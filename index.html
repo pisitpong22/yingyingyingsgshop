@@ -1,0 +1,3815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Speed up first byte to Firebase Storage / Google fonts by opening TCP
+     + TLS connections immediately, in parallel with the HTML parse. -->
+<link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<title id="pageTitle">Yingyingying Amulet</title>
+<!-- Favicons & PWA manifest -->
+<link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96">
+<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
+<link rel="shortcut icon" href="/favicon/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="YYYSG">
+<link rel="manifest" href="/favicon/site.webmanifest">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=Cinzel:wght@400;600;700&family=Marcellus&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
+<!-- Three.js for 3D phra somdej model -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<!-- Firebase shared module — provides window.FB API -->
+<script type="module" src="firebase-shared.js"></script>
+<script>
+// ───── DIAGNOSTIC: trace what causes "Unsafe attempt to load URL" errors ─────
+// This patches Image.src and CSS backgroundImage so we can see who's loading
+// the page URL itself (which is what triggers the file:// CORS error).
+(function diagnose(){
+  if(location.protocol !== 'file:') return; // only run when debugging file://
+  const pageURL = location.href;
+
+  // Patch Image.src
+  const desc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  if(desc && desc.set){
+    Object.defineProperty(HTMLImageElement.prototype, 'src', {
+      configurable: true,
+      enumerable: true,
+      get: desc.get,
+      set: function(v){
+        if(v === '' || v == null || v === pageURL){
+          console.warn('[DIAG] Image.src set to suspicious value:', JSON.stringify(v));
+          console.trace('[DIAG] stack trace:');
+        } else if(typeof v === 'string' && v.length < 200){
+          console.log('[DIAG] Image.src ←', v.slice(0,100));
+        } else {
+          console.log('[DIAG] Image.src ← (long URL,', typeof v === 'string' ? v.length : '?', 'chars)');
+        }
+        return desc.set.call(this, v);
+      }
+    });
+  }
+})();
+</script>
+<style>
+  :root{
+    --gold:#c9a84c;--gold-light:#e8c96a;--gold-dark:#8b6914;
+    --cream:#fdf6e3;--deep:#12100a;--accent:#8b0000;
+    --text:#2c1a06;--text-muted:#7a6040;--surface:#fff9ee;
+    --border:rgba(201,168,76,0.28);
+    --font-display:var(--font-display);
+
+    /* ─── LIQUID GLASS DESIGN TOKENS ───
+       Centralised so we can swap the whole "glass" look in one place. */
+    --glass-bg:rgba(255,251,235,0.55);
+    --glass-bg-strong:rgba(255,251,235,0.72);
+    --glass-bg-dark:rgba(20,16,8,0.45);
+    --glass-border:rgba(201,168,76,0.32);
+    --glass-border-strong:rgba(201,168,76,0.55);
+    --glass-shadow:0 10px 40px rgba(139,105,20,0.13), 0 2px 6px rgba(201,168,76,0.08);
+    --glass-shadow-hover:0 18px 60px rgba(139,105,20,0.22), 0 4px 12px rgba(201,168,76,0.15);
+    --glass-shadow-inner:inset 0 1px 0 rgba(255,255,255,0.5);
+    --glass-blur:18px;
+    --glass-blur-strong:32px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+
+  /* ─── Body background with ambient glow orbs ───
+     The orbs sit behind everything via a fixed pseudo-element, giving the
+     frosted glass elements something colourful to blur against. */
+  body{
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(at 20% 80%, rgba(232,201,106,.22) 0%, transparent 55%),
+      radial-gradient(at 80% 20%, rgba(201,168,76,.18) 0%, transparent 50%),
+      radial-gradient(at 40% 40%, rgba(139,0,0,.06) 0%, transparent 60%),
+      var(--cream);
+    color:var(--text);
+    overflow-x:hidden;
+    min-height:100vh;
+    background-attachment:fixed;
+    position:relative;
+  }
+  /* Drifting glow orbs — pure CSS, no JS. Adds subtle motion that makes the
+     glass blur effect look "alive". */
+  body::before, body::after{
+    content:'';
+    position:fixed;
+    width:480px;height:480px;
+    border-radius:50%;
+    filter:blur(80px);
+    pointer-events:none;
+    z-index:0;
+    opacity:.55;
+    will-change:transform;
+  }
+  body::before{
+    top:-100px;left:-100px;
+    background:radial-gradient(circle, rgba(232,201,106,.45) 0%, transparent 70%);
+    animation:floatOrb1 22s ease-in-out infinite;
+  }
+  body::after{
+    bottom:-150px;right:-100px;
+    background:radial-gradient(circle, rgba(201,168,76,.35) 0%, transparent 70%);
+    animation:floatOrb2 28s ease-in-out infinite;
+  }
+  @keyframes floatOrb1{
+    0%,100%{transform:translate(0,0) scale(1)}
+    33%{transform:translate(80px,40px) scale(1.1)}
+    66%{transform:translate(-40px,80px) scale(.95)}
+  }
+  @keyframes floatOrb2{
+    0%,100%{transform:translate(0,0) scale(1)}
+    33%{transform:translate(-60px,-40px) scale(1.05)}
+    66%{transform:translate(40px,-80px) scale(.9)}
+  }
+  /* Reduce orbs on mobile for performance */
+  @media(max-width:780px){
+    body::before, body::after{width:280px;height:280px;filter:blur(60px)}
+  }
+  /* Respect prefers-reduced-motion */
+  @media(prefers-reduced-motion:reduce){
+    body::before, body::after{animation:none}
+  }
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gold-light),var(--gold));border-radius:3px}
+
+  /* All content sits above the floating orbs */
+  nav, .page, .topbar, .fb-splash, footer{position:relative;z-index:1}
+
+  /* ─── GLASS UTILITY CLASSES ───
+     Apply .glass to any element to get the frosted-glass treatment.
+     .glass-dark for cards over dark backgrounds (like hero). */
+  .glass{
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+    transition:background .25s, border-color .25s, transform .25s, box-shadow .25s;
+  }
+  .glass:hover{
+    background:var(--glass-bg-strong);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .glass-dark{
+    background:var(--glass-bg-dark);
+    backdrop-filter:blur(var(--glass-blur-strong)) saturate(160%);
+    -webkit-backdrop-filter:blur(var(--glass-blur-strong)) saturate(160%);
+    border:1px solid rgba(201,168,76,0.25);
+  }
+
+  .topbar{background:var(--deep);color:var(--gold-light);text-align:center;padding:8px 16px;font-size:13px;letter-spacing:1px}
+
+  nav{
+    position:sticky;top:0;z-index:100;
+    background:rgba(18,16,10,0.92);
+    backdrop-filter:blur(16px) saturate(160%);
+    -webkit-backdrop-filter:blur(16px) saturate(160%);
+    border-bottom:1px solid rgba(201,168,76,0.28);
+    box-shadow:0 4px 24px rgba(0,0,0,.25);
+  }
+  .nav-inner{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:66px;gap:12px}
+  .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
+  .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
+  .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
+  .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
+  .logo-text{color:var(--gold-light);font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display)}
+  .logo-sub{color:#9e8a60;font-size:10px;letter-spacing:2px}
+  .nav-links{display:flex;gap:2px;list-style:none;flex-wrap:wrap}
+  .nav-links a{color:#c8b888;text-decoration:none;padding:8px 13px;border-radius:7px;font-size:14px;font-weight:500;transition:all .2s;cursor:pointer;white-space:nowrap}
+  .nav-links a:hover,.nav-links a.active{color:var(--gold-light);background:rgba(201,168,76,0.13)}
+
+  .page{display:none;animation:fadeUp .4s ease}
+  .page.active{display:block}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ───── INITIAL LOAD SPLASH ─────
+     Cover the screen with the brand colour until Firebase data arrives,
+     so users don't see seed/default values flash in for a beat.
+     The splash is removed once <html class="fb-ready"> is set. */
+  .fb-splash{
+    position:fixed;inset:0;z-index:99999;
+    background:#0a0805;
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .35s ease-out;
+    pointer-events:auto;
+  }
+  .fb-splash-inner{
+    display:flex;flex-direction:column;align-items:center;gap:16px;
+    opacity:.85;
+  }
+  .fb-splash-logo{
+    width:54px;height:54px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold-light,#e8c96a),var(--gold-dark,#8b6914));
+    box-shadow:0 0 30px rgba(201,168,76,.35);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .fb-splash-logo img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+  .fb-splash-dots{display:flex;gap:6px}
+  .fb-splash-dot{
+    width:6px;height:6px;border-radius:50%;background:#c9a84c;
+    animation:fbDot 1.2s ease-in-out infinite both;
+  }
+  .fb-splash-dot:nth-child(2){animation-delay:.15s}
+  .fb-splash-dot:nth-child(3){animation-delay:.3s}
+  @keyframes fbDot{
+    0%,80%,100%{opacity:.3;transform:scale(.85)}
+    40%{opacity:1;transform:scale(1)}
+  }
+  html.fb-ready .fb-splash{opacity:0;pointer-events:none}
+
+  /* While Firebase isn't ready yet, hide content that would otherwise
+     flash with seed data. We show them once <html class="fb-ready"> set. */
+  html:not(.fb-ready) .nav-links,
+  html:not(.fb-ready) .topbar,
+  html:not(.fb-ready) .home-section{
+    visibility:hidden;
+  }
+  /* Outer wrapper: full-bleed dark gradient. Inner .hero is constrained. */
+  .hero-wrap{
+    background:
+      radial-gradient(ellipse at 20% 70%,rgba(201,168,76,.08) 0%,transparent 50%),
+      radial-gradient(ellipse at 80% 30%,rgba(139,0,0,.05) 0%,transparent 45%),
+      linear-gradient(165deg,#0a0805 0%,#1a1208 30%,#231700 60%,#0d0a06 100%);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero{
+    min-height:100vh;
+    display:grid;grid-template-columns:1.05fr 1fr;
+    align-items:center;
+    gap:40px;
+    padding:0 60px;position:relative;
+    /* Constrain content on large/ultrawide screens */
+    max-width:1400px;
+    margin:0 auto;
+  }
+  /* When no 3D model is uploaded, hero is single-column full width */
+  .hero.no-3d{grid-template-columns:1fr;padding:0 80px;max-width:1200px}
+  .hero.no-3d .hero-inner{max-width:900px;margin:0 auto;text-align:center;padding:80px 0}
+  .hero.no-3d .hero-title{text-align:center}
+  .hero.no-3d .hero-sub{text-align:center}
+  .hero.no-3d .hero-desc{text-align:center;max-width:680px;margin-left:auto;margin-right:auto}
+  .hero.no-3d .hero-btns{justify-content:center}
+  .hero.no-3d .hero-stats{justify-content:center;max-width:none;margin-left:auto;margin-right:auto;width:fit-content}
+  .hero.no-3d .stat{text-align:center;padding-left:0}
+  .hero.no-3d .stat::before{display:none}
+  @media(max-width:780px){
+    /* ─── Mobile Hero — redesigned for breathing room ─── */
+    .hero{
+      grid-template-columns:1fr;
+      gap:24px;
+      padding:0 22px;
+      min-height:auto;
+    }
+    .hero-inner{
+      padding:36px 0 32px;
+      max-width:100%;
+      text-align:center;
+    }
+    .eyebrow{
+      font-size:9.5px;letter-spacing:2.2px;
+      padding:6px 12px;margin-bottom:22px;
+      max-width:fit-content;margin-left:auto;margin-right:auto;
+    }
+    .eyebrow::before,.eyebrow::after{width:10px}
+    .hero-title{
+      font-size:38px;letter-spacing:-.5px;line-height:1.1;
+      margin-bottom:14px;text-align:center;
+    }
+    .hero-title .ying{padding-right:.25em;margin-right:-.1em}
+    .hero-sub{
+      font-size:14.5px;line-height:1.5;margin-bottom:18px;
+      text-align:center;letter-spacing:.2px;padding:0 6px;
+    }
+    .hero-desc{
+      font-size:14px;line-height:1.7;margin-bottom:26px;
+      max-width:100%;text-align:center;padding:0 6px;
+    }
+    .hero-btns{
+      justify-content:center;gap:10px;margin-bottom:30px;
+    }
+    .hero-btns .btn,.hero-btns .btn-ol{
+      flex:1 1 auto;max-width:300px;justify-content:center;
+      padding:13px 22px;font-size:12.5px;letter-spacing:1.2px;
+    }
+    .hero-stats{
+      display:grid;grid-template-columns:1fr 1fr;
+      gap:14px 18px;margin-top:24px;padding-top:24px;
+      max-width:100%;width:100%;
+      justify-content:stretch;
+    }
+    .stat{padding-left:14px}
+    .stat::before{display:block}
+    .stat-num{font-size:28px;line-height:1}
+    .stat-label{font-size:10px;letter-spacing:1.5px;margin-top:4px}
+
+    /* When hero has no 3D / image visual — keep mobile centered too */
+    .hero.no-3d{padding:0 22px;max-width:100%}
+    .hero.no-3d .hero-inner{padding:36px 0 32px;text-align:center}
+    .hero.no-3d .hero-title{text-align:center}
+    .hero.no-3d .hero-sub{text-align:center}
+    .hero.no-3d .hero-desc{text-align:center;margin:0 auto 26px}
+    .hero.no-3d .hero-btns{justify-content:center}
+    .hero.no-3d .hero-stats{justify-content:stretch;width:100%}
+    .hero.no-3d .stat{text-align:left;padding-left:14px}
+
+    /* Mobile 3D/image height — shorter so text + visual both visible */
+    .hero-3d{height:55vh;max-height:420px;order:2}
+    .hero-still-img{max-width:80%}
+  }
+  @media(max-width:380px){
+    .hero-title{font-size:32px}
+    .hero-stats{grid-template-columns:1fr 1fr;gap:12px 14px}
+    .stat-num{font-size:24px}
+    .eyebrow{font-size:8.5px;letter-spacing:1.8px;padding:5px 10px}
+  }
+  /* Old no-3d mobile rules — now superseded by the unified block above */
+  /* Thai pattern overlay - subtle, gives non-AI feel — extended to full
+     viewport width so it matches the hero background image. */
+  .hero::before{
+    content:'';position:absolute;
+    top:0;bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;
+    background-image:
+      radial-gradient(circle at 0 0,rgba(201,168,76,.04) 1px,transparent 1px),
+      radial-gradient(circle at 30px 30px,rgba(201,168,76,.03) 1px,transparent 1px);
+    background-size:60px 60px,60px 60px;
+    background-position:0 0,30px 30px;
+    pointer-events:none;z-index:1;
+  }
+  .hero::after{
+    content:'';position:absolute;
+    bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;height:80px;
+    background:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.15) 100%);
+    pointer-events:none;z-index:1;
+  }
+  .hero-bg{
+    position:absolute;
+    /* Extend beyond the constrained .hero box so the background image
+       fills the entire .hero-wrap viewport width, even on huge monitors
+       where .hero is capped at 1400px. */
+    top:0;bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;
+    background-size:cover;background-position:center;
+    opacity:0;transition:opacity .6s;
+    z-index:0;
+  }
+  .hero-bg.show{opacity:.35}
+  .hero-bg-overlay{
+    position:absolute;
+    top:0;bottom:0;
+    left:calc(50% - 50vw);
+    right:calc(50% - 50vw);
+    width:100vw;
+    /* Vignette-style overlay: dark at the edges (so text is readable) and
+       transparent in the middle (so the hero image and any centerpiece
+       isn't dimmed). Falls back to a top-bottom gradient on mobile via
+       blend with rgba layers. */
+    background:
+      radial-gradient(ellipse 80% 90% at 50% 50%,
+        transparent 0%,
+        transparent 30%,
+        rgba(18,16,10,.35) 75%,
+        rgba(18,16,10,.6) 100%),
+      linear-gradient(180deg,
+        rgba(18,16,10,.2) 0%,
+        rgba(18,16,10,.05) 30%,
+        rgba(18,16,10,.05) 70%,
+        rgba(18,16,10,.4) 100%);
+    z-index:1;
+    pointer-events:none;
+  }
+
+  /* 3D canvas container — z-index:10 to definitively sit above ALL hero
+     overlays. isolation:isolate creates a stacking context so nothing
+     from .hero (background, overlays) can blend onto the image inside. */
+  .hero-3d{
+    position:relative;
+    width:100%;height:80vh;max-height:680px;
+    z-index:10;
+    isolation:isolate;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #phra3d{width:100%;height:100%;cursor:grab}
+  #phra3d:active{cursor:grabbing}
+  /* ─── HERO STILL IMAGE — absolute pass-through, zero interference ───
+     Show the uploaded image EXACTLY. No filter, no shadow underneath
+     that might overlap, no glow behind that might darken edges. */
+  .hero-still-img{
+    max-width:100%;max-height:100%;
+    width:auto;height:auto;
+    object-fit:contain;
+    position:relative;
+    z-index:10;
+    opacity:1 !important;
+  }
+
+  /* ─── HAS-HERO-IMAGE MODE ───
+     When admin uploads a still photo as hero, we kill ALL overlays and
+     gradient layers that would tint or darken the centerpiece, and give
+     the image a clean studio-style backdrop (deep neutral grey, just like
+     a product-photo lightroom). This isolates the photo entirely from
+     the rest of the site's gold/cream theme so its colours come through
+     exactly as uploaded. */
+  .hero.has-hero-image::before,
+  .hero.has-hero-image::after{display:none !important}
+  .hero.has-hero-image .hero-bg-overlay{display:none !important}
+  .hero.has-hero-image .hero-bg{
+    /* Replace the bg image (if any) with a clean studio gradient */
+    background-image:radial-gradient(ellipse at center,
+      #3a3a42 0%,
+      #25252a 45%,
+      #15151a 100%) !important;
+    opacity:1 !important;
+  }
+  /* 3D mode: keep transparent — let the hero background show through.
+     The 3D model gets its shine from the environment map (set in JS),
+     which is invisible — only reflects onto the polished gold surface. */
+  .phra-hint{position:absolute;bottom:-10px;left:0;right:0;text-align:center;color:rgba(201,168,76,.6);font-size:10.5px;letter-spacing:2px;text-transform:uppercase;z-index:5;font-weight:500;pointer-events:none;padding:0 10px;line-height:1.4}
+  /* glow halo — ONLY for 3D mode (not hero still image). Adding the
+     .has-3d class to .hero-3d when a GLB/canvas is rendering keeps the
+     glow from showing behind a still image (which already has its own
+     shadow/colour built in). */
+  .hero-3d.has-3d::before{
+    content:'';position:absolute;width:60%;height:60%;
+    top:50%;left:50%;transform:translate(-50%,-50%);
+    background:radial-gradient(circle,rgba(201,168,76,.25) 0%,rgba(139,0,0,.08) 35%,transparent 70%);
+    filter:blur(40px);z-index:0;animation:glowPulse 4s ease-in-out infinite;
+  }
+  @keyframes glowPulse{0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+  /* sacred ring */
+  .sacred-ring{position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:1}
+  .sacred-ring.r1{width:340px;height:340px;border:1px solid rgba(201,168,76,.18);animation:rotR 60s linear infinite}
+  .sacred-ring.r2{width:480px;height:480px;border:1px dashed rgba(201,168,76,.1);animation:rotR 90s linear infinite reverse}
+  @keyframes rotR{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+  .ring{position:absolute;border-radius:50%;border:1px solid rgba(201,168,76,.07);top:50%;left:50%;transform:translate(-50%,-50%);animation:rp 5s ease-in-out infinite;z-index:1}
+  @keyframes rp{0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(1)}50%{opacity:.1;transform:translate(-50%,-50%) scale(1.025)}}
+  .hero-inner{position:relative;z-index:3;max-width:560px;text-align:left;padding:80px 0}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.35);color:var(--gold-light);font-size:11px;letter-spacing:3.5px;padding:7px 18px;border-radius:0;margin-bottom:30px;font-weight:600;backdrop-filter:blur(4px);position:relative}
+  .eyebrow::before,.eyebrow::after{content:'';width:18px;height:1px;background:var(--gold);opacity:.6}
+  .hero-title{font-family:var(--font-display);font-size:clamp(42px,5.5vw,72px);font-weight:700;color:#fff;line-height:1.05;margin-bottom:16px;text-shadow:0 2px 24px rgba(0,0,0,.4);letter-spacing:-1px}
+  .ying{background:linear-gradient(135deg,#f5d97a 0%,#c9a84c 50%,#8b6914 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;font-style:italic;padding-right:0.45em;margin-right:-0.25em}
+  .hero-sub{font-size:clamp(16px,1.8vw,20px);color:var(--gold-light);margin-bottom:20px;font-weight:400;text-shadow:0 1px 10px rgba(0,0,0,.4);letter-spacing:.5px;font-family:var(--font-display);font-style:italic}
+  .hero-sub::before{content:'— ';opacity:.6}
+  .hero-desc{color:#c8b888;font-size:15px;line-height:1.95;margin-bottom:38px;font-weight:300;text-shadow:0 1px 8px rgba(0,0,0,.4);max-width:480px}
+  .hero-btns{display:flex;gap:14px;flex-wrap:wrap}
+  .btn-gold{background:linear-gradient(135deg,#e8c96a,#c9a84c 60%,#a08230);color:#1a0f00;padding:15px 36px;border-radius:2px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .3s;box-shadow:0 6px 24px rgba(201,168,76,.35),inset 0 1px 0 rgba(255,255,255,.3);font-family:'Inter',sans-serif;letter-spacing:1.5px;text-transform:uppercase;position:relative;overflow:hidden}
+  .btn-gold::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);transition:left .6s}
+  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(201,168,76,.5),inset 0 1px 0 rgba(255,255,255,.4)}
+  .btn-gold:hover::before{left:100%}
+  .btn-ol{background:rgba(0,0,0,.2);backdrop-filter:blur(4px);color:var(--gold-light);padding:15px 32px;border-radius:2px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid rgba(201,168,76,.45);transition:all .3s;font-family:'Inter',sans-serif;letter-spacing:1.5px;text-transform:uppercase}
+  .btn-ol:hover{background:rgba(201,168,76,.13);border-color:var(--gold);color:#fff}
+  .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:60px;padding-top:36px;border-top:1px solid rgba(201,168,76,.15);max-width:520px}
+  .stat{text-align:left;position:relative;padding-left:16px}
+  .stat::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,var(--gold),transparent)}
+  .stat-num{font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--gold-light);text-shadow:0 1px 10px rgba(0,0,0,.4);line-height:1}
+  .stat-label{font-size:10.5px;color:#9e8a60;margin-top:4px;letter-spacing:1.8px;text-transform:uppercase;font-weight:500}
+
+  /* Scroll cue */
+  .scroll-cue{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);color:rgba(201,168,76,.5);font-size:11px;letter-spacing:3px;text-transform:uppercase;z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;animation:bob 2.2s ease-in-out infinite}
+  .scroll-cue::after{content:'';width:1px;height:30px;background:linear-gradient(180deg,var(--gold),transparent)}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+  .sec-head{text-align:center;padding:68px 24px 46px;background:linear-gradient(180deg,var(--deep) 0%,#1e1400 100%)}
+  .sec-head h2{font-family:var(--font-display);font-size:34px;color:var(--gold-light);margin-bottom:10px}
+  .sec-head p{color:#c8b888;font-size:15px;max-width:520px;margin:0 auto;line-height:1.8}
+  .gline{width:56px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:14px auto}
+
+  .content{max-width:1200px;margin:auto;padding:48px 24px}
+
+  .crumb{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-muted);margin-bottom:24px;flex-wrap:wrap}
+  .crumb a{color:var(--gold-dark);text-decoration:none;cursor:pointer;font-weight:600}
+  .crumb a:hover{text-decoration:underline}
+  .crumb-sep{color:#bbb;font-size:11px}
+  .crumb-cur{color:var(--text);font-weight:600}
+
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:22px}
+  .card{
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:16px;overflow:hidden;
+    cursor:pointer;
+    transition:transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+  }
+  .card:hover{
+    transform:translateY(-4px);
+    background:var(--glass-bg-strong);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .card:hover{transform:translateY(-5px);box-shadow:0 14px 44px rgba(201,168,76,.16);border-color:var(--gold)}
+  .card-img{width:100%;height:225px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .card-img img{width:100%;height:100%;object-fit:cover}
+  /* ───── IMAGE LAZY LOAD + BLUR PROGRESSIVE ─────
+     Approach:
+     1. While loading: show animated shimmer placeholder
+     2. As a backdrop, set a CSS background to a tiny blurred preview
+        (the same image, requested via ImageKit at w-20,blur-10) — only
+        ~1KB, loads almost instantly. Blurred up via CSS to fill the
+        container.
+     3. Once full-size image decoded: fade in over 350ms; the blur preview
+        is hidden by the now-opaque foreground image.
+     This eliminates the "blank box" feeling on cold cache misses — users
+     see the SHAPE of the image immediately, then the sharp version. */
+  img.is-loading{
+    opacity:0;
+    background:
+      linear-gradient(90deg,
+        rgba(201,168,76,.04) 0%,
+        rgba(232,201,106,.10) 50%,
+        rgba(201,168,76,.04) 100%),
+      linear-gradient(135deg, #2d1e06 0%, #1a1408 100%);
+    background-size:200% 100%, 100% 100%;
+    background-blend-mode:overlay, normal;
+    animation:imgShimmer 1.6s ease-in-out infinite;
+    min-height:60px;
+  }
+  /* When a blur preview is set, use it as the background instead of shimmer */
+  img.is-loading.has-blur{
+    background-image:var(--blur-preview, none);
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    animation:none;
+    filter:blur(0); /* the bitmap is already blurred */
+  }
+  img.is-loaded{
+    opacity:1;
+    transition:opacity .35s ease-out;
+    background:none;
+    animation:none;
+  }
+  @keyframes imgShimmer{
+    0%{background-position:200% 0, 0 0}
+    100%{background-position:-200% 0, 0 0}
+  }
+  /* Hint browser to skip layout for off-screen sections — paints faster */
+  .home-section,
+  #page-amulets,#page-accessories,#page-casing,#page-projects,#page-reviews{
+    content-visibility:auto;
+    contain-intrinsic-size:auto 800px;
+  }
+  /* The hero is always visible — opt OUT so it never has to be re-painted */
+  #page-home .hero-wrap{content-visibility:visible}
+  .card-ph{display:flex;flex-direction:column;align-items:center;gap:7px;color:#6a5030}
+  .card-ph span{font-size:13px}
+  .cbadge{position:absolute;top:11px;right:11px;background:var(--accent);color:white;font-size:11px;font-weight:700;padding:4px 11px;border-radius:25px}
+  .cbadge-gold{background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));color:var(--deep)}
+  .card-body{padding:18px 20px 12px}
+  .card-cat{font-size:11px;font-weight:600;color:var(--gold-dark);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px}
+  .card-title{font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px}
+  .card-desc{color:var(--text-muted);font-size:13px;line-height:1.65;margin-bottom:12px}
+  .card-price{font-size:21px;font-weight:700;color:var(--gold-dark);font-family:var(--font-display)}
+  .card-price-u{font-size:13px;color:var(--text-muted);margin-left:4px;font-weight:400}
+  .card-foot{padding:11px 20px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .tag{background:rgba(201,168,76,.1);color:var(--gold-dark);font-size:12px;padding:4px 11px;border-radius:25px;border:1px solid rgba(201,168,76,.22);font-weight:500}
+  .btn-sm{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);border:none;padding:7px 16px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+  .btn-sm:hover{opacity:.9;transform:scale(1.02)}
+
+  .cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px}
+  .cat-tab{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:8px 18px;border-radius:25px;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;font-weight:500}
+  .cat-tab:hover,.cat-tab.active{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--deep);border-color:var(--gold);font-weight:700}
+
+  .ftype-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+  .ftype-card{
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:16px;overflow:hidden;cursor:pointer;
+    transition:transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+    display:flex;flex-direction:column;
+  }
+  .ftype-card:hover{
+    transform:translateY(-4px);
+    background:var(--glass-bg-strong);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .ftype-card:hover{transform:translateY(-5px);box-shadow:0 16px 50px rgba(201,168,76,.18);border-color:var(--gold)}
+  .ftype-banner{height:200px;background:linear-gradient(135deg,#1e1400,#2d1e06);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .ftype-banner img{width:100%;height:100%;object-fit:cover}
+  .ftype-icon-bg{font-size:80px;opacity:.6}
+  .ftype-count{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.6);color:var(--gold-light);font-size:12px;font-weight:600;padding:4px 12px;border-radius:25px;backdrop-filter:blur(8px)}
+  .ftype-body{padding:22px 24px;flex:1;display:flex;flex-direction:column}
+  .ftype-name{font-family:var(--font-display);font-size:21px;font-weight:700;margin-bottom:8px;color:var(--text)}
+  .ftype-desc{color:var(--text-muted);font-size:14px;line-height:1.7;margin-bottom:14px;flex:1;display:-webkit-box;-webkit-line-clamp:4;line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  /* Allow inline formatting from the rich text editor to show through */
+  .ftype-desc strong{font-weight:700;color:var(--text)}
+  .ftype-desc em{font-style:italic}
+  .ftype-desc br{line-height:1.7}
+  .ftype-cta{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border)}
+  .ftype-from{color:var(--text-muted);font-size:12px}
+  .ftype-from strong{color:var(--gold-dark);font-size:18px;font-family:var(--font-display)}
+  .ftype-arrow{color:var(--gold-dark);font-weight:700;font-size:14px}
+
+  /* SIMPLIFIED STYLE CARDS — name + image only */
+  .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+  /* ───── CASING TYPE DETAIL PAGE ───── */
+  .casing-detail-head{
+    margin:14px 0 36px;
+  }
+  .casing-detail-main{min-width:0}
+  /* Title + price chip on same line, with the chip flowing to the right
+     of the title. On narrow screens it wraps below. */
+  .casing-detail-title-row{
+    display:flex;align-items:baseline;
+    gap:14px;flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .casing-detail-title{
+    font-family:var(--font-display);font-size:32px;color:var(--text);
+    font-weight:700;margin:0;line-height:1.15;
+  }
+  .casing-detail-price-badge{
+    display:inline-flex;align-items:baseline;gap:8px;
+    padding:6px 14px;
+    background:linear-gradient(135deg, rgba(232,201,106,.18) 0%, rgba(201,168,76,.1) 100%);
+    border:1.5px solid rgba(201,168,76,.4);
+    border-radius:999px;
+    box-shadow:0 2px 8px rgba(201,168,76,.15);
+  }
+  .cd-price-chip-label{
+    font-size:10.5px;letter-spacing:1.5px;
+    text-transform:uppercase;font-weight:700;
+    color:var(--gold-dark);opacity:.85;
+  }
+  .cd-price-chip-value{
+    font-family:var(--font-display);
+    font-size:17px;font-weight:700;
+    color:var(--gold-dark);
+    letter-spacing:.3px;
+  }
+  /* ─── CUSTOM PAGE COLLECTIONS — grid / list layouts ───
+     Used when admin chose layout=grid or layout=list for a custom page. */
+  .cp-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:22px;
+  }
+  .cp-card{
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .3s, box-shadow .3s, border-color .3s;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+    display:flex;flex-direction:column;
+  }
+  .cp-card:hover{
+    transform:translateY(-4px);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .cp-card-img{
+    width:100%;aspect-ratio:4/3;
+    background:linear-gradient(135deg,#2d1e06,#12100a);
+    display:flex;align-items:center;justify-content:center;
+    font-size:48px;overflow:hidden;
+  }
+  .cp-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .cp-card-body{padding:20px}
+  .cp-card-title{
+    font-family:var(--font-display);font-size:18px;
+    color:var(--text);font-weight:700;
+    margin:0 0 6px;line-height:1.3;
+  }
+  .cp-card-subtitle{
+    color:var(--text-muted);font-size:13.5px;
+    line-height:1.55;margin-bottom:14px;
+  }
+  .cp-card-more{
+    color:var(--gold-dark);font-size:12.5px;font-weight:600;
+    letter-spacing:.4px;
+  }
+
+  /* List layout */
+  .cp-list{display:flex;flex-direction:column;gap:16px}
+  .cp-list-item{
+    display:grid;grid-template-columns:200px 1fr;gap:22px;
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    overflow:hidden;
+    cursor:pointer;
+    transition:transform .25s,box-shadow .25s,border-color .25s;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+  }
+  .cp-list-item:hover{
+    transform:translateY(-2px);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .cp-list-img{
+    aspect-ratio:1;background:linear-gradient(135deg,#2d1e06,#12100a);
+    overflow:hidden;display:flex;align-items:center;justify-content:center;
+  }
+  .cp-list-img img{width:100%;height:100%;object-fit:cover}
+  .cp-list-body{padding:22px 24px 22px 0;display:flex;flex-direction:column;justify-content:center}
+  .cp-list-title{
+    font-family:var(--font-display);font-size:22px;
+    font-weight:700;color:var(--text);
+    margin:0 0 6px;line-height:1.25;
+  }
+  .cp-list-subtitle{
+    color:var(--gold-dark);font-size:13.5px;font-weight:600;
+    margin-bottom:10px;letter-spacing:.3px;
+  }
+  .cp-list-content{
+    color:var(--text-muted);font-size:14px;line-height:1.7;
+    margin-bottom:10px;
+  }
+  .cp-list-more{
+    color:var(--gold-dark);font-size:13px;font-weight:600;
+    letter-spacing:.3px;
+  }
+
+  @media(max-width:780px){
+    .cp-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+    .cp-card-body{padding:14px 14px 16px}
+    .cp-card-title{font-size:15px}
+    .cp-card-subtitle{font-size:12.5px;margin-bottom:10px}
+    .cp-card-more{font-size:11.5px}
+
+    .cp-list-item{grid-template-columns:110px 1fr;gap:12px}
+    .cp-list-body{padding:14px 14px 14px 0}
+    .cp-list-title{font-size:17px}
+    .cp-list-subtitle{font-size:12.5px}
+    .cp-list-content{font-size:13.5px;margin-bottom:8px}
+  }
+
+  /* ─── CUSTOM PAGE CONTENT ───
+     Style the rich-text content of admin-created custom pages so it looks
+     polished by default — no matter what HTML the admin's RTE produces. */
+  .custom-page-content{
+    max-width:780px;margin:0 auto;
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:18px;
+    padding:42px 48px;
+    color:var(--text);font-size:16px;line-height:1.85;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+  }
+  .custom-page-content h1,
+  .custom-page-content h2,
+  .custom-page-content h3{
+    font-family:var(--font-display);
+    color:var(--text);font-weight:700;
+    margin:1.4em 0 .6em;line-height:1.25;
+  }
+  .custom-page-content h1{font-size:28px}
+  .custom-page-content h2{font-size:24px}
+  .custom-page-content h3{font-size:20px}
+  .custom-page-content h1:first-child,
+  .custom-page-content h2:first-child,
+  .custom-page-content h3:first-child{margin-top:0}
+  .custom-page-content p{margin:0 0 1em}
+  .custom-page-content p:last-child{margin-bottom:0}
+  .custom-page-content strong,
+  .custom-page-content b{font-weight:700;color:var(--text)}
+  .custom-page-content em,
+  .custom-page-content i{font-style:italic}
+  .custom-page-content ul,
+  .custom-page-content ol{margin:0 0 1em 1.6em;padding:0}
+  .custom-page-content li{margin-bottom:.4em;line-height:1.75}
+  .custom-page-content a{
+    color:var(--gold-dark);text-decoration:underline;
+    text-decoration-color:rgba(201,168,76,.4);
+    text-underline-offset:3px;
+    transition:color .2s,text-decoration-color .2s;
+  }
+  .custom-page-content a:hover{color:var(--gold);text-decoration-color:var(--gold)}
+  .custom-page-content img{
+    max-width:100%;height:auto;
+    border-radius:12px;margin:1em 0;
+    box-shadow:0 6px 24px rgba(0,0,0,.1);
+  }
+  .custom-page-content blockquote{
+    border-left:3px solid var(--gold);
+    padding:8px 0 8px 20px;
+    margin:1em 0;
+    color:var(--text-muted);font-style:italic;
+  }
+  .custom-page-content hr{
+    border:none;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    margin:2em 0;
+  }
+  .custom-page-content code{
+    background:rgba(201,168,76,.12);
+    padding:2px 8px;border-radius:5px;
+    font-family:'SF Mono',Monaco,monospace;font-size:.92em;
+    color:var(--gold-dark);
+  }
+  @media(max-width:780px){
+    .custom-page-content{padding:28px 24px;font-size:15px;border-radius:14px}
+    .custom-page-content h1{font-size:24px}
+    .custom-page-content h2{font-size:20px}
+    .custom-page-content h3{font-size:17px}
+  }
+
+  .casing-detail-desc{
+    color:var(--text);font-size:15px;line-height:1.85;
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-left:3px solid var(--gold);
+    border-radius:14px;
+    padding:20px 24px;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+  }
+  /* Rich-text descriptions: full RTE support */
+  .casing-detail-desc strong,
+  .casing-detail-desc b{font-weight:700;color:var(--text)}
+  .casing-detail-desc em,
+  .casing-detail-desc i{font-style:italic}
+  .casing-detail-desc u{text-decoration:underline;text-decoration-color:rgba(201,168,76,.5);text-underline-offset:2px}
+  .casing-detail-desc p{margin:0 0 10px}
+  .casing-detail-desc p:last-child{margin-bottom:0}
+  .casing-detail-desc br{line-height:1.85}
+  .casing-detail-desc h1,
+  .casing-detail-desc h2,
+  .casing-detail-desc h3{
+    font-family:var(--font-display);font-weight:700;color:var(--text);
+    margin:1em 0 .5em;line-height:1.3;
+  }
+  .casing-detail-desc h1:first-child,
+  .casing-detail-desc h2:first-child,
+  .casing-detail-desc h3:first-child{margin-top:0}
+  .casing-detail-desc h2{font-size:20px;color:var(--gold-dark)}
+  .casing-detail-desc h3{font-size:17px}
+  .casing-detail-desc ul,
+  .casing-detail-desc ol{margin:0 0 .8em 1.5em;padding:0}
+  .casing-detail-desc li{margin-bottom:.35em;line-height:1.75}
+  .casing-detail-desc a{
+    color:var(--gold-dark);text-decoration:underline;
+    text-decoration-color:rgba(201,168,76,.45);
+    text-underline-offset:3px;transition:color .2s,text-decoration-color .2s;
+  }
+  .casing-detail-desc a:hover{color:var(--gold);text-decoration-color:var(--gold)}
+  /* Alignment classes — execCommand produces inline style="text-align:..."
+     and may also use these tags. Make sure both work. */
+  .casing-detail-desc [style*="text-align:center"],
+  .casing-detail-desc [align="center"]{text-align:center}
+  .casing-detail-desc [style*="text-align:right"],
+  .casing-detail-desc [align="right"]{text-align:right}
+  .casing-detail-desc [style*="text-align:left"],
+  .casing-detail-desc [align="left"]{text-align:left}
+
+  /* Side info card — price */
+  .casing-detail-side{display:flex;flex-direction:column;gap:14px}
+  .cd-side-card{
+    background:linear-gradient(135deg,var(--deep) 0%,#1f1608 100%);
+    border:1px solid var(--gold);
+    border-radius:12px;
+    padding:22px 24px;
+    text-align:center;
+    box-shadow:0 6px 18px rgba(201,168,76,.12);
+  }
+  .cd-side-label{
+    color:var(--gold);font-size:11px;letter-spacing:2.5px;
+    font-weight:600;text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .cd-side-value{
+    font-family:var(--font-display);font-size:28px;
+    color:var(--gold-light);font-weight:700;letter-spacing:.5px;
+  }
+
+  /* Available styles section header */
+  .var-grid-head{
+    display:flex;align-items:center;gap:18px;
+    margin:18px 0 22px;
+  }
+  .var-grid-title{
+    font-family:var(--font-display);font-size:20px;
+    color:var(--text);font-weight:700;margin:0;
+    white-space:nowrap;
+  }
+  .var-grid-line{
+    flex:1;height:1px;
+    background:linear-gradient(90deg,var(--gold) 0%,transparent 100%);
+  }
+
+  @media(max-width:780px){
+    .casing-detail-head{margin-bottom:24px}
+    .casing-detail-title{font-size:24px}
+    .casing-detail-price-badge{padding:5px 12px}
+    .cd-price-chip-value{font-size:15px}
+    .cd-price-chip-label{font-size:9.5px;letter-spacing:1px}
+    .casing-detail-desc{font-size:14px;padding:16px 18px}
+    .cd-side-card{padding:16px 20px}
+    .cd-side-value{font-size:24px}
+    .var-grid-title{font-size:17px}
+  }
+  .var-card{
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:14px;overflow:hidden;cursor:pointer;
+    transition:transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+  }
+  .var-card:hover{
+    transform:translateY(-3px);
+    background:var(--glass-bg-strong);
+    border-color:var(--glass-border-strong);
+    box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .var-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(201,168,76,.15);border-color:var(--gold)}
+  .var-img{width:100%;aspect-ratio:1;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:50px;position:relative;overflow:hidden}
+  .var-img img{width:100%;height:100%;object-fit:cover}
+  .var-img-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:white;font-size:11px;font-weight:600;padding:3px 9px;border-radius:25px;backdrop-filter:blur(6px)}
+  .var-price-badge{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:14px;font-weight:700;padding:5px 11px;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,.25);letter-spacing:.3px}
+  .var-body{padding:14px 18px;text-align:center}
+  .var-name{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin-bottom:5px}
+  .var-hint{font-size:11.5px;color:var(--gold-dark);font-weight:600;opacity:.85;transition:opacity .2s}
+  .var-card:hover .var-hint{opacity:1}
+
+  .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px}
+  .proj-card{background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(180%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease,background .3s ease;cursor:pointer;box-shadow:var(--glass-shadow),var(--glass-shadow-inner)}
+  .proj-card:hover{border-color:var(--gold);box-shadow:0 10px 40px rgba(201,168,76,.14);transform:translateY(-3px)}
+  .proj-img{width:100%;height:200px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;position:relative}
+  .proj-img img{width:100%;height:100%;object-fit:cover}
+  .proj-photo-count{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.65);color:var(--gold-light);font-size:11px;font-weight:600;padding:4px 11px;border-radius:25px;backdrop-filter:blur(6px)}
+  .proj-body{padding:22px}
+  .proj-meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .sbadge{font-size:12px;padding:4px 12px;border-radius:25px;font-weight:600}
+  .s-active{background:#d4edda;color:#155724}.s-done{background:#fff3cd;color:#856404}.s-soon{background:#d1ecf1;color:#0c5460}
+  .s-open{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep)}
+  .proj-title{font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:8px}
+  .proj-desc{color:var(--text-muted);font-size:14px;line-height:1.7;margin-bottom:12px}
+  .proj-cta{font-size:13px;color:var(--gold-dark);font-weight:600;padding-top:10px;border-top:1px solid var(--border)}
+
+  .about-banner{background:linear-gradient(135deg,var(--deep),#231700);padding:80px 24px;text-align:center}
+  .about-banner h2{font-family:var(--font-display);font-size:34px;color:var(--gold-light);margin-bottom:16px}
+  .about-banner p{color:#c8b888;font-size:16px;max-width:580px;margin:0 auto;line-height:1.9}
+  .trust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px;max-width:1000px;margin:50px auto;padding:0 24px}
+  .trust-card{background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(180%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);border:1px solid var(--glass-border);border-radius:16px;padding:28px 24px;text-align:center;transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease,background .3s ease;cursor:pointer;box-shadow:var(--glass-shadow),var(--glass-shadow-inner)}
+  .trust-card:hover{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 8px 30px rgba(201,168,76,.12)}
+  .trust-icon{font-size:38px;margin-bottom:12px}
+  .trust-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin-bottom:7px}
+  .trust-desc{color:var(--text-muted);font-size:13px;line-height:1.7}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);-webkit-backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid var(--glass-border);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.18),var(--glass-shadow-inner)}
+  @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);gap:16px}
+  .modal-title-wrap{flex:1}
+  .modal-title-cat{font-size:11px;color:var(--gold-dark);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+  .modal-title{font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1.3}
+  .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted);flex-shrink:0;padding:0;line-height:1}
+  .prod-detail{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+  .prod-main-img{width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:60px}
+  .prod-main-img img{width:100%;height:100%;object-fit:cover}
+  .prod-thumbs{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+  .prod-thumb{width:64px;height:64px;border-radius:8px;border:2px solid var(--border);cursor:pointer;overflow:hidden;background:#2d1e06;display:flex;align-items:center;justify-content:center;transition:border-color .2s}
+  .prod-thumb.active{border-color:var(--gold)}
+  .prod-thumb img{width:100%;height:100%;object-fit:cover}
+  .prod-info h2{font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:6px}
+  .prod-price{font-size:28px;font-weight:700;color:var(--gold-dark);font-family:var(--font-display);margin:12px 0}
+  .prod-desc{color:var(--text-muted);font-size:14px;line-height:1.85;margin-bottom:18px}
+  .spec-box{background:white;border-radius:10px;padding:14px;margin-bottom:18px;border:1px solid var(--border)}
+  .spec-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0e8d0;font-size:14px;gap:14px}
+  .spec-row:last-child{border-bottom:none}
+  .spec-k{color:var(--text-muted);font-weight:500;flex-shrink:0}.spec-v{font-weight:600;text-align:right}
+  .detail-list{list-style:none;margin-bottom:18px}
+  .detail-list li{font-size:13px;color:var(--text-muted);padding:5px 0;display:flex;gap:8px}
+  .detail-list li::before{content:'✦';color:var(--gold);font-size:10px;flex-shrink:0;margin-top:3px}
+
+  /* VARIANT GALLERY — masonry style, original aspect ratios, many at once */
+  .variant-gallery{column-count:5;column-gap:10px}
+  .variant-photo{break-inside:avoid;margin-bottom:10px;border-radius:10px;overflow:hidden;background:#2d1e06;cursor:zoom-in;transition:transform .2s}
+  .variant-photo:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+  .variant-photo img{width:100%;height:auto;display:block}
+  @media(max-width:1100px){.variant-gallery{column-count:4}}
+  @media(max-width:780px){.variant-gallery{column-count:3}}
+  @media(max-width:520px){.variant-gallery{column-count:2}}
+
+  /* LIGHTBOX */
+  #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:600;align-items:center;justify-content:center;padding:24px;animation:lbFade .25s ease}
+  #lightbox.open{display:flex}
+  @keyframes lbFade{from{opacity:0}to{opacity:1}}
+  #lbImgWrap{max-width:95vw;max-height:90vh;display:flex;align-items:center;justify-content:center;cursor:default}
+  #lbImg{max-width:95vw;max-height:90vh;width:auto;height:auto;object-fit:contain;border-radius:6px;box-shadow:0 12px 60px rgba(0,0,0,.5)}
+  #lbClose{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:2}
+  #lbClose:hover{background:rgba(255,255,255,.2);transform:scale(1.05)}
+  #lbPrev,#lbNext{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;width:50px;height:50px;border-radius:50%;font-size:32px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:2;font-family:'Inter',sans-serif;padding:0}
+  #lbPrev{left:18px}
+  #lbNext{right:18px}
+  #lbPrev:hover,#lbNext:hover{background:rgba(255,255,255,.22);transform:translateY(-50%) scale(1.05)}
+  #lbCounter{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:white;padding:6px 16px;border-radius:25px;font-size:13px;font-weight:500;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15)}
+  @media(max-width:768px){
+    #lbClose{top:12px;right:12px;width:38px;height:38px;font-size:18px}
+    #lbPrev,#lbNext{width:42px;height:42px;font-size:26px}
+    #lbPrev{left:8px}#lbNext{right:8px}
+    #lbCounter{bottom:14px;font-size:12px;padding:5px 13px}
+  }
+
+  .cf-wrap{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+  .cf-btn{display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:50px;border:none;cursor:pointer;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;transition:all .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);color:white}
+  .cf-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+
+  #toast{position:fixed;top:24px;right:24px;background:var(--deep);color:var(--gold-light);padding:13px 22px;border-radius:10px;font-size:14px;font-weight:500;border:1px solid rgba(201,168,76,.3);z-index:500;display:none;max-width:90vw;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:slideInTR .3s ease}
+  @keyframes slideInTR{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+  .empty-state{text-align:center;padding:60px 24px;color:var(--text-muted);background:var(--surface);border:1px dashed var(--border);border-radius:14px}
+
+  /* HAMBURGER */
+  .menu-btn{display:none;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold-light);width:38px;height:38px;border-radius:8px;cursor:pointer;font-size:18px;align-items:center;justify-content:center}
+  .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;backdrop-filter:blur(4px)}
+  .mobile-overlay.open{display:block}
+
+  /* TABLET */
+  @media(max-width:900px){
+    .nav-inner{padding:0 16px;height:60px}
+    .logo-text{font-size:14px}
+    .logo-sub{display:none}
+    .content{padding:32px 16px}
+    .sec-head{padding:50px 16px 36px}
+    .sec-head h2{font-size:26px}
+    .hero{grid-template-columns:1fr;padding:0 32px;min-height:auto;gap:0}
+    .hero-3d{height:55vh;max-height:480px;order:1}
+    .hero-inner{order:2;padding:0 0 60px;text-align:center;max-width:100%}
+    .hero-title{font-size:42px !important}
+    .stat{text-align:center;padding-left:0}
+    .stat::before{display:none}
+    .hero-stats{margin:40px auto 0;max-width:100%}
+    .hero-btns{justify-content:center}
+    .hero-desc{margin:0 auto 30px}
+    .scroll-cue{display:none}
+    .about-banner{padding:50px 16px}
+    .about-banner h2{font-size:26px}
+    .trust-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:0 16px;margin:30px auto}
+  }
+
+  /* MOBILE */
+  @media(max-width:768px){
+    body{font-size:14px}
+    .topbar{font-size:11px;padding:6px 12px;letter-spacing:.5px}
+    .nav-inner{height:56px;gap:8px}
+    .logo-icon{width:34px;height:34px;font-size:17px}
+    .logo-text{font-size:13px}
+    .menu-btn{display:flex}
+    .nav-links{
+      position:fixed;top:0;right:-280px;width:260px;height:100vh;
+      background:var(--deep);
+      flex-direction:column;
+      padding:60px 0 24px;gap:0;list-style:none;
+      transition:right .3s ease;z-index:100;
+      box-shadow:-8px 0 30px rgba(0,0,0,.4);
+      overflow-y:auto;
+    }
+    .nav-links.open{right:0}
+    .nav-links li{width:100%;border-bottom:1px solid rgba(201,168,76,.1)}
+    .nav-links a{display:block;padding:14px 22px;font-size:14px;border-radius:0;width:100%;border-left:3px solid transparent}
+    .nav-links a.active{border-left-color:var(--gold);background:rgba(201,168,76,.13)}
+
+    .hero{grid-template-columns:1fr;padding:24px 18px 40px;min-height:auto;gap:0}
+    .hero-3d{height:50vh;max-height:380px;order:1}
+    .hero-inner{order:2;padding:0;text-align:center}
+    .ring,.sacred-ring{display:none}
+    .eyebrow{font-size:10px;letter-spacing:2px;padding:5px 14px;margin-bottom:18px}
+    .hero-title{font-size:32px !important;line-height:1.2 !important}
+    .hero-sub{font-size:15px !important;margin-bottom:14px}
+    .hero-desc{font-size:13.5px;margin-bottom:24px;line-height:1.7}
+    .hero-desc br{display:none}
+    .hero-btns{flex-direction:column;width:100%;gap:10px;justify-content:center}
+    .hero-btns button{width:100%;padding:13px 22px;font-size:13px}
+    .btn-gold,.btn-ol{padding:13px 22px;font-size:13px}
+    .hero-stats{grid-template-columns:repeat(2,1fr);margin-top:30px;padding-top:24px;gap:18px}
+    .stat{padding-left:0;text-align:center}
+    .stat::before{display:none}
+    .stat-num{font-size:22px}
+    .stat-label{font-size:9.5px;letter-spacing:1.2px}
+
+    .sec-head{padding:36px 16px 28px}
+    .sec-head h2{font-size:22px;margin-bottom:6px}
+    .sec-head p{font-size:13px;line-height:1.6}
+    .gline{width:42px;margin:10px auto}
+
+    .content{padding:28px 14px}
+
+    /* Casing types: 2 columns on mobile (was 1) — much faster to scan
+       through 8+ casing types without scrolling for ages. */
+    .card-grid,.proj-grid{grid-template-columns:1fr;gap:14px}
+    .ftype-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+    .var-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+    .card-img{height:200px}
+    .card-body{padding:14px 16px 8px}
+    .card-title{font-size:15px}
+    .card-desc{font-size:12px}
+    .card-price{font-size:18px}
+
+    /* Compact casing-type cards for 2-column mobile layout */
+    .ftype-banner{height:120px}
+    .ftype-icon-bg{font-size:48px}
+    .ftype-count{font-size:10px;padding:2px 8px;top:8px;right:8px}
+    .ftype-body{padding:12px 14px}
+    .ftype-name{font-size:14.5px;margin-bottom:5px;line-height:1.25}
+    .ftype-desc{
+      font-size:11.5px;line-height:1.5;margin-bottom:10px;
+      -webkit-line-clamp:3;line-clamp:3;
+    }
+    .ftype-cta{padding-top:10px;flex-wrap:wrap;gap:6px}
+    .ftype-from{font-size:10px}
+    .ftype-from strong{font-size:14px}
+    .ftype-arrow{font-size:11.5px}
+
+    .var-img{font-size:38px}
+    .var-name{font-size:13px}
+    .var-color-name{font-size:11px}
+    .var-price{font-size:14px}
+    .var-body{padding:11px 13px}
+
+    .proj-img{height:170px;font-size:42px}
+    .proj-body{padding:16px}
+    .proj-title{font-size:15px}
+    .proj-desc{font-size:13px}
+
+    .cat-tabs{gap:6px;margin-bottom:20px}
+    .cat-tab{padding:6px 14px;font-size:12.5px}
+
+    .crumb{font-size:13px;margin-bottom:18px}
+
+    .about-banner{padding:50px 16px 40px}
+    .about-banner h2{font-size:22px}
+    .about-banner p{font-size:14px;line-height:1.8}
+    .trust-grid{grid-template-columns:1fr;gap:12px;margin:32px auto;padding:0 14px}
+    .trust-card{padding:22px 18px}
+    .trust-icon{font-size:32px}
+    .trust-title{font-size:14px}
+    .trust-desc{font-size:12px}
+
+    /* MODAL — full screen on mobile */
+    .modal-overlay{padding:0;align-items:flex-end}
+    .modal{max-width:100%;max-height:96vh;border-radius:18px 18px 0 0;padding:22px 18px;animation:slideUpMobile .35s ease}
+    @keyframes slideUpMobile{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .prod-detail{grid-template-columns:1fr;gap:20px}
+    .prod-main-img{max-width:280px;margin:0 auto}
+    .modal-title{font-size:18px}
+    .prod-info h2{font-size:18px}
+    .prod-price{font-size:24px;margin:10px 0}
+    .prod-desc{font-size:13px}
+    .modal-head{margin-bottom:18px;padding-bottom:14px}
+    .spec-row{font-size:13px}
+
+    .cf-wrap{bottom:16px;right:16px;gap:8px}
+    .cf-btn{padding:9px 14px;font-size:12.5px}
+
+    #toast{font-size:12.5px;padding:10px 18px;top:72px;right:14px;left:auto}
+  }
+
+  /* SMALL MOBILE */
+  @media(max-width:380px){
+    .var-grid{grid-template-columns:1fr}
+    .hero-title{font-size:28px !important}
+    .stat-num{font-size:20px}
+    .hero-stats{gap:10px}
+    .stat{min-width:60px}
+  }
+
+  /* ═══════ NEW FEATURES STYLES ═══════ */
+
+  /* SEARCH BAR */
+  .search-bar{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+  .search-input-wrap{flex:1;position:relative;min-width:240px}
+  .search-input-wrap::before{content:'🔍';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.55;pointer-events:none}
+  .search-input{width:100%;background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:25px;padding:11px 18px 11px 40px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);transition:all .2s}
+  .search-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.15)}
+  .search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.06);border:none;width:24px;height:24px;border-radius:50%;cursor:pointer;color:var(--text-muted);font-size:13px;display:none;align-items:center;justify-content:center}
+  .search-clear.show{display:flex}
+  .sort-select{background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:25px;padding:11px 16px;font-family:'Inter',sans-serif;font-size:14px;color:var(--text);cursor:pointer;min-width:160px}
+  .sort-select:focus{outline:none;border-color:var(--gold)}
+  .result-count{font-size:13px;color:var(--text-muted);margin-bottom:14px;padding-left:4px}
+
+  /* STATUS OVERLAYS — sold/reserved */
+  .card-img,.var-img{position:relative}
+  .status-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:32px;font-weight:700;letter-spacing:6px;color:#fff;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none;z-index:5;background:linear-gradient(135deg,rgba(0,0,0,.6) 0%,rgba(139,0,0,.4) 100%);backdrop-filter:saturate(.4)}
+  .status-overlay.reserved{background:linear-gradient(135deg,rgba(0,0,0,.55) 0%,rgba(139,100,20,.4) 100%)}
+  .status-overlay.reserved::after{content:'RESERVED'}
+  .status-overlay.sold::after{content:'SOLD'}
+  .status-overlay span{transform:rotate(-12deg);border:3px solid #fff;padding:8px 28px;border-radius:6px}
+  .status-pill{position:absolute;top:11px;left:11px;font-size:10.5px;font-weight:700;padding:4px 11px;border-radius:25px;letter-spacing:1.2px;text-transform:uppercase;z-index:6}
+  .status-pill.available{background:#155724;color:#d4edda}
+  .status-pill.reserved{background:#856404;color:#fff3cd}
+  .status-pill.sold{background:#721c24;color:#f8d7da}
+
+  /* PRICE HIDDEN (PM for price) */
+  .price-pm{font-family:var(--font-display);color:var(--gold-dark);font-size:16px;font-style:italic;font-weight:600}
+
+  /* FEATURED SECTION (HOME) */
+  .featured-section{background:linear-gradient(180deg,var(--cream) 0%,#f7eed8 100%);padding:60px 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .featured-inner{max-width:1200px;margin:auto}
+  .featured-head{text-align:center;margin-bottom:36px}
+  .featured-head h2{font-family:var(--font-display);font-size:30px;color:var(--text);margin-bottom:8px}
+  .featured-head p{color:var(--text-muted);font-size:14px;max-width:520px;margin:0 auto;line-height:1.7}
+  .featured-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+
+  /* PAYMENT PAGE */
+  .pay-wrap{max-width:760px;margin:auto;padding:48px 24px}
+  .pay-card{background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);-webkit-backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);border:2px solid var(--gold);border-radius:20px;padding:36px 32px;box-shadow:var(--glass-shadow-hover),var(--glass-shadow-inner);position:relative;overflow:hidden}
+  .pay-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--gold-light),var(--gold-dark),var(--gold-light))}
+  .pay-block{padding:20px 0;border-bottom:1px dashed var(--border)}
+  .pay-block:last-child{border-bottom:none}
+  .pay-block h3{font-family:var(--font-display);font-size:18px;color:var(--gold-dark);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .pay-uen{background:linear-gradient(135deg,#1a0f00,#2d1e06);color:var(--gold-light);padding:18px 22px;border-radius:12px;font-family:var(--font-display);font-size:18px;text-align:center;margin:14px 0;letter-spacing:2px;border:1px solid rgba(201,168,76,.3)}
+  .pay-uen strong{display:block;font-size:14px;letter-spacing:3px;color:var(--gold);font-weight:600;margin-bottom:6px}
+  .pay-uen .uen-num{font-size:24px;font-weight:700;letter-spacing:3px}
+  .pay-info{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:14px;color:var(--text);line-height:1.8}
+  .pay-info dt{font-weight:600;color:var(--text-muted)}
+  .pay-policy{background:#fff9ee;border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 18px;font-size:14px;line-height:1.95;color:var(--text);white-space:pre-wrap}
+  .pay-qr{text-align:center;margin:18px 0}
+  .pay-qr img{max-width:240px;border-radius:12px;border:2px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+  .pay-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+
+  /* REVIEWS */
+  .rev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+  /* Homepage reviews preview */
+  .home-reviews-section{background:linear-gradient(180deg,var(--cream) 0%,#f7ede0 100%);padding:80px 24px;position:relative;overflow:hidden}
+  .home-reviews-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.08) 0%,transparent 60%);pointer-events:none}
+  .home-reviews-inner{max-width:1200px;margin:0 auto;position:relative;z-index:1}
+  .home-reviews-head{text-align:center;margin-bottom:42px}
+  .home-reviews-eyebrow{color:var(--gold-dark);font-size:11px;font-weight:600;letter-spacing:3px;margin-bottom:12px}
+  .home-reviews-head h2{font-family:var(--font-display);font-size:32px;color:var(--text);font-weight:700;margin-bottom:6px}
+  body.th .home-reviews-head h2{font-family:'Sarabun',sans-serif !important}
+  .home-reviews-head .gline{margin:12px auto}
+  .home-reviews-head p{color:var(--text-muted);font-size:15px;max-width:560px;margin:14px auto 0;line-height:1.7}
+  .home-reviews-cta{text-align:center;margin-top:42px}
+  .home-reviews-btn{background:transparent;border:1.5px solid var(--gold);color:var(--gold-dark);padding:13px 28px;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .25s;font-family:inherit}
+  .home-reviews-btn:hover{background:var(--gold);color:var(--deep);transform:translateY(-2px);box-shadow:0 6px 18px rgba(201,168,76,.3)}
+  @media(max-width:780px){
+    .home-reviews-section{padding:50px 18px}
+    .home-reviews-head h2{font-size:24px}
+    .home-reviews-head p{font-size:13.5px}
+    .home-reviews-cta{margin-top:28px}
+  }
+  .rev-card{background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(180%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);border:1px solid var(--glass-border);border-radius:16px;padding:22px;transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease,background .3s ease;position:relative;box-shadow:var(--glass-shadow),var(--glass-shadow-inner)}
+  .rev-card:hover{border-color:var(--gold);box-shadow:0 8px 24px rgba(201,168,76,.12);transform:translateY(-3px)}
+  .rev-quote{position:absolute;top:-8px;left:18px;font-family:var(--font-display);font-size:48px;color:var(--gold);line-height:1;opacity:.4}
+  .rev-stars{color:var(--gold-dark);font-size:15px;margin-bottom:10px;letter-spacing:2px}
+  .rev-text{font-size:14px;color:var(--text);line-height:1.85;margin-bottom:14px;font-style:italic}
+  .rev-foot{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border)}
+  .rev-name{font-weight:700;color:var(--text);font-size:14px}
+  .rev-loc{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .rev-date{font-size:11.5px;color:var(--gold-dark);font-weight:600}
+  .rev-imgs{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .rev-imgs img{width:54px;height:54px;border-radius:8px;object-fit:cover;cursor:zoom-in;border:1px solid var(--border)}
+  /* When a review has only photos (no text), give the images more space */
+  .rev-card-imgonly .rev-imgs{margin-top:14px;gap:8px}
+  .rev-card-imgonly .rev-imgs img{width:100%;height:auto;max-height:280px;border-radius:10px;border:1px solid var(--border);object-fit:cover;flex:1 1 calc(50% - 8px)}
+  .rev-card-imgonly .rev-imgs img:only-child{flex-basis:100%;max-height:380px}
+  .rev-card-imgonly .rev-quote{display:none}
+  .rev-card-imgonly .rev-stars{margin-bottom:4px}
+
+  /* SHARE BUTTONS in modal */
+  .share-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .share-btn{background:rgba(201,168,76,.08);border:1px solid var(--border);color:var(--text-muted);padding:7px 14px;border-radius:25px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+  .share-btn:hover{border-color:var(--gold);color:var(--gold-dark);background:rgba(201,168,76,.15)}
+
+  /* CONTACT BUTTON GROUP in product modal */
+  .contact-group{display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px}
+  .contact-group .cf-btn{justify-content:center;padding:13px 18px;font-size:14px;border-radius:10px}
+  .contact-group .cf-btn.primary{padding:15px 18px;font-size:14.5px}
+
+  /* FAB INSTALL */
+  .install-fab{position:fixed;bottom:24px;left:24px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);border:none;padding:11px 18px;border-radius:50px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 6px 20px rgba(201,168,76,.4);z-index:200;display:none;align-items:center;gap:8px;font-family:'Inter',sans-serif}
+  .install-fab.show{display:flex}
+
+  /* MOBILE adjustments for new features */
+  @media(max-width:768px){
+    .search-bar{flex-direction:column;gap:8px;margin-bottom:18px}
+    .sort-select{width:100%}
+    .featured-section{padding:40px 14px}
+    .featured-head h2{font-size:22px}
+    .featured-grid{grid-template-columns:1fr;gap:12px}
+    .pay-wrap{padding:28px 14px}
+    .pay-card{padding:24px 18px;border-radius:14px}
+    .pay-block h3{font-size:16px}
+    .pay-uen{padding:14px 16px}
+    .pay-uen .uen-num{font-size:20px;letter-spacing:2px}
+    .rev-grid{grid-template-columns:1fr;gap:14px}
+    .rev-card{padding:18px}
+    .status-overlay{font-size:22px;letter-spacing:4px}
+    .status-overlay span{padding:6px 18px;border-width:2px}
+    .install-fab{bottom:16px;left:16px;padding:9px 14px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="fb-splash" id="fbSplash">
+  <div class="fb-splash-inner">
+    <div class="fb-splash-logo"><img loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
+    <div class="fb-splash-dots"><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span></div>
+  </div>
+</div>
+
+<div class="topbar" id="topbar"></div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo" onclick="goPage('home')">
+      <div class="logo-icon" id="logoIcon">📿</div>
+      <div>
+        <div class="logo-text" id="logoText"></div>
+        <div class="logo-sub" id="logoSub"></div>
+      </div>
+    </div>
+    <ul class="nav-links" id="navLinks"></ul>
+    <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menu">☰</button>
+  </div>
+</nav>
+
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleMenu()"></div>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="hero-wrap">
+  <section class="hero">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-bg-overlay" id="heroBgOverlay" style="display:none"></div>
+    <div class="hero-inner">
+      <div class="eyebrow" id="heroEyebrow"></div>
+      <h1 class="hero-title" id="heroTitle"></h1>
+      <div class="hero-sub" id="heroSub"></div>
+      <p class="hero-desc" id="heroDesc"></p>
+      <div class="hero-btns" id="heroBtns"></div>
+      <div class="hero-stats" id="heroStats"></div>
+    </div>
+    <div class="hero-3d">
+      <canvas id="phra3d"></canvas>
+    </div>
+    <div class="scroll-cue">Scroll to explore</div>
+  </section>
+  </div>
+
+  <div id="homeSections">
+  <!-- REVIEWS PREVIEW (homepage) -->
+  <section class="home-reviews-section home-section" id="homeReviewsSection" data-home-section="reviews" style="display:none">
+    <div class="home-reviews-inner">
+      <div class="home-reviews-head">
+        <div class="home-reviews-eyebrow" data-en="✦ WHAT CUSTOMERS SAY ✦" data-th="✦ ลูกค้าพูดถึงเรา ✦">✦ WHAT CUSTOMERS SAY ✦</div>
+        <h2 id="homeRevTitle"></h2>
+        <div class="gline"></div>
+        <p id="homeRevSub"></p>
+      </div>
+      <div class="rev-grid" id="homeRevGrid"></div>
+      <div class="home-reviews-cta">
+        <button onclick="goPage('reviews')" class="home-reviews-btn" data-en="See all reviews →" data-th="ดูรีวิวทั้งหมด →">See all reviews →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURED ITEMS -->
+  <section class="featured-section home-section" id="featuredSection" data-home-section="featured" style="display:none">
+    <div class="featured-inner">
+      <div class="featured-head">
+        <h2 id="featuredTitle"></h2>
+        <div class="gline"></div>
+        <p id="featuredSub"></p>
+      </div>
+      <div class="featured-grid card-grid" id="featuredGrid"></div>
+    </div>
+  </section>
+
+  <!-- HOMEPAGE SERVICE CARDS -->
+  <section class="home-services-section home-section" id="homeServicesSection" data-home-section="services" style="background:var(--cream);padding:60px 24px">
+    <div style="max-width:1100px;margin:auto">
+      <div style="text-align:center;margin-bottom:40px">
+        <h2 style="font-family:var(--font-display);font-size:26px;color:var(--text)" id="svcTitle"></h2>
+        <div class="gline"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px" id="svcCards"></div>
+    </div>
+  </section>
+  </div>
+</div>
+
+<!-- AMULETS -->
+<div id="page-amulets" class="page">
+  <div class="sec-head"><h2 id="amuletsTitle"></h2><div class="gline"></div><p id="amuletsDesc"></p></div>
+  <div class="content">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <input class="search-input" id="aSearch" oninput="searchA()" placeholder="">
+        <button class="search-clear" id="aSearchClear" onclick="clearSearchA()" aria-label="Clear">✕</button>
+      </div>
+      <select class="sort-select" id="aSort" onchange="renderA(curAcat)">
+        <option value="default">Sort: Default</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="name">Name: A–Z</option>
+        <option value="year-desc">Year: Newest</option>
+        <option value="year-asc">Year: Oldest</option>
+      </select>
+    </div>
+    <div class="cat-tabs" id="aTabs"></div>
+    <div class="result-count" id="aCount"></div>
+    <div class="card-grid" id="aGrid"></div>
+  </div>
+</div>
+
+<!-- ACCESSORIES -->
+<div id="page-accessories" class="page">
+  <div class="sec-head"><h2 id="accTitle"></h2><div class="gline"></div><p id="accDesc"></p></div>
+  <div class="content">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <input class="search-input" id="acSearch" oninput="searchAc()" placeholder="">
+        <button class="search-clear" id="acSearchClear" onclick="clearSearchAc()" aria-label="Clear">✕</button>
+      </div>
+      <select class="sort-select" id="acSort" onchange="renderAc(curAccat)">
+        <option value="default">Sort: Default</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="name">Name: A–Z</option>
+      </select>
+    </div>
+    <div class="cat-tabs" id="acTabs"></div>
+    <div class="result-count" id="acCount"></div>
+    <div class="card-grid" id="acGrid"></div>
+  </div>
+</div>
+
+<!-- CASING (was frames) -->
+<div id="page-casing" class="page">
+  <div class="sec-head"><h2 id="casingTitle"></h2><div class="gline"></div><p id="casingDesc"></p></div>
+  <div class="content">
+    <div id="casingTypes"><div class="ftype-grid" id="cTypeGrid"></div></div>
+    <div id="casingVariants" style="display:none">
+      <div class="crumb" id="vCrumb"></div>
+      <div class="casing-detail-head">
+        <div class="casing-detail-main">
+          <div class="casing-detail-title-row">
+            <h3 class="casing-detail-title" id="vTitle"></h3>
+            <div class="casing-detail-price-badge" id="vSide"></div>
+          </div>
+          <div class="casing-detail-desc" id="vDesc"></div>
+        </div>
+      </div>
+      <div class="var-grid-head">
+        <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
+        <div class="var-grid-line"></div>
+      </div>
+      <div class="var-grid" id="vGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECTS -->
+<div id="page-projects" class="page">
+  <div class="sec-head"><h2 id="projTitle"></h2><div class="gline"></div><p id="projDesc"></p></div>
+  <div class="content"><div class="proj-grid" id="pGrid"></div></div>
+</div>
+
+<!-- ABOUT -->
+<div id="page-about" class="page">
+  <div class="about-banner"><h2 id="aboutTitle"></h2><div class="gline"></div><p id="aboutDesc"></p></div>
+  <div class="trust-grid" id="trustGrid"></div>
+</div>
+
+<!-- REVIEWS -->
+<div id="page-reviews" class="page">
+  <div class="sec-head"><h2 id="revTitle"></h2><div class="gline"></div><p id="revSub"></p></div>
+  <div class="content"><div class="rev-grid" id="revGrid"></div></div>
+</div>
+
+<!-- PAYMENT -->
+<div id="page-payment" class="page">
+  <div class="sec-head"><h2 id="payTitle"></h2><div class="gline"></div><p id="paySub"></p></div>
+  <div class="pay-wrap" id="payWrap"></div>
+</div>
+
+<!-- CUSTOM PAGES (rendered dynamically) -->
+<div id="customPages"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox(event)">
+  <button id="lbClose" onclick="closeLightbox(event)" aria-label="Close">✕</button>
+  <button id="lbPrev" onclick="lbPrev(event)" aria-label="Previous">‹</button>
+  <div id="lbImgWrap"><img loading="lazy" decoding="async" id="lbImg" src="" alt=""></div>
+  <button id="lbNext" onclick="lbNext(event)" aria-label="Next">›</button>
+  <div id="lbCounter"></div>
+</div>
+
+<!-- FLOAT -->
+<div class="cf-wrap" id="contactFloat"></div>
+
+<!-- INSTALL APP BUTTON -->
+<button class="install-fab" id="installFab" onclick="doInstall()">📲 <span>Install App</span></button>
+
+<div id="toast"></div>
+
+<script>
+const DB_KEY = 'yyy_db';
+let curAcat='all', curAccat='all', curCasingType=null;
+
+// ── DEFAULTS ──
+function defaultSettings(){
+  return {
+    pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
+    logoIcon:'/favicon/apple-touch-icon.png',
+    logoText:'Yingyingying Amulet',
+    logoSub:'AUTHENTIC THAI AMULETS',
+    topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
+    nav:[
+      {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
+      {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
+      {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
+      {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
+      {id:'projects',label:'Projects',visible:true,enabled:true,builtin:true},
+      {id:'about',label:'About Us',visible:true,enabled:true,builtin:true},
+      {id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true},
+      {id:'payment',label:'Payment',visible:true,enabled:true,builtin:true},
+    ],
+    customPages:[], // [{id,label,title,desc,content}]
+    hero:{
+      bgImage:'',
+      heroImage:'',         // plain still image — takes priority over 3D
+      phra3dGlb:'',
+      phra3dFront:'',
+      phra3dBack:'',
+      eyebrow:'✦ CERTIFIED GENUINE · EVERY PIECE ✦',
+      titleHighlight:'Yingyingying',
+      titleRest:'Amulet',
+      sub:'Authentic Thai Amulets · Curated with Expertise',
+      desc:'Specialists in authentic Thai amulets, meticulously selected and verified.<br>Every piece guaranteed genuine — with professional casing service available.',
+      buttons:[
+        {label:'📿 Browse Amulets',target:'amulets',style:'gold'},
+        {label:'🪬 Casing Service',target:'casing',style:'outline'},
+      ],
+      stats:[
+        {label:'Amulets',source:'amulets'},
+        {label:'Accessories',source:'accessories'},
+        {label:'Projects',source:'projects'},
+        {label:'Guaranteed',value:'100%'},
+      ]
+    },
+    homeServices:{
+      title:'Our Products & Services',
+      cards:[
+        {icon:'📿',title:'Amulets',desc:'Sacred amulets in all categories — pong, metal, coins & more',target:'amulets'},
+        {icon:'⛓️',title:'Accessories',desc:'Chains, pendants, cases, pouches & complete accessories',target:'accessories'},
+        {icon:'🪬',title:'Casing Service',desc:'Waterproof, gold, silver & crystal casings — custom orders welcome',target:'casing'},
+        {icon:'🎯',title:'Special Projects',desc:'Commissioned projects, ceremonies & exclusive collections',target:'projects'},
+      ]
+    },
+    sections:{
+      amulets:{title:'📿 Amulets',desc:'Authentic amulets, hand-selected and verified. Every piece guaranteed genuine.'},
+      accessories:{title:'⛓️ Accessories',desc:'Chains, pendants, cases and complete accessories for your amulets.'},
+      casing:{title:'🪬 Casing Service',desc:'Premium amulet casings in various styles. Browse by type, then choose your style.'},
+      projects:{title:'🎯 Projects',desc:'Special commissioned projects and exclusive collections.'},
+      about:{title:'About Yingyingying Amulet',desc:'We are a specialist amulet shop dedicated to authenticity and quality. Every piece carefully verified by experts. Professional casing service available for all amulet types.'},
+    },
+    trustCards:[
+      {icon:'🏆',title:'Certified Authentic',desc:'Every amulet verified by specialists with documentation'},
+      {icon:'✅',title:'100% Guaranteed',desc:'Full authenticity guarantee on every item we sell'},
+      {icon:'🪬',title:'Casing Service',desc:'High-quality casings in multiple styles, custom made'},
+      {icon:'🚚',title:'Worldwide Shipping',desc:'Careful packaging, fast and secure delivery'},
+      {icon:'💬',title:'Free Consultation',desc:'Expert advice on amulets and casings at no charge'},
+      {icon:'📱',title:'Multi-Channel',desc:'Facebook, Line & Instagram — always available'},
+    ],
+    contacts:[
+      {label:'📘 Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger'},
+      {label:'💬 Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line'},
+      {label:'📱 WhatsApp',color:'#25d366',url:'https://wa.me/6500000000',message:'Contact us on WhatsApp'},
+    ],
+    contactBtnText:'📞 Contact to Order',
+    contactBtnMessage:'📞 Contact us to order or for more information',
+    casingInquiryText:'📞 Inquire About Service',
+    casingInquiryMessage:'📞 Contact us to inquire about casing service',
+    payment:{
+      enabled:true,
+      title:'💳 Payment & Shipping',
+      paynowName:'YINGYINGYINGSG PTE. LTD.',
+      paynowUEN:'202433708R',
+      shipFromTo:'📍 Amulets in Thailand 🇹🇭 → Shipping to Singapore 🇸🇬',
+      shipFee:'Add S$6 for mailing',
+      policy:'✅ Please make payment to confirm your order.\n⏳ Items reserved after payment only.\n🚫 Once confirmed, orders are final.\n🙏 Thank you for your understanding.',
+      qrImage:'',
+    },
+    featured:{enabled:true,title:'✨ Featured Pieces',sub:'Hand-picked highlights from our collection',ids:[]},
+    reviews:{
+      enabled:true,
+      title:'🙏 What Our Customers Say',
+      sub:'Real words from real devotees & collectors',
+      // homepage preview
+      showOnHome:true,
+      homeTitle:'What Our Customers Say',
+      homeSub:'Real words from real devotees and collectors who trust us with their amulets.',
+      homeCount:3,                   // how many to show
+      homeMode:'top'                 // 'top' = highest rated first, 'latest' = newest, 'random' = random pick
+    },
+    searchPlaceholder:'Search by name, temple, year, category…',
+    contactPmText:'PM for price',
+    // Display font for headings, hero title, brand name, etc.
+    // Picked from a curated list in the admin (see FONT_PRESETS in admin).
+    displayFont:'Noto Serif',
+    // Order of homepage sections (excluding hero which is fixed at top).
+    // Each entry: {id, enabled, label}. The 'id' must match a [data-home-section]
+    // in index.html. Reorderable from admin.
+    homeOrder:[
+      {id:'reviews',  enabled:true, label:'Reviews preview'},
+      {id:'featured', enabled:true, label:'Featured items'},
+      {id:'services', enabled:true, label:'Service cards'},
+    ],
+  };
+}
+
+// Apply legacy migrations to a DB so older data shapes still work.
+function applyDbMigrations(d){
+  if(!d) return null;
+  if(d.frameTypes && !d.casingTypes){d.casingTypes=d.frameTypes;delete d.frameTypes;}
+  if(!d.casingTypes)d.casingTypes=[];
+  if(!d.settings)d.settings=defaultSettings();
+  if(!d.settings.customPages)d.settings.customPages=[];
+  // Backfill layout + items on legacy custom pages
+  d.settings.customPages.forEach(p => {
+    if(!p.layout) p.layout = 'article';
+    if(!Array.isArray(p.items)) p.items = [];
+  });
+  if(d.settings.hero && d.settings.hero.bgImage===undefined)d.settings.hero.bgImage='';
+  if(d.settings.hero && d.settings.hero.phra3dGlb===undefined)d.settings.hero.phra3dGlb='';
+  if(d.settings.hero && d.settings.hero.phra3dFront===undefined)d.settings.hero.phra3dFront='';
+  if(d.settings.hero && d.settings.hero.phra3dBack===undefined)d.settings.hero.phra3dBack='';
+  if(d.settings.hero && d.settings.hero.heroImage===undefined)d.settings.hero.heroImage='';
+  const def=defaultSettings();
+  if(!d.settings.payment)d.settings.payment=def.payment;
+  if(!d.settings.featured)d.settings.featured=def.featured;
+  if(!d.settings.reviews)d.settings.reviews=def.reviews;
+  if(d.settings.reviews){
+    if(d.settings.reviews.showOnHome===undefined)d.settings.reviews.showOnHome=true;
+    if(d.settings.reviews.homeTitle===undefined)d.settings.reviews.homeTitle=def.reviews.homeTitle;
+    if(d.settings.reviews.homeSub===undefined)d.settings.reviews.homeSub=def.reviews.homeSub;
+    if(d.settings.reviews.homeCount===undefined)d.settings.reviews.homeCount=3;
+    if(d.settings.reviews.homeMode===undefined)d.settings.reviews.homeMode='top';
+  }
+  if(d.settings.searchPlaceholder===undefined)d.settings.searchPlaceholder=def.searchPlaceholder;
+  if(d.settings.contactPmText===undefined)d.settings.contactPmText=def.contactPmText;
+  if(d.settings.displayFont===undefined)d.settings.displayFont=def.displayFont;
+  // Auto-upgrade old emoji logo to the favicon image now that we have one.
+  // Only does this once — if the user has set anything other than the legacy
+  // default emoji, we respect their choice.
+  if(d.settings.logoIcon === '📿') d.settings.logoIcon = def.logoIcon;
+  if(!Array.isArray(d.settings.homeOrder)){
+    d.settings.homeOrder = def.homeOrder.slice();
+  } else {
+    def.homeOrder.forEach(s => {
+      if(!d.settings.homeOrder.some(x => x && x.id === s.id)){
+        d.settings.homeOrder.push({...s});
+      }
+    });
+    const knownIds = def.homeOrder.map(s => s.id);
+    d.settings.homeOrder = d.settings.homeOrder.filter(x => x && knownIds.includes(x.id));
+  }
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';});}
+  if(d.settings.nav && Array.isArray(d.settings.nav)){
+    if(!d.settings.nav.find(n=>n.id==='reviews')){
+      const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
+      const insertAt=aboutIdx>=0?aboutIdx+1:d.settings.nav.length;
+      d.settings.nav.splice(insertAt,0,{id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true});
+    }
+    if(!d.settings.nav.find(n=>n.id==='payment')){
+      const revIdx=d.settings.nav.findIndex(n=>n.id==='reviews');
+      const insertAt=revIdx>=0?revIdx+1:d.settings.nav.length;
+      d.settings.nav.splice(insertAt,0,{id:'payment',label:'Payment',visible:true,enabled:true,builtin:true});
+    }
+  }
+  ['amulets','accessories'].forEach(k=>{
+    if(d[k])d[k].forEach(it=>{if(!it.status)it.status='available';if(it.hidePrice===undefined)it.hidePrice=false;if(!it.featured)it.featured=false;});
+  });
+  if(!d.reviews)d.reviews=[];
+  if(!d.amulets)d.amulets=[];
+  if(!d.accessories)d.accessories=[];
+  if(!d.projects)d.projects=[];
+  return rewriteImageUrls(d);
+}
+
+// ─── LEGACY URL REWRITER ────────────────────────────────────────────────
+// Walks the DB and converts any old ImageKit URLs back to direct Firebase
+// Storage URLs (pointing at the legacy US bucket). After the Asia-bucket
+// migration finishes, every URL will be a *.firebasestorage.app one and
+// this rewriter becomes a no-op.
+function rewriteImageUrls(d){
+  const rw = (window._rewriteLegacyImageUrl || ((u) => u));
+
+  // Helper to rewrite an array of image URLs in place
+  const arrRw = (arr) => Array.isArray(arr) ? arr.map(rw) : arr;
+
+  // Settings — single-image fields and the nav/page image arrays
+  if(d.settings){
+    if(d.settings.hero){
+      d.settings.hero.bgImage    = rw(d.settings.hero.bgImage);
+      d.settings.hero.heroImage  = rw(d.settings.hero.heroImage);
+      d.settings.hero.phra3dFront = rw(d.settings.hero.phra3dFront);
+      d.settings.hero.phra3dBack  = rw(d.settings.hero.phra3dBack);
+      // phra3dGlb is a .glb file, not an image — also CDN-eligible
+      d.settings.hero.phra3dGlb   = rw(d.settings.hero.phra3dGlb);
+    }
+    if(d.settings.payment && d.settings.payment.qrImage){
+      d.settings.payment.qrImage = rw(d.settings.payment.qrImage);
+    }
+    if(Array.isArray(d.settings.featured)){
+      d.settings.featured.forEach(f => { if(f && f.img) f.img = rw(f.img); });
+    }
+  }
+
+  // Item arrays — each has an imgs[] (and sometimes bannerImg)
+  (d.amulets    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.accessories|| []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.projects   || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.reviews    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+
+  // Casing types — banner image + nested variants
+  (d.casingTypes || []).forEach(ty => {
+    ty.bannerImg = rw(ty.bannerImg);
+    (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
+  });
+
+  return d;
+}
+
+// Demo seed used when the Firestore doc doesn't exist yet (first run)
+// or while data is still loading.
+function seedDB(){
+  return {
+    settings:defaultSettings(),
+    amulets:[],
+    accessories:[],
+    casingTypes:[],
+    projects:[],
+    reviews:[],
+  };
+}
+
+function getDB(){
+  // Read from Firebase in-memory cache. The cache is kept in sync with
+  // Firestore via onSnapshot in firebase-shared.js — so this is always fresh.
+  if(window.FB){
+    const d = window.FB.getDB();
+    if(d && Object.keys(d).length) return applyDbMigrations(d);
+  }
+  return seedDB();
+}
+
+// `lang` is a global property derived from <body class="th">.
+// Code throughout the file uses `lang === 'th'` to localise dynamically
+// generated HTML — declaring it as a getter on `window` means it stays
+// up to date when the user toggles language without us having to push
+// updates to every consumer.
+Object.defineProperty(window, 'lang', {
+  get(){ return document.body.classList.contains('th') ? 'th' : 'en'; },
+  configurable: true,
+});
+
+// index.html never writes to the DB — admin.html is the only writer.
+// Keep this stub so any legacy call sites don't crash.
+function saveDB(/*db*/){}
+
+// ── APPLY SETTINGS ──
+function applySettings(){
+  const db=getDB(); const s=db.settings;
+  document.getElementById('pageTitle').textContent=s.pageTitle;
+  document.getElementById('topbar').textContent=s.topbar;
+  // logoIcon supports either emoji (📿) or a URL/path (/favicon/...) — auto-detect
+  const logoEl = document.getElementById('logoIcon');
+  const v = s.logoIcon || '';
+  const looksLikeImage = /^(\/|https?:\/\/|\.\/|data:image\/)/i.test(v) || /\.(png|jpe?g|svg|webp|gif)(\?|$)/i.test(v);
+  if(looksLikeImage){
+    logoEl.classList.add('has-image');
+    logoEl.innerHTML = `<img src="${v}" alt="logo">`;
+  } else {
+    logoEl.classList.remove('has-image');
+    logoEl.textContent = v;
+  }
+  document.getElementById('logoText').textContent=s.logoText;
+  document.getElementById('logoSub').textContent=s.logoSub;
+
+  // DISPLAY FONT
+  if(s.displayFont){
+    document.documentElement.style.setProperty('--font-display', `"${s.displayFont}", serif`);
+  }
+
+  // HERO BG
+  const bg=document.getElementById('heroBg');const ov=document.getElementById('heroBgOverlay');
+  if(s.hero.bgImage){
+    bg.style.backgroundImage=`url('${s.hero.bgImage}')`;
+    bg.classList.add('show');
+    ov.style.display='block';
+  } else {
+    bg.style.backgroundImage='';
+    bg.classList.remove('show');
+    ov.style.display='none';
+  }
+
+  // HERO VISUAL — four modes in priority order:
+  //   1. heroImage (a still image)
+  //   2. GLB 3D model
+  //   3. Front + Back tablet images (3D)
+  //   4. no visual — single-column hero
+  window.PHRA_GLB        = s.hero.phra3dGlb || '';
+  window.PHRA_FRONT_IMG  = s.hero.phra3dFront || '';
+  window.PHRA_BACK_IMG   = s.hero.phra3dBack  || '';
+  const heroImage = s.hero.heroImage || '';
+  const hero3dBlock = document.querySelector('.hero-3d');
+  const heroSection = document.querySelector('.hero');
+  const has3D = !!(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG));
+  const hasHeroVisual = !!(heroImage || has3D);
+  if(hero3dBlock){
+    // Clean previous content (image element or canvas leftover)
+    const existingImg = hero3dBlock.querySelector('.hero-still-img');
+    const canvas = document.getElementById('phra3d');
+    if(heroImage){
+      // Still image mode — hide canvas, show image
+      if(canvas) canvas.style.display = 'none';
+      if(existingImg){
+        existingImg.src = heroImage;
+      } else {
+        const img = document.createElement('img');
+        img.className = 'hero-still-img';
+        // Hero is above-the-fold — load with highest priority, not lazy
+        img.setAttribute('loading', 'eager');
+        img.setAttribute('fetchpriority', 'high');
+        img.setAttribute('decoding', 'async');
+        img.src = heroImage;
+        img.alt = '';
+        hero3dBlock.appendChild(img);
+      }
+      hero3dBlock.style.display = '';
+      hero3dBlock.classList.remove('has-3d'); // suppress 3D glow halo for still images
+      if(heroSection){
+        heroSection.classList.remove('no-3d');
+        heroSection.classList.add('has-hero-image'); // suppress overlays
+      }
+    } else if(has3D){
+      // 3D mode — remove still image if it was there, show canvas
+      if(existingImg) existingImg.remove();
+      if(canvas) canvas.style.display = '';
+      hero3dBlock.style.display = '';
+      hero3dBlock.classList.add('has-3d'); // enable 3D glow halo
+      if(heroSection){
+        heroSection.classList.remove('no-3d');
+        heroSection.classList.remove('has-hero-image');
+      }
+      if(typeof window.initPhra3D === 'function'){
+        window.initPhra3D();
+      } else if(typeof window.refreshPhra3DTextures === 'function'){
+        window.refreshPhra3DTextures();
+      }
+    } else {
+      // No visual — hide the right column entirely
+      if(existingImg) existingImg.remove();
+      hero3dBlock.style.display = 'none';
+      hero3dBlock.classList.remove('has-3d');
+      if(heroSection){
+        heroSection.classList.add('no-3d');
+        heroSection.classList.remove('has-hero-image');
+      }
+    }
+  }
+
+  // NAV (built-in + custom pages)
+  const visibleNav=(s.nav||[]).filter(n=>n.visible);
+  document.getElementById('navLinks').innerHTML=visibleNav.map(n=>`<li><a id="nav-${n.id}" onclick="goPage('${n.id}')">${n.label}</a></li>`).join('');
+
+  // CUSTOM PAGES — render their containers
+  renderCustomPages();
+
+  // HERO
+  document.getElementById('heroEyebrow').textContent=s.hero.eyebrow;
+  document.getElementById('heroTitle').innerHTML=s.hero.titleHighlight?`<span class="ying">${s.hero.titleHighlight}</span> ${s.hero.titleRest||''}`:(s.hero.titleRest||'');
+  document.getElementById('heroSub').textContent=s.hero.sub;
+  document.getElementById('heroDesc').innerHTML=s.hero.desc;
+  document.getElementById('heroBtns').innerHTML=(s.hero.buttons||[]).map(b=>{
+    const cls=b.style==='gold'?'btn-gold':'btn-ol';
+    return `<button class="${cls}" onclick="goPage('${b.target}')">${b.label}</button>`;
+  }).join('');
+  document.getElementById('heroStats').innerHTML=(s.hero.stats||[]).map((st,i)=>{
+    let val=st.value||'0';
+    if(st.source==='amulets')val=db.amulets.length;
+    else if(st.source==='accessories')val=db.accessories.length;
+    else if(st.source==='projects')val=db.projects.length;
+    return `<div class="stat"><div class="stat-num" id="stat-${i}">${val}</div><div class="stat-label">${st.label}</div></div>`;
+  }).join('');
+
+  document.getElementById('svcTitle').textContent=s.homeServices.title;
+  document.getElementById('svcCards').innerHTML=(s.homeServices.cards||[]).map(c=>`
+    <div class="trust-card" onclick="goPage('${c.target}')">
+      <div class="trust-icon">${c.icon}</div>
+      <div class="trust-title">${c.title}</div>
+      <div class="trust-desc">${c.desc}</div>
+    </div>`).join('');
+
+  document.getElementById('amuletsTitle').textContent=s.sections.amulets.title;
+  document.getElementById('amuletsDesc').textContent=s.sections.amulets.desc;
+  document.getElementById('accTitle').textContent=s.sections.accessories.title;
+  document.getElementById('accDesc').textContent=s.sections.accessories.desc;
+  document.getElementById('casingTitle').textContent=s.sections.casing.title;
+  document.getElementById('casingDesc').textContent=s.sections.casing.desc;
+  document.getElementById('projTitle').textContent=s.sections.projects.title;
+  document.getElementById('projDesc').textContent=s.sections.projects.desc;
+  document.getElementById('aboutTitle').textContent=s.sections.about.title;
+  document.getElementById('aboutDesc').textContent=s.sections.about.desc;
+
+  document.getElementById('trustGrid').innerHTML=(s.trustCards||[]).map(t=>`
+    <div class="trust-card">
+      <div class="trust-icon">${t.icon}</div>
+      <div class="trust-title">${t.title}</div>
+      <div class="trust-desc">${t.desc}</div>
+    </div>`).join('');
+
+  document.getElementById('contactFloat').innerHTML=(s.contacts||[]).map(c=>`
+    <button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${c.label}</button>
+  `).join('');
+
+  // ── FEATURED on home ──
+  renderFeatured();
+  // ── REVIEWS preview on home ──
+  renderHomeReviews();
+  // ── Apply homepage section order ──
+  applyHomeOrder(s);
+  // ── REVIEWS page ──
+  document.getElementById('revTitle').textContent=(s.reviews&&s.reviews.title)||'🙏 Reviews';
+  document.getElementById('revSub').textContent=(s.reviews&&s.reviews.sub)||'';
+  // ── PAYMENT page ──
+  renderPayment();
+  // ── SEARCH placeholders ──
+  const sph=s.searchPlaceholder||'Search…';
+  if(document.getElementById('aSearch'))document.getElementById('aSearch').placeholder=sph;
+  if(document.getElementById('acSearch'))document.getElementById('acSearch').placeholder=sph;
+
+  setTimeout(()=>{
+    (s.hero.stats||[]).forEach((st,i)=>{
+      let target=parseInt(st.value)||0;
+      if(st.source==='amulets')target=db.amulets.length;
+      else if(st.source==='accessories')target=db.accessories.length;
+      else if(st.source==='projects')target=db.projects.length;
+      else if(st.value && st.value.indexOf('%')>=0){document.getElementById('stat-'+i).textContent=st.value;return;}
+      animN('stat-'+i,target);
+    });
+  },100);
+}
+
+function renderCustomPages(){
+  const db=getDB();const cp=db.settings.customPages||[];
+  const container=document.getElementById('customPages');
+  container.innerHTML=cp.map(p=>{
+    const layout = p.layout || 'article';
+    const items  = p.items || [];
+    let body;
+    if(layout === 'article' || !items.length){
+      // Article: single rich-text block
+      body = `<div class="custom-page-content">
+        ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet. Edit this page in the admin to add content.</p>'}
+      </div>`;
+    } else if(layout === 'list'){
+      // List: vertical rows of image + text
+      body = `<div class="cp-list">${items.map(it => `
+        <div class="cp-list-item" onclick="openCpItem('${p.id}','${it.id}')">
+          ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" src="${it.img}" alt=""></div>`:''}
+          <div class="cp-list-body">
+            <h3 class="cp-list-title">${it.title || ''}</h3>
+            ${it.subtitle?`<div class="cp-list-subtitle">${it.subtitle}</div>`:''}
+            ${it.content?`<div class="cp-list-content">${truncateHtml(it.content, 180)}</div>`:''}
+            ${it.content?`<div class="cp-list-more">Read more →</div>`:''}
+          </div>
+        </div>
+      `).join('')}</div>`;
+    } else {
+      // Grid: cards in responsive grid
+      body = `<div class="cp-grid">${items.map(it => `
+        <div class="cp-card" onclick="openCpItem('${p.id}','${it.id}')">
+          <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" src="${it.img}" alt="">`:'📄'}</div>
+          <div class="cp-card-body">
+            <h3 class="cp-card-title">${it.title || ''}</h3>
+            ${it.subtitle?`<div class="cp-card-subtitle">${it.subtitle}</div>`:''}
+            <div class="cp-card-more">View details →</div>
+          </div>
+        </div>
+      `).join('')}</div>`;
+    }
+    return `
+    <div id="page-${p.id}" class="page">
+      <div class="sec-head"><h2>${p.title||p.label}</h2><div class="gline"></div>${p.desc?`<p>${p.desc}</p>`:''}</div>
+      <div class="content">${body}</div>
+    </div>`;
+  }).join('');
+}
+
+// Strip HTML tags then truncate — used for grid/list card previews
+function truncateHtml(html, maxLen){
+  const plain = String(html||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
+  if(plain.length <= maxLen) return plain;
+  return plain.slice(0, maxLen) + '…';
+}
+
+// Open detail modal for a single custom-page item (used by grid/list cards)
+function openCpItem(pageId, itemId){
+  const db = getDB();
+  const p = (db.settings.customPages||[]).find(x => x.id === pageId);
+  if(!p) return;
+  const it = (p.items||[]).find(x => String(x.id) === String(itemId));
+  if(!it) return;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
+      <div class="modal-title-wrap">
+        <div class="modal-title" style="font-size:24px">${it.title || ''}</div>
+        ${it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:4px">${it.subtitle}</div>`:''}
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    ${it.img?`<div style="text-align:center;margin-bottom:22px"><img src="${it.img}" alt="" style="max-width:100%;max-height:400px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15)"></div>`:''}
+    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content.</p>'}</div>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
+
+function goPage(name){
+  const db=getDB();
+  const navItem=(db.settings.nav||[]).find(n=>n.id===name);
+  if(navItem && !navItem.enabled)return;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
+  const n=document.getElementById('nav-'+name);if(n)n.classList.add('active');
+  window.scrollTo(0,0);
+  // close mobile menu
+  document.getElementById('navLinks').classList.remove('open');
+  document.getElementById('mobileOverlay').classList.remove('open');
+  if(name==='amulets'){curAcat='all';renderA('all');}
+  if(name==='accessories'){curAccat='all';renderAc('all');}
+  if(name==='casing'){curCasingType=null;renderCasingTypes();}
+  if(name==='projects')renderP();
+  if(name==='reviews')renderReviews();
+  if(name==='payment')renderPayment();
+  if(name==='home')applySettings();
+}
+
+// ── CONTACT CLICK ── opens URL if set, otherwise shows toast
+function onContactClick(url,msg){
+  if(url && url.trim()){
+    window.open(url,'_blank','noopener');
+  } else if(msg){
+    showToast(msg);
+  }
+}
+
+// ── PRE-FILL contact message with item name/price ──
+function buildContactMsg(item,type){
+  const s=getDB().settings;
+  const typeLabel=type==='amulets'?'amulet':(type==='accessories'?'accessory':'item');
+  const price=item.hidePrice?(s.contactPmText||'PM for price'):('S$'+Number(item.price||0).toLocaleString());
+  return `Hi! I'm interested in the ${typeLabel}: "${item.name}" (${price}). Could you share more details? 🙏`;
+}
+function openContactWithItem(type,id){
+  const db=getDB();const item=(db[type]||[]).find(i=>i.id===id);if(!item)return;
+  const msg=buildContactMsg(item,type);
+  // build buttons grid if multiple contacts
+  const contacts=db.settings.contacts||[];
+  if(!contacts.length){showToast(msg);return;}
+  // open first one with URL by appending text where supported
+  const c=contacts.find(x=>x.url&&x.url.trim());
+  if(c){
+    let url=c.url;
+    // wa.me supports ?text=, m.me does not, line https links don't, but we still encode
+    if(/wa\.me/i.test(url)){
+      url+= (url.indexOf('?')>=0?'&':'?')+'text='+encodeURIComponent(msg);
+    } else if(/api\.whatsapp/i.test(url)){
+      url+= (url.indexOf('?')>=0?'&':'?')+'text='+encodeURIComponent(msg);
+    }
+    // copy message to clipboard so user can paste in apps that don't support pre-fill
+    try{navigator.clipboard&&navigator.clipboard.writeText(msg);}catch(e){}
+    window.open(url,'_blank','noopener');
+    showToast('📋 Message copied — paste it in chat');
+  } else {
+    showToast(msg);
+  }
+}
+
+// ── SHARE handler ──
+function shareItem(type,id){
+  const db=getDB();const item=(db[type]||[]).find(i=>i.id===id);if(!item)return;
+  const url=window.location.href.split('#')[0]+'#'+type+'-'+id;
+  const text=`${item.name} — Yingyingying Amulet`;
+  if(navigator.share){
+    navigator.share({title:item.name,text:text,url:url}).catch(()=>{});
+  } else {
+    try{
+      navigator.clipboard.writeText(url);
+      showToast('🔗 Link copied to clipboard');
+    }catch(e){showToast('🔗 '+url);}
+  }
+}
+function shareToFB(type,id){
+  const url=window.location.href.split('#')[0]+'#'+type+'-'+id;
+  window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(url),'_blank','noopener');
+}
+function shareToLine(type,id){
+  const db=getDB();const item=(db[type]||[]).find(i=>i.id===id);if(!item)return;
+  const url=window.location.href.split('#')[0]+'#'+type+'-'+id;
+  window.open('https://line.me/R/msg/text/?'+encodeURIComponent(item.name+' — '+url),'_blank','noopener');
+}
+function shareToWA(type,id){
+  const db=getDB();const item=(db[type]||[]).find(i=>i.id===id);if(!item)return;
+  const url=window.location.href.split('#')[0]+'#'+type+'-'+id;
+  window.open('https://wa.me/?text='+encodeURIComponent(item.name+' — '+url),'_blank','noopener');
+}
+function copyLink(type,id){
+  const url=window.location.href.split('#')[0]+'#'+type+'-'+id;
+  try{navigator.clipboard.writeText(url);showToast('🔗 Link copied');}catch(e){showToast('🔗 '+url);}
+}
+
+// ── FEATURED ──
+function applyHomeOrder(s){
+  const container = document.getElementById('homeSections');
+  if(!container) return;
+  const order = (s && Array.isArray(s.homeOrder)) ? s.homeOrder : [];
+  if(!order.length) return;
+
+  // Re-append sections in the order specified. Sections marked disabled
+  // get display:none. Sections not in the order list keep their original
+  // place (defensive — shouldn't happen because migration enforces parity).
+  order.forEach(entry => {
+    if(!entry || !entry.id) return;
+    const sec = container.querySelector('[data-home-section="' + entry.id + '"]');
+    if(!sec) return;
+    container.appendChild(sec);  // moves to end (reorders by call sequence)
+    if(entry.enabled === false){
+      sec.dataset.disabledByOrder = '1';
+      sec.style.display = 'none';
+    } else {
+      delete sec.dataset.disabledByOrder;
+      // Don't force display:'' here — let each section's own renderer decide
+      // (e.g. reviews section hides itself if there are no reviews).
+      // We only un-hide if it was hidden ONLY because of the order setting.
+      if(sec.style.display === 'none'){
+        // Trigger that section's renderer to decide visibility
+        if(entry.id === 'reviews')       renderHomeReviews();
+        else if(entry.id === 'featured') renderFeatured();
+        else                              sec.style.display = '';
+      }
+    }
+  });
+}
+
+function renderHomeReviews(){
+  const db = getDB();
+  const r  = db.reviews || [];
+  const s  = db.settings.reviews || {};
+  const sec = document.getElementById('homeReviewsSection');
+  if(!sec) return;
+
+  // If admin disabled this section in homeOrder, always hide
+  if(sec.dataset.disabledByOrder === '1'){
+    sec.style.display = 'none';
+    return;
+  }
+
+  // Hide if disabled in admin, or no reviews exist
+  if(s.showOnHome === false || s.enabled === false || !r.length){
+    sec.style.display = 'none';
+    return;
+  }
+
+  // Pick which reviews to show
+  const count = Math.max(1, Math.min(6, s.homeCount || 3));
+  const mode  = s.homeMode || 'top';
+  let picks = r.slice();
+  if(mode === 'top'){
+    picks.sort((a,b) => (b.rating||5) - (a.rating||5));
+  } else if(mode === 'latest'){
+    picks.reverse();  // newest at the end of the array
+  } else if(mode === 'random'){
+    picks.sort(() => Math.random() - 0.5);
+  }
+  picks = picks.slice(0, count);
+
+  sec.style.display = '';
+  document.getElementById('homeRevTitle').textContent = s.homeTitle || s.title || 'What Our Customers Say';
+  const subEl = document.getElementById('homeRevSub');
+  if(subEl) subEl.textContent = s.homeSub || '';
+
+  const grid = document.getElementById('homeRevGrid');
+  grid.innerHTML = picks.map(rv => {
+    // Optional rating — show stars only if rating > 0
+    const rating = rv.rating || 0;
+    const starsHtml = rating > 0
+      ? `<div class="rev-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div>`
+      : '';
+    // Anonymous or display-name override
+    const displayName = rv.anonymous
+      ? (lang==='th' ? 'ลูกค้า' : 'Anonymous Customer')
+      : (rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'));
+    const imgsHtml = (rv.imgs && rv.imgs.length)
+      ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
+      : '';
+    const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
+    return `
+      <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
+        <div class="rev-quote">"</div>
+        ${starsHtml}
+        ${textHtml}
+        ${imgsHtml}
+        <div class="rev-foot">
+          <div>
+            <div class="rev-name">${displayName}</div>
+            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
+          </div>
+          ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderFeatured(){
+  const db=getDB();const f=db.settings.featured||{};
+  const sec=document.getElementById('featuredSection');
+  if(!sec) return;
+  // If admin disabled this section in homeOrder, always hide
+  if(sec.dataset.disabledByOrder === '1'){
+    sec.style.display='none';
+    return;
+  }
+  // gather featured items from amulets+accessories: explicit ids OR items with featured:true
+  let items=[];
+  (db.amulets||[]).forEach(a=>{if(a.featured||(f.ids||[]).includes('a'+a.id))items.push({...a,_type:'amulets'});});
+  (db.accessories||[]).forEach(a=>{if(a.featured||(f.ids||[]).includes('ac'+a.id))items.push({...a,_type:'accessories'});});
+  if(!f.enabled||!items.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  document.getElementById('featuredTitle').textContent=f.title||'✨ Featured Pieces';
+  document.getElementById('featuredSub').textContent=f.sub||'';
+  document.getElementById('featuredGrid').innerHTML=items.slice(0,8).map(a=>buildCard(a,a._type,db.settings)).join('');
+}
+
+// ── BUILD CARD (shared) ──
+function buildCard(a,type,settings){
+  const icon=type==='amulets'?'📿':'⛓️';
+  const status=a.status||'available';
+  const overlay=status==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:(status==='reserved'?`<div class="status-overlay reserved"><span>RESERVED</span></div>`:'');
+  const pill=status==='sold'?`<div class="status-pill sold">SOLD</div>`:(status==='reserved'?`<div class="status-pill reserved">RESERVED</div>`:'');
+  const priceHtml=a.hidePrice?`<div class="price-pm">${settings.contactPmText||'PM for price'}</div>`:`<div class="card-price">S$${Number(a.price||0).toLocaleString()}</div>`;
+  const tag=type==='amulets'?(a.temple||a.cat):a.cat;
+  return `
+    <div class="card" onclick="openProd('${type}',${a.id})">
+      <div class="card-img">
+        ${a.imgs&&a.imgs[0]?`<img loading="lazy" decoding="async" src="${a.imgs[0]}">`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
+        ${a.badge?`<div class="cbadge cbadge-gold">${a.badge}</div>`:''}
+        ${pill}
+        ${overlay}
+      </div>
+      <div class="card-body">
+        <div class="card-cat">${a.cat||''}</div>
+        <div class="card-title">${a.name}</div>
+        <div class="card-desc">${(a.desc||'').slice(0,70)}${a.desc&&a.desc.length>70?'...':''}</div>
+        ${priceHtml}
+      </div>
+      <div class="card-foot">
+        <span class="tag">${tag||a.cat||''}</span>
+        <button class="btn-sm" onclick="event.stopPropagation();openProd('${type}',${a.id})">Details</button>
+      </div>
+    </div>`;
+}
+
+// ── REVIEWS ──
+function renderReviews(){
+  const db=getDB();const r=db.reviews||[];const s=db.settings.reviews||{};
+  document.getElementById('revTitle').textContent=s.title||'🙏 Reviews';
+  document.getElementById('revSub').textContent=s.sub||'';
+  const grid=document.getElementById('revGrid');
+  if(!r.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No reviews yet.</div>`;return;}
+  grid.innerHTML=r.map(rv=>{
+    const rating = rv.rating || 0;
+    const starsHtml = rating > 0
+      ? `<div class="rev-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div>`
+      : '';
+    const displayName = rv.anonymous
+      ? (lang==='th' ? 'ลูกค้า' : 'Anonymous Customer')
+      : (rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'));
+    const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
+    const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
+    return `
+      <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
+        <div class="rev-quote">"</div>
+        ${starsHtml}
+        ${textHtml}
+        ${imgsHtml}
+        <div class="rev-foot">
+          <div>
+            <div class="rev-name">${displayName}</div>
+            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
+          </div>
+          ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
+        </div>
+      </div>`;
+  }).join('');
+}
+function openReviewLightbox(reviewId,idx){
+  const db=getDB();const rv=(db.reviews||[]).find(r=>r.id===reviewId);if(!rv||!rv.imgs)return;
+  window._lbImages=rv.imgs;openLightbox(idx);
+}
+
+// ── PAYMENT PAGE ──
+function renderPayment(){
+  const s=getDB().settings;const p=s.payment||{};
+  document.getElementById('payTitle').textContent=p.title||'💳 Payment & Shipping';
+  document.getElementById('paySub').textContent='Quick reference for placing your order';
+  const policyEsc=(p.policy||'').replace(/</g,'&lt;');
+  document.getElementById('payWrap').innerHTML=`
+    <div class="pay-card">
+      <div class="pay-block">
+        <h3>🇸🇬 PayNow Details</h3>
+        <div class="pay-uen">
+          <strong>UEN</strong>
+          <div class="uen-num">${p.paynowUEN||'—'}</div>
+        </div>
+        <dl class="pay-info">
+          <dt>Account Name</dt><dd>${p.paynowName||'—'}</dd>
+        </dl>
+        ${p.qrImage?`<div class="pay-qr"><img loading="lazy" decoding="async" src="${p.qrImage}" alt="PayNow QR"></div>`:''}
+      </div>
+      <div class="pay-block">
+        <h3>📦 Shipping</h3>
+        <dl class="pay-info">
+          <dt>Route</dt><dd>${p.shipFromTo||'—'}</dd>
+          <dt>Fee</dt><dd>${p.shipFee||'—'}</dd>
+        </dl>
+      </div>
+      <div class="pay-block">
+        <h3>📌 Order Policy</h3>
+        <div class="pay-policy">${policyEsc}</div>
+      </div>
+      <div class="pay-cta">
+        ${(s.contacts||[]).map(c=>`<button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${c.label}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function toggleMenu(){
+  document.getElementById('navLinks').classList.toggle('open');
+  document.getElementById('mobileOverlay').classList.toggle('open');
+}
+
+function buildTabs(containerId,cats,curCat,onFilter){
+  document.getElementById(containerId).innerHTML=[{v:'all',l:'All'},...cats.map(c=>({v:c,l:c}))].map(c=>`
+    <div class="cat-tab ${c.v===curCat?'active':''}" onclick="${onFilter}('${c.v.replace(/'/g,"\\'")}',this)">${c.l}</div>
+  `).join('');
+}
+
+// ── AMULETS ──
+let _aQuery='';
+function searchA(){
+  const v=document.getElementById('aSearch').value;
+  _aQuery=v.toLowerCase().trim();
+  document.getElementById('aSearchClear').classList.toggle('show',!!_aQuery);
+  renderA(curAcat);
+}
+function clearSearchA(){document.getElementById('aSearch').value='';_aQuery='';document.getElementById('aSearchClear').classList.remove('show');renderA(curAcat);}
+function applySort(list,sortKey){
+  const arr=[...list];
+  switch(sortKey){
+    case 'price-asc':return arr.sort((a,b)=>(a.hidePrice?Infinity:Number(a.price||0))-(b.hidePrice?Infinity:Number(b.price||0)));
+    case 'price-desc':return arr.sort((a,b)=>(b.hidePrice?-1:Number(b.price||0))-(a.hidePrice?-1:Number(a.price||0)));
+    case 'name':return arr.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    case 'year-desc':return arr.sort((a,b)=>(parseInt(b.year)||0)-(parseInt(a.year)||0));
+    case 'year-asc':return arr.sort((a,b)=>(parseInt(a.year)||0)-(parseInt(b.year)||0));
+    default:
+      // available first, sold last
+      return arr.sort((a,b)=>{const sa=a.status==='sold'?2:(a.status==='reserved'?1:0);const sb=b.status==='sold'?2:(b.status==='reserved'?1:0);return sa-sb;});
+  }
+}
+function matchSearch(item,q){
+  if(!q)return true;
+  const hay=[item.name,item.cat,item.temple,item.year,item.desc,item.badge].filter(Boolean).join(' ').toLowerCase();
+  return hay.indexOf(q)>=0;
+}
+function renderA(cat){
+  const db=getDB();const settings=db.settings;
+  const cats=[...new Set(db.amulets.map(a=>a.cat).filter(Boolean))];
+  buildTabs('aTabs',cats,cat,'filterA');
+  let list=cat==='all'?db.amulets:db.amulets.filter(a=>a.cat===cat);
+  list=list.filter(a=>matchSearch(a,_aQuery));
+  const sort=document.getElementById('aSort')?document.getElementById('aSort').value:'default';
+  list=applySort(list,sort);
+  const cnt=document.getElementById('aCount');
+  if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'piece':'pieces'}${_aQuery?' for "'+_aQuery+'"':''}`:'';
+  document.getElementById('aGrid').innerHTML=list.length?list.map(a=>buildCard(a,'amulets',settings)).join(''):`<div class="empty-state" style="grid-column:1/-1">${_aQuery?'No items match "'+_aQuery+'".':'No items in this category.'}</div>`;
+}
+function filterA(cat,el){document.querySelectorAll('#aTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAcat=cat;renderA(cat);}
+
+let _acQuery='';
+function searchAc(){
+  const v=document.getElementById('acSearch').value;
+  _acQuery=v.toLowerCase().trim();
+  document.getElementById('acSearchClear').classList.toggle('show',!!_acQuery);
+  renderAc(curAccat);
+}
+function clearSearchAc(){document.getElementById('acSearch').value='';_acQuery='';document.getElementById('acSearchClear').classList.remove('show');renderAc(curAccat);}
+function renderAc(cat){
+  const db=getDB();const settings=db.settings;
+  const cats=[...new Set(db.accessories.map(a=>a.cat).filter(Boolean))];
+  buildTabs('acTabs',cats,cat,'filterAc');
+  let list=cat==='all'?db.accessories:db.accessories.filter(a=>a.cat===cat);
+  list=list.filter(a=>matchSearch(a,_acQuery));
+  const sort=document.getElementById('acSort')?document.getElementById('acSort').value:'default';
+  list=applySort(list,sort);
+  const cnt=document.getElementById('acCount');
+  if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'item':'items'}${_acQuery?' for "'+_acQuery+'"':''}`:'';
+  document.getElementById('acGrid').innerHTML=list.length?list.map(a=>buildCard(a,'accessories',settings)).join(''):`<div class="empty-state" style="grid-column:1/-1">${_acQuery?'No items match "'+_acQuery+'".':'No items in this category.'}</div>`;
+}
+function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAccat=cat;renderAc(cat);}
+
+// ── CASING ──
+function renderCasingTypes(){
+  const db=getDB();
+  document.getElementById('casingTypes').style.display='block';
+  document.getElementById('casingVariants').style.display='none';
+  const types=db.casingTypes||[];
+  const grid=document.getElementById('cTypeGrid');
+  if(!types.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No casing types available yet.</div>`;return;}
+  // Direct Firebase Storage URLs — no proxy/resize, just pass through.
+  // Upload-time optimisation in firebase-shared.js already caps images at
+  // 1920px and re-encodes to WebP q85, so they're already CDN-friendly.
+  const bannerify = (url) => url;
+  grid.innerHTML=types.map(ty=>{
+    const count=(ty.variants||[]).length;
+    return `
+    <div class="ftype-card" onclick="openCasingType(${ty.id})">
+      <div class="ftype-banner">
+        ${ty.bannerImg?`<img loading="lazy" decoding="async" src="${bannerify(ty.bannerImg)}">`:`<span class="ftype-icon-bg">🪬</span>`}
+        <div class="ftype-count">${count} ${count===1?'style':'styles'}</div>
+      </div>
+      <div class="ftype-body">
+        <div class="ftype-name">${ty.name}</div>
+        <div class="ftype-desc">${ty.desc || ''}</div>
+        <div class="ftype-cta">
+          ${ty.priceRange?`<div class="ftype-from">Price<br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from">Price<br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
+          <div class="ftype-arrow">View Styles →</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCasingType(typeId){curCasingType=typeId;renderVariants(typeId);window.scrollTo({top:0,behavior:'smooth'});}
+
+function renderVariants(typeId){
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(x=>x.id===typeId);
+  if(!ty){curCasingType=null;renderCasingTypes();return;}
+  document.getElementById('casingTypes').style.display='none';
+  document.getElementById('casingVariants').style.display='block';
+  document.getElementById('vCrumb').innerHTML=`
+    <a onclick="curCasingType=null;renderCasingTypes()">All Casing Types</a>
+    <span class="crumb-sep">▸</span>
+    <span class="crumb-cur">${ty.name}</span>`;
+  document.getElementById('vTitle').textContent=ty.name;
+  document.getElementById('vDesc').innerHTML = ty.desc || '';
+  // Price badge — small chip next to the title (e.g. "Waterproof Casing  S$15-25")
+  const sideEl = document.getElementById('vSide');
+  if(ty.priceRange){
+    sideEl.innerHTML = `<span class="cd-price-chip-label">${lang==='th'?'ราคา':'Price'}</span> <span class="cd-price-chip-value">S$${ty.priceRange}</span>`;
+    sideEl.style.display = '';
+  } else if(ty.price){
+    sideEl.innerHTML = `<span class="cd-price-chip-label">${lang==='th'?'ราคาเริ่มต้น':'From'}</span> <span class="cd-price-chip-value">S$${Number(ty.price).toLocaleString()}</span>`;
+    sideEl.style.display = '';
+  } else {
+    sideEl.style.display = 'none';
+  }
+  const vars=ty.variants||[];
+  const grid=document.getElementById('vGrid');
+  if(!vars.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No styles in this type yet.</div>`;return;}
+  // Direct URLs — see note in renderCasingTypes about why no resize.
+  const thumbify = (url) => url;
+  grid.innerHTML=vars.map(v=>`
+    <div class="var-card" onclick="openVariant(${ty.id},${v.id})">
+      <div class="var-img">
+        ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
+        ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
+        ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
+      </div>
+      <div class="var-body">
+        <div class="var-name">${v.name}</div>
+        <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
+      </div>
+    </div>`).join('');
+}
+
+function openVariant(typeId,varId){
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(x=>x.id===typeId);if(!ty)return;
+  const v=(ty.variants||[]).find(x=>x.id===varId);if(!v)return;
+  const imgs=v.imgs||[];
+  // store images globally for lightbox — keep originals for full-size view
+  window._lbImages = imgs;
+  // Direct URLs — Firebase Storage Asia bucket serves original optimised images.
+  const thumbify = (url) => url;
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-head" style="padding-bottom:12px;margin-bottom:16px">
+      <div class="modal-title-wrap">
+        <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+          <div class="modal-title" style="font-size:24px">${v.name}</div>
+          ${v.price?`<div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--gold-dark)">S$${Number(v.price).toLocaleString()}</div>`:''}
+        </div>
+        ${imgs.length?`<div style="font-size:12px;color:var(--text-muted);margin-top:6px">📷 ${imgs.length} sample${imgs.length>1?'s':''} · click any photo to view full size</div>`:''}
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="variant-gallery">
+      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${thumbify(img)}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+// LIGHTBOX
+let _lbIndex = 0;
+function openLightbox(idx){
+  _lbIndex = idx;
+  const lb = document.getElementById('lightbox');
+  if(!lb) return;
+  showLightboxImage();
+  lb.classList.add('open');
+  document.addEventListener('keydown', _lbKeyHandler);
+}
+function showLightboxImage(){
+  const imgs = window._lbImages || [];
+  if(!imgs.length) return;
+  // Direct Firebase Storage URL — already optimised at upload time.
+  const url = imgs[_lbIndex];
+  document.getElementById('lbImg').src = url;
+  document.getElementById('lbCounter').textContent = (_lbIndex+1) + ' / ' + imgs.length;
+  // hide arrows if only 1 image
+  const single = imgs.length <= 1;
+  document.getElementById('lbPrev').style.display = single ? 'none' : 'flex';
+  document.getElementById('lbNext').style.display = single ? 'none' : 'flex';
+}
+function lbNext(e){
+  if(e) e.stopPropagation();
+  const imgs = window._lbImages || [];
+  _lbIndex = (_lbIndex + 1) % imgs.length;
+  showLightboxImage();
+}
+function lbPrev(e){
+  if(e) e.stopPropagation();
+  const imgs = window._lbImages || [];
+  _lbIndex = (_lbIndex - 1 + imgs.length) % imgs.length;
+  showLightboxImage();
+}
+function closeLightbox(e){
+  if(e && e.target.id !== 'lightbox' && e.target.id !== 'lbClose' && e.target.id !== 'lbImgWrap') return;
+  document.getElementById('lightbox').classList.remove('open');
+  document.removeEventListener('keydown', _lbKeyHandler);
+}
+function _lbKeyHandler(e){
+  if(e.key === 'Escape') closeLightbox({target:{id:'lightbox'}});
+  else if(e.key === 'ArrowRight') lbNext();
+  else if(e.key === 'ArrowLeft') lbPrev();
+}
+
+// ── PROJECTS ──
+function renderP(){
+  const db=getDB();const grid=document.getElementById('pGrid');
+  if(!db.projects||!db.projects.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No projects yet.</div>`;return;}
+  const sm={active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
+  const sc={active:'s-active',done:'s-done',soon:'s-soon',open:'s-open'};
+  grid.innerHTML=db.projects.map(p=>`
+    <div class="proj-card" onclick="openProject(${p.id})">
+      <div class="proj-img">
+        ${p.imgs&&p.imgs[0]?`<img loading="lazy" decoding="async" src="${p.imgs[0]}">`:'🎯'}
+        ${p.imgs&&p.imgs.length>1?`<div class="proj-photo-count">📷 ${p.imgs.length}</div>`:''}
+      </div>
+      <div class="proj-body">
+        <div class="proj-meta">
+          <span class="sbadge ${sc[p.status]||'s-active'}">${sm[p.status]||p.status}</span>
+          ${p.date?`<span class="tag">${p.date}</span>`:''}
+        </div>
+        <div class="proj-title">${p.name}</div>
+        <p class="proj-desc">${(p.desc||'').slice(0,140)}${p.desc&&p.desc.length>140?'...':''}</p>
+        <div class="proj-cta">View details →</div>
+      </div>
+    </div>`).join('');
+}
+
+function openProject(id){
+  const db=getDB();
+  const p=db.projects.find(x=>x.id===id);if(!p)return;
+  const sm={active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
+  const sc={active:'s-active',done:'s-done',soon:'s-soon',open:'s-open'};
+  const imgs=p.imgs||[];
+  window._lbImages=imgs;
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
+      <div class="modal-title-wrap">
+        <div class="modal-title" style="font-size:24px">${p.name}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="sbadge ${sc[p.status]||'s-active'}">${sm[p.status]||p.status}</span>
+          ${p.date?`<span class="tag">${p.date}</span>`:''}
+          ${imgs.length?`<span style="font-size:12px;color:var(--text-muted)">📷 ${imgs.length} photo${imgs.length>1?'s':''}</span>`:''}
+        </div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    ${p.desc?`<p style="color:var(--text-muted);font-size:14px;line-height:1.85;margin-bottom:20px;white-space:pre-wrap">${p.desc}</p>`:''}
+    ${imgs.length?`
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase">Sample Photos · click to view full size</div>
+      <div class="variant-gallery">
+        ${imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${img}"></div>`).join('')}
+      </div>
+    `:''}`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function openProd(type,id){
+  const db=getDB();const s=db.settings;
+  const item=db[type].find(i=>i.id===id);if(!item)return;
+  const icon=type==='amulets'?'📿':'⛓️';
+  const status=item.status||'available';
+  const statusBadge=status!=='available'?`<span class="status-pill ${status}" style="position:static;display:inline-block;margin-left:8px">${status.toUpperCase()}</span>`:'';
+  const specs=type==='amulets'?`
+    <div class="spec-row"><span class="spec-k">Type</span><span class="spec-v">${item.cat}</span></div>
+    <div class="spec-row"><span class="spec-k">Temple / Origin</span><span class="spec-v">${item.temple||'-'}</span></div>
+    <div class="spec-row"><span class="spec-k">Year</span><span class="spec-v">${item.year||'-'}</span></div>
+    <div class="spec-row"><span class="spec-k">Status</span><span class="spec-v" style="color:${status==='sold'?'#721c24':status==='reserved'?'#856404':'#155724'}">${status==='sold'?'❌ Sold':status==='reserved'?'⏳ Reserved':'✅ Available'}</span></div>
+  `:`<div class="spec-row"><span class="spec-k">Type</span><span class="spec-v">${item.cat}</span></div>
+    <div class="spec-row"><span class="spec-k">Status</span><span class="spec-v" style="color:${status==='sold'?'#721c24':status==='reserved'?'#856404':'#155724'}">${status==='sold'?'❌ Sold':status==='reserved'?'⏳ Reserved':'✅ Available'}</span></div>`;
+
+  const priceHtml=item.hidePrice?`<div class="prod-price price-pm" style="font-size:22px">${s.contactPmText||'PM for price'}</div>`:`<div class="prod-price">S$${Number(item.price||0).toLocaleString()}</div>`;
+
+  // build contact buttons row
+  const contacts=s.contacts||[];
+  const contactBtnsHtml=status==='sold'?
+    `<div style="background:#f8d7da;color:#721c24;padding:14px;border-radius:10px;text-align:center;font-weight:600;border:1px solid #f5c6cb">❌ This item has been sold</div>`:
+    contacts.length?
+      `<div class="contact-group">
+        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" style="background:${c.color}" onclick="openContactWithItemBtn('${type}',${id})">${c.label} →</button>`).join('')}
+      </div>`:
+      `<button class="btn-gold" style="width:100%" onclick="showToast('${(s.contactBtnMessage||'').replace(/'/g,"\\'")}')">${s.contactBtnText||'Contact'}</button>`;
+
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-head">
+      <div class="modal-title-wrap">
+        <div class="modal-title-cat">${item.cat||''}</div>
+        <div class="modal-title">${item.name}${statusBadge}</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="prod-detail">
+      <div>
+        <div class="prod-main-img" id="mImg">
+          ${item.imgs&&item.imgs[0]?`<img loading="lazy" decoding="async" src="${item.imgs[0]}">`:`<span style="font-size:64px">${icon}</span>`}
+          ${status==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:status==='reserved'?`<div class="status-overlay reserved"><span>RESERVED</span></div>`:''}
+        </div>
+        ${item.imgs&&item.imgs.length>1?`<div class="prod-thumbs">${item.imgs.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImg(this,'${img}')"><img loading="lazy" decoding="async" src="${img}"></div>`).join('')}</div>`:''}
+      </div>
+      <div class="prod-info">
+        ${item.badge?`<span class="tag cbadge-gold" style="display:inline-block;margin-bottom:8px">${item.badge}</span>`:''}
+        ${priceHtml}
+        <p class="prod-desc">${item.desc||''}</p>
+        <div class="spec-box">${specs}</div>
+        ${contactBtnsHtml}
+        <div class="share-row">
+          <button class="share-btn" onclick="copyLink('${type}',${id})">🔗 Copy link</button>
+          <button class="share-btn" onclick="shareToWA('${type}',${id})">📱 WhatsApp</button>
+          <button class="share-btn" onclick="shareToLine('${type}',${id})">💬 Line</button>
+          <button class="share-btn" onclick="shareToFB('${type}',${id})">📘 Facebook</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+  // remember opened item for context
+  window._lastOpened={type,id};
+}
+function openContactWithItemBtn(type,id){openContactWithItem(type,id);}
+function swImg(el,src){document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" src="${src}" style="width:100%;height:100%;object-fit:cover">`;}
+function closeModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
+
+// ─── IMAGE LOADING — IntersectionObserver-based ────────────────────────────
+// Native loading="lazy" only kicks in when the image is very close to the
+// viewport (usually ~100px). For a richer experience we use our own
+// observer with a 250px rootMargin — images start downloading earlier, so
+// by the time the user scrolls there they're already visible.
+//
+// Workflow per image:
+//   1. On insertion: tag .is-loading (shimmer placeholder shows immediately)
+//   2. Move actual `src` into `data-src`, leave src empty until observer fires
+//   3. When 250px from viewport: set src, then listen for load event
+//   4. On load: swap classes to .is-loaded (fade in)
+//
+// We don't strip `loading="lazy"` — it acts as a fallback if our JS is
+// disabled or fails to run.
+const _imgObserver = ('IntersectionObserver' in window)
+  ? new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if(!entry.isIntersecting) return;
+        const img = entry.target;
+        const realSrc = img.dataset.src;
+        if(realSrc){
+          img.src = realSrc;
+          img.removeAttribute('data-src');
+        }
+        obs.unobserve(img);
+      });
+    }, { rootMargin: '250px 0px', threshold: 0.01 })
+  : null;
+
+// ─── IMAGEKIT AUTO-RESIZE ──────────────────────────────────────────────────
+// Inserts transformation params (resize, format, quality) into ImageKit URLs
+// based on the image's actual display size. A 240×240 card no longer
+// downloads a 1920×1920 source — it asks ImageKit to resize on the edge
+// before sending bytes over the wire. Typical reduction: 90%+.
+//
+// We use devicePixelRatio so retina screens get 2x assets (still small).
+// ─── IMAGE WATCH ────────────────────────────────────────────────
+// Previously we had an applyImageKitResize() here that injected /tr:.../
+// transformations into ImageKit URLs to fetch device-appropriate sizes.
+// After migrating to a Singapore-region Firebase Storage bucket (no CDN
+// proxy), images now come directly from Cloud Storage at their original
+// (already optimised) dimensions. Upload-time optimisation in
+// firebase-shared.js caps every image at 1920px wide and re-encodes to
+// WebP at quality 85, so we no longer need on-the-fly resizing.
+
+function watchImage(img){
+  if(!img || img.dataset._watched) return;
+  img.dataset._watched = '1';
+
+  // Direct Firebase Storage URLs are already optimised at upload time
+  // (capped 1920px, WebP q85). No on-the-fly resize needed.
+
+  // Eager (above-the-fold) images: keep native loading, just listen for load
+  if(img.getAttribute('loading') !== 'lazy'){
+    if(img.complete && img.naturalWidth > 0){
+      img.classList.add('is-loaded');
+    } else {
+      img.classList.add('is-loading');
+      img.addEventListener('load', () => {
+        img.classList.remove('is-loading');
+        img.classList.add('is-loaded');
+      }, {once:true});
+      img.addEventListener('error', () => {
+        img.classList.remove('is-loading');
+      }, {once:true});
+    }
+    return;
+  }
+
+  // Lazy images: defer the network request until observer fires
+  img.classList.add('is-loading');
+  img.addEventListener('load', () => {
+    if(img.naturalWidth > 0){
+      img.classList.remove('is-loading');
+      img.classList.add('is-loaded');
+    }
+  });
+  img.addEventListener('error', () => {
+    img.classList.remove('is-loading');
+  });
+  if(_imgObserver && img.src){
+    // Move src → data-src so the network request waits for the observer
+    const realSrc = img.src;
+    img.removeAttribute('src');
+    img.dataset.src = realSrc;
+    _imgObserver.observe(img);
+  } else if(img.complete && img.naturalWidth > 0){
+    img.classList.remove('is-loading');
+    img.classList.add('is-loaded');
+  }
+}
+
+function setupImageFadeIn(){
+  document.querySelectorAll('img').forEach(watchImage);
+}
+setupImageFadeIn();
+
+// Process images added dynamically by render functions (applySettings etc).
+new MutationObserver(muts => {
+  muts.forEach(mut => {
+    mut.addedNodes && mut.addedNodes.forEach(node => {
+      if(node.nodeType !== 1) return;
+      const imgs = node.tagName === 'IMG' ? [node] : (node.querySelectorAll ? [...node.querySelectorAll('img')] : []);
+      imgs.forEach(watchImage);
+    });
+  });
+}).observe(document.body, {childList: true, subtree: true});
+
+
+
+// Apply settings once now using whatever data is currently in the FB cache
+// (might be empty on cold start — we'll re-render once data arrives).
+applySettings();
+
+// Wait for Firebase to load + initial data, then re-render the page.
+async function bootIndex(){
+  let tries = 0;
+  while(!window.FB && tries < 100){ await new Promise(r => setTimeout(r, 50)); tries++; }
+  if(!window.FB){
+    // Even if Firebase failed to load, drop the splash so the page is usable
+    document.documentElement.classList.add('fb-ready');
+    setTimeout(() => {
+      const s = document.getElementById('fbSplash');
+      if(s) s.remove();
+    }, 400);
+    return;
+  }
+  // Wait for first DB load from Firestore
+  await window.FB.ready();
+  applySettings();
+  // Now reveal the page — adds fb-ready class which fades out the splash
+  // and shows any elements that were hidden to avoid the FOUC flash.
+  document.documentElement.classList.add('fb-ready');
+  setTimeout(() => {
+    const s = document.getElementById('fbSplash');
+    if(s) s.remove();
+  }, 400);
+  // Subscribe to live updates — if admin changes something, the visible
+  // site updates without a refresh.
+  window.FB.onDBChange(() => {
+    try { applySettings(); } catch(e){ console.error(e); }
+  });
+}
+bootIndex();
+
+// ─── SERVICE WORKER ────────────────────────────────────────────────────────
+// Registers /sw.js which caches Firebase Storage images. After the first
+// page load, every image becomes effectively instant on repeat visits.
+// We register late (after main content paints) so it never blocks initial
+// rendering — registration is non-critical.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.warn('[SW] registration failed:', err);
+    });
+  });
+}
+
+// ── DEEP LINK on load (from share buttons) ──
+(function handleHash(){
+  const h=window.location.hash;if(!h)return;
+  const m=h.match(/^#(amulets|accessories)-(\d+)$/);
+  if(m){
+    setTimeout(()=>openProd(m[1],parseInt(m[2])),200);
+  } else {
+    const pageMatch=h.match(/^#page-(\w+)$/);
+    if(pageMatch)setTimeout(()=>goPage(pageMatch[1]),200);
+  }
+})();
+
+// ── PWA INSTALL ──
+let _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();
+  _deferredPrompt=e;
+  document.getElementById('installFab').classList.add('show');
+});
+function doInstall(){
+  if(!_deferredPrompt)return;
+  _deferredPrompt.prompt();
+  _deferredPrompt.userChoice.then(()=>{
+    _deferredPrompt=null;
+    document.getElementById('installFab').classList.remove('show');
+  });
+}
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installFab').classList.remove('show');
+});
+
+// Inline minimal manifest via blob (no separate file needed)
+(function setupManifest(){
+  // Skip on file:// — manifest needs http(s) and would just spam errors
+  if(location.protocol === 'file:') return;
+  try{
+    const settings=getDB().settings;
+    const name=settings.logoText||'Yingyingying Amulet';
+    const manifest={
+      name:name,
+      short_name:name.split(' ')[0],
+      description:settings.logoSub||'Authentic Thai Amulets',
+      start_url:'./',
+      display:'standalone',
+      background_color:'#fdf6e3',
+      theme_color:'#c9a84c',
+      icons:[
+        {src:'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22><rect width=%22192%22 height=%22192%22 fill=%22%2312100a%22/><text x=%2296%22 y=%22128%22 font-size=%22120%22 text-anchor=%22middle%22 fill=%22%23e8c96a%22>📿</text></svg>',sizes:'192x192',type:'image/svg+xml'},
+        {src:'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><rect width=%22512%22 height=%22512%22 fill=%22%2312100a%22/><text x=%22256%22 y=%22340%22 font-size=%22320%22 text-anchor=%22middle%22 fill=%22%23e8c96a%22>📿</text></svg>',sizes:'512x512',type:'image/svg+xml'}
+      ]
+    };
+    const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('link');
+    link.rel='manifest';link.href=url;
+    document.head.appendChild(link);
+    // theme color
+    const theme=document.createElement('meta');
+    theme.name='theme-color';theme.content='#12100a';
+    document.head.appendChild(theme);
+  }catch(e){console.warn('manifest setup failed',e);}
+})();
+
+// Register service worker (inline blob) for offline shell + install eligibility
+(function setupSW(){
+  if(!('serviceWorker' in navigator))return;
+  // Service workers cannot run on file:// — skip to avoid security errors
+  if(location.protocol === 'file:') return;
+  const swCode=`
+    const CACHE='yyy-v1';
+    self.addEventListener('install',e=>{self.skipWaiting();});
+    self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
+    self.addEventListener('fetch',e=>{
+      if(e.request.method!=='GET')return;
+      e.respondWith(
+        caches.open(CACHE).then(cache=>
+          cache.match(e.request).then(hit=>{
+            const fetchPromise=fetch(e.request).then(resp=>{
+              if(resp&&resp.status===200&&resp.type==='basic')cache.put(e.request,resp.clone());
+              return resp;
+            }).catch(()=>hit);
+            return hit||fetchPromise;
+          })
+        )
+      );
+    });
+  `;
+  try{
+    const blob=new Blob([swCode],{type:'application/javascript'});
+    const url=URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url).catch(()=>{});
+  }catch(e){}
+})();
+</script>
+
+
+<script>
+(function(){
+  // ──────────────────────────────────────────────────────────────────────
+  //  Phra Somdej 3D — three rendering modes:
+  //    1. GLB upload  → loads a real 3D model via GLTFLoader (best quality)
+  //    2. Front+Back  → renders a flat tablet with textures on each face
+  //    3. Neither     → hero-3d is hidden, hero goes single-column
+  //
+  //  applySettings() in the main script sets window.PHRA_GLB,
+  //  window.PHRA_FRONT_IMG, and window.PHRA_BACK_IMG before calling
+  //  window.initPhra3D() — we pick the mode from those values here.
+  // ──────────────────────────────────────────────────────────────────────
+
+  let initialised = false;
+  let currentMode = '';                          // 'glb' | 'tablet' | ''
+  let scene, camera, renderer, phraGroup, halo, clock, canvas;
+  let frontTex = null, backTex = null;
+  let loadedGlbUrl = '';                         // remember what we loaded so we can detect changes
+
+  // Public: refresh textures or model when settings change.
+  // The main applySettings() function calls initPhra3D() which handles both
+  // cold-start and refresh, so this is mostly a thin shim.
+  window.refreshPhra3DTextures = function(){
+    if(!initialised) return;
+    window.initPhra3D();   // will detect mode change and rebuild scene
+  };
+
+  // Public entry point. Idempotent — safe to call on every settings change.
+  window.initPhra3D = function(){
+    canvas = canvas || document.getElementById('phra3d');
+    if(!canvas || !window.THREE) return;
+
+    const wantGlb    = !!window.PHRA_GLB;
+    const wantTablet = !wantGlb && !!(window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG);
+    const newMode    = wantGlb ? 'glb' : (wantTablet ? 'tablet' : '');
+    if(!newMode){ return; }   // nothing to render — applySettings hid the block
+
+    // If the mode changed, or the glb URL changed, tear down the existing scene.
+    const glbChanged = wantGlb && loadedGlbUrl !== window.PHRA_GLB;
+    if(initialised && (currentMode !== newMode || glbChanged)){
+      disposeScene();
+      initialised = false;
+    }
+
+    if(!initialised){
+      buildScene();
+      initialised = true;
+      currentMode = newMode;
+    }
+
+    // For tablet mode, refresh the textures from current globals.
+    if(newMode === 'tablet'){
+      loadTabletTextures();
+    } else if(newMode === 'glb'){
+      loadGlbModel(window.PHRA_GLB);
+      loadedGlbUrl = window.PHRA_GLB;
+    }
+  };
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Scene building — common parts (camera, lights, renderer, halo)
+  // ──────────────────────────────────────────────────────────────────────
+  function buildScene(){
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+    camera.position.set(0, 0, 7);
+
+    renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
+    // ─── Cap pixel ratio for performance ───
+    // Full retina (DPR 3) on a phone means 9x the pixels to render every
+    // frame. That's heavy on a WebGL scene with envMaps. Cap at 2 on
+    // desktop and 1.5 on touch devices — the model is small enough that
+    // the visual difference is minimal.
+    const isMobileForPx = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const dprCap = isMobileForPx ? 1.5 : 2;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
+    renderer.setClearColor(0x000000, 0);
+    // Studio-quality colour & exposure for metallic models (gold/brass).
+    // outputColorSpace = sRGB ensures colours render as the artist intended
+    // (without this, dark areas crush to near-black).
+    // ACESFilmic toneMapping gives a soft "studio photo" exposure curve.
+    // Exposure 1.6 lifts the overall brightness without blowing highlights.
+    if(THREE.SRGBColorSpace !== undefined){
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+    } else if(THREE.sRGBEncoding !== undefined){
+      // Older three.js fallback
+      renderer.outputEncoding = THREE.sRGBEncoding;
+    }
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.75;
+
+    function resize(){
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      if(canvas.width !== w * window.devicePixelRatio || canvas.height !== h * window.devicePixelRatio){
+        renderer.setSize(w, h, false);
+        camera.aspect = w/h;
+        camera.updateProjectionMatrix();
+      }
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    phraGroup = new THREE.Group();
+    scene.add(phraGroup);
+
+    // Halo placeholder — kept in the scene graph so later code that references
+    // `halo` doesn't crash, but invisible. Setting opacity to 0 (rather than
+    // omitting the mesh) preserves the rest of the scene-management logic.
+    const haloGeom = new THREE.PlaneGeometry(3.5, 4.6);
+    const haloMat  = new THREE.MeshBasicMaterial({
+      color: 0xc9a84c, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+      visible: false,
+    });
+    halo = new THREE.Mesh(haloGeom, haloMat);
+    halo.position.z = -0.6;
+    scene.add(halo);
+
+    // ─── DIRECT LIGHTS — supplementary only ───
+    // The envMap handles most of the lighting for shiny gold. These
+    // direct lights add a touch of definition to shape and form, but
+    // they are intentionally LOW intensity so they don't overwhelm the
+    // gold reflections (which is what makes gold actually look like gold).
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    keyLight.position.set(3, 5, 5);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xfff4d6, 0.3);
+    rimLight.position.set(-3, 4, -4);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.2);
+    fillLight.position.set(-4, 1, 3);
+    scene.add(fillLight);
+
+    // Minimal ambient — the envMap provides general illumination.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.1));
+
+    // Very subtle hemisphere — tints shadows slightly.
+    const hemi = new THREE.HemisphereLight(0xfff4d6, 0x1a1a1a, 0.15);
+    scene.add(hemi);
+
+    // ─── HDR-STYLE STUDIO ENVIRONMENT — designed for shiny gold ───
+    // Polished gold is a perfect mirror — its appearance comes ENTIRELY
+    // from what it reflects. We bake a procedural studio into an envMap.
+    //
+    // Performance note: PMREMGenerator can be expensive. We use a small
+    // env scene and the lowest acceptable roughness on PMREM (0.04)
+    // to keep memory/GPU cost down on mobile.
+    try {
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      pmrem.compileEquirectangularShader();
+
+      const envScene = new THREE.Scene();
+      envScene.background = new THREE.Color(0x0a0a0a);
+
+      // 4 bright sources at studio angles (down from 6 — lighter on mobile)
+      const lights = [
+        [ 6,  5,  6,  4.0, 0xffffff, 8.0],   // main softbox
+        [-5,  4,  5,  3.0, 0xfff4e0, 5.0],   // secondary key
+        [ 0,  8,  2,  3.5, 0xfffaf0, 5.0],   // top fill
+        [ 0, -3,  6,  2.0, 0xffe8c0, 2.5],   // bottom bounce
+      ];
+      lights.forEach(([x, y, z, size, color, intensity]) => {
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(size, 12, 12),  // 12-segment is plenty for env
+          new THREE.MeshBasicMaterial({
+            color: new THREE.Color(color).multiplyScalar(intensity),
+            toneMapped: false,
+          })
+        );
+        m.position.set(x, y, z);
+        envScene.add(m);
+      });
+
+      const envTexture = pmrem.fromScene(envScene, 0.04).texture;
+      scene.environment = envTexture;
+      pmrem.dispose();
+    } catch(e){
+      console.warn('[phra3d] PMREM env map failed (ok, will use lights only):', e);
+    }
+
+    setupInteractionAndAnimation();
+  }
+
+  function disposeScene(){
+    if(renderer) renderer.dispose();
+    if(scene){
+      scene.traverse(obj => {
+        if(obj.geometry) obj.geometry.dispose();
+        if(obj.material){
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach(m => {
+            if(m.map) m.map.dispose();
+            m.dispose();
+          });
+        }
+      });
+    }
+    scene = camera = renderer = phraGroup = halo = clock = null;
+    frontTex = backTex = null;
+    loadedGlbUrl = '';
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Mode 1 — GLB model loading
+  // ──────────────────────────────────────────────────────────────────────
+  function loadGlbModel(url){
+    if(!url || !window.THREE || !window.THREE.GLTFLoader){
+      console.warn('[phra3d] GLTFLoader not available');
+      return;
+    }
+    console.log('[phra3d] loading glb:', url.slice(0, 80) + (url.length > 80 ? '...' : ''));
+    const loader = new THREE.GLTFLoader();
+
+    // Helper: take a parsed glTF and add it to the scene with auto-fit + recentre.
+    const onParsed = (gltf) => {
+      // Remove previous model children (keep halo etc. which are on scene, not group)
+      while(phraGroup.children.length) phraGroup.remove(phraGroup.children[0]);
+
+      const model = gltf.scene || gltf.scenes[0];
+
+      // Auto-fit: compute bounding box, scale to fit ~3 units tall, recentre
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3(); box.getSize(size);
+      const center = new THREE.Vector3(); box.getCenter(center);
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      const targetSize = 3.5;
+      const scale = targetSize / maxDim;
+      model.scale.setScalar(scale);
+      model.position.x = -center.x * scale;
+      model.position.y = -center.y * scale;
+      model.position.z = -center.z * scale;
+
+      // ─── Tune materials for a metallic gold look — but PRESERVE textures ───
+      // Trellis exports come with baked baseColor textures that include all
+      // the model's surface detail (red cushion, fabric folds, etc.). We
+      // must KEEP these textures, otherwise the model becomes a single
+      // colour and loses all detail.
+      //
+      // What we tune:
+      //   • mat.color → warm gold tint (1.0, 0.78, 0.42) — acts as a
+      //     MULTIPLIER on the texture. White texture pixels become gold;
+      //     red cushion pixels become a warmer red-gold (still distinct).
+      //   • metalness → 1.0  (full metal — reflects light, doesn't absorb)
+      //   • roughness → 0.32 (polished, not mirror — soft highlights)
+      //   • envMapIntensity → 1.0 (strong environment reflections)
+      //
+      // What we leave alone:
+      //   • mat.map (baseColor texture — has the actual surface detail!)
+      //   • All other maps (normal, AO, emissive, etc.)
+      model.traverse(obj => {
+        if(obj.isMesh && obj.material){
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach(mat => {
+            if(mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial){
+              // Studio environment so metal reflects something
+              if(scene.environment) mat.envMap = scene.environment;
+              mat.envMapIntensity = 1.8;  // strong reflections = gold shine
+              // Warm gold tint — deeper amber gold for that "burnished
+              // leaf" look. Texture × this multiplier = rich gold.
+              mat.color.setRGB(0.95, 0.62, 0.20);
+              // Force polished-metal physical properties.
+              mat.metalness = 1.0;
+              mat.roughness = 0.25;
+              mat.needsUpdate = true;
+            }
+          });
+        }
+      });
+
+      phraGroup.add(model);
+      // ─── Force re-renders once textures + env are fully decoded ───
+      // The model can render before its textures finish decoding, which
+      // briefly shows it as dark/black. We schedule additional renders
+      // over the next ~600ms to make sure the first paint is correct.
+      [50, 150, 350, 600].forEach(delay => {
+        setTimeout(() => {
+          if(renderer && scene && camera) renderer.render(scene, camera);
+        }, delay);
+      });
+      console.log('[phra3d] glb loaded. dims (pre-scale):',
+                  size.x.toFixed(2), size.y.toFixed(2), size.z.toFixed(2),
+                  '→ scale:', scale.toFixed(3));
+    };
+
+    const onLoadError = (err) => {
+      console.error('[phra3d] glb load failed:', err);
+      // Fallback: try to render images instead, if available
+      if(window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG){
+        console.log('[phra3d] falling back to tablet textures');
+        currentMode = 'tablet';
+        buildTabletGeometry();
+        loadTabletTextures();
+      }
+    };
+
+    // Workaround for Firebase Storage CORS issue with GLTFLoader's XHR.
+    // We fetch the file as a Blob first (fetch() handles CORS differently
+    // and Firebase Storage's signed URLs are accessible to fetch), then
+    // hand the ArrayBuffer directly to GLTFLoader.parse().
+    if(/^https?:\/\//i.test(url)){
+      fetch(url)
+        .then(r => {
+          if(!r.ok) throw new Error('HTTP ' + r.status);
+          return r.arrayBuffer();
+        })
+        .then(buf => {
+          // parse(data, path, onLoad, onError)
+          loader.parse(buf, '', onParsed, onLoadError);
+        })
+        .catch(onLoadError);
+    } else {
+      // data: URL or local path — use the loader's built-in load
+      loader.load(url, onParsed, undefined, onLoadError);
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Mode 2 — Flat tablet with front/back textures
+  // ──────────────────────────────────────────────────────────────────────
+  function buildTabletGeometry(){
+    // Clear any old children
+    while(phraGroup.children.length) phraGroup.remove(phraGroup.children[0]);
+
+    const W = 1.5, H = 2.21, D = 0.18;
+
+    function makeRoundedRectShape(w, h, r){
+      const shape = new THREE.Shape();
+      shape.moveTo(-w + r, -h);
+      shape.lineTo(w - r, -h);
+      shape.quadraticCurveTo(w, -h, w, -h + r);
+      shape.lineTo(w, h - r);
+      shape.quadraticCurveTo(w, h, w - r, h);
+      shape.lineTo(-w + r, h);
+      shape.quadraticCurveTo(-w, h, -w, h - r);
+      shape.lineTo(-w, -h + r);
+      shape.quadraticCurveTo(-w, -h, -w + r, -h);
+      return shape;
+    }
+
+    const shape = makeRoundedRectShape(W, H, 0.04);
+    let tabletGeom = new THREE.ExtrudeGeometry(shape, {
+      depth: D, bevelEnabled: true, bevelThickness: 0.025,
+      bevelSize: 0.025, bevelSegments: 4, curveSegments: 12
+    });
+    tabletGeom.translate(0, 0, -D/2 - 0.025);
+    tabletGeom = tabletGeom.toNonIndexed();
+    tabletGeom.computeVertexNormals();
+
+    const posAttr = tabletGeom.attributes.position;
+    const normAttr = tabletGeom.attributes.normal;
+    const triCount = posAttr.count / 3;
+    const fronts = [], backs = [], sides = [];
+    for(let t = 0; t < triCount; t++){
+      const i0 = t*3, i1 = t*3+1, i2 = t*3+2;
+      const nz = (normAttr.getZ(i0) + normAttr.getZ(i1) + normAttr.getZ(i2)) / 3;
+      const tri = [i0, i1, i2];
+      if(nz > 0.7) fronts.push(tri);
+      else if(nz < -0.7) backs.push(tri);
+      else sides.push(tri);
+    }
+
+    const ordered = fronts.concat(backs).concat(sides);
+    const newPos = new Float32Array(triCount * 9);
+    const newNorm = new Float32Array(triCount * 9);
+    const newUV = new Float32Array(triCount * 6);
+    for(let t = 0; t < ordered.length; t++){
+      const [a, b, c] = ordered[t];
+      const dst = t * 9, dstUv = t * 6;
+      [a, b, c].forEach((src, k) => {
+        newPos[dst + k*3]   = posAttr.getX(src);
+        newPos[dst + k*3+1] = posAttr.getY(src);
+        newPos[dst + k*3+2] = posAttr.getZ(src);
+        newNorm[dst + k*3]   = normAttr.getX(src);
+        newNorm[dst + k*3+1] = normAttr.getY(src);
+        newNorm[dst + k*3+2] = normAttr.getZ(src);
+        const x = posAttr.getX(src), y = posAttr.getY(src);
+        const isBack = t >= fronts.length && t < fronts.length + backs.length;
+        newUV[dstUv + k*2]   = isBack ? 1 - (x + W) / (2*W) : (x + W) / (2*W);
+        newUV[dstUv + k*2+1] = (y + H) / (2*H);
+      });
+    }
+
+    const geom = new THREE.BufferGeometry();
+    geom.setAttribute('position', new THREE.BufferAttribute(newPos, 3));
+    geom.setAttribute('normal',   new THREE.BufferAttribute(newNorm, 3));
+    geom.setAttribute('uv',       new THREE.BufferAttribute(newUV, 2));
+    geom.addGroup(0,                                  fronts.length * 3, 0);
+    geom.addGroup(fronts.length * 3,                  backs.length * 3,  1);
+    geom.addGroup((fronts.length + backs.length) * 3, sides.length * 3,  2);
+
+    const frontMat = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.65, metalness: 0.05});
+    const backMat  = new THREE.MeshStandardMaterial({color: 0xffffff, roughness: 0.65, metalness: 0.05});
+    const sideMat  = new THREE.MeshStandardMaterial({color: 0xc8b88a, roughness: 0.85, metalness: 0.05});
+    const tablet = new THREE.Mesh(geom, [frontMat, backMat, sideMat]);
+    phraGroup.add(tablet);
+  }
+
+  function loadTabletTextures(){
+    // Make sure tablet geometry exists (cold start in tablet mode)
+    if(!phraGroup.children.length) buildTabletGeometry();
+    const tablet = phraGroup.children[0];
+    if(!tablet || !Array.isArray(tablet.material)) return;
+
+    function loadTex(url, slot){
+      const tex = new THREE.Texture();
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      const img = new Image();
+      img.onload = () => {
+        const cvs = document.createElement('canvas');
+        cvs.width = img.naturalWidth;
+        cvs.height = img.naturalHeight;
+        cvs.getContext('2d').drawImage(img, 0, 0);
+        tex.image = cvs;
+        tex.needsUpdate = true;
+        tablet.material[slot].map = tex;
+        tablet.material[slot].needsUpdate = true;
+      };
+      if(/^https?:/i.test(url)) img.crossOrigin = 'anonymous';
+      img.src = url;
+      return tex;
+    }
+
+    if(frontTex) frontTex.dispose();
+    if(backTex)  backTex.dispose();
+    frontTex = loadTex(window.PHRA_FRONT_IMG, 0);
+    backTex  = loadTex(window.PHRA_BACK_IMG,  1);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  //  Interaction + animation loop (mode-independent)
+  // ──────────────────────────────────────────────────────────────────────
+  function setupInteractionAndAnimation(){
+    let mouseX = 0, mouseY = 0, targetRotX = 0, targetRotY = 0, scrollOffset = 0;
+    window.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      if(rect.width === 0) return;
+      mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+      targetRotY = mouseX * 0.5;
+      targetRotX = -mouseY * 0.25;
+    });
+
+    // ─── TOUCH ROTATION — only when actively dragging the canvas ───
+    // Previously we listened to touchmove on `window`, which meant that
+    // scrolling the page (which is a touchmove) was being interpreted as
+    // a drag-to-rotate. The model would tilt based on where the user's
+    // finger happened to be on the screen during scroll — leading to the
+    // model appearing upside-down/flipped after scrolling.
+    //
+    // Now we ONLY listen to touchmove that starts inside the canvas, and
+    // we reset the target rotation when the user lifts their finger so
+    // the model springs back to its resting position.
+    let isDraggingCanvas = false;
+    canvas.addEventListener('touchstart', (e) => {
+      isDraggingCanvas = true;
+    }, {passive: true});
+    canvas.addEventListener('touchmove', (e) => {
+      if(!isDraggingCanvas || !e.touches[0]) return;
+      const rect = canvas.getBoundingClientRect();
+      if(rect.width === 0) return;
+      mouseX = ((e.touches[0].clientX - rect.left) / rect.width) * 2 - 1;
+      mouseY = ((e.touches[0].clientY - rect.top) / rect.height) * 2 - 1;
+      targetRotY = mouseX * 0.5;
+      targetRotX = -mouseY * 0.25;
+    }, {passive: true});
+    const onTouchEnd = () => {
+      isDraggingCanvas = false;
+      // Spring back to resting position so the model returns upright
+      // instead of staying wherever the user dragged it to.
+      targetRotY = 0;
+      targetRotX = 0;
+    };
+    canvas.addEventListener('touchend', onTouchEnd, {passive: true});
+    canvas.addEventListener('touchcancel', onTouchEnd, {passive: true});
+
+    // tap-to-flip removed — the model just responds to drag/orbit now.
+    let flipped = 0;
+    // Scroll-linked rotation feels nice on desktop but on mobile it
+    // leaves the model tilted/upside-down when scrolled back to top.
+    // We detect mobile via the same media query the rest of the CSS
+    // uses — touch detection is unreliable on hybrid devices (iPad with
+    // pencil, etc).
+    const enableScrollRot =
+      typeof window.matchMedia === 'function'
+        ? !window.matchMedia('(max-width: 900px)').matches &&
+          !window.matchMedia('(hover: none)').matches
+        : true;
+    console.log('[phra3d] scroll rotation enabled:', enableScrollRot,
+                'viewport:', window.innerWidth, 'x', window.innerHeight);
+    window.addEventListener('scroll', () => {
+      // Only update if scroll rotation is enabled — saves a tiny bit on mobile
+      if(enableScrollRot) scrollOffset = window.scrollY;
+    }, {passive: true});
+
+    // ─── GYROSCOPE TILT — mobile only ───
+    // Listens for device orientation events and tilts the 3D model.
+    // iOS 13+ requires permission, which MUST be requested from a direct
+    // user gesture. We listen for the first touch anywhere on the page
+    // and request permission then — same effect as a button, but no UI.
+    let gyroX = 0, gyroY = 0;
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    const onDeviceOrientation = (e) => {
+      const beta  = (e.beta  || 0);
+      const gamma = (e.gamma || 0);
+      gyroY = Math.max(-0.4, Math.min(0.4, gamma * 0.012));
+      gyroX = Math.max(-0.25, Math.min(0.25, (beta - 45) * 0.008));
+    };
+
+    if(isTouch){
+      const iosNeedsPermission =
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function';
+
+      if(iosNeedsPermission){
+        // iOS — request permission on first user interaction anywhere.
+        // This produces the same iOS permission popup, just triggered
+        // automatically when the user first touches the page (which is
+        // how they're already interacting anyway).
+        const requestGyroNow = () => {
+          DeviceOrientationEvent.requestPermission()
+            .then(state => {
+              if(state === 'granted'){
+                window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
+                console.log('[phra3d] gyro permission granted');
+              } else {
+                console.log('[phra3d] gyro permission denied:', state);
+              }
+            })
+            .catch(err => console.warn('[phra3d] gyro permission request failed:', err));
+          // Remove all listeners — request only once
+          document.removeEventListener('touchend', requestGyroNow);
+          document.removeEventListener('click', requestGyroNow);
+        };
+        // First touch on ANY element triggers the request.
+        document.addEventListener('touchend', requestGyroNow, {once: true, passive: true});
+        document.addEventListener('click', requestGyroNow, {once: true});
+      } else {
+        // Android / non-iOS-13+ — listen directly, no permission needed
+        window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
+      }
+    }
+
+    // ─── VISIBILITY-AWARE RENDERING (performance) ───
+    // Pause the animation when the canvas scrolls off-screen, when the
+    // tab is hidden, or when the user is on a low-power device. This is
+    // critical on mobile — a continuously running WebGL loop drains
+    // battery and makes the rest of the page laggy.
+    let canvasVisible = true;
+    if('IntersectionObserver' in window){
+      new IntersectionObserver((entries) => {
+        canvasVisible = entries[0].isIntersecting;
+      }, {threshold: 0.05}).observe(canvas);
+    }
+    document.addEventListener('visibilitychange', () => {
+      canvasVisible = !document.hidden && canvasVisible;
+    });
+
+    clock = new THREE.Clock();
+    let curRotY = 0, curRotX = 0, curFlip = 0;
+    function animate(){
+      if(!renderer) return;     // disposed
+      requestAnimationFrame(animate);
+      // Skip rendering when hidden — huge battery & CPU saver on mobile.
+      if(!canvasVisible || document.hidden) return;
+      const t = clock.getElapsedTime();
+      curRotY += (targetRotY - curRotY) * 0.05;
+      curRotX += (targetRotX - curRotX) * 0.05;
+      curFlip += (flipped - curFlip) * 0.06;
+      const idleY = Math.sin(t * 0.35) * 0.06;
+      const idleX = Math.cos(t * 0.45) * 0.03;
+      const scrollRot = enableScrollRot ? (scrollOffset * 0.0015) : 0;
+      if(phraGroup){
+        phraGroup.rotation.y = curRotY + idleY + scrollRot + curFlip + gyroY;
+        phraGroup.rotation.x = curRotX + idleX + gyroX;
+        phraGroup.position.y = Math.sin(t * 1.1) * 0.1;
+      }
+      renderer.render(scene, camera);
+    }
+    animate();
+  }
+
+  // Try to init immediately in case applySettings already ran before
+  // this script executed (script order varies depending on caching).
+  if(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG)){
+    window.initPhra3D();
+  }
+})();
+</script>
+<!-- ───── LIVE EDIT MODE (only active when ?liveedit=1) ───── -->
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  console.log('[LE-iframe] live edit script running. URL:', location.href, 'has liveedit:', params.has('liveedit'));
+  if(!params.has('liveedit')) return;
+  console.log('[LE-iframe] LIVE EDIT MODE active');
+
+  // Inject CSS for hover outlines
+  const style = document.createElement('style');
+  style.textContent = `
+    [data-le-hoverable]{outline:2px dashed transparent;outline-offset:3px;cursor:pointer !important;transition:outline-color .15s, background-color .15s;position:relative}
+    [data-le-hoverable]:hover{outline-color:#c9a84c;background-color:rgba(201,168,76,0.06)}
+    [data-le-hoverable]:hover::before{
+      content:attr(data-le-label);
+      position:absolute;top:-26px;left:0;background:#c9a84c;color:#12100a;
+      font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;
+      white-space:nowrap;z-index:99999;pointer-events:none;
+      font-family:'Inter',sans-serif;letter-spacing:.5px;
+      box-shadow:0 4px 12px rgba(0,0,0,.4);
+    }
+    body.le-mode { padding-top: 30px !important; }
+    .le-banner{
+      position:fixed;top:0;left:0;right:0;background:linear-gradient(90deg,#c9a84c,#e8c96a);
+      color:#12100a;text-align:center;font-size:12px;font-weight:700;
+      padding:6px;z-index:99998;font-family:'Inter',sans-serif;letter-spacing:1px;
+      box-shadow:0 2px 10px rgba(0,0,0,.3);
+    }
+  `;
+  document.head.appendChild(style);
+  document.body.classList.add('le-mode');
+
+  // Visible banner
+  const banner = document.createElement('div');
+  banner.className = 'le-banner';
+  banner.textContent = '✨ LIVE EDIT MODE — Click any highlighted element to edit it';
+  document.body.appendChild(banner);
+
+  // Elements to make clickable — keyed by ANY selector that exists in index.html.
+  // Each target = [selector_string, label]. We add data-le-hoverable to the first
+  // element that matches.
+  const targets = [
+    // Top bar / branding
+    ['.topbar',       'Top Bar'],
+    ['.logo',         'Logo'],
+    ['.logo-icon',    'Logo Icon'],
+    ['.logo-text',    'Shop Name'],
+    ['.logo-sub',     'Shop Tagline'],
+    // Navigation
+    ['nav',           'Navigation'],
+    ['.nav-links',    'Nav Links'],
+    // Hero
+    ['#heroEyebrow',  'Eyebrow'],
+    ['#heroTitle',    'Hero Title'],
+    ['#heroSub',      'Subtitle'],
+    ['#heroDesc',     'Description'],
+    ['#heroBtns',     'Hero Buttons'],
+    ['#heroStats',    'Hero Stats'],
+    ['#heroBg',       'Background Image'],
+    ['.hero-3d',      '3D Phra Somdej'],
+    // Homepage sections
+    ['.featured-section', 'Featured Items'],
+    ['#featuredGrid', 'Featured Items'],
+    ['.home-reviews-section', 'Reviews Preview'],
+    ['#homeReviewsSection', 'Reviews Preview'],
+    ['#homeRevTitle', 'Reviews Title'],
+    ['#homeRevSub', 'Reviews Subtitle'],
+    ['#homeRevGrid', 'Reviews Preview'],
+    ['.home-services-section', 'Service Cards'],
+    ['#homeServicesSection', 'Service Cards'],
+    ['.trust-grid',   'Trust Badges'],
+    ['#trustGrid',    'Trust Badges'],
+    // Section headers (each page)
+    ['#amuletsTitle', 'Amulets Title'],
+    ['#amuletsDesc',  'Amulets Description'],
+    ['#accTitle',     'Accessories Title'],
+    ['#accDesc',      'Accessories Description'],
+    ['#casingTitle',  'Casing Title'],
+    ['#casingDesc',   'Casing Description'],
+    ['#projTitle',    'Projects Title'],
+    ['#projDesc',     'Projects Description'],
+    ['#revTitle',     'Reviews Title'],
+    ['#revSub',       'Reviews Description'],
+    ['#payTitle',     'Payment Title'],
+    ['#paySub',       'Payment Description'],
+    // Grids
+    ['#aGrid',        'Amulets Grid'],
+    ['#acGrid',       'Accessories Grid'],
+    ['#cTypeGrid',    'Casing Types Grid'],
+    // Contact section
+    ['.contact-group','Contact Section'],
+  ];
+
+  // Walks up the DOM from `el` and collects every selector we know about
+  // (so the admin gets a list of candidates to match against).
+  function getEditableSelectors(el){
+    const out = [];
+    let cur = el;
+    while(cur && cur !== document.body){
+      const ds = cur.getAttribute && cur.getAttribute('data-le-selector');
+      if(ds && out.indexOf(ds) === -1) out.push(ds);
+      cur = cur.parentElement;
+    }
+    return out;
+  }
+
+  function attach(){
+    let count = 0;
+    targets.forEach(([sel, label]) => {
+      const el = document.querySelector(sel);
+      if(!el) return;
+      // Skip if already tagged with another selector — keep the most specific
+      // tag (the first one we add) so labels don't flicker on re-attach.
+      if(el.getAttribute('data-le-hoverable') && el.getAttribute('data-le-selector') !== sel){
+        // Already labelled with something else, keep it
+        return;
+      }
+      el.setAttribute('data-le-hoverable', '1');
+      el.setAttribute('data-le-label', label);
+      el.setAttribute('data-le-selector', sel);
+      count++;
+    });
+    console.log('[LE-iframe] attached to', count, 'elements');
+
+    // Nav links → individual hover labels ("Manage X →")
+    const navLinks = document.querySelectorAll('.nav-links a');
+    navLinks.forEach(a => {
+      const linkId = (a.id || '').replace(/^nav-/, '');
+      const txt = (a.textContent || '').trim();
+      a.setAttribute('data-le-hoverable', '1');
+      a.setAttribute('data-le-label', '✏️ Manage "' + txt + '"');
+      a.setAttribute('data-le-selector', 'nav-link:' + linkId);
+    });
+    if(navLinks.length) console.log('[LE-iframe] attached to', navLinks.length, 'nav links');
+
+    // Product / list cards
+    const page = detectCurrentPage();
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      if(card.closest('.featured-grid')){
+        card.setAttribute('data-le-product-page', 'featured');
+      } else {
+        card.setAttribute('data-le-product-page', page || 'amulets');
+      }
+      card.setAttribute('data-le-hoverable', '1');
+      card.setAttribute('data-le-label', '✏️ Edit item');
+      card.setAttribute('data-le-selector', '.card');
+    });
+    if(cards.length) console.log('[LE-iframe] attached to', cards.length, 'product cards on page', page);
+  }
+
+  function detectCurrentPage(){
+    // page-{name} sections — find the one without display:none
+    const pages = document.querySelectorAll('[id^="page-"]');
+    for(const p of pages){
+      if(p.offsetParent !== null && getComputedStyle(p).display !== 'none'){
+        return p.id.replace('page-', '');
+      }
+    }
+    return null;
+  }
+
+  // Intercept clicks
+  document.addEventListener('click', function(e){
+    // Special: clicks on a nav link → manage that page directly
+    // (matches anchor inside .nav-links, whose id is "nav-{pageId}")
+    const navLink = e.target.closest('.nav-links a, .nav-links li a');
+    if(navLink){
+      e.preventDefault();
+      e.stopPropagation();
+      const linkId = navLink.id || '';            // "nav-amulets"
+      const pageId = linkId.replace(/^nav-/, ''); // "amulets"
+      const label  = (navLink.textContent || '').trim();
+      const data = {
+        type: 'le-click',
+        selectors: ['nav-link:' + pageId],  // synthetic selector
+        selector:  'nav-link:' + pageId,
+        label:     'Manage "' + label + '" page',
+        page:      pageId
+      };
+      console.log('[LE-iframe] nav link click → page:', pageId);
+      try { window.parent.postMessage(data, '*'); } catch(err) {}
+      return;
+    }
+
+    const target = e.target.closest('[data-le-hoverable]');
+    if(!target) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Collect this element's selector + all hoverable ancestors' selectors
+    // so the admin can match the most specific one available.
+    const selectors = getEditableSelectors(target);
+    const ownSel = target.getAttribute('data-le-selector') || '';
+    if(ownSel && selectors.indexOf(ownSel) === -1) selectors.unshift(ownSel);
+    const data = {
+      type: 'le-click',
+      selectors: selectors,
+      selector: ownSel,                    // legacy single-selector field
+      label: target.getAttribute('data-le-label') || '',
+      page: target.getAttribute('data-le-product-page') || null
+    };
+    console.log('[LE-iframe] click on:', data);
+    try { window.parent.postMessage(data, '*'); console.log('[LE-iframe] message posted to parent'); } catch(err) { console.error('[LE-iframe] postMessage failed:', err); }
+  }, true);
+
+  // Re-attach when DOM changes (for dynamically rendered content)
+  const obs = new MutationObserver(() => {
+    clearTimeout(window._leAttachT);
+    window._leAttachT = setTimeout(attach, 150);
+  });
+  obs.observe(document.body, {childList:true, subtree:true});
+
+  // Listen for commands from the parent (admin)
+  window.addEventListener('message', function(e){
+    if(!e.data || typeof e.data !== 'object') return;
+    if(e.data.type === 'le-goto' && e.data.page){
+      console.log('[LE-iframe] received goto:', e.data.page);
+      if(typeof goPage === 'function'){
+        goPage(e.data.page);
+        // Scroll to top of preview so the relevant section is visible
+        window.scrollTo({top: 0, behavior: 'smooth'});
+      } else {
+        console.warn('[LE-iframe] goPage() not available');
+      }
+    }
+  });
+
+  // Initial attach + signal ready to parent
+  function ready(){
+    attach();
+    try { window.parent.postMessage({type:'le-ready'}, '*'); console.log('[LE-iframe] ready message sent'); } catch(err) { console.error('[LE-iframe] cannot send ready:', err); }
+  }
+  if(document.readyState === 'complete' || document.readyState === 'interactive'){
+    setTimeout(ready, 100);
+  } else {
+    window.addEventListener('load', ready);
+  }
+})();
+</script>
+
+</body>
+</html>
