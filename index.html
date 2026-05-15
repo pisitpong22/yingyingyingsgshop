@@ -365,10 +365,16 @@
     right:calc(50% - 50vw);
     width:100vw;
     background-size:cover;background-position:center;
+    /* Subtle blur — softens the bg so it doesn't fight with the foreground
+       content but stays clearly recognisable. */
+    filter:blur(4px);
+    /* The blur expands slightly past the edges; scale up + clip via parent
+       overflow:hidden so we don't see a soft border. */
+    transform:scale(1.04);
     opacity:0;transition:opacity .6s;
     z-index:0;
   }
-  .hero-bg.show{opacity:.55}
+  .hero-bg.show{opacity:.5}
   .hero-bg-overlay{
     position:absolute;
     top:0;bottom:0;
