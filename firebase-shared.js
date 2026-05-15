@@ -136,7 +136,17 @@ async function uploadFile(fileOrBlob, pathHint){
 
   // Image optimisation: resize big images + convert to WebP. Anything that
   // isn't an image (or is already small) skips this and uploads unchanged.
-  if(blob.type && blob.type.startsWith('image/') && !blob.type.includes('svg')){
+  //
+  // We also explicitly detect HEIC/HEIF by filename or empty type because
+  // iPhone Safari often gives `blob.type === ''` for HEIC uploads instead
+  // of `image/heic`. Without this check, HEIC files would slip past the
+  // image-detection and upload as raw binary the browser can't display.
+  const looksLikeImage =
+    (blob.type && blob.type.startsWith('image/') && !blob.type.includes('svg')) ||
+    (blob.name && /\.(jpg|jpeg|png|gif|webp|heic|heif|bmp)$/i.test(blob.name)) ||
+    blob.type === ''; // assume image if no MIME — optimiseImage will validate
+
+  if(looksLikeImage){
     try {
       blob = await optimiseImage(blob);
     } catch(err){
@@ -203,18 +213,34 @@ async function optimiseImage(blob){
     (blob.name && /\.(heic|heif)$/i.test(blob.name));
 
   if(isHeic){
-    console.log('[FB] HEIC detected, converting to JPEG…');
+    console.log('[FB] HEIC detected, converting to JPEG…', {
+      type: blob.type,
+      size: blob.size,
+      name: blob.name,
+    });
     try {
-      // Load heic2any from JsDelivr CDN if not already loaded
+      // Load heic2any from CDN if not already loaded. Try jsDelivr first,
+      // fall back to unpkg if it fails (rare network issue).
       if(!window.heic2any){
-        await new Promise((res, rej) => {
+        console.log('[FB] loading heic2any library…');
+        const tryLoad = (src) => new Promise((res, rej) => {
           const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
-          s.onload = res;
-          s.onerror = rej;
+          s.src = src;
+          s.onload = () => { console.log('[FB] heic2any loaded from', src); res(); };
+          s.onerror = () => rej(new Error('failed to load ' + src));
           document.head.appendChild(s);
         });
+        try {
+          await tryLoad('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js');
+        } catch(e){
+          console.warn('[FB] jsDelivr failed, trying unpkg…');
+          await tryLoad('https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js');
+        }
+        if(!window.heic2any){
+          throw new Error('heic2any loaded but window.heic2any is undefined');
+        }
       }
+      console.log('[FB] calling heic2any…');
       const converted = await window.heic2any({
         blob: blob,
         toType: 'image/jpeg',
@@ -222,13 +248,12 @@ async function optimiseImage(blob){
       });
       // heic2any can return Blob or Blob[]; coalesce to single Blob
       blob = Array.isArray(converted) ? converted[0] : converted;
-      console.log('[FB] HEIC → JPEG conversion done, size:', blob.size);
+      console.log('[FB] HEIC → JPEG conversion done, size:', blob.size, 'type:', blob.type);
     } catch(e){
       console.error('[FB] HEIC conversion failed:', e);
       throw new Error(
-        'HEIC files cannot be converted. Please use a JPEG/PNG image instead, ' +
-        'or take screenshots on your iPhone with the camera set to "Most Compatible" ' +
-        '(Settings → Camera → Formats → Most Compatible).'
+        'HEIC conversion failed: ' + (e.message || e) +
+        '. Please check internet connection or use a JPEG/PNG image instead.'
       );
     }
   }
