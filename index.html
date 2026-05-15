@@ -368,7 +368,7 @@
     opacity:0;transition:opacity .6s;
     z-index:0;
   }
-  .hero-bg.show{opacity:.35}
+  .hero-bg.show{opacity:.55}
   .hero-bg-overlay{
     position:absolute;
     top:0;bottom:0;
@@ -419,23 +419,16 @@
   }
 
   /* ─── HAS-HERO-IMAGE MODE ───
-     When admin uploads a still photo as hero, we kill ALL overlays and
-     gradient layers that would tint or darken the centerpiece, and give
-     the image a clean studio-style backdrop (deep neutral grey, just like
-     a product-photo lightroom). This isolates the photo entirely from
-     the rest of the site's gold/cream theme so its colours come through
-     exactly as uploaded. */
+     When admin uploads a still photo as hero, we still want to show
+     the admin-set background image behind it (if any) — but kill the
+     gold-theme decorative overlays (radial vignettes, gradients) that
+     would tint or darken everything.
+     If no background image is set, the .hero-bg div stays empty and
+     transparent — falling back to the page's body background. */
   .hero.has-hero-image::before,
   .hero.has-hero-image::after{display:none !important}
-  .hero.has-hero-image .hero-bg-overlay{display:none !important}
-  .hero.has-hero-image .hero-bg{
-    /* Replace the bg image (if any) with a clean studio gradient */
-    background-image:radial-gradient(ellipse at center,
-      #3a3a42 0%,
-      #25252a 45%,
-      #15151a 100%) !important;
-    opacity:1 !important;
-  }
+  /* Keep the overlay enabled so text stays readable over background photos,
+     but allow the bg image itself to show. */
   /* 3D mode: keep transparent — let the hero background show through.
      The 3D model gets its shine from the environment map (set in JS),
      which is invisible — only reflects onto the polished gold surface. */
