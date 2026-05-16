@@ -3572,55 +3572,6 @@ window.addEventListener('appinstalled',()=>{
       if(enableScrollRot) scrollOffset = window.scrollY;
     }, {passive: true});
 
-    // ─── GYROSCOPE TILT — mobile only ───
-    // Listens for device orientation events and tilts the 3D model.
-    // iOS 13+ requires permission, which MUST be requested from a direct
-    // user gesture. We listen for the first touch anywhere on the page
-    // and request permission then — same effect as a button, but no UI.
-    let gyroX = 0, gyroY = 0;
-    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-
-    const onDeviceOrientation = (e) => {
-      const beta  = (e.beta  || 0);
-      const gamma = (e.gamma || 0);
-      gyroY = Math.max(-0.4, Math.min(0.4, gamma * 0.012));
-      gyroX = Math.max(-0.25, Math.min(0.25, (beta - 45) * 0.008));
-    };
-
-    if(isTouch){
-      const iosNeedsPermission =
-        typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission === 'function';
-
-      if(iosNeedsPermission){
-        // iOS — request permission on first user interaction anywhere.
-        // This produces the same iOS permission popup, just triggered
-        // automatically when the user first touches the page (which is
-        // how they're already interacting anyway).
-        const requestGyroNow = () => {
-          DeviceOrientationEvent.requestPermission()
-            .then(state => {
-              if(state === 'granted'){
-                window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
-                console.log('[phra3d] gyro permission granted');
-              } else {
-                console.log('[phra3d] gyro permission denied:', state);
-              }
-            })
-            .catch(err => console.warn('[phra3d] gyro permission request failed:', err));
-          // Remove all listeners — request only once
-          document.removeEventListener('touchend', requestGyroNow);
-          document.removeEventListener('click', requestGyroNow);
-        };
-        // First touch on ANY element triggers the request.
-        document.addEventListener('touchend', requestGyroNow, {once: true, passive: true});
-        document.addEventListener('click', requestGyroNow, {once: true});
-      } else {
-        // Android / non-iOS-13+ — listen directly, no permission needed
-        window.addEventListener('deviceorientation', onDeviceOrientation, {passive: true});
-      }
-    }
-
     // ─── VISIBILITY-AWARE RENDERING (performance) ───
     // Pause the animation when the canvas scrolls off-screen, when the
     // tab is hidden, or when the user is on a low-power device. This is
@@ -3647,26 +3598,27 @@ window.addEventListener('appinstalled',()=>{
       curRotY += (targetRotY - curRotY) * 0.05;
       curRotX += (targetRotX - curRotX) * 0.05;
       curFlip += (flipped - curFlip) * 0.06;
-      const idleY = Math.sin(t * 0.35) * 0.06;
-      const idleX = Math.cos(t * 0.45) * 0.03;
+      // ─── Idle floating animation ───
+      // Gentle horizontal sway (head-turning), slight pitch oscillation,
+      // and a vertical "breathing" bob. These give the model a relaxed,
+      // floating-in-space feel without needing user input.
+      const idleY = Math.sin(t * 0.4) * 0.18;   // sway left-right ~10°
+      const idleX = Math.cos(t * 0.5) * 0.04;   // gentle nod
       const scrollRot = enableScrollRot ? (scrollOffset * 0.0015) : 0;
       if(phraGroup){
-        // Limit final Y rotation to ±0.8 rad (~±45°) so the model only
-        // shows the front 90° arc. Trellis-generated 3D models often have
-        // incomplete or stretched back faces that look broken when
-        // exposed — clamping rotation hides those flaws while still
-        // letting the user inspect the model from a flattering angle.
+        // Clamp Y rotation to ±0.8 rad (~±45°) so only the front 90° arc
+        // is visible. Trellis-generated 3D models often have broken back
+        // faces — clamping prevents users from seeing those flaws.
         const maxYaw = 0.8;
-        let yaw = curRotY + idleY + scrollRot + curFlip + gyroY;
+        let yaw = curRotY + idleY + scrollRot + curFlip;
         yaw = Math.max(-maxYaw, Math.min(maxYaw, yaw));
-        // X rotation also clamped — prevents seeing the top of the head
-        // or the underside of the base.
         const maxPitch = 0.3;
-        let pitch = curRotX + idleX + gyroX;
+        let pitch = curRotX + idleX;
         pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
         phraGroup.rotation.y = yaw;
         phraGroup.rotation.x = pitch;
-        phraGroup.position.y = Math.sin(t * 1.1) * 0.1;
+        // Floating bob — vertical motion synced to a slow breath rate
+        phraGroup.position.y = Math.sin(t * 0.9) * 0.12;
       }
       renderer.render(scene, camera);
     }
