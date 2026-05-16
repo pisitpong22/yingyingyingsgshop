@@ -2136,7 +2136,14 @@ function goPage(name){
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
-  if(name==='home')applySettings();
+  if(name==='home'){
+    applySettings();
+    // Force-resume the 3D render loop — IntersectionObserver doesn't
+    // re-check immediately when the page becomes visible again.
+    if(typeof window._resumePhraRender === 'function'){
+      window._resumePhraRender();
+    }
+  }
 }
 
 // ── CONTACT CLICK ── opens URL if set, otherwise shows toast
@@ -3064,6 +3071,12 @@ window.addEventListener('appinstalled',()=>{
     canvas = canvas || document.getElementById('phra3d');
     if(!canvas || !window.THREE) return;
 
+    // Wake the render loop in case we paused it on a previous page
+    // (IntersectionObserver may still think the canvas is off-screen).
+    if(typeof window._resumePhraRender === 'function'){
+      window._resumePhraRender();
+    }
+
     const wantGlb    = !!window.PHRA_GLB;
     const wantTablet = !wantGlb && !!(window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG);
     const newMode    = wantGlb ? 'glb' : (wantTablet ? 'tablet' : '');
@@ -3586,6 +3599,12 @@ window.addEventListener('appinstalled',()=>{
     document.addEventListener('visibilitychange', () => {
       canvasVisible = !document.hidden && canvasVisible;
     });
+    // Expose a way to force canvasVisible=true. When the user navigates
+    // away from the home page and comes back, the IntersectionObserver
+    // had already marked the canvas as off-screen — but on return it can
+    // take 50-200ms before the observer re-checks, during which the model
+    // appears to "vanish". Calling _resumeRender() bypasses that wait.
+    window._resumePhraRender = () => { canvasVisible = true; };
 
     clock = new THREE.Clock();
     let curRotY = 0, curRotX = 0, curFlip = 0;
