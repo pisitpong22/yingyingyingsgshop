@@ -608,6 +608,43 @@
     margin-bottom:20px;
   }
 
+  /* ─── MATERIAL PRESET PICKER ───
+     Used on Hero panel — admin chooses a material/colour preset for the
+     3D model. Visual radio cards with a colour swatch preview. */
+  .material-options{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:10px;
+  }
+  .material-opt{cursor:pointer;display:block}
+  .material-opt input{position:absolute;opacity:0;pointer-events:none}
+  .material-opt-body{
+    background:#fff;
+    border:2px solid rgba(201,168,76,.25);
+    border-radius:12px;padding:12px;
+    transition:all .2s;height:100%;
+    text-align:center;
+  }
+  .material-opt:hover .material-opt-body{border-color:var(--gold);transform:translateY(-1px)}
+  .material-opt input:checked + .material-opt-body{
+    border-color:var(--gold);
+    background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(201,168,76,.06) 100%);
+    box-shadow:0 4px 16px rgba(201,168,76,.18);
+  }
+  .material-opt-swatch{
+    width:60px;height:60px;border-radius:50%;
+    background:var(--swatch, #ccc);
+    margin:2px auto 8px;
+    box-shadow:0 4px 12px rgba(0,0,0,.15), inset 0 2px 8px rgba(255,255,255,.2);
+    border:1px solid rgba(0,0,0,.08);
+  }
+  .material-opt-name{font-weight:700;font-size:13px;margin-bottom:3px;color:var(--text)}
+  .material-opt-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+
+  @media(max-width:680px){
+    .material-options{grid-template-columns:repeat(2,1fr)}
+    .material-opt-swatch{width:48px;height:48px}
+  }
+
   /* ─── ROLE-BASED UI ───
      Used by Team Management panel + applied across the app to hide
      actions that the current role can't perform. */
@@ -1225,6 +1262,57 @@
             <div class="u-text" data-en="Click or drag a .glb / .gltf file" data-th="คลิกหรือลากไฟล์ .glb / .gltf">Click or drag a .glb / .gltf file</div>
           </div>
           <div id="h_phra_glb_info" style="margin-top:12px"></div>
+
+          <!-- Material preset picker — tints the rendered 3D model -->
+          <div style="margin-top:18px">
+            <label class="fl" style="display:block;margin-bottom:8px" data-en="🎨 Material Style" data-th="🎨 สไตล์เนื้อพระ">🎨 Material Style</label>
+            <div class="form-section-desc" style="margin-bottom:10px" data-en="Choose the material that best matches your amulet. Gold for shiny gilded statues, Stone for พระผง (clay tablets), etc." data-th="เลือกเนื้อพระให้ตรงกับองค์จริง ทอง สำหรับพระทอง / หิน สำหรับพระผง / สำริด ฯลฯ">
+              Choose the material that matches your amulet.
+            </div>
+            <div class="material-options">
+              <label class="material-opt">
+                <input type="radio" name="h_phra_material" value="gold">
+                <div class="material-opt-body" style="--swatch:linear-gradient(135deg,#e8c96a,#c9a84c,#8b6914)">
+                  <div class="material-opt-swatch"></div>
+                  <div class="material-opt-name" data-en="✨ Gold" data-th="✨ ทอง">✨ Gold</div>
+                  <div class="material-opt-desc" data-en="Polished, bright, shiny" data-th="ขัดเงา สว่าง แวววาว">Polished, bright, shiny</div>
+                </div>
+              </label>
+              <label class="material-opt">
+                <input type="radio" name="h_phra_material" value="antique-gold">
+                <div class="material-opt-body" style="--swatch:linear-gradient(135deg,#a8814a,#7a5e30,#4f3c1c)">
+                  <div class="material-opt-swatch"></div>
+                  <div class="material-opt-name" data-en="🏺 Antique Gold" data-th="🏺 ทองเก่า">🏺 Antique Gold</div>
+                  <div class="material-opt-desc" data-en="Warm, aged, less shine" data-th="อบอุ่น เก่า เงาน้อย">Warm, aged, less shine</div>
+                </div>
+              </label>
+              <label class="material-opt">
+                <input type="radio" name="h_phra_material" value="bronze">
+                <div class="material-opt-body" style="--swatch:linear-gradient(135deg,#7a5230,#4a2f15,#2e1d0a)">
+                  <div class="material-opt-swatch"></div>
+                  <div class="material-opt-name" data-en="🔔 Bronze" data-th="🔔 สำริด">🔔 Bronze</div>
+                  <div class="material-opt-desc" data-en="Dark, metallic" data-th="เข้ม โลหะ">Dark, metallic</div>
+                </div>
+              </label>
+              <label class="material-opt">
+                <input type="radio" name="h_phra_material" value="stone">
+                <div class="material-opt-body" style="--swatch:linear-gradient(135deg,#ede4d0,#c9bea7,#9c907a)">
+                  <div class="material-opt-swatch"></div>
+                  <div class="material-opt-name" data-en="🪨 Stone" data-th="🪨 พระผง">🪨 Stone</div>
+                  <div class="material-opt-desc" data-en="Matte, off-white (clay tablets)" data-th="ด้าน สีครีม (เนื้อผง)">Matte, off-white (clay tablets)</div>
+                </div>
+              </label>
+              <label class="material-opt">
+                <input type="radio" name="h_phra_material" value="natural">
+                <div class="material-opt-body" style="--swatch:linear-gradient(135deg,#888,#666,#444)">
+                  <div class="material-opt-swatch"></div>
+                  <div class="material-opt-name" data-en="🎨 Natural" data-th="🎨 ธรรมชาติ">🎨 Natural</div>
+                  <div class="material-opt-desc" data-en="No tint — use original colours" data-th="ไม่ปรับสี — ใช้สีจากไฟล์">No tint — original colours</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div style="margin-top:14px;padding:12px 14px;background:rgba(201,168,76,.08);border-left:3px solid var(--gold);border-radius:6px;font-size:12.5px;color:var(--text-muted);line-height:1.7">
             <strong style="color:var(--gold-dark)" data-en="📐 Tips for good 3D models:" data-th="📐 เคล็ดลับโมเดล 3D ที่ดี:">📐 Tips for good 3D models:</strong>
             <ul style="margin:6px 0 0 18px;padding:0">
@@ -2949,6 +3037,10 @@ function loadHero(){
   _tempGlbName = '';
   _tempGlbSize = _tempGlb ? Math.round((_tempGlb.length * 3/4) / 1024) : 0;
   renderGlbInfo();
+  // Set material preset radio
+  const mat = h.phra3dMaterial || 'gold';
+  const matRadio = document.querySelector(`input[name="h_phra_material"][value="${mat}"]`);
+  if(matRadio) matRadio.checked = true;
   renderHeroBtns(h.buttons||[]);
   renderHeroStats(h.stats||[]);
 }
@@ -3127,6 +3219,9 @@ function saveHero(){
   db.settings.hero.phra3dGlb=_tempGlb||'';
   db.settings.hero.phra3dFront=(captureImgs('h_phra_front')[0]||'');
   db.settings.hero.phra3dBack=(captureImgs('h_phra_back')[0]||'');
+  // Material preset for the 3D model
+  const matInput = document.querySelector('input[name="h_phra_material"]:checked');
+  db.settings.hero.phra3dMaterial = matInput ? matInput.value : 'gold';
   db.settings.hero.eyebrow=document.getElementById('h_eyebrow').value;
   db.settings.hero.titleHighlight=document.getElementById('h_titleHL').value;
   db.settings.hero.titleRest=document.getElementById('h_titleRest').value;

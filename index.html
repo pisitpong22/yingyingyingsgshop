@@ -1611,6 +1611,14 @@ function defaultSettings(){
       phra3dGlb:'',
       phra3dFront:'',
       phra3dBack:'',
+      // Material preset for the 3D model — controls colour, lighting,
+      // and roughness. Five presets that suit different amulet types:
+      //   'gold'   — polished gilded buddha (bright, shiny)
+      //   'antique-gold' — aged warm gold (less shiny, deeper colour)
+      //   'bronze' — dark bronze / brass
+      //   'stone'  — limestone / weathered relic (matte, off-white)
+      //   'natural' — neutral, no tint (use original texture as-is)
+      phra3dMaterial:'gold',
       eyebrow:'✦ CERTIFIED GENUINE · EVERY PIECE ✦',
       titleHighlight:'Yingyingying',
       titleRest:'Amulet',
@@ -1714,6 +1722,7 @@ function applyDbMigrations(d){
   if(d.settings.hero && d.settings.hero.phra3dGlb===undefined)d.settings.hero.phra3dGlb='';
   if(d.settings.hero && d.settings.hero.phra3dFront===undefined)d.settings.hero.phra3dFront='';
   if(d.settings.hero && d.settings.hero.phra3dBack===undefined)d.settings.hero.phra3dBack='';
+  if(d.settings.hero && d.settings.hero.phra3dMaterial===undefined)d.settings.hero.phra3dMaterial='gold';
   if(d.settings.hero && d.settings.hero.heroImage===undefined)d.settings.hero.heroImage='';
   const def=defaultSettings();
   if(!d.settings.payment)d.settings.payment=def.payment;
@@ -1892,6 +1901,7 @@ function applySettings(){
   window.PHRA_GLB        = s.hero.phra3dGlb || '';
   window.PHRA_FRONT_IMG  = s.hero.phra3dFront || '';
   window.PHRA_BACK_IMG   = s.hero.phra3dBack  || '';
+  window.PHRA_MATERIAL_PRESET = s.hero.phra3dMaterial || 'gold';
   const heroImage = s.hero.heroImage || '';
   const hero3dBlock = document.querySelector('.hero-3d');
   const heroSection = document.querySelector('.hero');
@@ -3263,31 +3273,70 @@ window.addEventListener('appinstalled',()=>{
       // must KEEP these textures, otherwise the model becomes a single
       // colour and loses all detail.
       //
-      // What we tune:
-      //   • mat.color → warm gold tint (1.0, 0.78, 0.42) — acts as a
-      //     MULTIPLIER on the texture. White texture pixels become gold;
-      //     red cushion pixels become a warmer red-gold (still distinct).
-      //   • metalness → 1.0  (full metal — reflects light, doesn't absorb)
-      //   • roughness → 0.32 (polished, not mirror — soft highlights)
-      //   • envMapIntensity → 1.0 (strong environment reflections)
+      // ─── Material preset ───
+      // Admin chooses a preset per their amulet type:
       //
-      // What we leave alone:
-      //   • mat.map (baseColor texture — has the actual surface detail!)
-      //   • All other maps (normal, AO, emissive, etc.)
+      //   gold          — polished bright gold (Buddha statues with leaf)
+      //   antique-gold  — warm aged gold, less shiny (vintage pieces)
+      //   bronze        — dark bronze / brass (some Buddha images)
+      //   stone         — matte off-white limestone (พระผง = clay tablets)
+      //   natural       — pass through texture untouched (let model speak)
+      //
+      // Each preset defines:
+      //   - color tint multiplier (acts on top of base texture)
+      //   - metalness (0 = matte / 1 = mirror)
+      //   - roughness (0 = polished / 1 = chalk)
+      //   - envMapIntensity (how much the env reflects)
+      //
+      // What we leave alone in ALL presets:
+      //   - The baseColor texture (preserves all the surface detail)
+      //   - Normal/AO/emissive maps
+      const PRESETS = {
+        'gold': {
+          color: [0.95, 0.62, 0.20],
+          metalness: 1.0,
+          roughness: 0.25,
+          envIntensity: 1.8,
+        },
+        'antique-gold': {
+          color: [0.78, 0.55, 0.25],
+          metalness: 0.85,
+          roughness: 0.55,
+          envIntensity: 1.0,
+        },
+        'bronze': {
+          color: [0.55, 0.35, 0.15],
+          metalness: 0.9,
+          roughness: 0.45,
+          envIntensity: 1.2,
+        },
+        'stone': {
+          color: [0.92, 0.88, 0.80],
+          metalness: 0.0,
+          roughness: 0.92,
+          envIntensity: 0.3,
+        },
+        'natural': {
+          color: null,            // don't tint
+          metalness: null,        // keep mesh values
+          roughness: null,
+          envIntensity: 0.7,
+        },
+      };
+      const presetName = (window.PHRA_MATERIAL_PRESET || 'gold');
+      const preset = PRESETS[presetName] || PRESETS.gold;
+      console.log('[phra3d] applying material preset:', presetName);
+
       model.traverse(obj => {
         if(obj.isMesh && obj.material){
           const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
           mats.forEach(mat => {
             if(mat.isMeshStandardMaterial || mat.isMeshPhysicalMaterial){
-              // Studio environment so metal reflects something
               if(scene.environment) mat.envMap = scene.environment;
-              mat.envMapIntensity = 1.8;  // strong reflections = gold shine
-              // Warm gold tint — deeper amber gold for that "burnished
-              // leaf" look. Texture × this multiplier = rich gold.
-              mat.color.setRGB(0.95, 0.62, 0.20);
-              // Force polished-metal physical properties.
-              mat.metalness = 1.0;
-              mat.roughness = 0.25;
+              if(preset.envIntensity != null) mat.envMapIntensity = preset.envIntensity;
+              if(preset.color) mat.color.setRGB(...preset.color);
+              if(preset.metalness != null) mat.metalness = preset.metalness;
+              if(preset.roughness != null) mat.roughness = preset.roughness;
               mat.needsUpdate = true;
             }
           });
@@ -3602,8 +3651,21 @@ window.addEventListener('appinstalled',()=>{
       const idleX = Math.cos(t * 0.45) * 0.03;
       const scrollRot = enableScrollRot ? (scrollOffset * 0.0015) : 0;
       if(phraGroup){
-        phraGroup.rotation.y = curRotY + idleY + scrollRot + curFlip + gyroY;
-        phraGroup.rotation.x = curRotX + idleX + gyroX;
+        // Limit final Y rotation to ±0.8 rad (~±45°) so the model only
+        // shows the front 90° arc. Trellis-generated 3D models often have
+        // incomplete or stretched back faces that look broken when
+        // exposed — clamping rotation hides those flaws while still
+        // letting the user inspect the model from a flattering angle.
+        const maxYaw = 0.8;
+        let yaw = curRotY + idleY + scrollRot + curFlip + gyroY;
+        yaw = Math.max(-maxYaw, Math.min(maxYaw, yaw));
+        // X rotation also clamped — prevents seeing the top of the head
+        // or the underside of the base.
+        const maxPitch = 0.3;
+        let pitch = curRotX + idleX + gyroX;
+        pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+        phraGroup.rotation.y = yaw;
+        phraGroup.rotation.x = pitch;
         phraGroup.position.y = Math.sin(t * 1.1) * 0.1;
       }
       renderer.render(scene, camera);
