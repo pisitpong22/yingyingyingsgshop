@@ -1814,7 +1814,7 @@ function rewriteImageUrls(d){
   // Casing types — banner image + nested variants
   (d.casingTypes || []).forEach(ty => {
     ty.bannerImg = rw(ty.bannerImg);
-    ty.sampleImgs = arrRw(ty.sampleImgs);
+    ty.sampleImgs = arrRw(ty.sampleImgs) || [];
     (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
   });
 
