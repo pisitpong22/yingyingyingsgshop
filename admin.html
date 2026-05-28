@@ -2653,7 +2653,7 @@ function rewriteImageUrls(d){
 
   (d.casingTypes || []).forEach(ty => {
     ty.bannerImg = rw(ty.bannerImg);
-    ty.sampleImgs = arrRw(ty.sampleImgs);
+    ty.sampleImgs = arrRw(ty.sampleImgs) || [];
     (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
   });
 
@@ -2671,10 +2671,29 @@ function getDB(){
   return applyDbMigrations(d);
 }
 
+// Recursively strip undefined values (and undefined array items) so Firestore
+// never receives an unsupported `undefined` field. Firebase rejects the whole
+// write if any nested field is undefined, so we clean the payload here as a
+// final safety net regardless of where the undefined came from.
+function deepScrubUndefined(val){
+  if(Array.isArray(val)){
+    return val.filter(v => v !== undefined).map(deepScrubUndefined);
+  }
+  if(val && typeof val === 'object'){
+    const out = {};
+    for(const k in val){
+      if(val[k] === undefined) continue;
+      out[k] = deepScrubUndefined(val[k]);
+    }
+    return out;
+  }
+  return val;
+}
+
 // Save to Firestore. We don't await here so callers can keep using the
 // previous synchronous-looking API; errors are logged and shown as a toast.
 function saveDB(db){
-  FB.saveDB(db).catch(err => {
+  FB.saveDB(deepScrubUndefined(db)).catch(err => {
     console.error('saveDB failed:', err);
     showToast(lang === 'th' ? 'บันทึกล้มเหลว: ' + (err.message || 'unknown') : 'Save failed: ' + (err.message || 'unknown'));
   });
