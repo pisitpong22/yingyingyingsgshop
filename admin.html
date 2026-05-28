@@ -2025,6 +2025,15 @@
         </div>
         <div class="prev-grid" id="ft_banner_p"></div>
       </div>
+      <div class="fg full">
+        <label class="fl" data-en="Sample Images (for types with no separate styles)" data-th="รูปตัวอย่าง (สำหรับประเภทที่ไม่มีแบบแยก)">Sample Images (for types with no separate styles)</label>
+        <div class="form-section-desc" style="margin:-4px 0 8px" data-en="Upload sample photos directly here when this type doesn't need separate styles. Visitors will see these right away." data-th="อัปโหลดรูปตัวอย่างที่นี่ได้เลยเมื่อประเภทนี้ไม่ต้องแยกแบบ ลูกค้าจะเห็นรูปทันที">Upload sample photos directly here when this type doesn't need separate styles. Visitors will see these right away.</div>
+        <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'ft_samples')">
+          <input type="file" multiple accept="image/*" onchange="handleImgs(event,'ft_samples')">
+          <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag sample images here" data-th="คลิกหรือลากรูปตัวอย่างมาวางที่นี่">Click or drag sample images here</div>
+        </div>
+        <div class="prev-grid" id="ft_samples_p"></div>
+      </div>
     </div>
     <div style="margin-top:22px;display:flex;gap:12px">
       <button class="btn-gold" onclick="saveType()" data-en="✅ Save Type" data-th="✅ บันทึกประเภท">✅ Save Type</button>
@@ -2644,6 +2653,7 @@ function rewriteImageUrls(d){
 
   (d.casingTypes || []).forEach(ty => {
     ty.bannerImg = rw(ty.bannerImg);
+    ty.sampleImgs = arrRw(ty.sampleImgs);
     (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
   });
 
@@ -4040,6 +4050,8 @@ function openTypeForm(typeId){
   rteSetHtml('ft_desc', ty ? (ty.desc || '') : '');
   tempImgs['ft_banner']=ty&&ty.bannerImg?[ty.bannerImg]:[];
   renderPrev('ft_banner');
+  tempImgs['ft_samples']=ty&&ty.sampleImgs?[...ty.sampleImgs]:[];
+  renderPrev('ft_samples');
   document.getElementById('typeModal').classList.add('open');
 }
 
@@ -4051,9 +4063,9 @@ function saveType(){
   const db=getDB();if(!db.casingTypes)db.casingTypes=[];
   if(curEditTypeId){
     const ty=db.casingTypes.find(t=>t.id===curEditTypeId);
-    if(ty){ty.name=name;ty.priceRange=price;ty.desc=rteGetHtml('ft_desc');ty.bannerImg=(captureImgs('ft_banner')[0]||'');delete ty.price;}
+    if(ty){ty.name=name;ty.priceRange=price;ty.desc=rteGetHtml('ft_desc');ty.bannerImg=(captureImgs('ft_banner')[0]||'');ty.sampleImgs=captureImgs('ft_samples');delete ty.price;}
   } else {
-    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),variants:[]});
+    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[]});
   }
   saveDB(db);tempImgs={};closeModal('typeModal');showToast(tr('saved'));loadCasingTypes();loadDash();
 }

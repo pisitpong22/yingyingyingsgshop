@@ -1814,6 +1814,7 @@ function rewriteImageUrls(d){
   // Casing types — banner image + nested variants
   (d.casingTypes || []).forEach(ty => {
     ty.bannerImg = rw(ty.bannerImg);
+    ty.sampleImgs = arrRw(ty.sampleImgs);
     (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
   });
 
@@ -2533,18 +2534,27 @@ function renderCasingTypes(){
   const bannerify = (url) => url;
   grid.innerHTML=types.map(ty=>{
     const count=(ty.variants||[]).length;
+    const sampleCount=(ty.sampleImgs||[]).length;
+    // Types with no styles but with sample images: show sample count + sample label
+    const useSamples = count===0 && sampleCount>0;
+    const badge = useSamples
+      ? `${sampleCount} ${sampleCount===1?(lang==='th'?'ตัวอย่าง':'sample'):(lang==='th'?'ตัวอย่าง':'samples')}`
+      : `${count} ${count===1?'style':'styles'}`;
+    const cta = useSamples
+      ? (lang==='th'?'ดูตัวอย่าง →':'View Samples →')
+      : (lang==='th'?'ดูแบบ →':'View Styles →');
     return `
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-banner">
         ${ty.bannerImg?`<img loading="lazy" decoding="async" src="${bannerify(ty.bannerImg)}">`:`<span class="ftype-icon-bg">🪬</span>`}
-        <div class="ftype-count">${count} ${count===1?'style':'styles'}</div>
+        <div class="ftype-count">${badge}</div>
       </div>
       <div class="ftype-body">
         <div class="ftype-name">${ty.name}</div>
         <div class="ftype-desc">${ty.desc || ''}</div>
         <div class="ftype-cta">
           ${ty.priceRange?`<div class="ftype-from">Price<br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from">Price<br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
-          <div class="ftype-arrow">View Styles →</div>
+          <div class="ftype-arrow">${cta}</div>
         </div>
       </div>
     </div>`;
@@ -2578,7 +2588,21 @@ function renderVariants(typeId){
   }
   const vars=ty.variants||[];
   const grid=document.getElementById('vGrid');
-  if(!vars.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No styles in this type yet.</div>`;return;}
+  if(!vars.length){
+    // No separate styles — show the type's own sample images directly so
+    // visitors can preview right away without the admin needing to create a style.
+    const samples=(ty.sampleImgs&&ty.sampleImgs.length)?ty.sampleImgs : (ty.bannerImg?[ty.bannerImg]:[]);
+    if(samples.length){
+      window._lbImages=samples;
+      grid.innerHTML=samples.map((img,i)=>`
+        <div class="var-card" onclick="openLightbox(${i})">
+          <div class="var-img"><img loading="lazy" decoding="async" src="${img}"></div>
+        </div>`).join('');
+    } else {
+      grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'ยังไม่มีตัวอย่างสำหรับประเภทนี้':'No samples for this type yet.'}</div>`;
+    }
+    return;
+  }
   // Direct URLs — see note in renderCasingTypes about why no resize.
   const thumbify = (url) => url;
   grid.innerHTML=vars.map(v=>`
