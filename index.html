@@ -1003,6 +1003,27 @@
 
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;padding:20px}
   .modal-overlay.open{display:flex}
+  /* Review submission form */
+  .rf-field{margin-bottom:18px}
+  .rf-label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px}
+  .rf-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);box-sizing:border-box;resize:vertical}
+  .rf-input:focus{outline:none;border-color:var(--gold)}
+  .rf-stars{display:flex;gap:6px;font-size:32px;line-height:1;cursor:pointer}
+  .rf-stars span{color:var(--gold);transition:transform .12s}
+  .rf-stars span:hover{transform:scale(1.15)}
+  .rf-upload{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;color:var(--text-muted)}
+  .rf-upload:hover{border-color:var(--gold);background:rgba(201,168,76,.05)}
+  .rf-upload-inner{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px}
+  .rf-previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .rf-prev{position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#2d1e06}
+  .rf-prev img{width:100%;height:100%;object-fit:cover}
+  .rf-prev.loading{display:flex;align-items:center;justify-content:center}
+  .rf-prev-spin{width:22px;height:22px;border:3px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:rfspin .7s linear infinite}
+  @keyframes rfspin{to{transform:rotate(360deg)}}
+  .rf-prev-del{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
+  .rf-checkbox{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer;color:var(--text)}
+  .rf-checkbox input{width:17px;height:17px;accent-color:var(--gold);cursor:pointer}
+  .rf-note{font-size:12px;color:var(--text-muted);text-align:right;margin-top:10px}
   .modal{background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);-webkit-backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid var(--glass-border);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.18),var(--glass-shadow-inner)}
   @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
   .modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);gap:16px}
@@ -1548,7 +1569,12 @@
 <!-- REVIEWS -->
 <div id="page-reviews" class="page">
   <div class="sec-head"><h2 id="revTitle"></h2><div class="gline"></div><p id="revSub"></p></div>
-  <div class="content"><div class="rev-grid" id="revGrid"></div></div>
+  <div class="content">
+    <div style="text-align:center;margin-bottom:28px">
+      <button class="btn-gold" onclick="openReviewForm()" data-en="✍️ Write a Review" data-th="✍️ เขียนรีวิว">✍️ Write a Review</button>
+    </div>
+    <div class="rev-grid" id="revGrid"></div>
+  </div>
 </div>
 
 <!-- PAYMENT -->
@@ -1563,6 +1589,62 @@
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
   <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- REVIEW SUBMISSION MODAL -->
+<div class="modal-overlay" id="reviewModal" onclick="if(event.target===this)closeReviewForm()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
+      <div class="modal-title-wrap">
+        <div class="modal-title" data-en="Write a Review" data-th="เขียนรีวิว">Write a Review</div>
+      </div>
+      <button class="modal-close" onclick="closeReviewForm()">✕</button>
+    </div>
+
+    <div class="rf-body">
+      <!-- Rating -->
+      <div class="rf-field">
+        <label class="rf-label" data-en="Your rating" data-th="ให้คะแนน">Your rating</label>
+        <div class="rf-stars" id="rfStars">
+          <span data-v="1">☆</span><span data-v="2">☆</span><span data-v="3">☆</span><span data-v="4">☆</span><span data-v="5">☆</span>
+        </div>
+      </div>
+
+      <!-- Review text -->
+      <div class="rf-field">
+        <label class="rf-label" data-en="Your review" data-th="ความคิดเห็นของคุณ">Your review</label>
+        <textarea id="rfText" class="rf-input" rows="4" data-ph-en="Tell others about your experience…" data-ph-th="เล่าประสบการณ์ของคุณให้คนอื่นฟัง…"></textarea>
+      </div>
+
+      <!-- Photos -->
+      <div class="rf-field">
+        <label class="rf-label" data-en="Photos of your amulet (optional)" data-th="รูปพระเครื่องที่เช่า (ไม่บังคับ)">Photos of your amulet (optional)</label>
+        <div class="rf-upload" id="rfUploadZone" onclick="document.getElementById('rfFile').click()">
+          <input type="file" id="rfFile" accept="image/*" multiple style="display:none" onchange="rfHandleFiles(event)">
+          <div class="rf-upload-inner">
+            <div style="font-size:26px">📷</div>
+            <div data-en="Tap to add photos" data-th="แตะเพื่อเพิ่มรูป">Tap to add photos</div>
+          </div>
+        </div>
+        <div class="rf-previews" id="rfPreviews"></div>
+      </div>
+
+      <!-- Name + anonymous -->
+      <div class="rf-field">
+        <label class="rf-checkbox">
+          <input type="checkbox" id="rfAnon" checked onchange="rfToggleAnon()">
+          <span data-en="Post anonymously (don't show my name)" data-th="ไม่ลงชื่อ (ไม่แสดงชื่อของฉัน)">Post anonymously (don't show my name)</span>
+        </label>
+        <input type="text" id="rfName" class="rf-input" style="display:none;margin-top:10px" maxlength="80" data-ph-en="Your name" data-ph-th="ชื่อของคุณ">
+      </div>
+
+      <div class="modal-actions" style="margin-top:8px;display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap">
+        <button class="btn-ol" onclick="closeReviewForm()" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+        <button class="btn-gold" id="rfSubmitBtn" onclick="submitCustomerReview()" data-en="Submit Review" data-th="ส่งรีวิว">Submit Review</button>
+      </div>
+      <p class="rf-note" data-en="Your review will appear after our team approves it." data-th="รีวิวของคุณจะแสดงหลังจากทีมงานอนุมัติ">Your review will appear after our team approves it.</p>
+    </div>
+  </div>
 </div>
 
 <!-- LIGHTBOX -->
@@ -2377,8 +2459,11 @@ function renderReviews(){
   const db=getDB();const r=db.reviews||[];const s=db.settings.reviews||{};
   document.getElementById('revTitle').textContent=s.title||'🙏 Reviews';
   document.getElementById('revSub').textContent=s.sub||'';
+  // Localise the "Write a Review" trigger button.
+  const trigger = document.querySelector('#page-reviews .btn-gold[data-en][data-th]');
+  if(trigger) trigger.textContent = lang==='th' ? trigger.getAttribute('data-th') : trigger.getAttribute('data-en');
   const grid=document.getElementById('revGrid');
-  if(!r.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No reviews yet.</div>`;return;}
+  if(!r.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'ยังไม่มีรีวิว':'No reviews yet.'}</div>`;return;}
   grid.innerHTML=r.map(rv=>{
     const rating = rv.rating || 0;
     const starsHtml = rating > 0
@@ -2807,6 +2892,123 @@ function openProd(type,id){
 function openContactWithItemBtn(type,id){openContactWithItem(type,id);}
 function swImg(el,src){document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" src="${src}" style="width:100%;height:100%;object-fit:cover">`;}
 function closeModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');}
+
+// ─── CUSTOMER REVIEW SUBMISSION ────────────────────────────────────────────
+let rfRating = 0;
+let rfImages = [];   // array of {status:'uploading'|'done', url?}
+
+function openReviewForm(){
+  rfRating = 0;
+  rfImages = [];
+  document.getElementById('rfText').value = '';
+  document.getElementById('rfName').value = '';
+  document.getElementById('rfAnon').checked = true;
+  rfToggleAnon();
+  rfRenderStars();
+  rfRenderPreviews();
+  applyReviewFormPlaceholders();
+  document.getElementById('reviewModal').classList.add('open');
+}
+function closeReviewForm(){
+  document.getElementById('reviewModal').classList.remove('open');
+}
+function rfToggleAnon(){
+  const anon = document.getElementById('rfAnon').checked;
+  document.getElementById('rfName').style.display = anon ? 'none' : 'block';
+}
+function rfRenderStars(){
+  document.querySelectorAll('#rfStars span').forEach(s => {
+    s.textContent = Number(s.dataset.v) <= rfRating ? '★' : '☆';
+  });
+}
+function applyReviewFormPlaceholders(){
+  const th = lang === 'th';
+  // Placeholders
+  document.querySelectorAll('#reviewModal [data-ph-en]').forEach(el => {
+    el.placeholder = th ? el.getAttribute('data-ph-th') : el.getAttribute('data-ph-en');
+  });
+  // Visible labels / buttons — set text from data-en/data-th so the form
+  // localises with the rest of the UI (this page renders dynamic text from
+  // the `lang` flag rather than swapping data-attributes globally).
+  document.querySelectorAll('#reviewModal [data-en][data-th]').forEach(el => {
+    el.textContent = th ? el.getAttribute('data-th') : el.getAttribute('data-en');
+  });
+  // Also localise the trigger button on the reviews page.
+  const trigger = document.querySelector('#page-reviews [data-en][data-th]');
+  if(trigger) trigger.textContent = th ? trigger.getAttribute('data-th') : trigger.getAttribute('data-en');
+}
+document.addEventListener('click', (e) => {
+  const star = e.target.closest('#rfStars span');
+  if(star){ rfRating = Number(star.dataset.v); rfRenderStars(); }
+});
+
+async function rfHandleFiles(event){
+  const files = Array.from(event.target.files || []);
+  event.target.value = '';   // allow re-selecting same file
+  for(const file of files){
+    if(rfImages.length >= 6){
+      showToast(lang==='th' ? 'อัปได้สูงสุด 6 รูป' : 'Up to 6 photos');
+      break;
+    }
+    const slot = { status:'uploading' };
+    rfImages.push(slot);
+    rfRenderPreviews();
+    try {
+      const url = await window.FB.uploadFile(file, 'review');
+      slot.status = 'done';
+      slot.url = url;
+    } catch(err){
+      console.error('review image upload failed:', err);
+      rfImages = rfImages.filter(x => x !== slot);
+      showToast(lang==='th' ? 'อัปรูปไม่สำเร็จ ลองรูปอื่น' : 'Upload failed, try another photo');
+    }
+    rfRenderPreviews();
+  }
+}
+function rfRemoveImage(i){ rfImages.splice(i,1); rfRenderPreviews(); }
+function rfRenderPreviews(){
+  const wrap = document.getElementById('rfPreviews');
+  wrap.innerHTML = rfImages.map((im,i) => im.status==='uploading'
+    ? `<div class="rf-prev loading"><div class="rf-prev-spin"></div></div>`
+    : `<div class="rf-prev"><img src="${im.url}"><button class="rf-prev-del" onclick="rfRemoveImage(${i})">✕</button></div>`
+  ).join('');
+}
+
+async function submitCustomerReview(){
+  const text = document.getElementById('rfText').value.trim();
+  const anon = document.getElementById('rfAnon').checked;
+  const name = document.getElementById('rfName').value.trim();
+  const doneImgs = rfImages.filter(x => x.status==='done').map(x => x.url);
+
+  if(rfImages.some(x => x.status==='uploading')){
+    showToast(lang==='th' ? 'รอรูปอัปเสร็จก่อน' : 'Wait for photos to finish uploading');
+    return;
+  }
+  if(!text && !doneImgs.length){
+    showToast(lang==='th' ? 'กรุณาเขียนรีวิวหรือแนบรูปอย่างน้อย 1 อย่าง' : 'Please write a review or add a photo');
+    return;
+  }
+  if(!anon && !name){
+    showToast(lang==='th' ? 'กรุณากรอกชื่อ หรือเลือกไม่ลงชื่อ' : 'Please enter your name or post anonymously');
+    return;
+  }
+
+  const btn = document.getElementById('rfSubmitBtn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = lang==='th' ? 'กำลังส่ง…' : 'Sending…';
+  try {
+    await window.FB.submitReview({ name, anonymous: anon, rating: rfRating, text, imgs: doneImgs });
+    closeReviewForm();
+    showToast(lang==='th' ? '🙏 ขอบคุณ! รีวิวจะแสดงหลังทีมงานอนุมัติ' : '🙏 Thank you! Your review will show after approval');
+  } catch(err){
+    console.error('submitReview failed:', err);
+    showToast(lang==='th' ? 'ส่งไม่สำเร็จ ลองใหม่อีกครั้ง' : 'Submission failed, please try again');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
 

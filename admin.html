@@ -1778,6 +1778,22 @@
           </div>
         </div>
 
+        <div class="form-card" id="pendingReviewsCard" style="display:none">
+          <div class="form-section-title">
+            <span data-en="🔔 Pending Customer Reviews" data-th="🔔 รีวิวจากลูกค้า (รออนุมัติ)">🔔 Pending Customer Reviews</span>
+            <span id="pendingCount" style="background:var(--gold);color:#1a0f00;border-radius:999px;padding:2px 10px;font-size:12px;margin-left:8px"></span>
+          </div>
+          <div class="form-section-desc"
+               data-en="Reviews submitted by customers from the store. Approve to publish on the site, or reject to discard."
+               data-th="รีวิวที่ลูกค้าส่งมาจากหน้าร้าน กดอนุมัติเพื่อแสดงบนเว็บ หรือปฏิเสธเพื่อทิ้ง">
+            Reviews submitted by customers. Approve to publish, or reject to discard.
+          </div>
+          <div id="pendingReviewsList" style="margin-top:14px"></div>
+          <div style="margin-top:10px">
+            <button class="btn-ol" onclick="loadPendingReviews()" data-en="🔄 Refresh" data-th="🔄 โหลดใหม่">🔄 Refresh</button>
+          </div>
+        </div>
+
         <div class="form-card">
           <div class="form-section-title" data-en="📄 Reviews Page Settings" data-th="📄 ตั้งค่าหน้า Reviews">📄 Reviews Page Settings</div>
           <div class="form-grid" style="margin-bottom:14px">
@@ -3859,7 +3875,83 @@ function loadReviewsPanel(){
   document.getElementById('rev_homeCount').value = String(s.homeCount || 3);
   document.getElementById('rev_homeMode').value = s.homeMode || 'top';
   loadReviewsList();
+  loadPendingReviews();
 }
+// ── PENDING CUSTOMER REVIEWS ──
+let _pendingReviews = [];
+async function loadPendingReviews(){
+  const card = document.getElementById('pendingReviewsCard');
+  const listEl = document.getElementById('pendingReviewsList');
+  if(!window.FB || !window.FB.listReviewSubmissions) return;
+  listEl.innerHTML = `<div class="empty-state">${lang==='th'?'กำลังโหลด…':'Loading…'}</div>`;
+  try {
+    _pendingReviews = await window.FB.listReviewSubmissions();
+  } catch(e){
+    console.warn('loadPendingReviews failed:', e);
+    _pendingReviews = [];
+  }
+  const count = _pendingReviews.length;
+  document.getElementById('pendingCount').textContent = count;
+  // Always show the card so admins know the feature exists, but if there are
+  // none, show a gentle empty state.
+  card.style.display = '';
+  if(!count){
+    listEl.innerHTML = `<div class="empty-state">${lang==='th'?'ยังไม่มีรีวิวรออนุมัติ':'No pending reviews'}</div>`;
+    return;
+  }
+  listEl.innerHTML = _pendingReviews.map(rv => {
+    const stars = rv.rating>0 ? '★'.repeat(rv.rating)+'☆'.repeat(5-rv.rating) : (lang==='th'?'ไม่ให้คะแนน':'No rating');
+    const who = rv.anonymous ? (lang==='th'?'ไม่ลงชื่อ':'Anonymous') : (rv.name||'—');
+    const imgs = (rv.imgs||[]).map(u=>`<img src="${u}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${u}','_blank')">`).join('');
+    return `
+      <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--bg-soft,#fff)">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:start">
+          <div style="flex:1;min-width:200px">
+            <div style="color:var(--gold-dark);font-size:15px">${stars}</div>
+            <div style="font-weight:600;margin-top:4px">${who}</div>
+            ${rv.text?`<div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-top:6px">${escapeHtml(rv.text)}</div>`:''}
+            ${imgs?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${imgs}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:120px">
+            <button class="btn-gold" style="padding:9px 14px;font-size:13px" onclick="approvePending('${rv.id}')" data-en="✅ Approve" data-th="✅ อนุมัติ">✅ Approve</button>
+            <button class="btn-ol" style="padding:9px 14px;font-size:13px;color:#c0392b;border-color:#e0b4b4" onclick="rejectPending('${rv.id}')" data-en="🗑 Reject" data-th="🗑 ปฏิเสธ">🗑 Reject</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function approvePending(id){
+  const rv = _pendingReviews.find(x=>x.id===id);
+  if(!rv) return;
+  const db=getDB();
+  if(!db.reviews) db.reviews=[];
+  // Copy submission into the public reviews list. Submissions never carry an
+  // admin-style numeric id, so generate one here.
+  db.reviews.push({
+    id: genId(db.reviews),
+    name: rv.name||'',
+    displayName: '',
+    anonymous: !!rv.anonymous,
+    location: '',
+    rating: Number(rv.rating)||0,
+    date: '',
+    text: rv.text||'',
+    imgs: Array.isArray(rv.imgs)?rv.imgs.slice():[],
+  });
+  saveDB(db);
+  try { await window.FB.deleteReviewSubmission(id); } catch(e){ console.warn('delete submission failed:',e); }
+  showToast(lang==='th'?'อนุมัติแล้ว แสดงบนเว็บ':'Approved & published');
+  loadReviewsList();
+  loadPendingReviews();
+}
+async function rejectPending(id){
+  if(!confirm(lang==='th'?'ปฏิเสธและลบรีวิวนี้?':'Reject and delete this review?')) return;
+  try { await window.FB.deleteReviewSubmission(id); } catch(e){ console.warn('delete submission failed:',e); }
+  showToast(lang==='th'?'ปฏิเสธแล้ว':'Rejected');
+  loadPendingReviews();
+}
+
 function loadReviewsList(){
   const db=getDB();const list=db.reviews||[];
   const cont=document.getElementById('r_list');
