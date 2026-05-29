@@ -915,6 +915,19 @@
   body.th .modal-title{font-family:'Sarabun',sans-serif !important}
   .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)}
 
+  /* Footer action row — Save (primary) + Cancel, right-aligned.
+     Used by every modal (typeModal, variantModal, etc) so the layout is
+     consistent across the admin. Save sits to the right of Cancel because
+     it's the primary action; on narrow screens we stay horizontal but
+     shrink the gap so both still fit. */
+  .modal-actions{
+    margin-top:22px;
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
   .toast{position:fixed;top:78px;right:24px;background:var(--deep);color:var(--gold-light);padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;border:1px solid rgba(201,168,76,.3);z-index:1000000;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:slideInTR .3s ease}
   .toast.show{display:block}
   @keyframes slideInTR{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -1087,16 +1100,16 @@
     .login-sub{font-size:12px;margin-bottom:24px}
     .login-input{padding:11px 13px;font-size:14px}
 
-    /* MODAL — bottom-sheet style on mobile */
-    .modal-overlay{padding:0;align-items:flex-end}
+    /* MODAL — floating centered card on mobile (not a bottom-sheet) */
+    .modal-overlay{padding:16px;align-items:center}
     .modal{
-      max-width:100%;max-height:96vh;border-radius:16px 16px 0 0;
+      max-width:100%;max-height:90vh;border-radius:16px;
       padding:22px 16px;
-      /* Override the desktop slide-from-top with a slide-from-bottom for the
-         familiar mobile bottom-sheet feel. */
-      transform:translateY(100%);
+      /* Subtle pop-in instead of slide-from-bottom; matches the desktop
+         feel and prevents the modal from hugging the bottom edge. */
+      transform:translateY(8px) scale(.985);
     }
-    .modal-overlay.open .modal{transform:translateY(0)}
+    .modal-overlay.open .modal{transform:translateY(0) scale(1)}
     .modal-title{font-size:17px}
     .modal-head{margin-bottom:16px;padding-bottom:12px}
 
@@ -2035,9 +2048,9 @@
         <div class="prev-grid" id="ft_samples_p"></div>
       </div>
     </div>
-    <div style="margin-top:22px;display:flex;gap:12px">
-      <button class="btn-gold" onclick="saveType()" data-en="✅ Save Type" data-th="✅ บันทึกประเภท">✅ Save Type</button>
+    <div class="modal-actions">
       <button class="btn-ol" onclick="closeModal('typeModal')" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+      <button class="btn-gold" onclick="saveType()" data-en="✅ Save Type" data-th="✅ บันทึกประเภท">✅ Save Type</button>
     </div>
   </div>
 </div>
@@ -2061,9 +2074,9 @@
         <div class="prev-grid" id="fv_imgs_p"></div>
       </div>
     </div>
-    <div style="margin-top:22px;display:flex;gap:12px">
-      <button class="btn-gold" onclick="saveVariant()" data-en="✅ Save Style" data-th="✅ บันทึกแบบ">✅ Save Style</button>
+    <div class="modal-actions">
       <button class="btn-ol" onclick="closeModal('variantModal')" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+      <button class="btn-gold" onclick="saveVariant()" data-en="✅ Save Style" data-th="✅ บันทึกแบบ">✅ Save Style</button>
     </div>
   </div>
 </div>
@@ -2152,9 +2165,9 @@
         <button class="btn-ol" type="button" onclick="addCpItem()" data-en="➕ Add Item" data-th="➕ เพิ่มรายการ" style="margin-top:12px">➕ Add Item</button>
       </div>
     </div>
-    <div style="margin-top:22px;display:flex;gap:12px">
-      <button class="btn-gold" onclick="saveCustomPage()" data-en="✅ Save Page" data-th="✅ บันทึกหน้า">✅ Save Page</button>
+    <div class="modal-actions">
       <button class="btn-ol" onclick="closeModal('pageModal')" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+      <button class="btn-gold" onclick="saveCustomPage()" data-en="✅ Save Page" data-th="✅ บันทึกหน้า">✅ Save Page</button>
     </div>
   </div>
 </div>
@@ -2205,9 +2218,9 @@
         </div>
       </div>
     </div>
-    <div style="margin-top:22px;display:flex;gap:12px">
-      <button class="btn-gold" onclick="saveCpItem()" data-en="✅ Save Item" data-th="✅ บันทึกรายการ">✅ Save Item</button>
+    <div class="modal-actions">
       <button class="btn-ol" onclick="closeModal('cpItemModal')" data-en="Cancel" data-th="ยกเลิก">Cancel</button>
+      <button class="btn-gold" onclick="saveCpItem()" data-en="✅ Save Item" data-th="✅ บันทึกรายการ">✅ Save Item</button>
     </div>
   </div>
 </div>
