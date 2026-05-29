@@ -2298,10 +2298,10 @@ function renderHomeReviews(){
     const starsHtml = rating > 0
       ? `<div class="rev-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div>`
       : '';
-    // Anonymous or display-name override
-    const displayName = rv.anonymous
-      ? (lang==='th' ? 'ลูกค้า' : 'Anonymous Customer')
-      : (rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'));
+    // Anonymous reviews show no name at all; named reviews show their name.
+    const nameHtml = rv.anonymous
+      ? ''
+      : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
     const imgsHtml = (rv.imgs && rv.imgs.length)
       ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
       : '';
@@ -2314,7 +2314,7 @@ function renderHomeReviews(){
         ${imgsHtml}
         <div class="rev-foot">
           <div>
-            <div class="rev-name">${displayName}</div>
+            ${nameHtml}
             ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
           </div>
           ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
@@ -2384,9 +2384,10 @@ function renderReviews(){
     const starsHtml = rating > 0
       ? `<div class="rev-stars">${'★'.repeat(rating)}${'☆'.repeat(5-rating)}</div>`
       : '';
-    const displayName = rv.anonymous
-      ? (lang==='th' ? 'ลูกค้า' : 'Anonymous Customer')
-      : (rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'));
+    // Anonymous reviews show no name at all; named reviews show their name.
+    const nameHtml = rv.anonymous
+      ? ''
+      : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
     const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
@@ -2397,7 +2398,7 @@ function renderReviews(){
         ${imgsHtml}
         <div class="rev-foot">
           <div>
-            <div class="rev-name">${displayName}</div>
+            ${nameHtml}
             ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
           </div>
           ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
