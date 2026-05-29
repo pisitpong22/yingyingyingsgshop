@@ -28,11 +28,15 @@ import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs
+  getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
+  addDoc, serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
+import {
+  initializeAppCheck, ReCaptchaV3Provider
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app-check.js";
 
 // ─── CONFIG (PUBLIC — safe to commit; protection is via Security Rules) ────
 // Project: yingyingyingsgshop (Singapore — asia-southeast1)
@@ -50,6 +54,44 @@ const firebaseConfig = {
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 const app  = initializeApp(firebaseConfig);
+
+// ─── APP CHECK ───────────────────────────────────────────────────────────────
+// App Check verifies every request to Firestore/Storage actually comes from
+// THIS website (not a bot, script, or someone calling the API directly). It
+// uses reCAPTCHA v3 invisibly in the background — visitors never see a puzzle.
+//
+// SETUP (one-time, see REVIEW_SETUP.md):
+//   1. Firebase Console → App Check → register this web app with the
+//      reCAPTCHA v3 provider. Google gives you a SITE KEY.
+//   2. Paste that site key below into APP_CHECK_SITE_KEY.
+//   3. Deploy, confirm the site still works, THEN turn on "Enforce" for
+//      Firestore + Storage in the console.
+//
+// IMPORTANT: leave APP_CHECK_SITE_KEY empty until you've pasted a real key.
+// With it empty, App Check stays OFF and the site works as before — so the
+// page never breaks just because the key isn't in yet. Only after you paste
+// the key AND enable enforcement does protection kick in.
+const APP_CHECK_SITE_KEY = '6LeDJQMtAAAAAJ_2o3lhLYQr-hRhEUG0RhK1iKqU'; // reCAPTCHA v3 site key
+
+// For local testing against an enforced project, set a debug token:
+// open the browser console once, copy the printed debug token, and register
+// it in Firebase Console → App Check → Manage debug tokens. Uncomment:
+// self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+
+if (APP_CHECK_SITE_KEY) {
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(APP_CHECK_SITE_KEY),
+      isTokenAutoRefreshEnabled: true,
+    });
+    console.log('[FB] App Check enabled');
+  } catch (err) {
+    console.error('[FB] App Check init failed:', err);
+  }
+} else {
+  console.log('[FB] App Check NOT configured (no site key) — running unprotected');
+}
+
 const auth = getAuth(app);
 const fs   = getFirestore(app);
 const stg  = getStorage(app);
@@ -453,6 +495,56 @@ async function ensureFirstSuperAdmin(email){
   return null;
 }
 
+// ─── CUSTOMER REVIEW SUBMISSIONS ───────────────────────────────────────────
+// Customers (not logged in) can submit reviews from the storefront. To keep
+// the main DB safe, submissions go into a SEPARATE collection that Security
+// Rules allow anyone to `create` but only admins to `read`/`delete`. Nothing
+// here can touch `app/db`. Admins review each submission and, on approval,
+// copy it into db.reviews (the public list) and delete the submission.
+//
+// Submission shape:
+//   { name, anonymous, rating, text, imgs[], createdAt }
+const REVIEW_SUBMISSIONS_COL = 'reviewSubmissions';
+
+// Called from the storefront. `imgs` should already be uploaded URLs
+// (use FB.uploadFile first). Returns the new submission id.
+async function submitReview(data){
+  const payload = {
+    name: (data.name || '').toString().slice(0, 80),
+    anonymous: !!data.anonymous,
+    rating: Math.max(0, Math.min(5, Number(data.rating) || 0)),
+    text: (data.text || '').toString().slice(0, 2000),
+    imgs: Array.isArray(data.imgs) ? data.imgs.slice(0, 6) : [],
+    createdAt: serverTimestamp(),
+  };
+  const ref = await addDoc(collection(fs, REVIEW_SUBMISSIONS_COL), payload);
+  return ref.id;
+}
+
+// Admin only — list all pending submissions (oldest first).
+async function listReviewSubmissions(){
+  try {
+    const q = query(collection(fs, REVIEW_SUBMISSIONS_COL), orderBy('createdAt', 'asc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch(e){
+    // orderBy fails if a doc is missing createdAt — fall back to unordered.
+    try {
+      const snap = await getDocs(collection(fs, REVIEW_SUBMISSIONS_COL));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch(e2){
+      console.warn('[FB] listReviewSubmissions failed:', e2);
+      return [];
+    }
+  }
+}
+
+// Admin only — remove a submission after approving or rejecting it.
+async function deleteReviewSubmission(id){
+  if(!id) return;
+  await deleteDoc(doc(fs, REVIEW_SUBMISSIONS_COL, id));
+}
+
 // ─── EXPOSE GLOBALLY ───────────────────────────────────────────────────────
 window.FB = {
   getDB, saveDB, onDBChange, ready,
@@ -461,6 +553,10 @@ window.FB = {
   signOut: signOutUser,
   onAuthChange,
   currentUser,
+  // Customer review submissions
+  submitReview,
+  listReviewSubmissions,
+  deleteReviewSubmission,
   // Admin role management
   getAdminRecord,
   listAdmins,
