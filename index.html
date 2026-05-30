@@ -1004,26 +1004,47 @@
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;padding:20px}
   .modal-overlay.open{display:flex}
   /* Review submission form */
-  .rf-field{margin-bottom:18px}
-  .rf-label{display:block;font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px}
-  .rf-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--text);box-sizing:border-box;resize:vertical}
-  .rf-input:focus{outline:none;border-color:var(--gold)}
-  .rf-stars{display:flex;gap:6px;font-size:32px;line-height:1;cursor:pointer}
-  .rf-stars span{color:var(--gold);transition:transform .12s}
-  .rf-stars span:hover{transform:scale(1.15)}
-  .rf-upload{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;color:var(--text-muted)}
-  .rf-upload:hover{border-color:var(--gold);background:rgba(201,168,76,.05)}
-  .rf-upload-inner{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px}
-  .rf-previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-  .rf-prev{position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:#2d1e06}
+  /* Make the review modal a solid, warm, premium card instead of the
+     translucent glass used by other modals (the glass looked murky over the
+     dark backdrop). */
+  #reviewModal{background:radial-gradient(120% 120% at 50% 0%,rgba(40,26,8,.55),rgba(15,10,4,.78));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  #reviewModal .modal{
+    background:linear-gradient(165deg,#fffdf7 0%,#fdf4dd 60%,#f8ead0 100%);
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+    border:1px solid var(--glass-border-strong);
+    box-shadow:0 30px 90px rgba(0,0,0,.45),0 2px 0 rgba(255,255,255,.7) inset;
+  }
+  #reviewModal .modal-head{border-bottom:1px solid rgba(201,168,76,.4);margin-bottom:22px}
+  #reviewModal .modal-title{color:var(--text);font-size:24px}
+  #reviewModal .modal-close{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s}
+  #reviewModal .modal-close:hover{background:rgba(201,168,76,.16);color:var(--gold-dark)}
+  .rf-field{margin-bottom:20px}
+  .rf-label{display:block;font-size:13px;font-weight:700;color:var(--gold-dark);margin-bottom:8px;letter-spacing:.3px}
+  .rf-input{width:100%;padding:13px 15px;border:1px solid rgba(201,168,76,.4);border-radius:12px;font-size:14px;font-family:inherit;background:rgba(255,255,255,.85);color:var(--text);box-sizing:border-box;resize:vertical;transition:border-color .2s,box-shadow .2s}
+  .rf-input::placeholder{color:#b9a577}
+  .rf-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.18)}
+  .rf-stars{display:flex;gap:8px;font-size:38px;line-height:1;cursor:pointer}
+  .rf-stars span{color:#d8c89a;transition:transform .14s ease,color .14s ease;text-shadow:0 1px 2px rgba(139,105,20,.2)}
+  .rf-stars span:hover{transform:scale(1.2)}
+  .rf-stars span.on{color:var(--gold);text-shadow:0 2px 8px rgba(201,168,76,.5)}
+  .rf-upload{border:2px dashed rgba(201,168,76,.45);border-radius:14px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s,transform .2s;color:var(--text-muted);background:rgba(255,255,255,.4)}
+  .rf-upload:hover{border-color:var(--gold);background:rgba(201,168,76,.08)}
+  .rf-upload-inner{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:13px;font-weight:500}
+  .rf-previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+  .rf-prev{position:relative;width:76px;height:76px;border-radius:12px;overflow:hidden;border:1px solid rgba(201,168,76,.4);background:#2d1e06;box-shadow:0 4px 12px rgba(0,0,0,.15)}
   .rf-prev img{width:100%;height:100%;object-fit:cover}
   .rf-prev.loading{display:flex;align-items:center;justify-content:center}
-  .rf-prev-spin{width:22px;height:22px;border:3px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:rfspin .7s linear infinite}
+  .rf-prev-spin{width:24px;height:24px;border:3px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:rfspin .7s linear infinite}
   @keyframes rfspin{to{transform:rotate(360deg)}}
-  .rf-prev-del{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center}
-  .rf-checkbox{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer;color:var(--text)}
-  .rf-checkbox input{width:17px;height:17px;accent-color:var(--gold);cursor:pointer}
-  .rf-note{font-size:12px;color:var(--text-muted);text-align:right;margin-top:10px}
+  .rf-prev-del{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;transition:background .2s}
+  .rf-prev-del:hover{background:var(--accent)}
+  .rf-checkbox{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;color:var(--text);background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:12px 14px;transition:background .2s}
+  .rf-checkbox:hover{background:rgba(201,168,76,.14)}
+  .rf-checkbox input{width:18px;height:18px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
+  #reviewModal .btn-gold{box-shadow:0 6px 18px rgba(201,168,76,.4)}
+  #reviewModal .btn-ol{background:transparent;color:var(--gold-dark);border:1px solid rgba(201,168,76,.5);text-transform:none;letter-spacing:.3px;padding:13px 26px}
+  #reviewModal .btn-ol:hover{background:rgba(201,168,76,.12);color:var(--text);border-color:var(--gold)}
+  .rf-note{font-size:12px;color:var(--text-muted);text-align:right;margin-top:12px;font-style:italic}
   /* Review thank-you popup — large, centered, auto-dismiss */
   #reviewThanks{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:rtFade .35s ease}
   #reviewThanks.open{display:flex}
@@ -2938,7 +2959,9 @@ function rfToggleAnon(){
 }
 function rfRenderStars(){
   document.querySelectorAll('#rfStars span').forEach(s => {
-    s.textContent = Number(s.dataset.v) <= rfRating ? '★' : '☆';
+    const on = Number(s.dataset.v) <= rfRating;
+    s.textContent = on ? '★' : '☆';
+    s.classList.toggle('on', on);
   });
 }
 function applyReviewFormPlaceholders(){
