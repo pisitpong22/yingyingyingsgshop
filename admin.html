@@ -309,6 +309,26 @@
   }
   .form-section-title{font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text);display:flex;align-items:center;gap:10px;justify-content:space-between}
   .form-section-desc{color:var(--text-muted);font-size:13px;margin-bottom:14px;line-height:1.6}
+  .page-intro-card{
+    border-color:rgba(201,168,76,.35);
+    background:linear-gradient(135deg,#fffdf7 0%,#fff7df 100%);
+  }
+  .page-intro-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+  .page-intro-kicker{font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:4px}
+  .page-intro-title{font-size:17px;font-weight:800;color:var(--text);line-height:1.25}
+  .page-intro-text{font-size:13px;color:var(--text-muted);line-height:1.55;margin-top:4px;max-width:680px}
+  .page-intro-badge{flex-shrink:0;background:rgba(201,168,76,.18);color:var(--gold-dark);border:1px solid rgba(201,168,76,.28);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:800}
+  .quick-edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:22px 0 30px}
+  .quick-edit-card{
+    background:#fff;border:1px solid rgba(201,168,76,.22);border-radius:14px;padding:16px;text-align:left;
+    cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s;color:var(--text);
+    box-shadow:0 3px 12px rgba(139,105,20,.05);
+    font:inherit;
+  }
+  .quick-edit-card:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 8px 24px rgba(139,105,20,.10)}
+  .quick-edit-icon{width:34px;height:34px;border-radius:10px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .quick-edit-title{display:block;font-weight:800;font-size:14px;margin-bottom:4px}
+  .quick-edit-sub{display:block;font-size:12.5px;color:var(--text-muted);line-height:1.45}
 
   .color-row{display:flex;gap:10px;align-items:center}
   .color-input{width:48px;height:42px;border-radius:8px;border:1px solid #d4c09a;padding:2px;cursor:pointer;flex-shrink:0}
@@ -1221,7 +1241,7 @@
       <div class="side-div"></div>
 
       <!-- ─── CATALOG ─── -->
-      <div class="sidebar-label" data-en="Catalog" data-th="แคตตาล็อก">Catalog</div>
+      <div class="sidebar-label" data-en="Store Pages" data-th="หน้าร้าน">Store Pages</div>
       <div class="side-item" onclick="showPanel('amulets',this)" data-en="📿 Amulets" data-th="📿 พระเครื่อง">📿 Amulets</div>
       <div class="side-item" onclick="showPanel('accessories',this)" data-en="⛓️ Accessories" data-th="⛓️ อุปกรณ์เสริม">⛓️ Accessories</div>
       <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
@@ -1248,12 +1268,22 @@
 
       <div class="panel active" id="panel-dashboard">
         <div class="panel-title" data-en="📊 Dashboard" data-th="📊 แดชบอร์ด">📊 Dashboard</div>
-        <div class="panel-sub" data-en-html="Edit any text on the customer site through <strong>Site Content</strong> on the left." data-th-html="แก้ไขข้อความบนหน้าร้านได้ที่ <strong>เนื้อหาเว็บไซต์</strong> ทางซ้าย">Edit any text on the customer site through <strong>Site Content</strong> on the left.</div>
+        <div class="panel-sub" data-en-html="Pick the page you want to change. Page titles and descriptions now live at the top of each page editor." data-th-html="เลือกหน้าที่ต้องการแก้ได้เลย หัวข้อและคำบรรยายของแต่ละหน้าอยู่ด้านบนของหน้าแก้ไขนั้นแล้ว">Pick the page you want to change. Page titles and descriptions now live at the top of each page editor.</div>
         <div class="dash-grid">
           <div class="dash-card"><div class="dash-icon">📿</div><div class="dash-num" id="dA">0</div><div class="dash-label" data-en="Amulets" data-th="พระเครื่อง">Amulets</div><span class="dash-link" onclick="showPanel('amulets',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
           <div class="dash-card"><div class="dash-icon">⛓️</div><div class="dash-num" id="dAc">0</div><div class="dash-label" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</div><span class="dash-link" onclick="showPanel('accessories',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
           <div class="dash-card"><div class="dash-icon">🪬</div><div class="dash-num" id="dF">0</div><div class="dash-label" data-en="Casing Types" data-th="ประเภทกรอบ">Casing Types</div><span class="dash-link" onclick="showPanel('casing',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
           <div class="dash-card"><div class="dash-icon">🎯</div><div class="dash-num" id="dP">0</div><div class="dash-label" data-en="Projects" data-th="โปรเจกต์">Projects</div><span class="dash-link" onclick="showPanel('projects',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
+        </div>
+        <div class="form-card">
+          <div class="form-section-title" data-en="⚡ Common Edits" data-th="⚡ แก้บ่อย">⚡ Common Edits</div>
+          <div class="form-section-desc" data-en="Jump straight to the page you want to change. Each page now has its own title and description editor at the top." data-th="กดไปหน้าที่ต้องการแก้ได้ทันที แต่ละหน้ามีช่องแก้หัวข้อและคำบรรยายอยู่ด้านบนแล้ว">Jump straight to the page you want to change.</div>
+          <div class="quick-edit-grid">
+            <button class="quick-edit-card" onclick="showPanel('amulets',null)"><span class="quick-edit-icon">📿</span><span class="quick-edit-title" data-en="Amulets page" data-th="หน้าพระเครื่อง">Amulets page</span><span class="quick-edit-sub" data-en="Intro text, products, prices, photos" data-th="คำโปรย สินค้า ราคา รูป">Intro text, products, prices, photos</span></button>
+            <button class="quick-edit-card" onclick="showPanel('casing',null)"><span class="quick-edit-icon">🪬</span><span class="quick-edit-title" data-en="Casing page" data-th="หน้าบริการกรอบพระ">Casing page</span><span class="quick-edit-sub" data-en="Page description, casing types, styles" data-th="คำอธิบาย ประเภทกรอบ แบบกรอบ">Page description, casing types, styles</span></button>
+            <button class="quick-edit-card" onclick="showPanel('reviews',null)"><span class="quick-edit-icon">🙏</span><span class="quick-edit-title" data-en="Reviews page" data-th="หน้ารีวิว">Reviews page</span><span class="quick-edit-sub" data-en="Review page text and approvals" data-th="ข้อความหน้ารีวิวและอนุมัติรีวิว">Review page text and approvals</span></button>
+            <button class="quick-edit-card" onclick="showPanel('checkout',null);showTab('checkout','payment')"><span class="quick-edit-icon">💳</span><span class="quick-edit-title" data-en="Payment & contact" data-th="ชำระเงินและติดต่อ">Payment & contact</span><span class="quick-edit-sub" data-en="PayNow, shipping, buttons" data-th="PayNow ค่าส่ง ปุ่มติดต่อ">PayNow, shipping, buttons</span></button>
+          </div>
         </div>
       </div>
 
@@ -1597,6 +1627,7 @@
       <!-- AMULETS -->
       <div class="panel" id="panel-amulets">
         <div class="panel-title" data-en="📿 Manage Amulets" data-th="📿 จัดการพระเครื่อง">📿 Manage Amulets</div>
+        <div id="pageHeader-amulets"></div>
         <div class="form-card">
           <div class="form-section-title" id="a_form_title" data-en="➕ Add New Amulet" data-th="➕ เพิ่มพระเครื่องใหม่">➕ Add New Amulet</div>
           <div class="form-grid">
@@ -1640,6 +1671,7 @@
       <!-- ACCESSORIES -->
       <div class="panel" id="panel-accessories">
         <div class="panel-title" data-en="⛓️ Manage Accessories" data-th="⛓️ จัดการอุปกรณ์เสริม">⛓️ Manage Accessories</div>
+        <div id="pageHeader-accessories"></div>
         <div class="form-card">
           <div class="form-section-title" id="ac_form_title" data-en="➕ Add New Accessory" data-th="➕ เพิ่มอุปกรณ์ใหม่">➕ Add New Accessory</div>
           <div class="form-grid">
@@ -1686,6 +1718,7 @@
             <button class="btn-gold" onclick="openTypeForm()" data-en="➕ Add New Casing Type" data-th="➕ เพิ่มประเภทใหม่">➕ Add New Casing Type</button>
           </div>
           <div class="panel-sub" data-en="Each Type has price + description. Inside, add Styles (just name + photos)." data-th="แต่ละประเภทมีราคา + คำอธิบาย ภายในเพิ่มแบบได้ (ชื่อ + รูปภาพ)">Each Type has price + description. Inside, add Styles (just name + photos).</div>
+          <div id="pageHeader-casing"></div>
           <div id="typesList"></div>
         </div>
         <div id="casingVariantsView" style="display:none">
@@ -1708,6 +1741,7 @@
       <!-- PROJECTS -->
       <div class="panel" id="panel-projects">
         <div class="panel-title" data-en="🎯 Manage Projects" data-th="🎯 จัดการโปรเจกต์">🎯 Manage Projects</div>
+        <div id="pageHeader-projects"></div>
         <div class="form-card">
           <div class="form-section-title" id="p_form_title" data-en="➕ Add New Project" data-th="➕ เพิ่มโปรเจกต์ใหม่">➕ Add New Project</div>
           <div class="form-grid">
@@ -1745,6 +1779,19 @@
       <div class="panel" id="panel-reviews">
         <div class="panel-title" data-en="🙏 Manage Reviews" data-th="🙏 จัดการรีวิว">🙏 Manage Reviews</div>
         <div class="panel-sub" data-en="Customer reviews/testimonials shown on the Reviews page." data-th="รีวิว/คำชมจากลูกค้าที่แสดงในหน้ารีวิว">Customer reviews shown on the Reviews page.</div>
+
+        <div class="form-card page-intro-card">
+          <div class="form-section-title" data-en="📄 Reviews Page Text" data-th="📄 ข้อความหน้า Reviews">📄 Reviews Page Text</div>
+          <div class="form-section-desc" data-en="Title and subtitle visitors see at the top of the Reviews page." data-th="หัวข้อและคำบรรยายที่ลูกค้าเห็นด้านบนของหน้า Reviews">Title and subtitle visitors see at the top of the Reviews page.</div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="fg full">
+              <label class="fl" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="rev_enabled" style="width:auto"> <span data-en="Enable Reviews page in menu" data-th="เปิดหน้า Reviews">Enable Reviews page in menu</span></label>
+            </div>
+            <div class="fg"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="rev_title"></div>
+            <div class="fg"><label class="fl" data-en="Subtitle" data-th="คำบรรยาย">Subtitle</label><input class="fi" id="rev_sub"></div>
+          </div>
+          <div style="margin-top:8px"><button class="btn-gold" onclick="saveReviewsSection()" data-en="💾 Save Page Text" data-th="💾 บันทึกข้อความหน้า">💾 Save Page Text</button></div>
+        </div>
 
         <div class="form-card">
           <div class="form-section-title" data-en="🏠 Show on Homepage" data-th="🏠 แสดงในหน้าแรก">🏠 Show on Homepage</div>
@@ -1792,18 +1839,6 @@
           <div style="margin-top:10px">
             <button class="btn-ol" onclick="loadPendingReviews()" data-en="🔄 Refresh" data-th="🔄 โหลดใหม่">🔄 Refresh</button>
           </div>
-        </div>
-
-        <div class="form-card">
-          <div class="form-section-title" data-en="📄 Reviews Page Settings" data-th="📄 ตั้งค่าหน้า Reviews">📄 Reviews Page Settings</div>
-          <div class="form-grid" style="margin-bottom:14px">
-            <div class="fg full">
-              <label class="fl" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="rev_enabled" style="width:auto"> <span data-en="Enable Reviews page in menu" data-th="เปิดหน้า Reviews">Enable Reviews page in menu</span></label>
-            </div>
-            <div class="fg"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="rev_title"></div>
-            <div class="fg"><label class="fl" data-en="Subtitle" data-th="คำบรรยาย">Subtitle</label><input class="fi" id="rev_sub"></div>
-          </div>
-          <div style="margin-top:8px"><button class="btn-gold" onclick="saveReviewsSection()" data-en="💾 Save All Reviews Settings" data-th="💾 บันทึกการตั้งค่าทั้งหมด">💾 Save All Reviews Settings</button></div>
         </div>
 
         <div class="form-card">
@@ -2409,10 +2444,11 @@ function setLang(l){
 
 function refreshDynamic(){
   const active=document.querySelector('.panel.active');if(!active)return;
-  if(active.id==='panel-amulets')loadList('amulets');
-  else if(active.id==='panel-accessories')loadList('accessories');
-  else if(active.id==='panel-projects')loadList('projects');
+  if(active.id==='panel-amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
+  else if(active.id==='panel-accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
+  else if(active.id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(active.id==='panel-casing'){
+    loadPanelPageIntro('casing');
     if(curEditTypeId)loadVariants();else loadCasingTypes();
   }
   else if(active.id==='panel-content-nav'){loadNav();loadCustomPagesList();}
@@ -2773,10 +2809,10 @@ function showPanel(name, el){
 
   // Load data for each panel
   if(name==='dashboard')loadDash();
-  if(name==='amulets')loadList('amulets');
-  if(name==='accessories')loadList('accessories');
-  if(name==='casing'){exitTypeView();loadCasingTypes();}
-  if(name==='projects')loadList('projects');
+  if(name==='amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
+  if(name==='accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
+  if(name==='casing'){exitTypeView();loadPanelPageIntro('casing');loadCasingTypes();}
+  if(name==='projects'){loadPanelPageIntro('projects');loadList('projects');}
   if(name==='reviews')loadReviewsPanel();
   // Composite panels — load all their sub-screens once when entered
   if(name==='home'){
@@ -3722,6 +3758,66 @@ function saveSections(){
   });
 
   saveDB(db); showToast(tr('sectionsSaved'));
+}
+
+const PAGE_INTRO_LABELS = {
+  amulets:     {icon:'📿', en:'Amulets page intro',     th:'คำโปรยหน้าพระเครื่อง'},
+  accessories: {icon:'⛓️', en:'Accessories page intro', th:'คำโปรยหน้าอุปกรณ์'},
+  casing:      {icon:'🪬', en:'Casing page intro',      th:'คำโปรยหน้าบริการกรอบพระ'},
+  projects:    {icon:'🎯', en:'Projects page intro',    th:'คำโปรยหน้าโปรเจกต์'},
+  about:       {icon:'🏛️', en:'About page intro',       th:'คำโปรยหน้าเกี่ยวกับเรา'},
+};
+
+function loadPanelPageIntro(pageId){
+  const box = document.getElementById('pageHeader-' + pageId);
+  if(!box) return;
+  const db = getDB();
+  const s = db.settings;
+  const key = SECTION_KEY_BY_NAV_ID[pageId] || pageId;
+  const section = (s.sections && s.sections[key]) || {title:'',desc:''};
+  const navItem = (s.nav || []).find(n => n.id === pageId);
+  const meta = PAGE_INTRO_LABELS[pageId] || {icon:'📄', en:'Page intro', th:'คำโปรยหน้า'};
+  const hidden = navItem && !navItem.visible;
+  box.innerHTML = `
+    <div class="form-card page-intro-card">
+      <div class="page-intro-head">
+        <div>
+          <div class="page-intro-kicker" data-en="Page Text" data-th="ข้อความหน้า">Page Text</div>
+          <div class="page-intro-title">${meta.icon} <span data-en="${escapeAttr(meta.en)}" data-th="${escapeAttr(meta.th)}">${lang==='th'?meta.th:meta.en}</span></div>
+          <div class="page-intro-text" data-en="This is the title and description visitors see at the top of this page." data-th="นี่คือหัวข้อและคำบรรยายที่ลูกค้าเห็นด้านบนของหน้านี้">This is the title and description visitors see at the top of this page.</div>
+        </div>
+        ${hidden?`<span class="page-intro-badge" data-en="Hidden in menu" data-th="ซ่อนในเมนู">${lang==='th'?'ซ่อนในเมนู':'Hidden in menu'}</span>`:''}
+      </div>
+      <div class="form-grid">
+        <div class="fg full">
+          <label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label>
+          <input class="fi" id="panel_${pageId}_title" value="${escapeAttr(section.title || '')}">
+        </div>
+        <div class="fg full">
+          <label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label>
+          <textarea class="fta" id="panel_${pageId}_desc" style="min-height:86px">${escapeText(section.desc || '')}</textarea>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px">
+        <button class="btn-gold" onclick="savePanelPageIntro('${pageId}')" data-en="💾 Save Page Text" data-th="💾 บันทึกข้อความหน้า">💾 Save Page Text</button>
+      </div>
+    </div>`;
+}
+
+function savePanelPageIntro(pageId){
+  const db = getDB();
+  const s = db.settings;
+  if(!s.sections) s.sections = {};
+  const key = SECTION_KEY_BY_NAV_ID[pageId] || pageId;
+  if(!s.sections[key]) s.sections[key] = {title:'',desc:''};
+  const titleEl = document.getElementById(`panel_${pageId}_title`);
+  const descEl = document.getElementById(`panel_${pageId}_desc`);
+  s.sections[key].title = titleEl ? titleEl.value : '';
+  s.sections[key].desc = descEl ? descEl.value : '';
+  saveDB(db);
+  loadPanelPageIntro(pageId);
+  loadSections();
+  showToast(lang==='th' ? '✅ บันทึกข้อความหน้าแล้ว' : '✅ Page text saved');
 }
 
 // Helpers escapeAttr / escapeText defined elsewhere in this file
