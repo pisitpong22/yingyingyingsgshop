@@ -4799,7 +4799,14 @@ function captureImgs(key){
   const arr = tempImgs[key] || [];
   return arr
     .map(e => (typeof e === 'string' ? e : (e && e.status === 'done' ? e.url : null)))
-    .filter(Boolean);
+    .filter(isUsableStoredImageUrl);
+}
+
+function isUsableStoredImageUrl(url){
+  const s = String(url || '').trim();
+  if(!s) return false;
+  if(/^https?:\/\//i.test(s)) return true;
+  return /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(s) && s.length < 350000;
 }
 
 // Count uploads currently in-flight (any tempImgs slot with status='uploading').
@@ -5002,9 +5009,10 @@ function renderPrev(key){
     }
     // status === 'done' OR legacy string
     const url = e.url;
+    const safeUrl = safePreviewUrl(url);
     return `
       <div class="prev-item is-done${isPrimary ? ' is-primary' : ''}" data-pkey="${key}" data-pidx="${i}">
-        <div class="pi-thumb"><img src="${url}" alt=""></div>
+        <div class="pi-thumb">${safeUrl ? `<img src="${escapeAttr(safeUrl)}" alt="">` : '🖼️'}</div>
         ${isPrimary ? `<div class="pi-badge">${lang==='th'?'หลัก':'Cover'}</div>` : ''}
         <div class="pi-reorder">
           <button class="pi-move" onclick="moveImg('${key}',${i},-1)" ${canMoveLeft ? '' : 'disabled'} title="${lang==='th'?'เลื่อนซ้าย':'Move left'}">◀</button>
@@ -5019,6 +5027,14 @@ function escapeAttr(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function safePreviewUrl(url){
+  const s = String(url || '').trim();
+  if(!s) return '';
+  if(/^https?:\/\//i.test(s) || /^blob:/i.test(s)) return s;
+  if(/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(s) && s.length < 350000) return s.replace(/\s+/g,'');
+  return '';
 }
 // Same as escapeAttr but for text inside elements (no quote escaping needed)
 function escapeText(s){

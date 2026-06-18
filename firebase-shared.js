@@ -558,6 +558,24 @@ async function readJsonRecord(ref, chunkRefForIndex, label){
     return data.json || '{}';
   }
   const count = Math.max(0, Number(data._chunkCount) || 0);
+  const parts = await readJsonRecordChunks(chunkRefForIndex, count, label);
+  let json = parts.join('');
+  if(canParseJson(json)) return json;
+
+  // Some records were saved while the large-record migration was still
+  // changing. If the stored _chunkCount is too low, continue reading any
+  // extra chunk docs that exist so one stale counter doesn't break the admin.
+  const originalJson = json;
+  for(let idx = count; idx < count + 40; idx++){
+    const extra = await getDoc(chunkRefForIndex(idx));
+    if(!extra.exists()) break;
+    json += extra.data().json || '';
+    if(canParseJson(json)) return json;
+  }
+  return originalJson;
+}
+
+async function readJsonRecordChunks(chunkRefForIndex, count, label){
   const snaps = await Promise.all(
     Array.from({ length: count }, (_, idx) => getDoc(chunkRefForIndex(idx)))
   );
@@ -566,7 +584,16 @@ async function readJsonRecord(ref, chunkRefForIndex, label){
       throw new Error(`Missing ${label} chunk ${idx}`);
     }
     return partSnap.data().json || '';
-  }).join('');
+  });
+}
+
+function canParseJson(value){
+  try {
+    JSON.parse(value);
+    return true;
+  } catch(err) {
+    return false;
+  }
 }
 
 // Subscribe to realtime updates from Firestore.
