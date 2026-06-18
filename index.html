@@ -2145,7 +2145,7 @@ function applySettings(){
   }
 
   // NAV (built-in + custom pages)
-  const visibleNav=(s.nav||[]).filter(n=>n.visible);
+  const visibleNav=(s.nav||[]).filter(n=>n.visible !== false && n.enabled !== false);
   document.getElementById('navLinks').innerHTML=visibleNav.map(n=>`<li><a id="nav-${n.id}" onclick="goPage('${n.id}')">${n.label}</a></li>`).join('');
 
   // CUSTOM PAGES — render their containers

@@ -2976,8 +2976,7 @@ function loadNav(){
         <div class="fg"><label class="fl">${tr('pageId')} <span class="fl-hint">— ${n.builtin?tr('builtin'):tr('custom')}</span></label><input class="fi" value="${n.id}" disabled style="background:#f0e8d0;color:var(--text-muted)"></div>
         <div class="fg"><label class="fl">${tr('menuLabel')}</label><input class="fi" data-nav-label="${i}" value="${n.label}"></div>
         <div class="fg" style="display:flex;flex-direction:row;gap:14px;align-items:end;padding-bottom:8px;flex-wrap:wrap">
-          <label class="switch-label"><label class="switch"><input type="checkbox" data-nav-vis="${i}" ${n.visible?'checked':''}><span class="slider"></span></label>${tr('show')}</label>
-          <label class="switch-label"><label class="switch"><input type="checkbox" data-nav-en="${i}" ${n.enabled?'checked':''}><span class="slider"></span></label>${tr('enabled')}</label>
+          <label class="switch-label"><label class="switch"><input type="checkbox" data-nav-vis="${i}" ${(n.visible!==false && n.enabled!==false)?'checked':''}><span class="slider"></span></label><span data-en="Show in menu" data-th="แสดงในเมนู">${lang==='th'?'แสดงในเมนู':'Show in menu'}</span></label>
           ${!n.builtin?`<button class="btn-edit" onclick="editCustomPage('${n.id}')" style="padding:7px 13px;font-size:12px" data-en="✏️ Edit Page Content" data-th="✏️ แก้ไขเนื้อหา">✏️ Edit Page Content</button>`:''}
         </div>
       </div>
@@ -2992,8 +2991,11 @@ function captureNavValues(){
   arr.forEach((n,i)=>{
     const lbl=document.querySelector(`[data-nav-label="${i}"]`);
     const vis=document.querySelector(`[data-nav-vis="${i}"]`);
-    const en=document.querySelector(`[data-nav-en="${i}"]`);
-    if(lbl)n.label=lbl.value;if(vis)n.visible=vis.checked;if(en)n.enabled=en.checked;
+    if(lbl)n.label=lbl.value;
+    if(vis){
+      n.visible=vis.checked;
+      n.enabled=vis.checked;
+    }
   });
   return db;
 }
