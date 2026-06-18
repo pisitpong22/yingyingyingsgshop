@@ -110,7 +110,7 @@ const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews'];
 const DB_CHUNK_PREFIX = 'dbpart';
-const DB_CHUNK_CHARS = 120000; // small chunks avoid both 1 MiB docs and 10 MiB request payloads
+const DB_CHUNK_CHARS = 600000; // few writes per save, still safely below Firestore's 1 MiB doc limit
 let _dbPartCounts = {};
 let _dbPartHashes = {};
 let _snapshotSeq = 0;
@@ -143,10 +143,10 @@ async function saveDB(newDb){
         }
       });
 
-      const oldCount = _dbPartCounts[key] || 0;
-      for(let idx = chunks.length; idx < oldCount; idx++){
-        writes.push({ type: 'delete', ref: dbChunkDoc(key, idx) });
-      }
+      // Do not delete stale chunks during normal saves. The manifest's
+      // _partCounts tells readers exactly which chunks are current, so older
+      // extras are ignored. Skipping deletes keeps a one-image edit from
+      // enqueueing a long tail of cleanup writes.
     });
 
     writes.push({ type: 'set', ref: DB_DOC, data: {
@@ -157,6 +157,7 @@ async function saveDB(newDb){
       _updatedAt: serverTimestamp(),
     }});
 
+    console.log('[FB] saveDB writes:', writes.length);
     await commitWritesSequentially(writes);
     _dbPartCounts = nextCounts;
     _dbPartHashes = nextHashes;

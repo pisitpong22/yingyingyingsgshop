@@ -2757,19 +2757,18 @@ function deepScrubUndefined(val){
 }
 
 // Save to Firestore and only resolve after Firebase confirms the write.
-let _saveInFlight = null;
+let _saveTail = Promise.resolve();
 async function saveDB(db){
-  if(_saveInFlight) return _saveInFlight;
+  const cleanDb = deepScrubUndefined(db);
+  const job = _saveTail.then(() => FB.saveDB(cleanDb));
+  _saveTail = job.catch(() => {});
   try {
-    _saveInFlight = FB.saveDB(deepScrubUndefined(db));
-    await _saveInFlight;
+    await job;
     return true;
   } catch(err) {
     console.error('saveDB failed:', err);
     showToast(lang === 'th' ? 'บันทึกล้มเหลว: ' + (err.message || 'unknown') : 'Save failed: ' + (err.message || 'unknown'));
     throw err;
-  } finally {
-    _saveInFlight = null;
   }
 }
 
