@@ -370,6 +370,7 @@
   .rte-swatch:hover{transform:scale(1.15);border-color:var(--gold)}
   .rte-color-input{width:22px;height:22px;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;background:transparent;padding:0}
   .rte-editor{min-height:90px;padding:12px 14px;outline:none;font-size:13.5px;color:var(--text);line-height:1.55;font-family:inherit}
+  .rte-editor.rte-title-editor{min-height:42px;font-size:15px;font-weight:600;line-height:1.45}
   .rte-editor:empty::before{content:attr(data-placeholder);color:var(--text-muted);pointer-events:none;font-style:italic}
   .rte-editor strong,.rte-editor b{font-weight:700}
   .rte-editor em,.rte-editor i{font-style:italic}
@@ -1787,8 +1788,8 @@
             <div class="fg full">
               <label class="fl" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="rev_enabled" style="width:auto"> <span data-en="Enable Reviews page in menu" data-th="เปิดหน้า Reviews">Enable Reviews page in menu</span></label>
             </div>
-            <div class="fg"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="rev_title"></div>
-            <div class="fg"><label class="fl" data-en="Subtitle" data-th="คำบรรยาย">Subtitle</label><input class="fi" id="rev_sub"></div>
+            <div class="fg"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><div id="rev_title_mount"></div></div>
+            <div class="fg"><label class="fl" data-en="Subtitle" data-th="คำบรรยาย">Subtitle</label><div id="rev_sub_mount"></div></div>
           </div>
           <div style="margin-top:8px"><button class="btn-gold" onclick="saveReviewsSection()" data-en="💾 Save Page Text" data-th="💾 บันทึกข้อความหน้า">💾 Save Page Text</button></div>
         </div>
@@ -3677,6 +3678,53 @@ const SECTION_KEY_BY_NAV_ID = {
   reviews: 'reviews',
 };
 
+function renderRte(editorId, placeholder, mode='body'){
+  const titleMode = mode === 'title';
+  return `
+    <div class="rte-wrap">
+      <div class="rte-toolbar">
+        <button type="button" class="rte-btn" onclick="rteExec('${editorId}','bold')" title="Bold"><b>B</b></button>
+        <button type="button" class="rte-btn" onclick="rteExec('${editorId}','italic')" title="Italic"><i>I</i></button>
+        <button type="button" class="rte-btn" onclick="rteExec('${editorId}','underline')" title="Underline"><u>U</u></button>
+        <span class="rte-sep"></span>
+        ${titleMode ? '' : `
+          <button type="button" class="rte-btn" onclick="rteExec('${editorId}','formatBlock','<h2>')" title="Heading 2" style="font-size:13px;font-weight:700">H2</button>
+          <button type="button" class="rte-btn" onclick="rteExec('${editorId}','formatBlock','<h3>')" title="Heading 3" style="font-size:12px;font-weight:700">H3</button>
+          <button type="button" class="rte-btn" onclick="rteExec('${editorId}','formatBlock','<p>')" title="Paragraph">¶</button>
+          <span class="rte-sep"></span>
+          <button type="button" class="rte-btn" onclick="rteExec('${editorId}','insertUnorderedList')" title="Bullet list">• ≡</button>
+          <button type="button" class="rte-btn" onclick="rteExec('${editorId}','insertOrderedList')" title="Numbered list">1. ≡</button>
+          <span class="rte-sep"></span>
+        `}
+        <button type="button" class="rte-btn" onclick="rteExec('${editorId}','justifyLeft')" title="Align left">⬅</button>
+        <button type="button" class="rte-btn" onclick="rteExec('${editorId}','justifyCenter')" title="Align center">↔</button>
+        <button type="button" class="rte-btn" onclick="rteExec('${editorId}','justifyRight')" title="Align right">➡</button>
+        <span class="rte-sep"></span>
+        <div class="rte-color-picker">
+          <button type="button" class="rte-btn rte-color-btn" onclick="rteToggleColors('${editorId}')" title="Text color">
+            <span class="rte-color-letter">A</span>
+            <span class="rte-color-bar" id="${editorId}_colorbar"></span>
+          </button>
+          <div class="rte-color-pop" id="${editorId}_colorpop">
+            <div class="rte-color-grid">
+              <button type="button" class="rte-swatch" style="background:#2c1a06" onclick="rteSetColor('${editorId}','#2c1a06')" title="Default"></button>
+              <button type="button" class="rte-swatch" style="background:#8b6914" onclick="rteSetColor('${editorId}','#8b6914')" title="Gold dark"></button>
+              <button type="button" class="rte-swatch" style="background:#c9a84c" onclick="rteSetColor('${editorId}','#c9a84c')" title="Gold"></button>
+              <button type="button" class="rte-swatch" style="background:#8b0000" onclick="rteSetColor('${editorId}','#8b0000')" title="Crimson"></button>
+              <button type="button" class="rte-swatch" style="background:#2e6b3a" onclick="rteSetColor('${editorId}','#2e6b3a')" title="Forest"></button>
+              <button type="button" class="rte-swatch" style="background:#1f4e7a" onclick="rteSetColor('${editorId}','#1f4e7a')" title="Deep blue"></button>
+              <button type="button" class="rte-swatch" style="background:#666" onclick="rteSetColor('${editorId}','#666')" title="Grey"></button>
+              <input type="color" class="rte-color-input" oninput="rteSetColor('${editorId}',this.value)" title="Custom color">
+            </div>
+          </div>
+        </div>
+        ${titleMode ? '' : `<button type="button" class="rte-btn" onclick="rteLink('${editorId}')" title="Insert link">🔗</button>`}
+        <button type="button" class="rte-btn" onclick="rteExec('${editorId}','removeFormat')" title="Clear formatting">⌫</button>
+      </div>
+      <div class="rte-editor ${titleMode ? 'rte-title-editor' : ''}" id="${editorId}" contenteditable="true" data-placeholder="${escapeAttr(placeholder)}"></div>
+    </div>`;
+}
+
 function loadSections(){
   const db = getDB();
   const s = db.settings;
@@ -3713,11 +3761,11 @@ function loadSections(){
           <div class="form-grid">
             <div class="fg full">
               <label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label>
-              <input class="fi" id="sec_${escapeAttr(n.id)}_title" data-sec-title="${n.id}" value="${escapeAttr(title)}">
+              <div data-sec-title="${n.id}">${renderRte(`sec_${n.id}_title`, 'Page title', 'title')}</div>
             </div>
             <div class="fg full">
               <label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label>
-              <textarea class="fta" id="sec_${escapeAttr(n.id)}_desc" data-sec-desc="${n.id}" style="min-height:60px">${escapeText(desc)}</textarea>
+              <div data-sec-desc="${n.id}">${renderRte(`sec_${n.id}_desc`, 'Subtitle / description', 'body')}</div>
             </div>
           </div>
         </div>`;
@@ -3727,6 +3775,21 @@ function loadSections(){
     list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px">${lang==='th'?'ไม่มีหน้าให้แก้ไข':'No pages to edit'}</div>`;
   } else {
     list.innerHTML = rows;
+    nav.filter(n => !SECTION_SKIP_IDS.has(n.id)).forEach(n => {
+      const isCustom = !n.builtin;
+      let title = '', desc = '';
+      if(isCustom){
+        const p = (s.customPages || []).find(x => x.id === n.id);
+        title = p?.title || '';
+        desc  = p?.desc  || '';
+      } else {
+        const key = SECTION_KEY_BY_NAV_ID[n.id] || n.id;
+        title = s.sections[key]?.title || '';
+        desc  = s.sections[key]?.desc  || '';
+      }
+      rteSetHtml(`sec_${n.id}_title`, title);
+      rteSetHtml(`sec_${n.id}_desc`, desc);
+    });
   }
 }
 
@@ -3740,9 +3803,8 @@ function saveSections(){
     const id = el.getAttribute('data-sec-title');
     const navItem = (s.nav || []).find(n => n.id === id);
     if(!navItem) return;
-    const descEl = document.querySelector(`[data-sec-desc="${id}"]`);
-    const title = el.value;
-    const desc  = descEl ? descEl.value : '';
+    const title = rteGetHtml(`sec_${id}_title`);
+    const desc  = rteGetHtml(`sec_${id}_desc`);
     if(navItem.builtin){
       const key = SECTION_KEY_BY_NAV_ID[id] || id;
       if(!s.sections[key]) s.sections[key] = {title:'',desc:''};
@@ -3791,17 +3853,19 @@ function loadPanelPageIntro(pageId){
       <div class="form-grid">
         <div class="fg full">
           <label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label>
-          <input class="fi" id="panel_${pageId}_title" value="${escapeAttr(section.title || '')}">
+          ${renderRte(`panel_${pageId}_title`, 'Page title', 'title')}
         </div>
         <div class="fg full">
           <label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label>
-          <textarea class="fta" id="panel_${pageId}_desc" style="min-height:86px">${escapeText(section.desc || '')}</textarea>
+          ${renderRte(`panel_${pageId}_desc`, 'Subtitle / description', 'body')}
         </div>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:14px">
         <button class="btn-gold" onclick="savePanelPageIntro('${pageId}')" data-en="💾 Save Page Text" data-th="💾 บันทึกข้อความหน้า">💾 Save Page Text</button>
       </div>
     </div>`;
+  rteSetHtml(`panel_${pageId}_title`, section.title || '');
+  rteSetHtml(`panel_${pageId}_desc`, section.desc || '');
 }
 
 function savePanelPageIntro(pageId){
@@ -3810,10 +3874,8 @@ function savePanelPageIntro(pageId){
   if(!s.sections) s.sections = {};
   const key = SECTION_KEY_BY_NAV_ID[pageId] || pageId;
   if(!s.sections[key]) s.sections[key] = {title:'',desc:''};
-  const titleEl = document.getElementById(`panel_${pageId}_title`);
-  const descEl = document.getElementById(`panel_${pageId}_desc`);
-  s.sections[key].title = titleEl ? titleEl.value : '';
-  s.sections[key].desc = descEl ? descEl.value : '';
+  s.sections[key].title = rteGetHtml(`panel_${pageId}_title`);
+  s.sections[key].desc = rteGetHtml(`panel_${pageId}_desc`);
   saveDB(db);
   loadPanelPageIntro(pageId);
   loadSections();
@@ -3962,8 +4024,16 @@ function loadReviewsPanel(){
   const db=getDB();const s=db.settings.reviews||{};
   // Reviews PAGE settings
   document.getElementById('rev_enabled').checked=s.enabled!==false;
-  document.getElementById('rev_title').value=s.title||'';
-  document.getElementById('rev_sub').value=s.sub||'';
+  const revTitleMount = document.getElementById('rev_title_mount');
+  const revSubMount = document.getElementById('rev_sub_mount');
+  if(revTitleMount && !document.getElementById('rev_title')){
+    revTitleMount.innerHTML = renderRte('rev_title', 'Reviews page title', 'title');
+  }
+  if(revSubMount && !document.getElementById('rev_sub')){
+    revSubMount.innerHTML = renderRte('rev_sub', 'Reviews page subtitle', 'body');
+  }
+  rteSetHtml('rev_title', s.title||'');
+  rteSetHtml('rev_sub', s.sub||'');
   // Homepage preview settings
   document.getElementById('rev_showOnHome').checked = s.showOnHome !== false;
   document.getElementById('rev_homeTitle').value = s.homeTitle || '';
@@ -4085,8 +4155,8 @@ function saveReviewsSection(){
   db.settings.reviews = {
     ...cur,
     enabled: document.getElementById('rev_enabled').checked,
-    title:   document.getElementById('rev_title').value,
-    sub:     document.getElementById('rev_sub').value,
+    title:   rteGetHtml('rev_title'),
+    sub:     rteGetHtml('rev_sub'),
     showOnHome: document.getElementById('rev_showOnHome').checked,
     homeTitle:  document.getElementById('rev_homeTitle').value,
     homeSub:    document.getElementById('rev_homeSub').value,

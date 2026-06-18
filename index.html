@@ -489,6 +489,26 @@
   .sec-head{text-align:center;padding:68px 24px 46px;background:linear-gradient(180deg,var(--deep) 0%,#1e1400 100%)}
   .sec-head h2{font-family:var(--font-display);font-size:34px;color:var(--gold-light);margin-bottom:10px}
   .sec-head p{color:#c8b888;font-size:15px;max-width:520px;margin:0 auto;line-height:1.8}
+  .sec-head h2 b,.sec-head h2 strong{font-weight:700}
+  .sec-head h2 i,.sec-head h2 em{font-style:italic}
+  .sec-head h2 u{text-decoration-color:rgba(232,201,106,.65);text-underline-offset:4px}
+  .sec-head p b,.sec-head p strong{font-weight:700;color:#f1d77a}
+  .sec-head p i,.sec-head p em{font-style:italic}
+  .sec-head p u{text-decoration-color:rgba(232,201,106,.55);text-underline-offset:3px}
+  .sec-head p h2,.sec-head p h3{font-family:var(--font-display);color:var(--gold-light);line-height:1.35;margin:.8em 0 .35em}
+  .sec-head p h2{font-size:22px}
+  .sec-head p h3{font-size:18px}
+  .sec-head p ul,.sec-head p ol{display:inline-block;text-align:left;margin:.45em auto .45em 1.4em;padding:0;max-width:100%}
+  .sec-head p li{margin:.2em 0;line-height:1.65}
+  .sec-head p a{color:var(--gold-light);text-decoration:underline;text-underline-offset:3px}
+  .sec-head p [style*="text-align:center"],.sec-head h2 [style*="text-align:center"]{text-align:center}
+  .sec-head p [style*="text-align:right"],.sec-head h2 [style*="text-align:right"]{text-align:right}
+  .about-banner h2 b,.about-banner h2 strong{font-weight:700}
+  .about-banner h2 i,.about-banner h2 em{font-style:italic}
+  .about-banner p b,.about-banner p strong{font-weight:700;color:var(--gold-light)}
+  .about-banner p i,.about-banner p em{font-style:italic}
+  .about-banner p h2,.about-banner p h3{font-family:var(--font-display);color:var(--gold-light);margin:.8em 0 .35em}
+  .about-banner p ul,.about-banner p ol{display:inline-block;text-align:left;margin:.45em auto .45em 1.4em;padding:0}
   .gline{width:56px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:14px auto}
 
   .content{max-width:1200px;margin:auto;padding:48px 24px}
@@ -1981,6 +2001,44 @@ Object.defineProperty(window, 'lang', {
 // Keep this stub so any legacy call sites don't crash.
 function saveDB(/*db*/){}
 
+function escapeHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function sanitizeRichHtml(value){
+  const raw = String(value || '');
+  if(!/<[a-z][\s\S]*>/i.test(raw)){
+    return escapeHtml(raw).replace(/\n/g, '<br>');
+  }
+  const tpl = document.createElement('template');
+  tpl.innerHTML = raw;
+  tpl.content.querySelectorAll('script,style,iframe,object,embed').forEach(el => el.remove());
+  tpl.content.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(attr => {
+      const name = attr.name.toLowerCase();
+      const val = attr.value || '';
+      if(name.startsWith('on')) el.removeAttribute(attr.name);
+      if((name === 'href' || name === 'src') && /^\s*javascript:/i.test(val)) el.removeAttribute(attr.name);
+      if(name === 'style'){
+        const safe = val
+          .split(';')
+          .map(x => x.trim())
+          .filter(x => /^(color|text-align)\s*:/i.test(x) && !/url\s*\(|expression\s*\(/i.test(x))
+          .join('; ');
+        safe ? el.setAttribute('style', safe) : el.removeAttribute('style');
+      }
+    });
+  });
+  return tpl.innerHTML;
+}
+
+function setRich(id, value){
+  const el = document.getElementById(id);
+  if(el) el.innerHTML = sanitizeRichHtml(value);
+}
+
 // ── APPLY SETTINGS ──
 function applySettings(){
   const db=getDB(); const s=db.settings;
@@ -2116,16 +2174,16 @@ function applySettings(){
       <div class="trust-desc">${c.desc}</div>
     </div>`).join('');
 
-  document.getElementById('amuletsTitle').textContent=s.sections.amulets.title;
-  document.getElementById('amuletsDesc').textContent=s.sections.amulets.desc;
-  document.getElementById('accTitle').textContent=s.sections.accessories.title;
-  document.getElementById('accDesc').textContent=s.sections.accessories.desc;
-  document.getElementById('casingTitle').textContent=s.sections.casing.title;
-  document.getElementById('casingDesc').textContent=s.sections.casing.desc;
-  document.getElementById('projTitle').textContent=s.sections.projects.title;
-  document.getElementById('projDesc').textContent=s.sections.projects.desc;
-  document.getElementById('aboutTitle').textContent=s.sections.about.title;
-  document.getElementById('aboutDesc').textContent=s.sections.about.desc;
+  setRich('amuletsTitle', s.sections.amulets.title);
+  setRich('amuletsDesc', s.sections.amulets.desc);
+  setRich('accTitle', s.sections.accessories.title);
+  setRich('accDesc', s.sections.accessories.desc);
+  setRich('casingTitle', s.sections.casing.title);
+  setRich('casingDesc', s.sections.casing.desc);
+  setRich('projTitle', s.sections.projects.title);
+  setRich('projDesc', s.sections.projects.desc);
+  setRich('aboutTitle', s.sections.about.title);
+  setRich('aboutDesc', s.sections.about.desc);
 
   document.getElementById('trustGrid').innerHTML=(s.trustCards||[]).map(t=>`
     <div class="trust-card">
@@ -2145,8 +2203,8 @@ function applySettings(){
   // ── Apply homepage section order ──
   applyHomeOrder(s);
   // ── REVIEWS page ──
-  document.getElementById('revTitle').textContent=(s.reviews&&s.reviews.title)||'🙏 Reviews';
-  document.getElementById('revSub').textContent=(s.reviews&&s.reviews.sub)||'';
+  setRich('revTitle', (s.reviews&&s.reviews.title)||'🙏 Reviews');
+  setRich('revSub', (s.reviews&&s.reviews.sub)||'');
   // ── PAYMENT page ──
   renderPayment();
   // ── SEARCH placeholders ──
@@ -2498,8 +2556,8 @@ function buildCard(a,type,settings){
 // ── REVIEWS ──
 function renderReviews(){
   const db=getDB();const r=db.reviews||[];const s=db.settings.reviews||{};
-  document.getElementById('revTitle').textContent=s.title||'🙏 Reviews';
-  document.getElementById('revSub').textContent=s.sub||'';
+  setRich('revTitle', s.title||'🙏 Reviews');
+  setRich('revSub', s.sub||'');
   // Localise the "Write a Review" trigger button.
   const trigger = document.querySelector('#page-reviews .btn-gold[data-en][data-th]');
   if(trigger) trigger.textContent = lang==='th' ? trigger.getAttribute('data-th') : trigger.getAttribute('data-en');
