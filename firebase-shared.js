@@ -17,10 +17,11 @@
 //    FB.currentUser() ...... current logged-in user (or null)
 //    FB.ready() ............ promise that resolves after initial DB load
 //
-//  DB shape: identical to the previous localStorage `yyy_db` value. The whole
-//  DB is stored in ONE Firestore document at `app/db` for simplicity (a few KB
-//  to ~1 MB of mostly-text data). Images are referenced by URL pointing to
-//  Firebase Storage, NOT stored inline as base64.
+//  DB shape exposed to the app is identical to the previous localStorage
+//  `yyy_db` value. Internally the DB is split into small Firestore documents
+//  under /app so it can grow beyond Firestore's 1 MiB per-document limit.
+//  Images are referenced by URL pointing to Firebase Storage, NOT stored
+//  inline as base64.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
@@ -29,7 +30,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
-  addDoc, serverTimestamp, query, orderBy
+  addDoc, serverTimestamp, query, orderBy, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
@@ -106,15 +107,51 @@ const _readyPromise = new Promise(res => { _readyResolve = res; });
 let _isReady = false;
 
 const DB_DOC = doc(fs, 'app', 'db');
+const DB_SPLIT_VERSION = 1;
+const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews'];
+const DB_CHUNK_PREFIX = 'dbpart';
+const DB_CHUNK_CHARS = 200000; // comfortably below Firestore's 1 MiB document limit
+let _dbPartCounts = {};
+let _snapshotSeq = 0;
 
 // ─── DB API ────────────────────────────────────────────────────────────────
 function getDB(){ return _db || {}; }
 
 async function saveDB(newDb){
-  // Persist whole document. Firestore writes are atomic per-document.
+  // Persist as many small documents. This avoids Firestore's hard 1 MiB
+  // limit for a single document while keeping FB.getDB()/saveDB() unchanged.
   _db = newDb;
   try {
-    await setDoc(DB_DOC, newDb);
+    const batch = writeBatch(fs);
+    const nextCounts = {};
+
+    DB_SPLIT_KEYS.forEach(key => {
+      const json = JSON.stringify(newDb && newDb[key] !== undefined ? newDb[key] : defaultDbValueForKey(key));
+      const chunks = chunkString(json, DB_CHUNK_CHARS);
+      nextCounts[key] = chunks.length;
+      chunks.forEach((part, idx) => {
+        batch.set(dbChunkDoc(key, idx), {
+          key,
+          index: idx,
+          json: part,
+        });
+      });
+
+      const oldCount = _dbPartCounts[key] || 0;
+      for(let idx = chunks.length; idx < oldCount; idx++){
+        batch.delete(dbChunkDoc(key, idx));
+      }
+    });
+
+    batch.set(DB_DOC, {
+      _splitVersion: DB_SPLIT_VERSION,
+      _partKeys: DB_SPLIT_KEYS,
+      _partCounts: nextCounts,
+      _updatedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+    _dbPartCounts = nextCounts;
   } catch(err){
     console.error('[FB] saveDB failed:', err);
     throw err;
@@ -130,20 +167,79 @@ function onDBChange(cb){
   };
 }
 
-// Subscribe to realtime updates from Firestore.
-// Whenever the document changes, _db is updated and listeners are notified.
-onSnapshot(DB_DOC, (snap) => {
-  if(snap.exists()){
-    _db = snap.data();
-  } else {
-    _db = null;   // doc doesn't exist yet — first run
+function defaultDbValueForKey(key){
+  return key === 'settings' ? {} : [];
+}
+
+function dbChunkDoc(key, idx){
+  return doc(fs, 'app', `${DB_CHUNK_PREFIX}_${key}_${idx}`);
+}
+
+function chunkString(str, size){
+  const chunks = [];
+  for(let i = 0; i < str.length; i += size){
+    chunks.push(str.slice(i, i + size));
   }
+  return chunks.length ? chunks : ['null'];
+}
+
+function notifyDBReady(){
   _dbListeners.forEach(cb => {
     try { cb(_db); } catch(err){ console.error('[FB] listener error:', err); }
   });
   if(!_isReady){
     _isReady = true;
     _readyResolve(_db);
+  }
+}
+
+async function loadSplitDB(meta){
+  const out = {};
+  const keys = Array.isArray(meta._partKeys) ? meta._partKeys : DB_SPLIT_KEYS;
+  const counts = meta._partCounts || {};
+
+  await Promise.all(keys.map(async key => {
+    const count = Math.max(0, Number(counts[key]) || 0);
+    if(!count){
+      out[key] = defaultDbValueForKey(key);
+      return;
+    }
+
+    const snaps = await Promise.all(
+      Array.from({ length: count }, (_, idx) => getDoc(dbChunkDoc(key, idx)))
+    );
+    const json = snaps.map((snap, idx) => {
+      if(!snap.exists()){
+        throw new Error(`Missing DB chunk: ${key}[${idx}]`);
+      }
+      return snap.data().json || '';
+    }).join('');
+    out[key] = JSON.parse(json);
+  }));
+
+  _dbPartCounts = { ...counts };
+  return out;
+}
+
+// Subscribe to realtime updates from Firestore.
+// Whenever the manifest changes, _db is rebuilt and listeners are notified.
+onSnapshot(DB_DOC, async (snap) => {
+  const seq = ++_snapshotSeq;
+  try {
+    if(snap.exists()){
+      const data = snap.data();
+      _db = data && data._splitVersion ? await loadSplitDB(data) : data;
+    } else {
+      _db = null;   // doc doesn't exist yet — first run
+      _dbPartCounts = {};
+    }
+    if(seq !== _snapshotSeq) return;
+    notifyDBReady();
+  } catch(err){
+    console.error('[FB] DB load failed:', err);
+    if(seq !== _snapshotSeq) return;
+    _db = null;
+    notifyDBReady();
   }
 }, (err) => {
   console.error('[FB] onSnapshot error:', err);
