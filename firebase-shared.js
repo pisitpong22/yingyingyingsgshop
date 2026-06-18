@@ -109,10 +109,14 @@ let _isReady = false;
 const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews'];
+const DB_ITEM_KEYS = new Set(['casingTypes']);
 const DB_CHUNK_PREFIX = 'dbpart';
+const DB_ITEM_PREFIX = 'dbitem';
 const DB_CHUNK_CHARS = 600000; // few writes per save, still safely below Firestore's 1 MiB doc limit
 let _dbPartCounts = {};
 let _dbPartHashes = {};
+let _dbItemIds = {};
+let _dbItemHashes = {};
 let _snapshotSeq = 0;
 
 // ─── DB API ────────────────────────────────────────────────────────────────
@@ -125,9 +129,38 @@ async function saveDB(newDb){
   try {
     const nextCounts = {};
     const nextHashes = {};
+    const nextItemIds = {};
+    const nextItemHashes = {};
     const writes = [];
 
     DB_SPLIT_KEYS.forEach(key => {
+      if(DB_ITEM_KEYS.has(key)){
+        const items = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
+        const ids = [];
+        const hashes = {};
+
+        items.forEach((item, idx) => {
+          const itemId = stableItemId(item, idx);
+          const json = JSON.stringify(item);
+          const hash = hashString(json);
+          ids.push(itemId);
+          hashes[itemId] = hash;
+          if(!_dbItemHashes[key] || _dbItemHashes[key][itemId] !== hash){
+            writes.push({
+              type: 'set',
+              ref: dbItemDoc(key, itemId),
+              data: { key, itemId, index: idx, json },
+            });
+          }
+        });
+
+        nextCounts[key] = 0;
+        nextHashes[key] = [];
+        nextItemIds[key] = ids;
+        nextItemHashes[key] = hashes;
+        return;
+      }
+
       const json = JSON.stringify(newDb && newDb[key] !== undefined ? newDb[key] : defaultDbValueForKey(key));
       const chunks = chunkString(json, DB_CHUNK_CHARS);
       nextCounts[key] = chunks.length;
@@ -154,6 +187,9 @@ async function saveDB(newDb){
       _partKeys: DB_SPLIT_KEYS,
       _partCounts: nextCounts,
       _partHashes: nextHashes,
+      _itemKeys: Array.from(DB_ITEM_KEYS),
+      _itemIds: nextItemIds,
+      _itemHashes: nextItemHashes,
       _updatedAt: serverTimestamp(),
     }});
 
@@ -161,6 +197,8 @@ async function saveDB(newDb){
     await commitWritesSequentially(writes);
     _dbPartCounts = nextCounts;
     _dbPartHashes = nextHashes;
+    _dbItemIds = nextItemIds;
+    _dbItemHashes = nextItemHashes;
   } catch(err){
     console.error('[FB] saveDB failed:', err);
     throw err;
@@ -182,6 +220,19 @@ function defaultDbValueForKey(key){
 
 function dbChunkDoc(key, idx){
   return doc(fs, 'app', `${DB_CHUNK_PREFIX}_${key}_${idx}`);
+}
+
+function dbItemDoc(key, itemId){
+  return doc(fs, 'app', `${DB_ITEM_PREFIX}_${key}_${safeDocId(itemId)}`);
+}
+
+function stableItemId(item, idx){
+  if(item && item.id !== undefined && item.id !== null) return String(item.id);
+  return `idx_${idx}`;
+}
+
+function safeDocId(id){
+  return String(id).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 120) || 'item';
 }
 
 function chunkString(str, size){
@@ -223,8 +274,21 @@ async function loadSplitDB(meta){
   const keys = Array.isArray(meta._partKeys) ? meta._partKeys : DB_SPLIT_KEYS;
   const counts = meta._partCounts || {};
   const hashes = meta._partHashes || {};
+  const itemIds = meta._itemIds || {};
+  const itemHashes = meta._itemHashes || {};
 
   await Promise.all(keys.map(async key => {
+    if(Array.isArray(itemIds[key])){
+      const snaps = await Promise.all(itemIds[key].map(itemId => getDoc(dbItemDoc(key, itemId))));
+      out[key] = snaps.map((snap, idx) => {
+        if(!snap.exists()){
+          throw new Error(`Missing DB item: ${key}[${itemIds[key][idx]}]`);
+        }
+        return JSON.parse(snap.data().json || 'null');
+      }).filter(Boolean);
+      return;
+    }
+
     const count = Math.max(0, Number(counts[key]) || 0);
     if(!count){
       out[key] = defaultDbValueForKey(key);
@@ -245,6 +309,8 @@ async function loadSplitDB(meta){
 
   _dbPartCounts = { ...counts };
   _dbPartHashes = { ...hashes };
+  _dbItemIds = { ...itemIds };
+  _dbItemHashes = { ...itemHashes };
   return out;
 }
 
@@ -260,6 +326,8 @@ onSnapshot(DB_DOC, async (snap) => {
       _db = null;   // doc doesn't exist yet — first run
       _dbPartCounts = {};
       _dbPartHashes = {};
+      _dbItemIds = {};
+      _dbItemHashes = {};
     }
     if(seq !== _snapshotSeq) return;
     notifyDBReady();
