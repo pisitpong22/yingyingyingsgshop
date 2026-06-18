@@ -109,10 +109,12 @@ let _isReady = false;
 const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews'];
-const DB_ITEM_KEYS = new Set(['casingTypes']);
+// Keep every large collection chunked. A single casing type can grow past
+// Firestore's 1 MiB document limit when it contains many style/photo URLs.
+const DB_ITEM_KEYS = new Set([]);
 const DB_CHUNK_PREFIX = 'dbpart';
 const DB_ITEM_PREFIX = 'dbitem';
-const DB_CHUNK_CHARS = 600000; // few writes per save, still safely below Firestore's 1 MiB doc limit
+const DB_CHUNK_CHARS = 450000; // safely below Firestore's 1 MiB document/request limits
 let _dbPartCounts = {};
 let _dbPartHashes = {};
 let _dbItemIds = {};
