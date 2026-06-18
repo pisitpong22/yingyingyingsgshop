@@ -115,6 +115,7 @@ const DB_ITEM_KEYS = new Set([]);
 const DB_CHUNK_PREFIX = 'dbpart';
 const DB_ITEM_PREFIX = 'dbitem';
 const DB_CHUNK_CHARS = 700000; // safely below Firestore's 1 MiB document limit, fewer writes per save
+const DB_RECORD_INLINE_CHARS = 650000;
 const DB_BATCH_MAX_WRITES = 6;
 const DB_BATCH_MAX_BYTES = 3500000; // stay well below Firestore's 10 MiB request payload limit
 let _dbPartCounts = {};
@@ -297,6 +298,14 @@ function casingVariantDoc(typeId, variantId){
   return doc(fs, 'app', `dbcasing_variant_${safeDocId(typeId)}_${safeDocId(variantId)}`);
 }
 
+function casingTypeChunkDoc(typeId, idx){
+  return doc(fs, 'app', `dbcasing_typechunk_${safeDocId(typeId)}_${idx}`);
+}
+
+function casingVariantChunkDoc(typeId, variantId, idx){
+  return doc(fs, 'app', `dbcasing_variantchunk_${safeDocId(typeId)}_${safeDocId(variantId)}_${idx}`);
+}
+
 function queueCasingTypeWrites(types, writes){
   const list = Array.isArray(types) ? types : [];
   const typeIds = [];
@@ -314,11 +323,7 @@ function queueCasingTypeWrites(types, writes){
     const typeHash = hashString(typeJson);
     typeHashes[typeId] = typeHash;
     if(_casingTypeHashes[typeId] !== typeHash){
-      writes.push({
-        type: 'set',
-        ref: casingTypeDoc(typeId),
-        data: { key: 'casingTypes', typeId, json: typeJson },
-      });
+      queueJsonRecord(writes, casingTypeDoc(typeId), typeJson, { key: 'casingTypes', typeId }, idx => casingTypeChunkDoc(typeId, idx));
     }
 
     const vars = Array.isArray(type && type.variants) ? type.variants : [];
@@ -331,11 +336,7 @@ function queueCasingTypeWrites(types, writes){
       const variantHash = hashString(variantJson);
       variantHashes[typeId][variantId] = variantHash;
       if(!_casingVariantHashes[typeId] || _casingVariantHashes[typeId][variantId] !== variantHash){
-        writes.push({
-          type: 'set',
-          ref: casingVariantDoc(typeId, variantId),
-          data: { key: 'casingTypes', typeId, variantId, json: variantJson },
-        });
+        queueJsonRecord(writes, casingVariantDoc(typeId, variantId), variantJson, { key: 'casingTypes', typeId, variantId }, idx => casingVariantChunkDoc(typeId, variantId, idx));
       }
     });
   });
@@ -358,6 +359,36 @@ function queueCasingTypeWrites(types, writes){
   });
 
   return { typeIds, typeHashes, variantIds, variantHashes };
+}
+
+function queueJsonRecord(writes, ref, json, baseData, chunkRefForIndex){
+  if(json.length <= DB_RECORD_INLINE_CHARS){
+    writes.push({
+      type: 'set',
+      ref,
+      data: { ...baseData, json, _chunked: false },
+    });
+    return;
+  }
+
+  const chunks = chunkString(json, DB_RECORD_INLINE_CHARS);
+  writes.push({
+    type: 'set',
+    ref,
+    data: {
+      ...baseData,
+      _chunked: true,
+      _chunkCount: chunks.length,
+      _chunkHashes: chunks.map(hashString),
+    },
+  });
+  chunks.forEach((part, idx) => {
+    writes.push({
+      type: 'set',
+      ref: chunkRefForIndex(idx),
+      data: { ...baseData, index: idx, json: part },
+    });
+  });
 }
 
 function stableItemId(item, idx){
@@ -505,24 +536,37 @@ async function loadCasingTypesV2(meta){
   const variantIds = meta._casingVariantIds || {};
 
   const types = await Promise.all(typeIds.map(async typeId => {
-    const snap = await getDoc(casingTypeDoc(typeId));
-    if(!snap.exists()){
-      throw new Error(`Missing casing type: ${typeId}`);
-    }
-    const type = JSON.parse(snap.data().json || '{}');
+    const type = JSON.parse(await readJsonRecord(casingTypeDoc(typeId), idx => casingTypeChunkDoc(typeId, idx), `casing type: ${typeId}`));
     const ids = Array.isArray(variantIds[typeId]) ? variantIds[typeId] : [];
     const variants = await Promise.all(ids.map(async variantId => {
-      const vsnap = await getDoc(casingVariantDoc(typeId, variantId));
-      if(!vsnap.exists()){
-        throw new Error(`Missing casing style: ${typeId}/${variantId}`);
-      }
-      return JSON.parse(vsnap.data().json || '{}');
+      return JSON.parse(await readJsonRecord(casingVariantDoc(typeId, variantId), idx => casingVariantChunkDoc(typeId, variantId, idx), `casing style: ${typeId}/${variantId}`));
     }));
     type.variants = variants;
     return type;
   }));
 
   return types;
+}
+
+async function readJsonRecord(ref, chunkRefForIndex, label){
+  const snap = await getDoc(ref);
+  if(!snap.exists()){
+    throw new Error(`Missing ${label}`);
+  }
+  const data = snap.data() || {};
+  if(!data._chunked){
+    return data.json || '{}';
+  }
+  const count = Math.max(0, Number(data._chunkCount) || 0);
+  const snaps = await Promise.all(
+    Array.from({ length: count }, (_, idx) => getDoc(chunkRefForIndex(idx)))
+  );
+  return snaps.map((partSnap, idx) => {
+    if(!partSnap.exists()){
+      throw new Error(`Missing ${label} chunk ${idx}`);
+    }
+    return partSnap.data().json || '';
+  }).join('');
 }
 
 // Subscribe to realtime updates from Firestore.
