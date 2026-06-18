@@ -2957,6 +2957,7 @@ function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(
 
 // ── CASING ──
 let _casingStyleQuery = '';
+let _casingStyleMode = 'all';
 
 function renderCasingTypes(){
   const db=getDB();
@@ -3008,6 +3009,18 @@ function casingVariantSearchText(v){
   ].filter(Boolean).join(' ').toLowerCase();
 }
 
+function casingPhotoCount(v){
+  return Array.isArray(v && v.imgs) ? v.imgs.length : 0;
+}
+
+function popularCasingVariants(vars){
+  return [...(vars || [])].sort((a,b) => {
+    const d = casingPhotoCount(b) - casingPhotoCount(a);
+    if(d) return d;
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+}
+
 function setupCasingStyleTools(vars){
   const tools=document.getElementById('casingStyleTools');
   const strip=document.getElementById('casingStyleStrip');
@@ -3015,6 +3028,7 @@ function setupCasingStyleTools(vars){
   const quick=document.getElementById('casingQuickStrip');
   if(!tools || !strip || !input) return;
   _casingStyleQuery='';
+  _casingStyleMode='all';
   input.value='';
   document.getElementById('casingStyleSearchClear')?.classList.remove('show');
   if(!vars || !vars.length){
@@ -3025,8 +3039,10 @@ function setupCasingStyleTools(vars){
   }
   tools.style.display='';
   input.placeholder = lang==='th' ? 'ค้นหาชื่อแบบ สี หรือราคา...' : 'Search style, color, price...';
+  const popular=popularCasingVariants(vars);
   strip.innerHTML=[
     `<button type="button" class="casing-style-chip active" data-style-chip="all" onclick="selectCasingStyleChip('all')"><span class="chip-label">${lang==='th'?'ทั้งหมด':'All'}</span></button>`,
+    `<button type="button" class="casing-style-chip" data-style-chip="popular" onclick="selectCasingStyleChip('popular')"><span class="chip-label">${lang==='th'?'ยอดนิยม':'Popular'}</span><span class="chip-price">${lang==='th'?'รูปเยอะ':'most photos'}</span></button>`,
     ...vars.map(v=>`
       <button type="button" class="casing-style-chip" data-style-chip="${escapeHtml(v.id)}" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
         <span class="chip-label">${escapeHtml(v.name || '')}</span>
@@ -3034,10 +3050,10 @@ function setupCasingStyleTools(vars){
       </button>`)
   ].join('');
   if(quick){
-    quick.innerHTML=vars.slice(0,8).map(v=>`
+    quick.innerHTML=popular.slice(0,8).map(v=>`
       <button type="button" class="casing-quick-card" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
         <span class="casing-quick-name">${escapeHtml(v.name || '')}</span>
-        <span class="casing-quick-meta">${v.price?`S$${Number(v.price).toLocaleString()} · `:''}${(v.imgs||[]).length || 1} ${lang==='th'?'รูป':'photos'}</span>
+        <span class="casing-quick-meta">${casingPhotoCount(v)} ${lang==='th'?'รูป':'photos'}${v.price?` · S$${Number(v.price).toLocaleString()}`:''}</span>
       </button>`).join('');
   }
 }
@@ -3045,6 +3061,7 @@ function setupCasingStyleTools(vars){
 function filterCasingStyles(){
   const input=document.getElementById('casingStyleSearch');
   _casingStyleQuery=(input ? input.value : '').toLowerCase().trim();
+  _casingStyleMode='all';
   document.getElementById('casingStyleSearchClear')?.classList.toggle('show',!!_casingStyleQuery);
   document.querySelectorAll('#casingStyleStrip .casing-style-chip').forEach(ch=>ch.classList.toggle('active', ch.dataset.styleChip === 'all'));
   applyCasingStyleFilter();
@@ -3054,6 +3071,7 @@ function clearCasingStyleSearch(){
   const input=document.getElementById('casingStyleSearch');
   if(input) input.value='';
   _casingStyleQuery='';
+  _casingStyleMode='all';
   document.getElementById('casingStyleSearchClear')?.classList.remove('show');
   document.querySelectorAll('#casingStyleStrip .casing-style-chip').forEach(ch=>ch.classList.toggle('active', ch.dataset.styleChip === 'all'));
   applyCasingStyleFilter();
@@ -3066,11 +3084,24 @@ function selectCasingStyleChip(styleId){
     clearCasingStyleSearch();
     return;
   }
+  if(styleId === 'popular'){
+    const input=document.getElementById('casingStyleSearch');
+    if(input) input.value='';
+    _casingStyleQuery='';
+    _casingStyleMode='popular';
+    document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+    applyCasingStyleFilter();
+    const cnt=document.getElementById('casingStyleCount');
+    if(cnt) cnt.textContent = lang==='th' ? 'เรียงตามจำนวนรูปมากไปน้อย' : 'Sorted by most sample photos';
+    document.querySelector('.casing-results-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
   const card=cards.find(el=>el.dataset.styleId === String(styleId));
   if(!card) return;
   const input=document.getElementById('casingStyleSearch');
   if(input) input.value='';
   _casingStyleQuery='';
+  _casingStyleMode='all';
   document.getElementById('casingStyleSearchClear')?.classList.remove('show');
   cards.forEach(el=>el.classList.remove('is-hidden','is-highlighted'));
   card.classList.add('is-highlighted');
@@ -3087,6 +3118,9 @@ function applyCasingStyleFilter(){
     const ok=!_casingStyleQuery || (card.dataset.search || '').includes(_casingStyleQuery);
     card.classList.toggle('is-hidden',!ok);
     card.classList.remove('is-highlighted');
+    card.style.order = _casingStyleMode === 'popular'
+      ? String(9999 - (Number(card.dataset.photoCount) || 0))
+      : '';
     if(ok) shown++;
   });
   const empty=document.getElementById('casingStyleEmpty');
@@ -3097,6 +3131,8 @@ function applyCasingStyleFilter(){
       cnt.textContent = shown
         ? (lang==='th' ? `พบ ${shown} แบบสำหรับ "${_casingStyleQuery}"` : `Showing ${shown} style${shown===1?'':'s'} for "${_casingStyleQuery}"`)
         : (lang==='th' ? `ไม่พบแบบสำหรับ "${_casingStyleQuery}"` : `No styles match "${_casingStyleQuery}"`);
+    } else if(_casingStyleMode === 'popular') {
+      cnt.textContent = shown ? (lang==='th' ? `ยอดนิยม ${shown} แบบ เรียงตามจำนวนรูป` : `${shown} popular styles sorted by photo count`) : '';
     } else {
       cnt.textContent = cards.length ? (lang==='th' ? `มี ${cards.length} แบบให้เลือก` : `${cards.length} available style${cards.length===1?'':'s'}`) : '';
     }
@@ -3148,7 +3184,7 @@ function renderVariants(typeId){
   // Direct URLs — see note in renderCasingTypes about why no resize.
   const thumbify = (url) => url;
   grid.innerHTML=vars.map(v=>`
-    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
+    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
         ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
