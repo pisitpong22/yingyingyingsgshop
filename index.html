@@ -953,6 +953,67 @@
     flex:1;height:1px;
     background:linear-gradient(90deg,var(--gold) 0%,transparent 100%);
   }
+  .casing-style-tools{
+    margin:-6px 0 22px;
+    padding:14px;
+    background:var(--glass-bg);
+    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+  }
+  .casing-search-wrap{min-width:0;margin-bottom:12px}
+  .casing-style-strip{
+    display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;
+    padding:2px 2px 8px;scrollbar-width:thin;
+    -webkit-overflow-scrolling:touch;
+  }
+  .casing-style-chip{
+    flex:0 0 auto;
+    display:inline-flex;align-items:center;gap:7px;
+    max-width:240px;
+    padding:8px 12px;
+    border-radius:999px;
+    border:1px solid rgba(201,168,76,.34);
+    background:rgba(255,249,238,.72);
+    color:var(--text);
+    font-size:13px;font-weight:700;
+    cursor:pointer;
+    transition:background .2s,border-color .2s,transform .2s,color .2s;
+  }
+  .casing-style-chip:hover,
+  .casing-style-chip.active{
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    border-color:var(--gold);
+    color:var(--deep);
+    transform:translateY(-1px);
+  }
+  .casing-style-chip .chip-label{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .casing-style-chip .chip-price{
+    color:var(--gold-dark);
+    font-family:var(--font-display);
+    font-size:12px;
+    white-space:nowrap;
+  }
+  .casing-style-chip.active .chip-price,
+  .casing-style-chip:hover .chip-price{color:var(--deep)}
+  .casing-style-count{margin:2px 0 0;padding-left:2px}
+  .var-card.is-hidden{display:none}
+  .var-card.is-highlighted{
+    outline:3px solid rgba(201,168,76,.55);
+    outline-offset:3px;
+    box-shadow:0 0 0 6px rgba(201,168,76,.14),var(--glass-shadow-hover),var(--glass-shadow-inner);
+  }
+  .casing-style-empty{
+    grid-column:1/-1;text-align:center;padding:28px 18px;
+    color:var(--text-muted);
+    border:1px dashed var(--border);
+    border-radius:14px;
+    background:rgba(255,249,238,.45);
+  }
 
   @media(max-width:780px){
     .casing-detail-head{margin-bottom:24px}
@@ -964,6 +1025,14 @@
     .cd-side-card{padding:16px 20px}
     .cd-side-value{font-size:24px}
     .var-grid-title{font-size:17px}
+    .casing-style-tools{
+      position:sticky;top:74px;z-index:20;
+      margin:0 -2px 18px;
+      padding:12px;
+      border-radius:14px;
+    }
+    .casing-style-chip{font-size:12px;padding:7px 11px;max-width:180px}
+    .casing-style-count{font-size:12px}
   }
   .var-card{
     background:var(--glass-bg);
@@ -1601,6 +1670,14 @@
       <div class="var-grid-head">
         <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
         <div class="var-grid-line"></div>
+      </div>
+      <div class="casing-style-tools" id="casingStyleTools" style="display:none">
+        <div class="search-input-wrap casing-search-wrap">
+          <input class="search-input" id="casingStyleSearch" oninput="filterCasingStyles()" placeholder="Search style, color, price...">
+          <button class="search-clear" id="casingStyleSearchClear" onclick="clearCasingStyleSearch()" aria-label="Clear">✕</button>
+        </div>
+        <div class="casing-style-strip" id="casingStyleStrip"></div>
+        <div class="result-count casing-style-count" id="casingStyleCount"></div>
       </div>
       <div class="var-grid" id="vGrid"></div>
     </div>
@@ -2708,6 +2785,8 @@ function renderAc(cat){
 function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAccat=cat;renderAc(cat);}
 
 // ── CASING ──
+let _casingStyleQuery = '';
+
 function renderCasingTypes(){
   const db=getDB();
   document.getElementById('casingTypes').style.display='block';
@@ -2750,6 +2829,100 @@ function renderCasingTypes(){
 
 function openCasingType(typeId){curCasingType=typeId;renderVariants(typeId);window.scrollTo({top:0,behavior:'smooth'});}
 
+function casingVariantSearchText(v){
+  return [
+    v && v.name,
+    v && v.price ? `S$${v.price}` : '',
+    v && v.price,
+  ].filter(Boolean).join(' ').toLowerCase();
+}
+
+function setupCasingStyleTools(vars){
+  const tools=document.getElementById('casingStyleTools');
+  const strip=document.getElementById('casingStyleStrip');
+  const input=document.getElementById('casingStyleSearch');
+  if(!tools || !strip || !input) return;
+  _casingStyleQuery='';
+  input.value='';
+  document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+  if(!vars || !vars.length){
+    tools.style.display='none';
+    strip.innerHTML='';
+    return;
+  }
+  tools.style.display='';
+  input.placeholder = lang==='th' ? 'ค้นหาชื่อแบบ สี หรือราคา...' : 'Search style, color, price...';
+  strip.innerHTML=[
+    `<button type="button" class="casing-style-chip active" data-style-chip="all" onclick="selectCasingStyleChip('all')"><span class="chip-label">${lang==='th'?'ทั้งหมด':'All'}</span></button>`,
+    ...vars.map(v=>`
+      <button type="button" class="casing-style-chip" data-style-chip="${escapeHtml(v.id)}" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
+        <span class="chip-label">${escapeHtml(v.name || '')}</span>
+        ${v.price?`<span class="chip-price">S$${Number(v.price).toLocaleString()}</span>`:''}
+      </button>`)
+  ].join('');
+}
+
+function filterCasingStyles(){
+  const input=document.getElementById('casingStyleSearch');
+  _casingStyleQuery=(input ? input.value : '').toLowerCase().trim();
+  document.getElementById('casingStyleSearchClear')?.classList.toggle('show',!!_casingStyleQuery);
+  document.querySelectorAll('#casingStyleStrip .casing-style-chip').forEach(ch=>ch.classList.toggle('active', ch.dataset.styleChip === 'all'));
+  applyCasingStyleFilter();
+}
+
+function clearCasingStyleSearch(){
+  const input=document.getElementById('casingStyleSearch');
+  if(input) input.value='';
+  _casingStyleQuery='';
+  document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+  document.querySelectorAll('#casingStyleStrip .casing-style-chip').forEach(ch=>ch.classList.toggle('active', ch.dataset.styleChip === 'all'));
+  applyCasingStyleFilter();
+}
+
+function selectCasingStyleChip(styleId){
+  const cards=[...document.querySelectorAll('#vGrid .var-card')];
+  document.querySelectorAll('#casingStyleStrip .casing-style-chip').forEach(ch=>ch.classList.toggle('active', ch.dataset.styleChip === String(styleId)));
+  if(styleId === 'all'){
+    clearCasingStyleSearch();
+    return;
+  }
+  const card=cards.find(el=>el.dataset.styleId === String(styleId));
+  if(!card) return;
+  const input=document.getElementById('casingStyleSearch');
+  if(input) input.value='';
+  _casingStyleQuery='';
+  document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+  cards.forEach(el=>el.classList.remove('is-hidden','is-highlighted'));
+  card.classList.add('is-highlighted');
+  card.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>card.classList.remove('is-highlighted'),1800);
+  const cnt=document.getElementById('casingStyleCount');
+  if(cnt) cnt.textContent = lang==='th' ? 'เลื่อนไปยังแบบที่เลือกแล้ว' : 'Jumped to selected style';
+}
+
+function applyCasingStyleFilter(){
+  const cards=[...document.querySelectorAll('#vGrid .var-card')];
+  let shown=0;
+  cards.forEach(card=>{
+    const ok=!_casingStyleQuery || (card.dataset.search || '').includes(_casingStyleQuery);
+    card.classList.toggle('is-hidden',!ok);
+    card.classList.remove('is-highlighted');
+    if(ok) shown++;
+  });
+  const empty=document.getElementById('casingStyleEmpty');
+  if(empty) empty.style.display = shown ? 'none' : '';
+  const cnt=document.getElementById('casingStyleCount');
+  if(cnt){
+    if(_casingStyleQuery){
+      cnt.textContent = shown
+        ? (lang==='th' ? `พบ ${shown} แบบสำหรับ "${_casingStyleQuery}"` : `Showing ${shown} style${shown===1?'':'s'} for "${_casingStyleQuery}"`)
+        : (lang==='th' ? `ไม่พบแบบสำหรับ "${_casingStyleQuery}"` : `No styles match "${_casingStyleQuery}"`);
+    } else {
+      cnt.textContent = cards.length ? (lang==='th' ? `มี ${cards.length} แบบให้เลือก` : `${cards.length} available style${cards.length===1?'':'s'}`) : '';
+    }
+  }
+}
+
 function renderVariants(typeId){
   const db=getDB();
   const ty=(db.casingTypes||[]).find(x=>x.id===typeId);
@@ -2776,6 +2949,7 @@ function renderVariants(typeId){
   const vars=ty.variants||[];
   const grid=document.getElementById('vGrid');
   if(!vars.length){
+    setupCasingStyleTools([]);
     // No separate styles — show the type's own sample images directly so
     // visitors can preview right away without the admin needing to create a style.
     const samples=(ty.sampleImgs&&ty.sampleImgs.length)?ty.sampleImgs : (ty.bannerImg?[ty.bannerImg]:[]);
@@ -2790,10 +2964,11 @@ function renderVariants(typeId){
     }
     return;
   }
+  setupCasingStyleTools(vars);
   // Direct URLs — see note in renderCasingTypes about why no resize.
   const thumbify = (url) => url;
   grid.innerHTML=vars.map(v=>`
-    <div class="var-card" onclick="openVariant(${ty.id},${v.id})">
+    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
         ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
@@ -2803,7 +2978,8 @@ function renderVariants(typeId){
         <div class="var-name">${v.name}</div>
         <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
       </div>
-    </div>`).join('');
+    </div>`).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
+  applyCasingStyleFilter();
 }
 
 function openVariant(typeId,varId){
