@@ -2008,7 +2008,9 @@ function escapeHtml(s){
 }
 
 function sanitizeRichHtml(value){
-  const raw = String(value || '');
+  const raw = String(value || '')
+    .replace(/&amp;lt;br\s*\/?&amp;gt;/gi, '<br>')
+    .replace(/&lt;br\s*\/?&gt;/gi, '<br>');
   if(!/<[a-z][\s\S]*>/i.test(raw)){
     return escapeHtml(raw).replace(/\n/g, '<br>');
   }

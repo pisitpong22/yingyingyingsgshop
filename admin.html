@@ -4953,13 +4953,16 @@ function rteGetHtml(editorId){
 function rteSetHtml(editorId, html){
   const el = document.getElementById(editorId);
   if(!el) return;
+  const normalised = String(html || '')
+    .replace(/&amp;lt;br\s*\/?&amp;gt;/gi, '<br>')
+    .replace(/&lt;br\s*\/?&gt;/gi, '<br>');
   // If the stored value is plain text with line breaks, convert to <br>
   // so existing data (saved before we had RTE) renders properly.
-  const isAlreadyHtml = /<[a-z][^>]*>/i.test(html || '');
+  const isAlreadyHtml = /<[a-z][^>]*>/i.test(normalised);
   if(isAlreadyHtml){
-    el.innerHTML = html;
+    el.innerHTML = normalised;
   } else {
-    el.innerHTML = String(html || '').replace(/\n/g, '<br>');
+    el.innerHTML = normalised.replace(/\n/g, '<br>');
   }
 }
 
