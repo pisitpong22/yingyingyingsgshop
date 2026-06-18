@@ -1014,10 +1014,146 @@
     border-radius:14px;
     background:rgba(255,249,238,.45);
   }
+  .casing-finder-layout{
+    display:grid;
+    grid-template-columns:minmax(280px,330px) minmax(0,1fr);
+    gap:28px;
+    align-items:start;
+  }
+  .casing-finder-panel{
+    position:sticky;
+    top:86px;
+    background:
+      radial-gradient(circle at 28% 0%,rgba(232,201,106,.14),transparent 34%),
+      linear-gradient(180deg,#171006 0%,#221707 100%);
+    color:var(--gold-light);
+    border:1px solid rgba(201,168,76,.24);
+    border-radius:18px;
+    padding:24px;
+    box-shadow:0 18px 60px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .casing-finder-panel .crumb{margin-bottom:18px;color:#9e8a60}
+  .casing-finder-panel .crumb a{color:var(--gold-light)}
+  .casing-finder-panel .crumb-cur{color:#f0dd9b}
+  .casing-finder-panel .casing-detail-title-row{display:block;margin-bottom:14px}
+  .casing-finder-panel .casing-detail-title{
+    color:#f4d96e;
+    font-size:30px;
+    line-height:1.08;
+    margin-bottom:12px;
+  }
+  .casing-finder-panel .casing-detail-price-badge{
+    background:rgba(201,168,76,.12);
+    border-color:rgba(201,168,76,.38);
+    box-shadow:none;
+  }
+  .casing-finder-panel .cd-price-chip-label{color:#d8c076}
+  .casing-finder-panel .cd-price-chip-value{color:#f4d96e}
+  .casing-finder-panel .casing-detail-desc{
+    background:rgba(255,255,255,.045);
+    border-color:rgba(201,168,76,.18);
+    border-left-color:var(--gold);
+    color:#d8c896;
+    box-shadow:none;
+    padding:16px 18px;
+    margin:18px 0;
+  }
+  .casing-finder-panel .casing-detail-desc strong,
+  .casing-finder-panel .casing-detail-desc b{color:#f0dd9b}
+  .finder-kicker{
+    font-size:11px;
+    letter-spacing:1.8px;
+    text-transform:uppercase;
+    color:#c8b36a;
+    font-weight:800;
+    margin:4px 0 10px;
+  }
+  .casing-finder-panel .casing-style-tools{
+    margin:18px 0 0;
+    padding:0;
+    background:transparent;
+    border:0;
+    box-shadow:none;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+  }
+  .casing-finder-panel .search-input{
+    background:rgba(255,249,238,.08);
+    border-color:rgba(201,168,76,.24);
+    color:#f4e8bd;
+  }
+  .casing-finder-panel .search-input::placeholder{color:#8f7a47}
+  .casing-finder-panel .search-input-wrap::before{opacity:.45;color:#d8c076}
+  .casing-finder-panel .casing-style-strip{
+    flex-direction:column;
+    max-height:330px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:2px 2px 4px;
+  }
+  .casing-finder-panel .casing-style-chip{
+    width:100%;
+    justify-content:space-between;
+    max-width:none;
+    background:rgba(255,249,238,.07);
+    border-color:rgba(201,168,76,.18);
+    color:#eadba8;
+  }
+  .casing-finder-panel .casing-style-chip .chip-price{color:#d6bd63}
+  .casing-finder-panel .casing-style-chip:hover,
+  .casing-finder-panel .casing-style-chip.active{
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--deep);
+    border-color:var(--gold);
+  }
+  .casing-results-panel{min-width:0}
+  .casing-quick-strip{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
+    gap:12px;
+    margin-bottom:20px;
+  }
+  .casing-quick-card{
+    min-height:88px;
+    border:1px solid rgba(201,168,76,.34);
+    border-radius:14px;
+    padding:12px;
+    background:linear-gradient(135deg,rgba(255,253,247,.86),rgba(255,240,194,.72));
+    box-shadow:0 8px 24px rgba(139,105,20,.09);
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    gap:4px;
+    transition:transform .2s,border-color .2s,box-shadow .2s;
+  }
+  .casing-quick-card:hover{
+    transform:translateY(-2px);
+    border-color:var(--gold);
+    box-shadow:0 12px 30px rgba(139,105,20,.15);
+  }
+  .casing-quick-name{
+    font-family:var(--font-display);
+    font-weight:700;
+    color:var(--text);
+    font-size:15px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .casing-quick-meta{font-size:12px;color:var(--gold-dark);font-weight:700}
 
   @media(max-width:780px){
+    .casing-finder-layout{display:block}
+    .casing-finder-panel{
+      position:static;
+      padding:18px;
+      border-radius:16px;
+      margin-bottom:18px;
+    }
     .casing-detail-head{margin-bottom:24px}
     .casing-detail-title{font-size:24px}
+    .casing-finder-panel .casing-detail-title{font-size:26px}
     .casing-detail-price-badge{padding:5px 12px}
     .cd-price-chip-value{font-size:15px}
     .cd-price-chip-label{font-size:9.5px;letter-spacing:1px}
@@ -1031,6 +1167,37 @@
       padding:12px;
       border-radius:14px;
     }
+    .casing-finder-panel .casing-style-tools{
+      position:sticky;
+      top:64px;
+      margin:16px -10px -2px;
+      padding:12px;
+      background:rgba(18,16,10,.94);
+      border:1px solid rgba(201,168,76,.24);
+      border-radius:14px;
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+    }
+    .casing-finder-panel .casing-style-strip{
+      flex-direction:row;
+      max-height:none;
+      overflow-x:auto;
+      overflow-y:hidden;
+    }
+    .casing-finder-panel .casing-style-chip{
+      width:auto;
+      max-width:180px;
+      justify-content:flex-start;
+    }
+    .casing-quick-strip{
+      display:flex;
+      overflow-x:auto;
+      gap:10px;
+      margin:2px 0 18px;
+      padding-bottom:6px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .casing-quick-card{flex:0 0 116px;min-height:78px;padding:10px}
     .casing-style-chip{font-size:12px;padding:7px 11px;max-width:180px}
     .casing-style-count{font-size:12px}
   }
@@ -1657,29 +1824,33 @@
   <div class="content">
     <div id="casingTypes"><div class="ftype-grid" id="cTypeGrid"></div></div>
     <div id="casingVariants" style="display:none">
-      <div class="crumb" id="vCrumb"></div>
-      <div class="casing-detail-head">
-        <div class="casing-detail-main">
+      <div class="casing-finder-layout">
+        <aside class="casing-finder-panel">
+          <div class="crumb" id="vCrumb"></div>
           <div class="casing-detail-title-row">
             <h3 class="casing-detail-title" id="vTitle"></h3>
             <div class="casing-detail-price-badge" id="vSide"></div>
           </div>
           <div class="casing-detail-desc" id="vDesc"></div>
-        </div>
+          <div class="casing-style-tools" id="casingStyleTools" style="display:none">
+            <div class="finder-kicker" data-en="Find your casing style" data-th="ค้นหาแบบกรอบ">Find your casing style</div>
+            <div class="search-input-wrap casing-search-wrap">
+              <input class="search-input" id="casingStyleSearch" oninput="filterCasingStyles()" placeholder="Search style, color, price...">
+              <button class="search-clear" id="casingStyleSearchClear" onclick="clearCasingStyleSearch()" aria-label="Clear">✕</button>
+            </div>
+            <div class="casing-style-strip" id="casingStyleStrip"></div>
+            <div class="result-count casing-style-count" id="casingStyleCount"></div>
+          </div>
+        </aside>
+        <section class="casing-results-panel">
+          <div class="casing-quick-strip" id="casingQuickStrip"></div>
+          <div class="var-grid-head">
+            <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
+            <div class="var-grid-line"></div>
+          </div>
+          <div class="var-grid" id="vGrid"></div>
+        </section>
       </div>
-      <div class="var-grid-head">
-        <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
-        <div class="var-grid-line"></div>
-      </div>
-      <div class="casing-style-tools" id="casingStyleTools" style="display:none">
-        <div class="search-input-wrap casing-search-wrap">
-          <input class="search-input" id="casingStyleSearch" oninput="filterCasingStyles()" placeholder="Search style, color, price...">
-          <button class="search-clear" id="casingStyleSearchClear" onclick="clearCasingStyleSearch()" aria-label="Clear">✕</button>
-        </div>
-        <div class="casing-style-strip" id="casingStyleStrip"></div>
-        <div class="result-count casing-style-count" id="casingStyleCount"></div>
-      </div>
-      <div class="var-grid" id="vGrid"></div>
     </div>
   </div>
 </div>
@@ -2841,6 +3012,7 @@ function setupCasingStyleTools(vars){
   const tools=document.getElementById('casingStyleTools');
   const strip=document.getElementById('casingStyleStrip');
   const input=document.getElementById('casingStyleSearch');
+  const quick=document.getElementById('casingQuickStrip');
   if(!tools || !strip || !input) return;
   _casingStyleQuery='';
   input.value='';
@@ -2848,6 +3020,7 @@ function setupCasingStyleTools(vars){
   if(!vars || !vars.length){
     tools.style.display='none';
     strip.innerHTML='';
+    if(quick) quick.innerHTML='';
     return;
   }
   tools.style.display='';
@@ -2860,6 +3033,13 @@ function setupCasingStyleTools(vars){
         ${v.price?`<span class="chip-price">S$${Number(v.price).toLocaleString()}</span>`:''}
       </button>`)
   ].join('');
+  if(quick){
+    quick.innerHTML=vars.slice(0,8).map(v=>`
+      <button type="button" class="casing-quick-card" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
+        <span class="casing-quick-name">${escapeHtml(v.name || '')}</span>
+        <span class="casing-quick-meta">${v.price?`S$${Number(v.price).toLocaleString()} · `:''}${(v.imgs||[]).length || 1} ${lang==='th'?'รูป':'photos'}</span>
+      </button>`).join('');
+  }
 }
 
 function filterCasingStyles(){
