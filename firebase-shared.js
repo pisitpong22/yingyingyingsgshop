@@ -30,7 +30,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
-  addDoc, serverTimestamp, query, orderBy, writeBatch
+  addDoc, serverTimestamp, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
@@ -110,8 +110,7 @@ const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews'];
 const DB_CHUNK_PREFIX = 'dbpart';
-const DB_CHUNK_CHARS = 200000; // under Firestore's 1 MiB doc limit with room for encoded payload overhead
-const DB_MAX_WRITES_PER_BATCH = 8; // keep each request comfortably below Firestore's 10 MiB payload limit
+const DB_CHUNK_CHARS = 120000; // small chunks avoid both 1 MiB docs and 10 MiB request payloads
 let _dbPartCounts = {};
 let _dbPartHashes = {};
 let _snapshotSeq = 0;
@@ -158,7 +157,7 @@ async function saveDB(newDb){
       _updatedAt: serverTimestamp(),
     }});
 
-    await commitWritesInBatches(writes);
+    await commitWritesSequentially(writes);
     _dbPartCounts = nextCounts;
     _dbPartHashes = nextHashes;
   } catch(err){
@@ -201,14 +200,10 @@ function hashString(str){
   return (h >>> 0).toString(36) + ':' + str.length;
 }
 
-async function commitWritesInBatches(writes){
-  for(let i = 0; i < writes.length; i += DB_MAX_WRITES_PER_BATCH){
-    const batch = writeBatch(fs);
-    writes.slice(i, i + DB_MAX_WRITES_PER_BATCH).forEach(w => {
-      if(w.type === 'delete') batch.delete(w.ref);
-      else batch.set(w.ref, w.data);
-    });
-    await batch.commit();
+async function commitWritesSequentially(writes){
+  for(const w of writes){
+    if(w.type === 'delete') await deleteDoc(w.ref);
+    else await setDoc(w.ref, w.data);
   }
 }
 

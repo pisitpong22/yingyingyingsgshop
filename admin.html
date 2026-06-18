@@ -2757,19 +2757,24 @@ function deepScrubUndefined(val){
 }
 
 // Save to Firestore and only resolve after Firebase confirms the write.
+let _saveInFlight = null;
 async function saveDB(db){
+  if(_saveInFlight) return _saveInFlight;
   try {
-    await FB.saveDB(deepScrubUndefined(db));
+    _saveInFlight = FB.saveDB(deepScrubUndefined(db));
+    await _saveInFlight;
     return true;
   } catch(err) {
     console.error('saveDB failed:', err);
     showToast(lang === 'th' ? 'บันทึกล้มเหลว: ' + (err.message || 'unknown') : 'Save failed: ' + (err.message || 'unknown'));
     throw err;
+  } finally {
+    _saveInFlight = null;
   }
 }
 
 async function persistDB(db, successMsg){
-  showToast(lang === 'th' ? 'กำลังบันทึก...' : 'Saving...');
+  showToast(lang === 'th' ? 'กำลังบันทึก... กรุณารอจนเสร็จ' : 'Saving... please wait', { sticky: true });
   try {
     await saveDB(db);
     if(successMsg) showToast(successMsg);
@@ -5207,7 +5212,16 @@ function importDB(event){
 }
 function confirmReset(){if(tConfirm('confirmReset')){localStorage.removeItem(DB_KEY);loadDash();showToast(tr('reset'));}}
 
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+let _toastTimer = null;
+function showToast(msg, opts={}){
+  const t=document.getElementById('toast');
+  if(!t) return;
+  clearTimeout(_toastTimer);
+  t.textContent=msg;
+  t.classList.add('show');
+  if(opts.sticky) return;
+  _toastTimer=setTimeout(()=>t.classList.remove('show'), opts.duration || 3000);
+}
 
 // INIT
 applyLang();
