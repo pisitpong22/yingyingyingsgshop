@@ -3330,8 +3330,9 @@ function renderVariants(typeId){
       window._lbImages=samples;
       grid.innerHTML=samples.map((img,i)=>`
         <div class="var-card" onclick="openLightbox(${i})">
-          <div class="var-img"><img loading="lazy" decoding="async" src="${img}"></div>
+          <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" src="${img}"></div>
         </div>`).join('');
+      preloadImages(samples, 12);
     } else {
       grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'ยังไม่มีตัวอย่างสำหรับประเภทนี้':'No samples for this type yet.'}</div>`;
     }
@@ -3340,10 +3341,10 @@ function renderVariants(typeId){
   setupCasingStyleTools(vars);
   // Direct URLs — see note in renderCasingTypes about why no resize.
   const thumbify = (url) => url;
-  grid.innerHTML=vars.map(v=>`
+  grid.innerHTML=vars.map((v,i)=>`
     <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img loading="lazy" decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
+        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
@@ -3352,6 +3353,7 @@ function renderVariants(typeId){
         <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
       </div>
     </div>`).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
+  preloadImages(vars.map(v=>v.imgs&&v.imgs[0]).filter(Boolean), 18);
   applyCasingStyleFilter();
 }
 
@@ -3377,12 +3379,13 @@ function openVariant(typeId,varId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="variant-gallery">
-      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${thumbify(img)}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" src="${thumbify(img)}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
     </div>
     <div class="modal-sticky-actions">
       <button type="button" onclick="closeModal()">${lang==='th'?'กลับไปเลือกแบบ':'Back to styles'}</button>
       <button type="button" class="primary" onclick="openContactForCasingStyle(${JSON.stringify(ty.name || '')},${JSON.stringify(v.name || '')},${JSON.stringify(v.price || '')})">${lang==='th'?'สอบถามแบบนี้':'Ask about this style'}</button>
     </div>`;
+  preloadImages(imgs, 18);
   openModal('variant');
 }
 
@@ -3706,13 +3709,13 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 // ─── IMAGE LOADING — IntersectionObserver-based ────────────────────────────
 // Native loading="lazy" only kicks in when the image is very close to the
 // viewport (usually ~100px). For a richer experience we use our own
-// observer with a 250px rootMargin — images start downloading earlier, so
+// observer with a generous rootMargin — images start downloading earlier, so
 // by the time the user scrolls there they're already visible.
 //
 // Workflow per image:
 //   1. On insertion: tag .is-loading (shimmer placeholder shows immediately)
 //   2. Move actual `src` into `data-src`, leave src empty until observer fires
-//   3. When 250px from viewport: set src, then listen for load event
+//   3. When near the viewport: set src, then listen for load event
 //   4. On load: swap classes to .is-loaded (fade in)
 //
 // We don't strip `loading="lazy"` — it acts as a fallback if our JS is
@@ -3729,8 +3732,27 @@ const _imgObserver = ('IntersectionObserver' in window)
         }
         obs.unobserve(img);
       });
-    }, { rootMargin: '250px 0px', threshold: 0.01 })
+    }, { rootMargin: '1200px 0px', threshold: 0.01 })
   : null;
+
+const _preloadedImages = new Set();
+function preloadImages(urls, limit=12){
+  const queue=(urls||[]).filter(Boolean).filter(url=>!_preloadedImages.has(url)).slice(0,limit);
+  if(!queue.length) return;
+  queue.forEach(url=>_preloadedImages.add(url));
+  const run=()=>{
+    queue.forEach(url=>{
+      const img=new Image();
+      img.decoding='async';
+      img.src=url;
+    });
+  };
+  if('requestIdleCallback' in window){
+    requestIdleCallback(run,{timeout:1200});
+  } else {
+    setTimeout(run,80);
+  }
+}
 
 // ─── IMAGEKIT AUTO-RESIZE ──────────────────────────────────────────────────
 // Inserts transformation params (resize, format, quality) into ImageKit URLs
