@@ -2655,7 +2655,7 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'home': return ['amulets','accessories','reviews','projects'];
+    case 'home': return [];
     default: return [];
   }
 }
@@ -2700,6 +2700,17 @@ async function goPageFromUrl(){
   const name = pageFromUrl();
   if(name) await goPage(name, { updateUrl:false });
   else await goPage('home', { updateUrl:false });
+}
+
+async function warmHomeData(){
+  if(pageFromUrl()) return;
+  if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
+  try {
+    await window.FB.ensureDBKeys(['settings','amulets','accessories','reviews','projects']);
+    applySettings();
+  } catch(err) {
+    console.warn('[home] background data load failed:', err);
+  }
 }
 
 // ── CONTACT CLICK ── opens URL if set, otherwise shows toast
@@ -3830,6 +3841,7 @@ async function bootIndex(){
     const s = document.getElementById('fbSplash');
     if(s) s.remove();
   }, 400);
+  warmHomeData();
   // Subscribe to live updates — if admin changes something, the visible
   // site updates without a refresh.
   window.FB.onDBChange(() => {
