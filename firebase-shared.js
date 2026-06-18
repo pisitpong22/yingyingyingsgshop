@@ -110,8 +110,10 @@ const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews'];
 const DB_CHUNK_PREFIX = 'dbpart';
-const DB_CHUNK_CHARS = 200000; // comfortably below Firestore's 1 MiB document limit
+const DB_CHUNK_CHARS = 200000; // under Firestore's 1 MiB doc limit with room for encoded payload overhead
+const DB_MAX_WRITES_PER_BATCH = 8; // keep each request comfortably below Firestore's 10 MiB payload limit
 let _dbPartCounts = {};
+let _dbPartHashes = {};
 let _snapshotSeq = 0;
 
 // ─── DB API ────────────────────────────────────────────────────────────────
@@ -122,36 +124,43 @@ async function saveDB(newDb){
   // limit for a single document while keeping FB.getDB()/saveDB() unchanged.
   _db = newDb;
   try {
-    const batch = writeBatch(fs);
     const nextCounts = {};
+    const nextHashes = {};
+    const writes = [];
 
     DB_SPLIT_KEYS.forEach(key => {
       const json = JSON.stringify(newDb && newDb[key] !== undefined ? newDb[key] : defaultDbValueForKey(key));
       const chunks = chunkString(json, DB_CHUNK_CHARS);
       nextCounts[key] = chunks.length;
+      nextHashes[key] = chunks.map(hashString);
       chunks.forEach((part, idx) => {
-        batch.set(dbChunkDoc(key, idx), {
-          key,
-          index: idx,
-          json: part,
-        });
+        const prevHash = _dbPartHashes[key] && _dbPartHashes[key][idx];
+        if(prevHash !== nextHashes[key][idx]){
+          writes.push({
+            type: 'set',
+            ref: dbChunkDoc(key, idx),
+            data: { key, index: idx, json: part },
+          });
+        }
       });
 
       const oldCount = _dbPartCounts[key] || 0;
       for(let idx = chunks.length; idx < oldCount; idx++){
-        batch.delete(dbChunkDoc(key, idx));
+        writes.push({ type: 'delete', ref: dbChunkDoc(key, idx) });
       }
     });
 
-    batch.set(DB_DOC, {
+    writes.push({ type: 'set', ref: DB_DOC, data: {
       _splitVersion: DB_SPLIT_VERSION,
       _partKeys: DB_SPLIT_KEYS,
       _partCounts: nextCounts,
+      _partHashes: nextHashes,
       _updatedAt: serverTimestamp(),
-    });
+    }});
 
-    await batch.commit();
+    await commitWritesInBatches(writes);
     _dbPartCounts = nextCounts;
+    _dbPartHashes = nextHashes;
   } catch(err){
     console.error('[FB] saveDB failed:', err);
     throw err;
@@ -183,6 +192,26 @@ function chunkString(str, size){
   return chunks.length ? chunks : ['null'];
 }
 
+function hashString(str){
+  let h = 2166136261;
+  for(let i = 0; i < str.length; i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36) + ':' + str.length;
+}
+
+async function commitWritesInBatches(writes){
+  for(let i = 0; i < writes.length; i += DB_MAX_WRITES_PER_BATCH){
+    const batch = writeBatch(fs);
+    writes.slice(i, i + DB_MAX_WRITES_PER_BATCH).forEach(w => {
+      if(w.type === 'delete') batch.delete(w.ref);
+      else batch.set(w.ref, w.data);
+    });
+    await batch.commit();
+  }
+}
+
 function notifyDBReady(){
   _dbListeners.forEach(cb => {
     try { cb(_db); } catch(err){ console.error('[FB] listener error:', err); }
@@ -197,6 +226,7 @@ async function loadSplitDB(meta){
   const out = {};
   const keys = Array.isArray(meta._partKeys) ? meta._partKeys : DB_SPLIT_KEYS;
   const counts = meta._partCounts || {};
+  const hashes = meta._partHashes || {};
 
   await Promise.all(keys.map(async key => {
     const count = Math.max(0, Number(counts[key]) || 0);
@@ -218,6 +248,7 @@ async function loadSplitDB(meta){
   }));
 
   _dbPartCounts = { ...counts };
+  _dbPartHashes = { ...hashes };
   return out;
 }
 
@@ -232,6 +263,7 @@ onSnapshot(DB_DOC, async (snap) => {
     } else {
       _db = null;   // doc doesn't exist yet — first run
       _dbPartCounts = {};
+      _dbPartHashes = {};
     }
     if(seq !== _snapshotSeq) return;
     notifyDBReady();

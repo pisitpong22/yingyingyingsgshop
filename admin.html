@@ -2756,13 +2756,27 @@ function deepScrubUndefined(val){
   return val;
 }
 
-// Save to Firestore. We don't await here so callers can keep using the
-// previous synchronous-looking API; errors are logged and shown as a toast.
-function saveDB(db){
-  FB.saveDB(deepScrubUndefined(db)).catch(err => {
+// Save to Firestore and only resolve after Firebase confirms the write.
+async function saveDB(db){
+  try {
+    await FB.saveDB(deepScrubUndefined(db));
+    return true;
+  } catch(err) {
     console.error('saveDB failed:', err);
     showToast(lang === 'th' ? 'บันทึกล้มเหลว: ' + (err.message || 'unknown') : 'Save failed: ' + (err.message || 'unknown'));
-  });
+    throw err;
+  }
+}
+
+async function persistDB(db, successMsg){
+  showToast(lang === 'th' ? 'กำลังบันทึก...' : 'Saving...');
+  try {
+    await saveDB(db);
+    if(successMsg) showToast(successMsg);
+    return true;
+  } catch(err) {
+    return false;
+  }
 }
 function genId(arr){return arr.length?Math.max(...arr.map(i=>i.id))+1:1;}
 
@@ -2948,7 +2962,7 @@ function loadBranding(){
   _selectedFont = s.displayFont || 'Noto Serif';
   renderFontPicker();
 }
-function saveBranding(){
+async function saveBranding(){
   const db=getDB();
   db.settings.pageTitle=document.getElementById('b_pageTitle').value;
   db.settings.logoIcon=document.getElementById('b_logoIcon').value;
@@ -2956,7 +2970,7 @@ function saveBranding(){
   db.settings.logoSub=document.getElementById('b_logoSub').value;
   db.settings.topbar=document.getElementById('b_topbar').value;
   db.settings.displayFont=_selectedFont||'Noto Serif';
-  saveDB(db);showToast(tr('brandingSaved'));
+  await persistDB(db,tr('brandingSaved'));
 }
 
 // NAV
@@ -3000,27 +3014,28 @@ function captureNavValues(){
   return db;
 }
 
-function moveNav(idx,dir){
+async function moveNav(idx,dir){
   const db=captureNavValues();const arr=db.settings.nav;
   const ni=idx+dir;if(ni<0||ni>=arr.length)return;
   [arr[idx],arr[ni]]=[arr[ni],arr[idx]];
-  saveDB(db);loadNav();
+  try { await saveDB(db); loadNav(); } catch(err) {}
 }
 
-function rmNavItem(idx){
+async function rmNavItem(idx){
   if(!tConfirm('confirmDeleteNav'))return;
   const db=captureNavValues();
   const item=db.settings.nav[idx];
   if(item.builtin){showToast(tr('builtinNoDelete'));return;}
   db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==item.id);
   db.settings.nav.splice(idx,1);
-  saveDB(db);loadNav();showToast(tr('deleted'));
+  if(!(await persistDB(db,tr('deleted')))) return;
+  loadNav();
   if(typeof loadSections === 'function') loadSections();
 }
 
-function saveNav(){
+async function saveNav(){
   const db=captureNavValues();
-  saveDB(db);showToast(tr('menuSaved'));
+  await persistDB(db,tr('menuSaved'));
 }
 
 // CUSTOM PAGES
@@ -3170,7 +3185,7 @@ function saveCpItem(){
   renderCpItems();
 }
 
-function saveCustomPage(){
+async function saveCustomPage(){
   const label=document.getElementById('cp_label').value.trim();
   if(!label){showToast(tr('needLabel'));return;}
   // Block saving if any image still uploading
@@ -3207,17 +3222,19 @@ function saveCustomPage(){
     });
     db.settings.nav.push({id,label,visible:true,enabled:true,builtin:false});
   }
-  saveDB(db);closeModal('pageModal');showToast(tr('pageSaved'));loadNav();
+  if(!(await persistDB(db,tr('pageSaved')))) return;
+  closeModal('pageModal');loadNav();
   // Also refresh Page Headers tab in case admin is about to switch over to it
   if(typeof loadSections === 'function') loadSections();
 }
 
-function delCustomPage(id){
+async function delCustomPage(id){
   if(!tConfirm('confirmDeletePage'))return;
   const db=captureNavValues();
   db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==id);
   db.settings.nav=db.settings.nav.filter(n=>n.id!==id);
-  saveDB(db);loadNav();showToast(tr('deleted'));
+  if(!(await persistDB(db,tr('deleted')))) return;
+  loadNav();
   if(typeof loadSections === 'function') loadSections();
 }
 
@@ -3416,7 +3433,7 @@ function captureHeroStats(){
 function addHeroStat(){const cur=captureHeroStats();cur.push({label:'New Stat',value:'0'});renderHeroStats(cur);}
 function rmHeroStat(idx){const cur=captureHeroStats();cur.splice(idx,1);renderHeroStats(cur);}
 
-function saveHero(){
+async function saveHero(){
   if(!ensureUploadsDone()) return;
   const db=getDB();
   db.settings.hero.bgImage=(captureImgs('h_bg')[0]||'');
@@ -3434,12 +3451,12 @@ function saveHero(){
   db.settings.hero.desc=document.getElementById('h_desc').value;
   db.settings.hero.buttons=captureHeroBtns();
   db.settings.hero.stats=captureHeroStats();
-  saveDB(db);showToast(tr('heroSaved'));
+  await persistDB(db,tr('heroSaved'));
 }
 
 // Quick way to wipe all hero visuals (bg image, glb, front/back images)
 // without having to clear each one individually.
-function resetHeroVisuals(){
+async function resetHeroVisuals(){
   const msg = (lang === 'th')
     ? 'ลบรูปทั้งหมดในส่วน Hero?\n• รูปพื้นหลัง\n• โมเดล 3D (.glb)\n• รูปพระด้านหน้า/หลัง\n\nข้อความ Hero และปุ่มต่างๆ จะไม่ถูกแตะ'
     : 'Clear all images in Hero?\n• Background image\n• 3D model (.glb)\n• Phra front/back images\n\nHero text and buttons will NOT be touched.';
@@ -3471,8 +3488,7 @@ function resetHeroVisuals(){
     _tempGlbSize = 0;
     if(typeof renderGlbInfo === 'function') renderGlbInfo();
   }
-  saveDB(db);
-  showToast(lang === 'th' ? '🗑️ ลบรูป Hero ทั้งหมดแล้ว' : '🗑️ All hero images cleared');
+  await persistDB(db, lang === 'th' ? '🗑️ ลบรูป Hero ทั้งหมดแล้ว' : '🗑️ All hero images cleared');
 }
 // ── HOMEPAGE LAYOUT (section ordering) ──
 // Icons for each known home section id
@@ -3608,11 +3624,10 @@ function hoDragEnd(e){
   _hoDragIdx = -1;
 }
 
-function saveHomeOrder(){
+async function saveHomeOrder(){
   const db = getDB();
   db.settings.homeOrder = _homeOrderDraft.map(x => ({...x}));
-  saveDB(db);
-  showToast(lang === 'th' ? '💾 บันทึกเลย์เอาท์แล้ว' : '💾 Layout saved');
+  await persistDB(db, lang === 'th' ? '💾 บันทึกเลย์เอาท์แล้ว' : '💾 Layout saved');
 }
 
 // SERVICES
@@ -3651,11 +3666,11 @@ function captureSvc(){
 }
 function addSvcCard(){const cur=captureSvc();cur.push({icon:'✨',title:'New Service',desc:'Description',target:'home'});renderSvcList(cur);}
 function rmSvcCard(i){const cur=captureSvc();cur.splice(i,1);renderSvcList(cur);}
-function saveServices(){
+async function saveServices(){
   const db=getDB();
   db.settings.homeServices.title=document.getElementById('svc_title').value;
   db.settings.homeServices.cards=captureSvc();
-  saveDB(db);showToast(tr('serviceSaved'));
+  await persistDB(db,tr('serviceSaved'));
 }
 
 // SECTIONS
@@ -3795,7 +3810,7 @@ function loadSections(){
   }
 }
 
-function saveSections(){
+async function saveSections(){
   const db = getDB();
   const s = db.settings;
   if(!s.sections.reviews) s.sections.reviews = {title:'',desc:''};
@@ -3821,7 +3836,7 @@ function saveSections(){
     }
   });
 
-  saveDB(db); showToast(tr('sectionsSaved'));
+  await persistDB(db,tr('sectionsSaved'));
 }
 
 const PAGE_INTRO_LABELS = {
@@ -3870,7 +3885,7 @@ function loadPanelPageIntro(pageId){
   rteSetHtml(`panel_${pageId}_desc`, section.desc || '');
 }
 
-function savePanelPageIntro(pageId){
+async function savePanelPageIntro(pageId){
   const db = getDB();
   const s = db.settings;
   if(!s.sections) s.sections = {};
@@ -3878,10 +3893,9 @@ function savePanelPageIntro(pageId){
   if(!s.sections[key]) s.sections[key] = {title:'',desc:''};
   s.sections[key].title = rteGetHtml(`panel_${pageId}_title`);
   s.sections[key].desc = rteGetHtml(`panel_${pageId}_desc`);
-  saveDB(db);
+  if(!(await persistDB(db, lang==='th' ? '✅ บันทึกข้อความหน้าแล้ว' : '✅ Page text saved'))) return;
   loadPanelPageIntro(pageId);
   loadSections();
-  showToast(lang==='th' ? '✅ บันทึกข้อความหน้าแล้ว' : '✅ Page text saved');
 }
 
 // Helpers escapeAttr / escapeText defined elsewhere in this file
@@ -3909,7 +3923,7 @@ function captureTrust(){
 }
 function addTrustCard(){const cur=captureTrust();cur.push({icon:'⭐',title:'New Feature',desc:'Description'});renderTrustList(cur);}
 function rmTrust(i){const cur=captureTrust();cur.splice(i,1);renderTrustList(cur);}
-function saveTrust(){const db=getDB();db.settings.trustCards=captureTrust();saveDB(db);showToast(tr('trustSaved'));}
+async function saveTrust(){const db=getDB();db.settings.trustCards=captureTrust();await persistDB(db,tr('trustSaved'));}
 
 // CONTACT
 function loadContact(){
@@ -3948,14 +3962,14 @@ function captureContacts(){
 }
 function addContactBtn(){const cur=captureContacts();cur.push({label:'📞 New',color:'#888888',url:'',message:'Contact us'});renderContactList(cur);}
 function rmContact(i){const cur=captureContacts();cur.splice(i,1);renderContactList(cur);}
-function saveContact(){
+async function saveContact(){
   const db=getDB();
   db.settings.contacts=captureContacts();
   db.settings.contactBtnText=document.getElementById('cbtn_text').value;
   db.settings.contactBtnMessage=document.getElementById('cbtn_msg').value;
   db.settings.casingInquiryText=document.getElementById('cinq_text').value;
   db.settings.casingInquiryMessage=document.getElementById('cinq_msg').value;
-  saveDB(db);showToast(tr('contactSaved'));
+  await persistDB(db,tr('contactSaved'));
 }
 
 // ── PAYMENT ──
@@ -3970,7 +3984,7 @@ function loadPayment(){
   tempImgs['pay_qr']=p.qrImage?[p.qrImage]:[];
   renderPrev('pay_qr');
 }
-function savePayment(){
+async function savePayment(){
   if(!ensureUploadsDone()) return;
   const db=getDB();
   db.settings.payment={
@@ -3983,7 +3997,7 @@ function savePayment(){
     policy:document.getElementById('pay_policy').value,
     qrImage:(captureImgs('pay_qr')[0]||''),
   };
-  saveDB(db);showToast(tr('paymentSaved'));
+  await persistDB(db,tr('paymentSaved'));
 }
 
 // ── FEATURED ──
@@ -4005,11 +4019,12 @@ function loadFeatured(){
     </div>`).join('')}
   </div>`;
 }
-function unfeature(kind,id){
+async function unfeature(kind,id){
   const db=getDB();const it=(db[kind]||[]).find(x=>x.id===id);if(!it)return;
-  it.featured=false;saveDB(db);loadFeatured();
+  it.featured=false;
+  try { await saveDB(db); loadFeatured(); } catch(err) {}
 }
-function saveFeatured(){
+async function saveFeatured(){
   const db=getDB();
   db.settings.featured={
     enabled:document.getElementById('feat_enabled').checked,
@@ -4017,7 +4032,7 @@ function saveFeatured(){
     sub:document.getElementById('feat_sub').value,
     ids:db.settings.featured?.ids||[],
   };
-  saveDB(db);showToast(tr('featuredSaved'));
+  await persistDB(db,tr('featuredSaved'));
 }
 
 // ── REVIEWS ──
@@ -4107,9 +4122,8 @@ async function approvePending(id){
     text: rv.text||'',
     imgs: Array.isArray(rv.imgs)?rv.imgs.slice():[],
   });
-  saveDB(db);
+  if(!(await persistDB(db, lang==='th'?'อนุมัติแล้ว แสดงบนเว็บ':'Approved & published'))) return;
   try { await window.FB.deleteReviewSubmission(id); } catch(e){ console.warn('delete submission failed:',e); }
-  showToast(lang==='th'?'อนุมัติแล้ว แสดงบนเว็บ':'Approved & published');
   loadReviewsList();
   loadPendingReviews();
 }
@@ -4150,7 +4164,7 @@ function loadReviewsList(){
       </tr>`;
     }).join('')}</tbody></table>`;
 }
-function saveReviewsSection(){
+async function saveReviewsSection(){
   const db=getDB();
   // Preserve existing reviews object, just update its fields
   const cur = db.settings.reviews || {};
@@ -4165,7 +4179,7 @@ function saveReviewsSection(){
     homeCount:  parseInt(document.getElementById('rev_homeCount').value, 10) || 3,
     homeMode:   document.getElementById('rev_homeMode').value || 'top',
   };
-  saveDB(db);showToast(tr('saved'));
+  await persistDB(db,tr('saved'));
 }
 // Toggle visibility of name/display fields based on Anonymous switch.
 // When anon is on (default), the name fields are hidden — admin can skip
@@ -4176,7 +4190,7 @@ function onAnonChange(){
   if(optional) optional.style.display = anon ? 'none' : 'block';
 }
 
-function saveReview(){
+async function saveReview(){
   if(!ensureUploadsDone()) return;
   const anon = document.getElementById('r_anon').checked;
   const name=document.getElementById('r_name').value.trim();
@@ -4207,8 +4221,9 @@ function saveReview(){
   } else {
     db.reviews.push({id:genId(db.reviews),...data});
   }
-  saveDB(db);tempImgs['r_imgs']=[];
-  cancelEditReview();loadReviewsList();showToast(tr('reviewSaved'));
+  if(!(await persistDB(db,tr('reviewSaved')))) return;
+  tempImgs['r_imgs']=[];
+  cancelEditReview();loadReviewsList();
 }
 function editReview(id){
   const rv=(getDB().reviews||[]).find(x=>x.id===id);if(!rv)return;
@@ -4241,10 +4256,11 @@ function cancelEditReview(){
   document.getElementById('r_save_btn').textContent=lang==='th'?'✅ บันทึกรีวิว':'✅ Save Review';
   document.getElementById('r_cancel_btn').style.display='none';
 }
-function deleteReview(id){
+async function deleteReview(id){
   if(!tConfirm('confirmDelete'))return;
   const db=getDB();db.reviews=(db.reviews||[]).filter(r=>r.id!==id);
-  saveDB(db);loadReviewsList();showToast(tr('reviewDeleted'));
+  if(!(await persistDB(db,tr('reviewDeleted')))) return;
+  loadReviewsList();
 }
 
 // ITEMS
@@ -4319,7 +4335,7 @@ function loadCasingTypes(){
 }
 
 // Move a casing type up (dir=-1) or down (dir=1) in the order
-function moveType(typeId, dir){
+async function moveType(typeId, dir){
   const db = getDB();
   if(!Array.isArray(db.casingTypes)) return;
   const idx = db.casingTypes.findIndex(t => t.id === typeId);
@@ -4329,8 +4345,7 @@ function moveType(typeId, dir){
   const tmp = db.casingTypes[idx];
   db.casingTypes[idx] = db.casingTypes[target];
   db.casingTypes[target] = tmp;
-  saveDB(db);
-  loadCasingTypes();
+  try { await saveDB(db); loadCasingTypes(); } catch(err) {}
 }
 
 function openTypeForm(typeId){
@@ -4347,7 +4362,7 @@ function openTypeForm(typeId){
   document.getElementById('typeModal').classList.add('open');
 }
 
-function saveType(){
+async function saveType(){
   if(!ensureUploadsDone()) return;
   const name=document.getElementById('ft_name').value.trim();
   const price=document.getElementById('ft_price').value.trim();
@@ -4359,13 +4374,15 @@ function saveType(){
   } else {
     db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[]});
   }
-  saveDB(db);tempImgs={};closeModal('typeModal');showToast(tr('saved'));loadCasingTypes();loadDash();
+  if(!(await persistDB(db,tr('saved')))) return;
+  tempImgs={};closeModal('typeModal');loadCasingTypes();loadDash();
 }
 
-function delType(typeId){
+async function delType(typeId){
   if(!tConfirm('confirmDeleteType'))return;
   const db=getDB();db.casingTypes=db.casingTypes.filter(t=>t.id!==typeId);
-  saveDB(db);loadCasingTypes();loadDash();showToast(tr('deleted'));
+  if(!(await persistDB(db,tr('deleted')))) return;
+  loadCasingTypes();loadDash();
 }
 
 function enterTypeView(typeId){
@@ -4413,7 +4430,7 @@ function loadVariants(){
 }
 
 // Move a variant up/down within its parent casing type
-function moveVariant(variantId, dir){
+async function moveVariant(variantId, dir){
   const db = getDB();
   const ty = (db.casingTypes || []).find(t => t.id === curEditTypeId);
   if(!ty || !Array.isArray(ty.variants)) return;
@@ -4424,8 +4441,7 @@ function moveVariant(variantId, dir){
   const tmp = ty.variants[idx];
   ty.variants[idx] = ty.variants[target];
   ty.variants[target] = tmp;
-  saveDB(db);
-  loadVariants();
+  try { await saveDB(db); loadVariants(); } catch(err) {}
 }
 
 function openVariantForm(varId){
@@ -4440,7 +4456,7 @@ function openVariantForm(varId){
   document.getElementById('variantModal').classList.add('open');
 }
 
-function saveVariant(){
+async function saveVariant(){
   if(!ensureUploadsDone()) return;
   const name=document.getElementById('fv_name').value.trim();
   const price=document.getElementById('fv_price').value;
@@ -4454,19 +4470,22 @@ function saveVariant(){
   } else {
     ty.variants.push({id:genId(ty.variants),...data});
   }
-  saveDB(db);tempImgs={};closeModal('variantModal');showToast(tr('saved'));loadVariants();
+  if(!(await persistDB(db,tr('saved')))) return;
+  tempImgs={};closeModal('variantModal');loadVariants();
 }
 
-function delVariant(varId){
+async function delVariant(varId){
   if(!tConfirm('confirmDeleteStyle'))return;
   const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
-  ty.variants=ty.variants.filter(v=>v.id!==varId);saveDB(db);loadVariants();showToast(tr('deleted'));
+  ty.variants=ty.variants.filter(v=>v.id!==varId);
+  if(!(await persistDB(db,tr('deleted')))) return;
+  loadVariants();
 }
 
 let tempImgs={};
 let editingItemId={amulets:null,accessories:null,projects:null};
 
-function saveAmulet(){
+async function saveAmulet(){
   if(!ensureUploadsDone()) return;
   const name=document.getElementById('a_name').value.trim();
   const price=document.getElementById('a_price').value;
@@ -4491,7 +4510,8 @@ function saveAmulet(){
   } else {
     db.amulets.push({id:genId(db.amulets),...data});
   }
-  saveDB(db);tempImgs['a_imgs']=[];showToast(tr('saved'));
+  if(!(await persistDB(db,tr('saved')))) return;
+  tempImgs['a_imgs']=[];
   cancelEditAmulet();
   loadList('amulets');loadDash();
 }
@@ -4527,7 +4547,7 @@ function cancelEditAmulet(){
   document.getElementById('a_cancel_btn').style.display='none';
 }
 
-function saveAccess(){
+async function saveAccess(){
   if(!ensureUploadsDone()) return;
   const name=document.getElementById('ac_name').value.trim();
   const price=document.getElementById('ac_price').value;
@@ -4550,7 +4570,8 @@ function saveAccess(){
   } else {
     db.accessories.push({id:genId(db.accessories),...data});
   }
-  saveDB(db);tempImgs['ac_imgs']=[];showToast(tr('saved'));
+  if(!(await persistDB(db,tr('saved')))) return;
+  tempImgs['ac_imgs']=[];
   cancelEditAccess();
   loadList('accessories');loadDash();
 }
@@ -4584,7 +4605,7 @@ function cancelEditAccess(){
   document.getElementById('ac_cancel_btn').style.display='none';
 }
 
-function saveProject(){
+async function saveProject(){
   if(!ensureUploadsDone()) return;
   const name=document.getElementById('p_name').value.trim();
   if(!name){showToast(tr('needName'));return;}
@@ -4596,7 +4617,8 @@ function saveProject(){
   } else {
     db.projects.push({id:genId(db.projects),...data});
   }
-  saveDB(db);tempImgs['p_imgs']=[];showToast(tr('saved'));
+  if(!(await persistDB(db,tr('saved')))) return;
+  tempImgs['p_imgs']=[];
   cancelEditProject();
   loadList('projects');loadDash();
 }
@@ -4624,10 +4646,11 @@ function cancelEditProject(){
   document.getElementById('p_cancel_btn').style.display='none';
 }
 
-function delItem(type,id){
+async function delItem(type,id){
   if(!tConfirm('confirmDelete'))return;
-  const db=getDB();db[type]=db[type].filter(i=>i.id!==id);saveDB(db);
-  showToast(tr('deleted'));loadList(type);loadDash();
+  const db=getDB();db[type]=db[type].filter(i=>i.id!==id);
+  if(!(await persistDB(db,tr('deleted')))) return;
+  loadList(type);loadDash();
 }
 
 // ─── IMAGE UPLOAD + PREVIEW SYSTEM ────────────────────────────────────────
@@ -5804,14 +5827,15 @@ window.closeLiveEditor = function(){
   const orig = saveDB;
   // Override globally — works for both `saveDB(x)` direct calls AND
   // `window.saveDB(x)` reference calls because they resolve to the same slot.
-  saveDB = function(db){
-    orig.call(this, db);
+  saveDB = async function(db){
+    const result = await orig.call(this, db);
     if(_liveOpen){
       // Soft reload preview so the user sees the change
       setTimeout(() => reloadLivePreview(), 150);
       // Also show a confirmation toast inside the live editor
       showLiveToast('💾 ' + (lang==='th' ? 'บันทึกแล้ว — รีเฟรช preview...' : 'Saved — refreshing preview...'));
     }
+    return result;
   };
   // Make sure window.saveDB points to the wrapped version too
   window.saveDB = saveDB;
