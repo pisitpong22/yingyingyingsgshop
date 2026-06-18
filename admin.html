@@ -810,6 +810,14 @@
   .dtable tr:hover td{background:rgba(201,168,76,.04)}
   .dtable tr:last-child td{border-bottom:none}
   .dtable tr:hover td{background:#fffdf5}
+  .dtable tr.variant-row.dragging td{opacity:.42;background:#fff8df}
+  .dtable tr.variant-row.drag-over-top td{border-top:3px solid var(--gold)}
+  .dtable tr.variant-row.drag-over-bottom td{border-bottom:3px solid var(--gold)}
+  .variant-drag-cell{display:flex;align-items:center;gap:8px}
+  .variant-drag-handle{cursor:grab;color:var(--gold-dark);font-size:18px;line-height:1;padding:7px 5px;border:1px solid rgba(201,168,76,.28);border-radius:7px;background:#fff8df;user-select:none}
+  .variant-drag-handle:active{cursor:grabbing}
+  .variant-drag-handle.disabled{opacity:.4;cursor:not-allowed}
+  .variant-order-num{font-size:11px;color:var(--text-muted);font-weight:700;min-width:22px}
   .thumb{width:42px;height:42px;border-radius:6px;object-fit:cover}
   .no-img{width:42px;height:42px;border-radius:6px;background:#f0e8d0;display:flex;align-items:center;justify-content:center;font-size:18px}
   .tag{background:rgba(201,168,76,.1);color:var(--gold-dark);font-size:12px;padding:3px 10px;border-radius:25px;border:1px solid rgba(201,168,76,.22);font-weight:500}
@@ -4305,6 +4313,7 @@ function loadList(type){
 let curEditTypeId=null,curEditVariantId=null;
 let _variantOrderSaving=false;
 let _variantHighlightId=null;
+let _variantDragId=null;
 
 function loadCasingTypes(){
   const types=getDB().casingTypes||[];
@@ -4414,13 +4423,20 @@ function loadVariants(){
   if(!vars.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;return;}
   const last = vars.length - 1;
   c.innerHTML=`<table class="dtable">
-    <thead><tr><th style="width:60px">${lang==='th'?'ลำดับ':'Order'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
+    <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
     <tbody>${vars.map((v, idx)=>`
-      <tr data-variant-id="${String(v.id).replace(/"/g,'&quot;')}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}>
+      <tr class="variant-row" data-variant-id="${escapeHtml(v.id)}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}
+          ondragover="variantDragOver(event)"
+          ondragleave="variantDragLeave(event)"
+          ondrop="variantDrop(event,${JSON.stringify(v.id)})">
         <td>
-          <div style="display:flex;gap:3px">
-            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${JSON.stringify(v.id)}, -1)" ${idx === 0 || _variantOrderSaving ? 'disabled' : ''} title="${lang==='th'?'เลื่อนขึ้น':'Move up'}">▲</button>
-            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${JSON.stringify(v.id)}, 1)" ${idx === last || _variantOrderSaving ? 'disabled' : ''} title="${lang==='th'?'เลื่อนลง':'Move down'}">▼</button>
+          <div class="variant-drag-cell">
+            <span class="variant-drag-handle ${_variantOrderSaving?'disabled':''}"
+                  ${_variantOrderSaving?'':'draggable="true"'}
+                  title="${lang==='th'?'ลากเพื่อจัดลำดับ':'Drag to reorder'}"
+                  ondragstart="variantDragStart(event,${JSON.stringify(v.id)})"
+                  ondragend="variantDragEnd(event)">⋮⋮</span>
+            <span class="variant-order-num">${idx + 1}</span>
           </div>
         </td>
         <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${v.imgs[0]}">`:`<div class="no-img">🪬</div>`}</td>
@@ -4471,6 +4487,87 @@ async function moveVariant(variantId, dir){
     ty.variants[target]=displaced;
   } finally {
     _variantOrderSaving=false;
+    loadVariants();
+  }
+}
+
+function variantDragStart(e, variantId){
+  if(_variantOrderSaving){
+    e.preventDefault();
+    return;
+  }
+  _variantDragId=variantId;
+  const row=e.currentTarget.closest('tr');
+  if(row) row.classList.add('dragging');
+  try{
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain', String(variantId));
+  }catch(_){}
+}
+
+function variantDragOver(e){
+  e.preventDefault();
+  try{e.dataTransfer.dropEffect='move';}catch(_){}
+  const row=e.currentTarget;
+  if(!row || _variantDragId===null) return;
+  const rect=row.getBoundingClientRect();
+  const midY=rect.top + rect.height / 2;
+  row.classList.remove('drag-over-top','drag-over-bottom');
+  row.classList.add(e.clientY < midY ? 'drag-over-top' : 'drag-over-bottom');
+}
+
+function variantDragLeave(e){
+  e.currentTarget.classList.remove('drag-over-top','drag-over-bottom');
+}
+
+async function variantDrop(e, targetId){
+  e.preventDefault();
+  const row=e.currentTarget;
+  if(row) row.classList.remove('drag-over-top','drag-over-bottom');
+  if(_variantDragId===null || String(_variantDragId)===String(targetId)) return;
+
+  const rect=row.getBoundingClientRect();
+  const before=e.clientY < (rect.top + rect.height / 2);
+  await reorderVariantByDrag(_variantDragId, targetId, before);
+}
+
+function variantDragEnd(){
+  document.querySelectorAll('#variantsList .variant-row').forEach(row=>{
+    row.classList.remove('dragging','drag-over-top','drag-over-bottom');
+  });
+  _variantDragId=null;
+}
+
+async function reorderVariantByDrag(dragId, targetId, before){
+  if(_variantOrderSaving){
+    showToast(lang==='th'?'กำลังบันทึกลำดับ รอสักครู่':'Saving order, please wait');
+    return;
+  }
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);
+  if(!ty || !Array.isArray(ty.variants)) return;
+  const prev=[...ty.variants];
+  const from=ty.variants.findIndex(v=>String(v.id)===String(dragId));
+  const target=ty.variants.findIndex(v=>String(v.id)===String(targetId));
+  if(from<0 || target<0) return;
+
+  const [item]=ty.variants.splice(from,1);
+  let insertAt=target;
+  if(!before) insertAt=target+1;
+  if(from < insertAt) insertAt--;
+  insertAt=Math.max(0,Math.min(insertAt,ty.variants.length));
+  ty.variants.splice(insertAt,0,item);
+  _variantOrderSaving=true;
+  _variantHighlightId=dragId;
+  loadVariants();
+  try{
+    const ok=await persistDB(db,tr('saved'));
+    if(!ok){
+      ty.variants=prev;
+    }
+  } finally {
+    _variantOrderSaving=false;
+    _variantDragId=null;
     loadVariants();
   }
 }
