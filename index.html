@@ -2670,7 +2670,7 @@ async function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
-  await ensurePageData(name);
+  if(name!=='casing') await ensurePageData(name);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
@@ -2681,7 +2681,17 @@ async function goPage(name, opts={}){
   document.getElementById('mobileOverlay').classList.remove('open');
   if(name==='amulets'){curAcat='all';renderA('all');}
   if(name==='accessories'){curAccat='all';renderAc('all');}
-  if(name==='casing'){curCasingType=null;renderCasingTypes();}
+  if(name==='casing'){
+    curCasingType=null;
+    renderCasingLoading();
+    ensurePageData(name).then(()=>{
+      if(document.getElementById('page-casing')?.classList.contains('active')) renderCasingTypes();
+    }).catch(err=>{
+      console.warn('[casing] load failed:', err);
+      const grid=document.getElementById('cTypeGrid');
+      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load casing data. Please refresh.'}</div>`;
+    });
+  }
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
@@ -3116,6 +3126,30 @@ function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(
 let _casingStyleQuery = '';
 let _casingStyleMode = 'all';
 
+function renderCasingLoading(){
+  const typesWrap=document.getElementById('casingTypes');
+  const variantsWrap=document.getElementById('casingVariants');
+  const grid=document.getElementById('cTypeGrid');
+  if(typesWrap) typesWrap.style.display='block';
+  if(variantsWrap) variantsWrap.style.display='none';
+  const types=(getDB().casingTypes||[]);
+  if(types.length){
+    renderCasingTypes();
+    return;
+  }
+  if(grid){
+    grid.innerHTML=Array.from({length:3},()=>`
+      <div class="ftype-card" aria-hidden="true">
+        <div class="ftype-banner" style="background:linear-gradient(90deg,#f3ead0,#fff8df,#f3ead0);background-size:200% 100%;animation:imgShimmer 1.2s infinite"></div>
+        <div class="ftype-body">
+          <div style="height:24px;width:68%;border-radius:8px;background:#efe2bd;margin-bottom:12px"></div>
+          <div style="height:14px;width:92%;border-radius:8px;background:#f4e8c8;margin-bottom:8px"></div>
+          <div style="height:14px;width:58%;border-radius:8px;background:#f4e8c8"></div>
+        </div>
+      </div>`).join('');
+  }
+}
+
 function renderCasingTypes(){
   const db=getDB();
   document.getElementById('casingTypes').style.display='block';
@@ -3127,7 +3161,7 @@ function renderCasingTypes(){
   // Upload-time optimisation in firebase-shared.js already caps images at
   // 1920px and re-encodes to WebP q85, so they're already CDN-friendly.
   const bannerify = (url) => url;
-  grid.innerHTML=types.map(ty=>{
+  grid.innerHTML=types.map((ty,i)=>{
     const count=(ty.variants||[]).length;
     const sampleCount=(ty.sampleImgs||[]).length;
     // Types with no styles but with sample images: show sample count + sample label
@@ -3141,7 +3175,7 @@ function renderCasingTypes(){
     return `
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-banner">
-        ${ty.bannerImg?`<img loading="lazy" decoding="async" src="${bannerify(ty.bannerImg)}">`:`<span class="ftype-icon-bg">🪬</span>`}
+        ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" src="${bannerify(ty.bannerImg)}">`:`<span class="ftype-icon-bg">🪬</span>`}
         <div class="ftype-count">${badge}</div>
       </div>
       <div class="ftype-body">
@@ -3332,7 +3366,7 @@ function renderVariants(typeId){
         <div class="var-card" onclick="openLightbox(${i})">
           <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" src="${img}"></div>
         </div>`).join('');
-      preloadImages(samples, 12);
+      preloadImages(samples, 6);
     } else {
       grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'ยังไม่มีตัวอย่างสำหรับประเภทนี้':'No samples for this type yet.'}</div>`;
     }
@@ -3353,7 +3387,7 @@ function renderVariants(typeId){
         <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
       </div>
     </div>`).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
-  preloadImages(vars.map(v=>v.imgs&&v.imgs[0]).filter(Boolean), 18);
+  preloadImages(vars.map(v=>v.imgs&&v.imgs[0]).filter(Boolean), 6);
   applyCasingStyleFilter();
 }
 
@@ -3385,7 +3419,7 @@ function openVariant(typeId,varId){
       <button type="button" onclick="closeModal()">${lang==='th'?'กลับไปเลือกแบบ':'Back to styles'}</button>
       <button type="button" class="primary" onclick="openContactForCasingStyle(${JSON.stringify(ty.name || '')},${JSON.stringify(v.name || '')},${JSON.stringify(v.price || '')})">${lang==='th'?'สอบถามแบบนี้':'Ask about this style'}</button>
     </div>`;
-  preloadImages(imgs, 18);
+  preloadImages(imgs, 8);
   openModal('variant');
 }
 
