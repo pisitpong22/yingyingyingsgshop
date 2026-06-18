@@ -1320,6 +1320,7 @@
   .modal-title-cat{font-size:11px;color:var(--gold-dark);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
   .modal-title{font-family:var(--font-display);font-size:22px;font-weight:700;line-height:1.3}
   .modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted);flex-shrink:0;padding:0;line-height:1}
+  .modal-mobile-close,.modal-sticky-actions{display:none}
   .prod-detail{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
   .prod-main-img{width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:60px;box-shadow:0 8px 24px rgba(0,0,0,.15)}
   .prod-main-img img{width:100%;height:100%;object-fit:cover}
@@ -1529,6 +1530,83 @@
     /* MODAL — full screen on mobile */
     .modal-overlay{padding:0;align-items:flex-end}
     .modal{max-width:100%;max-height:96vh;border-radius:18px 18px 0 0;padding:22px 18px;animation:slideUpMobile .35s ease}
+    .modal.variant-modal{
+      height:96vh;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .modal.variant-modal .modal-head{
+      position:sticky;
+      top:0;
+      z-index:5;
+      background:linear-gradient(180deg,#fff8e8 0%,rgba(255,248,232,.94) 100%);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      margin:0;
+      padding:18px 20px 14px;
+      border-bottom:1px solid rgba(201,168,76,.28);
+    }
+    .modal.variant-modal .variant-gallery{
+      flex:1;
+      overflow-y:auto;
+      column-count:2;
+      column-gap:10px;
+      padding:16px 14px 86px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .modal.variant-modal .modal-close{display:none}
+    .modal-mobile-close{
+      display:flex;
+      position:fixed;
+      right:14px;
+      top:calc(env(safe-area-inset-top,0px) + 14px);
+      z-index:650;
+      width:44px;
+      height:44px;
+      border:1px solid rgba(201,168,76,.34);
+      border-radius:50%;
+      align-items:center;
+      justify-content:center;
+      background:rgba(18,16,10,.78);
+      color:var(--gold-light);
+      font-size:22px;
+      box-shadow:0 8px 24px rgba(0,0,0,.26);
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+    }
+    .modal-sticky-actions{
+      display:flex;
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      z-index:640;
+      gap:10px;
+      padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+      background:rgba(255,248,232,.95);
+      border-top:1px solid rgba(201,168,76,.28);
+      box-shadow:0 -8px 26px rgba(58,35,4,.14);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+    }
+    .modal-sticky-actions button{
+      flex:1;
+      min-height:44px;
+      border-radius:999px;
+      border:1px solid rgba(201,168,76,.42);
+      background:#fff8e8;
+      color:var(--text);
+      font-weight:800;
+      font-family:inherit;
+      font-size:14px;
+    }
+    .modal-sticky-actions .primary{
+      background:linear-gradient(135deg,var(--gold-light),var(--gold));
+      color:var(--deep);
+      border-color:var(--gold);
+    }
     @keyframes slideUpMobile{from{transform:translateY(100%)}to{transform:translateY(0)}}
     .prod-detail{grid-template-columns:1fr;gap:20px}
     .prod-main-img{max-width:280px;margin:0 auto}
@@ -2570,10 +2648,29 @@ function updatePageUrl(name){
   history.replaceState(null, '', url.pathname + url.search + url.hash);
 }
 
-function goPage(name, opts={}){
+function dataKeysForPage(name){
+  switch(name){
+    case 'amulets': return ['amulets'];
+    case 'accessories': return ['accessories'];
+    case 'casing': return ['casingTypes'];
+    case 'projects': return ['projects'];
+    case 'reviews': return ['reviews'];
+    case 'home': return ['amulets','accessories','reviews','projects'];
+    default: return [];
+  }
+}
+
+async function ensurePageData(name){
+  if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
+    await window.FB.ensureDBKeys(['settings', ...dataKeysForPage(name)]);
+  }
+}
+
+async function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
+  await ensurePageData(name);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
@@ -2599,9 +2696,10 @@ function goPage(name, opts={}){
   }
 }
 
-function goPageFromUrl(){
+async function goPageFromUrl(){
   const name = pageFromUrl();
-  if(name) goPage(name, { updateUrl:false });
+  if(name) await goPage(name, { updateUrl:false });
+  else await goPage('home', { updateUrl:false });
 }
 
 // ── CONTACT CLICK ── opens URL if set, otherwise shows toast
@@ -2640,6 +2738,28 @@ function openContactWithItem(type,id){
     try{navigator.clipboard&&navigator.clipboard.writeText(msg);}catch(e){}
     window.open(url,'_blank','noopener');
     showToast('📋 Message copied — paste it in chat');
+  } else {
+    showToast(msg);
+  }
+}
+
+function openContactForCasingStyle(typeName, styleName, price){
+  const db=getDB();
+  const priceText = price ? `S$${Number(price).toLocaleString()}` : '';
+  const msg = lang==='th'
+    ? `สวัสดีค่ะ/ครับ สนใจกรอบพระ ${typeName || ''} แบบ ${styleName || ''}${priceText ? ` (${priceText})` : ''} ขอสอบถามรายละเอียดเพิ่มเติมค่ะ/ครับ 🙏`
+    : `Hi! I'm interested in the casing service: ${typeName || ''} / ${styleName || ''}${priceText ? ` (${priceText})` : ''}. Could you share more details? 🙏`;
+  const contacts=db.settings.contacts||[];
+  if(!contacts.length){showToast(msg);return;}
+  const c=contacts.find(x=>x.url&&x.url.trim());
+  if(c){
+    let url=c.url;
+    if(/wa\.me|api\.whatsapp/i.test(url)){
+      url+= (url.indexOf('?')>=0?'&':'?')+'text='+encodeURIComponent(msg);
+    }
+    try{navigator.clipboard&&navigator.clipboard.writeText(msg);}catch(e){}
+    window.open(url,'_blank','noopener');
+    showToast(lang==='th'?'📋 คัดลอกข้อความแล้ว':'📋 Message copied');
   } else {
     showToast(msg);
   }
@@ -3234,6 +3354,7 @@ function openVariant(typeId,varId){
   // Direct URLs — Firebase Storage Asia bucket serves original optimised images.
   const thumbify = (url) => url;
   document.getElementById('modalContent').innerHTML=`
+    <button class="modal-mobile-close" onclick="closeModal()" aria-label="Close">×</button>
     <div class="modal-head" style="padding-bottom:12px;margin-bottom:16px">
       <div class="modal-title-wrap">
         <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
@@ -3246,8 +3367,12 @@ function openVariant(typeId,varId){
     </div>
     <div class="variant-gallery">
       ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${thumbify(img)}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+    </div>
+    <div class="modal-sticky-actions">
+      <button type="button" onclick="closeModal()">${lang==='th'?'กลับไปเลือกแบบ':'Back to styles'}</button>
+      <button type="button" class="primary" onclick="openContactForCasingStyle(${JSON.stringify(ty.name || '')},${JSON.stringify(v.name || '')},${JSON.stringify(v.price || '')})">${lang==='th'?'สอบถามแบบนี้':'Ask about this style'}</button>
     </div>`;
-  document.getElementById('modal').classList.add('open');
+  openModal('variant');
 }
 
 // LIGHTBOX
@@ -3410,7 +3535,24 @@ function openProd(type,id){
 }
 function openContactWithItemBtn(type,id){openContactWithItem(type,id);}
 function swImg(el,src){document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" src="${src}" style="width:100%;height:100%;object-fit:cover">`;}
-function closeModal(e){if(!e||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');}
+function openModal(kind){
+  const modal=document.getElementById('modal');
+  const content=document.getElementById('modalContent');
+  if(content){
+    content.classList.toggle('variant-modal', kind === 'variant');
+  }
+  modal.classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(e){
+  const modal=document.getElementById('modal');
+  if(!e||e.target===modal){
+    modal.classList.remove('open');
+    const content=document.getElementById('modalContent');
+    if(content) content.classList.remove('variant-modal');
+    document.body.style.overflow='';
+  }
+}
 
 // ─── CUSTOMER REVIEW SUBMISSION ────────────────────────────────────────────
 let rfRating = 0;
@@ -3680,7 +3822,7 @@ async function bootIndex(){
   // Wait for first DB load from Firestore
   await window.FB.ready();
   applySettings();
-  goPageFromUrl();
+  await goPageFromUrl();
   // Now reveal the page — adds fb-ready class which fades out the splash
   // and shows any elements that were hidden to avoid the FOUC flash.
   document.documentElement.classList.add('fb-ready');
@@ -3710,10 +3852,11 @@ if('serviceWorker' in navigator){
 }
 
 // ── DEEP LINK on load (from share buttons) ──
-function handleHash(){
+async function handleHash(){
   const h=window.location.hash;if(!h)return;
   const m=h.match(/^#(amulets|accessories)-(\d+)$/);
   if(m){
+    await ensurePageData(m[1]);
     setTimeout(()=>openProd(m[1],parseInt(m[2])),200);
   } else {
     const page = pageFromUrl();

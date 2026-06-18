@@ -118,9 +118,39 @@ let _dbPartHashes = {};
 let _dbItemIds = {};
 let _dbItemHashes = {};
 let _snapshotSeq = 0;
+let _dbMeta = null;
+let _loadedKeys = new Set();
+const IS_ADMIN_PAGE = /(^|\/)admin[^/]*\.html$/i.test(location.pathname);
 
 // ─── DB API ────────────────────────────────────────────────────────────────
 function getDB(){ return _db || {}; }
+
+function requestedPageFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const qPage = params.get('page');
+  if(qPage) return qPage.replace(/^page-/, '');
+  const h = (location.hash || '').replace(/^#/, '');
+  if(!h) return 'home';
+  if(h.startsWith('page-')) return h.slice(5);
+  if(/^(amulets|accessories)-\d+$/.test(h)) return '';
+  return h;
+}
+
+function keysForStorePage(page){
+  switch(page){
+    case 'amulets': return ['settings', 'amulets'];
+    case 'accessories': return ['settings', 'accessories'];
+    case 'casing': return ['settings', 'casingTypes'];
+    case 'projects': return ['settings', 'projects'];
+    case 'reviews': return ['settings', 'reviews'];
+    case 'home': return ['settings'];
+    default: return ['settings'];
+  }
+}
+
+function initialLoadKeys(){
+  return IS_ADMIN_PAGE ? DB_SPLIT_KEYS : keysForStorePage(requestedPageFromUrl());
+}
 
 async function saveDB(newDb){
   // Persist as many small documents. This avoids Firestore's hard 1 MiB
@@ -269,15 +299,30 @@ function notifyDBReady(){
   }
 }
 
-async function loadSplitDB(meta){
+async function ensureDBKeys(keys){
+  if(!_isReady) await _readyPromise;
+  if(!_dbMeta || !_dbMeta._splitVersion) return getDB();
+  const wanted = [...new Set((keys || []).filter(k => DB_SPLIT_KEYS.includes(k)))];
+  const missing = wanted.filter(k => !_loadedKeys.has(k));
+  if(!missing.length) return getDB();
+  const partial = await loadSplitDB(_dbMeta, missing);
+  _db = { ...(_db || {}), ...partial };
+  missing.forEach(k => _loadedKeys.add(k));
+  notifyDBReady();
+  return getDB();
+}
+
+async function loadSplitDB(meta, wantedKeys){
   const out = {};
   const keys = Array.isArray(meta._partKeys) ? meta._partKeys : DB_SPLIT_KEYS;
+  const wanted = wantedKeys ? new Set(wantedKeys) : new Set(keys);
   const counts = meta._partCounts || {};
   const hashes = meta._partHashes || {};
   const itemIds = meta._itemIds || {};
   const itemHashes = meta._itemHashes || {};
 
   await Promise.all(keys.map(async key => {
+    if(!wanted.has(key)) return;
     if(Array.isArray(itemIds[key])){
       const snaps = await Promise.all(itemIds[key].map(itemId => getDoc(dbItemDoc(key, itemId))));
       out[key] = snaps.map((snap, idx) => {
@@ -321,9 +366,20 @@ onSnapshot(DB_DOC, async (snap) => {
   try {
     if(snap.exists()){
       const data = snap.data();
-      _db = data && data._splitVersion ? await loadSplitDB(data) : data;
+      _dbMeta = data && data._splitVersion ? data : null;
+      _loadedKeys = new Set();
+      if(data && data._splitVersion){
+        const keys = initialLoadKeys();
+        _db = await loadSplitDB(data, keys);
+        keys.forEach(k => _loadedKeys.add(k));
+      } else {
+        _db = data;
+        DB_SPLIT_KEYS.forEach(k => _loadedKeys.add(k));
+      }
     } else {
       _db = null;   // doc doesn't exist yet — first run
+      _dbMeta = null;
+      _loadedKeys = new Set();
       _dbPartCounts = {};
       _dbPartHashes = {};
       _dbItemIds = {};
@@ -740,6 +796,7 @@ async function deleteReviewSubmission(id){
 // ─── EXPOSE GLOBALLY ───────────────────────────────────────────────────────
 window.FB = {
   getDB, saveDB, onDBChange, ready,
+  ensureDBKeys,
   uploadFile, deleteFile,
   signIn: signInUser,
   signOut: signOutUser,
