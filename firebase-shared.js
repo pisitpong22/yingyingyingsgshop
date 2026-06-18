@@ -124,6 +124,10 @@ let _dbItemHashes = {};
 let _snapshotSeq = 0;
 let _dbMeta = null;
 let _loadedKeys = new Set();
+let _casingTypeIds = [];
+let _casingTypeHashes = {};
+let _casingVariantIds = {};
+let _casingVariantHashes = {};
 const IS_ADMIN_PAGE = /(^|\/)admin[^/]*\.html$/i.test(location.pathname);
 
 // ─── DB API ────────────────────────────────────────────────────────────────
@@ -165,9 +169,25 @@ async function saveDB(newDb){
     const nextHashes = {};
     const nextItemIds = {};
     const nextItemHashes = {};
+    let nextCasingMeta = {
+      typeIds: [],
+      typeHashes: {},
+      variantIds: {},
+      variantHashes: {},
+    };
     const writes = [];
 
     DB_SPLIT_KEYS.forEach(key => {
+      if(key === 'casingTypes'){
+        const casingMeta = queueCasingTypeWrites(newDb && newDb[key], writes);
+        nextCounts[key] = 0;
+        nextHashes[key] = [];
+        nextItemIds[key] = [];
+        nextItemHashes[key] = {};
+        nextCasingMeta = casingMeta;
+        return;
+      }
+
       if(DB_ITEM_KEYS.has(key)){
         const items = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
         const ids = [];
@@ -224,6 +244,11 @@ async function saveDB(newDb){
       _itemKeys: Array.from(DB_ITEM_KEYS),
       _itemIds: nextItemIds,
       _itemHashes: nextItemHashes,
+      _casingTypesV2: true,
+      _casingTypeIds: nextCasingMeta.typeIds,
+      _casingTypeHashes: nextCasingMeta.typeHashes,
+      _casingVariantIds: nextCasingMeta.variantIds,
+      _casingVariantHashes: nextCasingMeta.variantHashes,
       _updatedAt: serverTimestamp(),
     }});
 
@@ -233,6 +258,10 @@ async function saveDB(newDb){
     _dbPartHashes = nextHashes;
     _dbItemIds = nextItemIds;
     _dbItemHashes = nextItemHashes;
+    _casingTypeIds = nextCasingMeta.typeIds;
+    _casingTypeHashes = nextCasingMeta.typeHashes;
+    _casingVariantIds = nextCasingMeta.variantIds;
+    _casingVariantHashes = nextCasingMeta.variantHashes;
   } catch(err){
     console.error('[FB] saveDB failed:', err);
     throw err;
@@ -258,6 +287,77 @@ function dbChunkDoc(key, idx){
 
 function dbItemDoc(key, itemId){
   return doc(fs, 'app', `${DB_ITEM_PREFIX}_${key}_${safeDocId(itemId)}`);
+}
+
+function casingTypeDoc(typeId){
+  return doc(fs, 'app', `dbcasing_type_${safeDocId(typeId)}`);
+}
+
+function casingVariantDoc(typeId, variantId){
+  return doc(fs, 'app', `dbcasing_variant_${safeDocId(typeId)}_${safeDocId(variantId)}`);
+}
+
+function queueCasingTypeWrites(types, writes){
+  const list = Array.isArray(types) ? types : [];
+  const typeIds = [];
+  const typeHashes = {};
+  const variantIds = {};
+  const variantHashes = {};
+
+  list.forEach((type, typeIdx) => {
+    const typeId = stableItemId(type, typeIdx);
+    typeIds.push(typeId);
+
+    const typeData = { ...(type || {}) };
+    delete typeData.variants;
+    const typeJson = JSON.stringify(typeData);
+    const typeHash = hashString(typeJson);
+    typeHashes[typeId] = typeHash;
+    if(_casingTypeHashes[typeId] !== typeHash){
+      writes.push({
+        type: 'set',
+        ref: casingTypeDoc(typeId),
+        data: { key: 'casingTypes', typeId, json: typeJson },
+      });
+    }
+
+    const vars = Array.isArray(type && type.variants) ? type.variants : [];
+    variantIds[typeId] = [];
+    variantHashes[typeId] = {};
+    vars.forEach((variant, variantIdx) => {
+      const variantId = stableItemId(variant, variantIdx);
+      variantIds[typeId].push(variantId);
+      const variantJson = JSON.stringify(variant || {});
+      const variantHash = hashString(variantJson);
+      variantHashes[typeId][variantId] = variantHash;
+      if(!_casingVariantHashes[typeId] || _casingVariantHashes[typeId][variantId] !== variantHash){
+        writes.push({
+          type: 'set',
+          ref: casingVariantDoc(typeId, variantId),
+          data: { key: 'casingTypes', typeId, variantId, json: variantJson },
+        });
+      }
+    });
+  });
+
+  _casingTypeIds.forEach(typeId => {
+    if(typeIds.includes(typeId)) return;
+    writes.push({ type: 'delete', ref: casingTypeDoc(typeId) });
+    const oldVariants = _casingVariantIds[typeId] || [];
+    oldVariants.forEach(variantId => writes.push({ type: 'delete', ref: casingVariantDoc(typeId, variantId) }));
+  });
+
+  Object.keys(_casingVariantIds || {}).forEach(typeId => {
+    if(!typeIds.includes(typeId)) return;
+    const current = new Set(variantIds[typeId] || []);
+    (_casingVariantIds[typeId] || []).forEach(variantId => {
+      if(!current.has(variantId)){
+        writes.push({ type: 'delete', ref: casingVariantDoc(typeId, variantId) });
+      }
+    });
+  });
+
+  return { typeIds, typeHashes, variantIds, variantHashes };
 }
 
 function stableItemId(item, idx){
@@ -355,6 +455,11 @@ async function loadSplitDB(meta, wantedKeys){
 
   await Promise.all(keys.map(async key => {
     if(!wanted.has(key)) return;
+    if(key === 'casingTypes' && meta._casingTypesV2){
+      out[key] = await loadCasingTypesV2(meta);
+      return;
+    }
+
     if(Array.isArray(itemIds[key])){
       const snaps = await Promise.all(itemIds[key].map(itemId => getDoc(dbItemDoc(key, itemId))));
       out[key] = snaps.map((snap, idx) => {
@@ -388,7 +493,36 @@ async function loadSplitDB(meta, wantedKeys){
   _dbPartHashes = { ...hashes };
   _dbItemIds = { ...itemIds };
   _dbItemHashes = { ...itemHashes };
+  _casingTypeIds = Array.isArray(meta._casingTypeIds) ? [...meta._casingTypeIds] : [];
+  _casingTypeHashes = { ...(meta._casingTypeHashes || {}) };
+  _casingVariantIds = { ...(meta._casingVariantIds || {}) };
+  _casingVariantHashes = { ...(meta._casingVariantHashes || {}) };
   return out;
+}
+
+async function loadCasingTypesV2(meta){
+  const typeIds = Array.isArray(meta._casingTypeIds) ? meta._casingTypeIds : [];
+  const variantIds = meta._casingVariantIds || {};
+
+  const types = await Promise.all(typeIds.map(async typeId => {
+    const snap = await getDoc(casingTypeDoc(typeId));
+    if(!snap.exists()){
+      throw new Error(`Missing casing type: ${typeId}`);
+    }
+    const type = JSON.parse(snap.data().json || '{}');
+    const ids = Array.isArray(variantIds[typeId]) ? variantIds[typeId] : [];
+    const variants = await Promise.all(ids.map(async variantId => {
+      const vsnap = await getDoc(casingVariantDoc(typeId, variantId));
+      if(!vsnap.exists()){
+        throw new Error(`Missing casing style: ${typeId}/${variantId}`);
+      }
+      return JSON.parse(vsnap.data().json || '{}');
+    }));
+    type.variants = variants;
+    return type;
+  }));
+
+  return types;
 }
 
 // Subscribe to realtime updates from Firestore.
@@ -416,6 +550,10 @@ onSnapshot(DB_DOC, async (snap) => {
       _dbPartHashes = {};
       _dbItemIds = {};
       _dbItemHashes = {};
+      _casingTypeIds = [];
+      _casingTypeHashes = {};
+      _casingVariantIds = {};
+      _casingVariantHashes = {};
     }
     if(seq !== _snapshotSeq) return;
     notifyDBReady();

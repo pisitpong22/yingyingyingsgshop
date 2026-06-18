@@ -4445,7 +4445,12 @@ async function moveVariant(variantId, dir){
   const tmp = ty.variants[idx];
   ty.variants[idx] = ty.variants[target];
   ty.variants[target] = tmp;
-  try { await saveDB(db); loadVariants(); } catch(err) {}
+  loadVariants();
+  try {
+    await persistDB(db, tr('saved'));
+  } catch(err) {
+    loadVariants();
+  }
 }
 
 function openVariantForm(varId){
@@ -4481,9 +4486,13 @@ async function saveVariant(){
 async function delVariant(varId){
   if(!tConfirm('confirmDeleteStyle'))return;
   const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  const prev=[...(ty.variants||[])];
   ty.variants=ty.variants.filter(v=>v.id!==varId);
-  if(!(await persistDB(db,tr('deleted')))) return;
   loadVariants();
+  if(!(await persistDB(db,tr('deleted')))){
+    ty.variants=prev;
+    loadVariants();
+  }
 }
 
 let tempImgs={};
