@@ -2116,7 +2116,7 @@
     </div>
     <div class="form-grid">
       <div class="fg"><label class="fl" data-en="Style Name *" data-th="ชื่อแบบ *">Style Name *</label><input class="fi" id="fv_name"></div>
-      <div class="fg"><label class="fl" data-en="Price (SGD) *" data-th="ราคา (SGD) *">Price (SGD) *</label><input class="fi" id="fv_price" type="number"></div>
+      <div class="fg"><label class="fl" data-en="Price (SGD) — optional" data-th="ราคา (SGD) — ไม่บังคับ">Price (SGD) — optional</label><input class="fi" id="fv_price" type="number"></div>
       <div class="fg full">
         <label class="fl" data-en="Sample Images — upload as many as you like" data-th="รูปตัวอย่าง — อัปโหลดได้ไม่จำกัด">Sample Images — upload as many as you like</label>
         <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'fv_imgs')">
@@ -4464,10 +4464,10 @@ async function saveVariant(){
   if(!ensureUploadsDone()) return;
   const name=document.getElementById('fv_name').value.trim();
   const price=document.getElementById('fv_price').value;
-  if(!name||!price){showToast(tr('needNamePrice'));return;}
+  if(!name){showToast(tr('needName'));return;}
   const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
   if(!ty.variants)ty.variants=[];
-  const data={name,price:Number(price),imgs:captureImgs('fv_imgs')};
+  const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs')};
   if(curEditVariantId){
     const v=ty.variants.find(x=>x.id===curEditVariantId);
     if(v)Object.assign(v,data);
