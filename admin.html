@@ -4303,6 +4303,8 @@ function loadList(type){
 }
 
 let curEditTypeId=null,curEditVariantId=null;
+let _variantOrderSaving=false;
+let _variantHighlightId=null;
 
 function loadCasingTypes(){
   const types=getDB().casingTypes||[];
@@ -4414,11 +4416,11 @@ function loadVariants(){
   c.innerHTML=`<table class="dtable">
     <thead><tr><th style="width:60px">${lang==='th'?'ลำดับ':'Order'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
     <tbody>${vars.map((v, idx)=>`
-      <tr>
+      <tr data-variant-id="${String(v.id).replace(/"/g,'&quot;')}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}>
         <td>
           <div style="display:flex;gap:3px">
-            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${v.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="${lang==='th'?'เลื่อนขึ้น':'Move up'}">▲</button>
-            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${v.id}, 1)" ${idx === last ? 'disabled' : ''} title="${lang==='th'?'เลื่อนลง':'Move down'}">▼</button>
+            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${JSON.stringify(v.id)}, -1)" ${idx === 0 || _variantOrderSaving ? 'disabled' : ''} title="${lang==='th'?'เลื่อนขึ้น':'Move up'}">▲</button>
+            <button class="ho-arrow-btn" style="width:26px;height:26px;font-size:11px" onclick="moveVariant(${JSON.stringify(v.id)}, 1)" ${idx === last || _variantOrderSaving ? 'disabled' : ''} title="${lang==='th'?'เลื่อนลง':'Move down'}">▼</button>
           </div>
         </td>
         <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${v.imgs[0]}">`:`<div class="no-img">🪬</div>`}</td>
@@ -4426,29 +4428,49 @@ function loadVariants(){
         <td>${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
         <td><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
         <td><div class="row-actions">
-          <button class="btn-edit" onclick="openVariantForm(${v.id})">✏️</button>
-          <button class="btn-del" onclick="delVariant(${v.id})">🗑</button>
+          <button class="btn-edit" onclick="openVariantForm(${JSON.stringify(v.id)})">✏️</button>
+          <button class="btn-del" onclick="delVariant(${JSON.stringify(v.id)})">🗑</button>
         </div></td>
       </tr>`).join('')}
     </tbody></table>`;
+  if(_variantHighlightId !== null){
+    setTimeout(()=>{
+      c.querySelector(`[data-variant-id="${CSS.escape(String(_variantHighlightId))}"]`)?.scrollIntoView({block:'nearest',behavior:'smooth'});
+    },0);
+  }
 }
 
 // Move a variant up/down within its parent casing type
 async function moveVariant(variantId, dir){
+  if(_variantOrderSaving){
+    showToast(lang==='th'?'กำลังบันทึกลำดับ รอสักครู่':'Saving order, please wait');
+    return;
+  }
   const db = getDB();
   const ty = (db.casingTypes || []).find(t => t.id === curEditTypeId);
   if(!ty || !Array.isArray(ty.variants)) return;
-  const idx = ty.variants.findIndex(v => v.id === variantId);
+  const idx = ty.variants.findIndex(v => String(v.id) === String(variantId));
   if(idx < 0) return;
   const target = idx + dir;
   if(target < 0 || target >= ty.variants.length) return;
-  const tmp = ty.variants[idx];
-  ty.variants[idx] = ty.variants[target];
-  ty.variants[target] = tmp;
+  const moved = ty.variants[idx];
+  const displaced = ty.variants[target];
+  ty.variants[idx] = displaced;
+  ty.variants[target] = moved;
+  _variantOrderSaving=true;
+  _variantHighlightId=variantId;
   loadVariants();
   try {
-    await persistDB(db, tr('saved'));
+    const ok=await persistDB(db, tr('saved'));
+    if(!ok){
+      ty.variants[idx]=moved;
+      ty.variants[target]=displaced;
+    }
   } catch(err) {
+    ty.variants[idx]=moved;
+    ty.variants[target]=displaced;
+  } finally {
+    _variantOrderSaving=false;
     loadVariants();
   }
 }
@@ -4456,7 +4478,7 @@ async function moveVariant(variantId, dir){
 function openVariantForm(varId){
   curEditVariantId=varId||null;
   const ty=(getDB().casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
-  const v=varId?(ty.variants||[]).find(x=>x.id===varId):null;
+  const v=varId?(ty.variants||[]).find(x=>String(x.id)===String(varId)):null;
   document.getElementById('variantModalTitle').textContent=lang==='th'?(varId?'แก้ไขแบบ':'เพิ่มแบบ'):(varId?'Edit Style':'Add Style');
   document.getElementById('fv_name').value=v?v.name:'';
   document.getElementById('fv_price').value=v?(v.price||''):'';
@@ -4474,7 +4496,7 @@ async function saveVariant(){
   if(!ty.variants)ty.variants=[];
   const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs')};
   if(curEditVariantId){
-    const v=ty.variants.find(x=>x.id===curEditVariantId);
+    const v=ty.variants.find(x=>String(x.id)===String(curEditVariantId));
     if(v)Object.assign(v,data);
   } else {
     ty.variants.push({id:genId(ty.variants),...data});
@@ -4487,7 +4509,7 @@ async function delVariant(varId){
   if(!tConfirm('confirmDeleteStyle'))return;
   const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
   const prev=[...(ty.variants||[])];
-  ty.variants=ty.variants.filter(v=>v.id!==varId);
+  ty.variants=ty.variants.filter(v=>String(v.id)!==String(varId));
   loadVariants();
   if(!(await persistDB(db,tr('deleted')))){
     ty.variants=prev;
