@@ -3677,11 +3677,11 @@ function loadSections(){
           <div class="form-grid">
             <div class="fg full">
               <label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label>
-              <input class="fi" data-sec-title="${n.id}" value="${escapeAttr(title)}">
+              <input class="fi" id="sec_${escapeAttr(n.id)}_title" data-sec-title="${n.id}" value="${escapeAttr(title)}">
             </div>
             <div class="fg full">
               <label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label>
-              <textarea class="fta" data-sec-desc="${n.id}" style="min-height:60px">${escapeText(desc)}</textarea>
+              <textarea class="fta" id="sec_${escapeAttr(n.id)}_desc" data-sec-desc="${n.id}" style="min-height:60px">${escapeText(desc)}</textarea>
             </div>
           </div>
         </div>`;
@@ -5314,15 +5314,18 @@ const EDIT_MAP = {
   '#trustGrid':       {panel:'content-trust',    label:'Trust badges'},
 
   // ─── Section headers (page titles) ───
-  '.sec-head':        {panel:'content-sections', label:'Section header'},
-  '#amuletsTitle':    {panel:'content-sections', field:'sec_a_title',  label:'Amulets header'},
-  '#amuletsDesc':     {panel:'content-sections', field:'sec_a_desc',   label:'Amulets header'},
-  '#accTitle':        {panel:'content-sections', field:'sec_ac_title', label:'Accessories header'},
-  '#accDesc':         {panel:'content-sections', field:'sec_ac_desc',  label:'Accessories header'},
-  '#casingTitle':     {panel:'content-sections', field:'sec_c_title',  label:'Casing header'},
-  '#casingDesc':      {panel:'content-sections', field:'sec_c_desc',   label:'Casing header'},
-  '#projTitle':       {panel:'content-sections', field:'sec_p_title',  label:'Projects header'},
-  '#projDesc':        {panel:'content-sections', field:'sec_p_desc',   label:'Projects header'},
+  '.sec-head':        {panel:'navigation', tab:'headers', label:'Section header'},
+  '#amuletsTitle':    {panel:'navigation', tab:'headers', field:'sec_amulets_title',     label:'Amulets header'},
+  '#amuletsDesc':     {panel:'navigation', tab:'headers', field:'sec_amulets_desc',      label:'Amulets header'},
+  '#accTitle':        {panel:'navigation', tab:'headers', field:'sec_accessories_title', label:'Accessories header'},
+  '#accDesc':         {panel:'navigation', tab:'headers', field:'sec_accessories_desc',  label:'Accessories header'},
+  '#casingTitle':     {panel:'navigation', tab:'headers', field:'sec_casing_title',      label:'Casing header'},
+  '#casingDesc':      {panel:'navigation', tab:'headers', field:'sec_casing_desc',       label:'Casing header'},
+  '#projTitle':       {panel:'navigation', tab:'headers', field:'sec_projects_title',    label:'Projects header'},
+  '#projDesc':        {panel:'navigation', tab:'headers', field:'sec_projects_desc',     label:'Projects header'},
+  '.about-banner':    {panel:'navigation', tab:'headers', field:'sec_about_title',       label:'About header'},
+  '#aboutTitle':      {panel:'navigation', tab:'headers', field:'sec_about_title',       label:'About header'},
+  '#aboutDesc':       {panel:'navigation', tab:'headers', field:'sec_about_desc',        label:'About header'},
   '#revTitle':        {panel:'reviews',           label:'Reviews header'},
   '#revSub':          {panel:'reviews',           label:'Reviews header'},
   '#payTitle':        {panel:'content-payment',   label:'Payment & shipping'},
@@ -5426,6 +5429,15 @@ function injectEditorScript(){
   // This is a no-op stub for future use.
 }
 
+function normalizeLiveTarget(target){
+  if(!target || !target.panel) return target;
+  if(PANEL_REDIRECTS[target.panel]){
+    const [panel, tab] = PANEL_REDIRECTS[target.panel];
+    return { ...target, panel, tab: target.tab || tab };
+  }
+  return target;
+}
+
 // Mapping from page id (built-in) → admin panel to open.
 // Used when user clicks a nav link in live preview.
 const PAGE_TO_PANEL = {
@@ -5437,7 +5449,7 @@ const PAGE_TO_PANEL = {
   reviews:      'reviews',
   contact:      'content-contact',
   payment:      'content-payment',
-  about:        'content-sections',      // about page → its section header
+  about:        'navigation',            // about page → its section header
 };
 
 function handleElementClick(data){
@@ -5457,6 +5469,10 @@ function handleElementClick(data){
       // Built-in page mapping
       if(PAGE_TO_PANEL[pageId]){
         target = {panel: PAGE_TO_PANEL[pageId], label: data.label || ('Manage ' + pageId)};
+        if(pageId === 'about'){
+          target.tab = 'headers';
+          target.field = 'sec_about_title';
+        }
         matchedKey = sel;
         break;
       }
@@ -5491,6 +5507,8 @@ function handleElementClick(data){
     return;
   }
 
+  target = normalizeLiveTarget(target);
+
   // If we picked up a navigation hint, tell the iframe to go there.
   if(navigateTo){
     try {
@@ -5500,6 +5518,9 @@ function handleElementClick(data){
   }
 
   showPanel(target.panel, null);
+  if(target.tab){
+    showTab(target.panel, target.tab);
+  }
   setTimeout(() => populateLeSidePanel(target), 50);
 }
 
@@ -5563,6 +5584,9 @@ function populateLeSidePanel(target){
   wrap.className = 'le-panel-inner';
   wrap.appendChild(header);
   sourcePanel.classList.add('active');
+  if(target.tab){
+    showTab(target.panel, target.tab);
+  }
   wrap.appendChild(sourcePanel);
   leSide.appendChild(wrap);
 
