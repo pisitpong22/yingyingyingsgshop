@@ -30,7 +30,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
-  addDoc, serverTimestamp, query, orderBy
+  addDoc, serverTimestamp, query, orderBy, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
@@ -114,7 +114,9 @@ const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'pro
 const DB_ITEM_KEYS = new Set([]);
 const DB_CHUNK_PREFIX = 'dbpart';
 const DB_ITEM_PREFIX = 'dbitem';
-const DB_CHUNK_CHARS = 450000; // safely below Firestore's 1 MiB document/request limits
+const DB_CHUNK_CHARS = 700000; // safely below Firestore's 1 MiB document limit, fewer writes per save
+const DB_BATCH_MAX_WRITES = 6;
+const DB_BATCH_MAX_BYTES = 3500000; // stay well below Firestore's 10 MiB request payload limit
 let _dbPartCounts = {};
 let _dbPartHashes = {};
 let _dbItemIds = {};
@@ -285,9 +287,37 @@ function hashString(str){
 }
 
 async function commitWritesSequentially(writes){
+  let batch = writeBatch(fs);
+  let count = 0;
+  let bytes = 0;
+
+  const flush = async () => {
+    if(!count) return;
+    await batch.commit();
+    batch = writeBatch(fs);
+    count = 0;
+    bytes = 0;
+  };
+
   for(const w of writes){
-    if(w.type === 'delete') await deleteDoc(w.ref);
-    else await setDoc(w.ref, w.data);
+    const size = estimateWriteBytes(w);
+    if(count && (count >= DB_BATCH_MAX_WRITES || bytes + size > DB_BATCH_MAX_BYTES)){
+      await flush();
+    }
+    if(w.type === 'delete') batch.delete(w.ref);
+    else batch.set(w.ref, w.data);
+    count++;
+    bytes += size;
+  }
+  await flush();
+}
+
+function estimateWriteBytes(w){
+  if(!w || w.type === 'delete') return 128;
+  try {
+    return JSON.stringify(w.data || {}).length + 512;
+  } catch(err) {
+    return DB_BATCH_MAX_BYTES;
   }
 }
 
