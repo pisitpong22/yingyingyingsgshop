@@ -2550,7 +2550,27 @@ function openCpItem(pageId, itemId){
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
 
-function goPage(name){
+const PAGE_IDS = new Set(['home','amulets','accessories','casing','projects','reviews','payment','about']);
+
+function pageFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const qPage = params.get('page');
+  if(qPage) return qPage.replace(/^page-/, '');
+  const h = (location.hash || '').replace(/^#/, '');
+  if(!h) return '';
+  if(h.startsWith('page-')) return h.slice(5);
+  if(/^(amulets|accessories)-\d+$/.test(h)) return '';
+  return h;
+}
+
+function updatePageUrl(name){
+  const url = new URL(location.href);
+  url.searchParams.delete('page');
+  url.hash = (!name || name === 'home') ? '' : encodeURIComponent(name);
+  history.replaceState(null, '', url.pathname + url.search + url.hash);
+}
+
+function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
@@ -2568,6 +2588,7 @@ function goPage(name){
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
+  if(opts.updateUrl !== false) updatePageUrl(name);
   if(name==='home'){
     applySettings();
     // Force-resume the 3D render loop — IntersectionObserver doesn't
@@ -2576,6 +2597,11 @@ function goPage(name){
       window._resumePhraRender();
     }
   }
+}
+
+function goPageFromUrl(){
+  const name = pageFromUrl();
+  if(name) goPage(name, { updateUrl:false });
 }
 
 // ── CONTACT CLICK ── opens URL if set, otherwise shows toast
@@ -3654,6 +3680,7 @@ async function bootIndex(){
   // Wait for first DB load from Firestore
   await window.FB.ready();
   applySettings();
+  goPageFromUrl();
   // Now reveal the page — adds fb-ready class which fades out the splash
   // and shows any elements that were hidden to avoid the FOUC flash.
   document.documentElement.classList.add('fb-ready');
@@ -3664,7 +3691,7 @@ async function bootIndex(){
   // Subscribe to live updates — if admin changes something, the visible
   // site updates without a refresh.
   window.FB.onDBChange(() => {
-    try { applySettings(); } catch(e){ console.error(e); }
+    try { applySettings(); goPageFromUrl(); } catch(e){ console.error(e); }
   });
 }
 bootIndex();
@@ -3683,16 +3710,18 @@ if('serviceWorker' in navigator){
 }
 
 // ── DEEP LINK on load (from share buttons) ──
-(function handleHash(){
+function handleHash(){
   const h=window.location.hash;if(!h)return;
   const m=h.match(/^#(amulets|accessories)-(\d+)$/);
   if(m){
     setTimeout(()=>openProd(m[1],parseInt(m[2])),200);
   } else {
-    const pageMatch=h.match(/^#page-(\w+)$/);
-    if(pageMatch)setTimeout(()=>goPage(pageMatch[1]),200);
+    const page = pageFromUrl();
+    if(page)setTimeout(()=>goPage(page,{updateUrl:false}),200);
   }
-})();
+}
+handleHash();
+window.addEventListener('hashchange', handleHash);
 
 // ── PWA INSTALL ──
 let _deferredPrompt=null;
