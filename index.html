@@ -3204,8 +3204,26 @@ function casingPhotoCount(v){
   return Array.isArray(v && v.imgs) ? v.imgs.length : 0;
 }
 
+function casingVariantKey(v){
+  if(!v) return '';
+  const name=String(v.name || '').trim().toLowerCase().replace(/\s+/g,' ');
+  const firstImg=Array.isArray(v.imgs) && v.imgs[0] ? String(v.imgs[0]).trim() : '';
+  return name || firstImg || String(v.id || '');
+}
+
+function uniqueCasingVariants(vars){
+  const seen=new Set();
+  return (vars || []).filter(v=>{
+    const key=casingVariantKey(v);
+    if(!key) return true;
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function popularCasingVariants(vars){
-  return [...(vars || [])].sort((a,b) => {
+  return uniqueCasingVariants(vars).sort((a,b) => {
     const d = casingPhotoCount(b) - casingPhotoCount(a);
     if(d) return d;
     return String(a.name || '').localeCompare(String(b.name || ''));
@@ -3230,11 +3248,12 @@ function setupCasingStyleTools(vars){
   }
   tools.style.display='';
   input.placeholder = lang==='th' ? 'ค้นหาชื่อแบบ สี หรือราคา...' : 'Search style, color, price...';
-  const popular=popularCasingVariants(vars);
+  const displayVars=uniqueCasingVariants(vars);
+  const popular=popularCasingVariants(displayVars);
   strip.innerHTML=[
     `<button type="button" class="casing-style-chip active" data-style-chip="all" onclick="selectCasingStyleChip('all')"><span class="chip-label">${lang==='th'?'ทั้งหมด':'All'}</span></button>`,
     `<button type="button" class="casing-style-chip" data-style-chip="popular" onclick="selectCasingStyleChip('popular')"><span class="chip-label">${lang==='th'?'ยอดนิยม':'Popular'}</span><span class="chip-price">${lang==='th'?'รูปเยอะ':'most photos'}</span></button>`,
-    ...vars.map(v=>`
+    ...displayVars.map(v=>`
       <button type="button" class="casing-style-chip" data-style-chip="${escapeHtml(v.id)}" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
         <span class="chip-label">${escapeHtml(v.name || '')}</span>
         ${v.price?`<span class="chip-price">S$${Number(v.price).toLocaleString()}</span>`:''}
@@ -3305,8 +3324,24 @@ function selectCasingStyleChip(styleId){
 function applyCasingStyleFilter(){
   const cards=[...document.querySelectorAll('#vGrid .var-card')];
   let shown=0;
+  const popularAllowed=new Set();
+  if(_casingStyleMode === 'popular'){
+    const seen=new Set();
+    [...cards]
+      .sort((a,b)=>(Number(b.dataset.photoCount)||0)-(Number(a.dataset.photoCount)||0))
+      .forEach(card=>{
+        const key=card.dataset.styleKey || card.dataset.styleId || '';
+        if(!key || seen.has(key)) return;
+        seen.add(key);
+        popularAllowed.add(key);
+      });
+  }
   cards.forEach(card=>{
-    const ok=!_casingStyleQuery || (card.dataset.search || '').includes(_casingStyleQuery);
+    let ok=!_casingStyleQuery || (card.dataset.search || '').includes(_casingStyleQuery);
+    if(ok && _casingStyleMode === 'popular'){
+      const key=card.dataset.styleKey || card.dataset.styleId || '';
+      if(key && !popularAllowed.has(key)) ok=false;
+    }
     card.classList.toggle('is-hidden',!ok);
     card.classList.remove('is-highlighted');
     card.style.order = _casingStyleMode === 'popular'
@@ -3376,7 +3411,7 @@ function renderVariants(typeId){
   // Direct URLs — see note in renderCasingTypes about why no resize.
   const thumbify = (url) => url;
   grid.innerHTML=vars.map((v,i)=>`
-    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
+    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
         ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
