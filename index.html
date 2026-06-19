@@ -966,8 +966,17 @@
   .casing-search-wrap{min-width:0;margin-bottom:12px}
   .casing-style-strip{
     display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;
-    padding:2px 2px 8px;scrollbar-width:thin;
+    padding:2px 2px 8px;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;
     -webkit-overflow-scrolling:touch;
+  }
+  .casing-style-strip::-webkit-scrollbar{height:6px;width:6px}
+  .casing-style-strip::-webkit-scrollbar-track{background:transparent}
+  .casing-style-strip::-webkit-scrollbar-thumb{
+    background:linear-gradient(90deg,var(--gold-light),var(--gold));
+    border-radius:3px;
+  }
+  .casing-style-strip::-webkit-scrollbar-thumb:hover{
+    background:linear-gradient(90deg,var(--gold-light),var(--gold-dark));
   }
   .casing-style-chip{
     flex:0 0 auto;
