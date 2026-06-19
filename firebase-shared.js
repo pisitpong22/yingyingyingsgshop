@@ -312,9 +312,10 @@ function queueCasingTypeWrites(types, writes){
   const typeHashes = {};
   const variantIds = {};
   const variantHashes = {};
+  const usedTypeIds = new Set();
 
   list.forEach((type, typeIdx) => {
-    const typeId = stableItemId(type, typeIdx);
+    const typeId = uniqueItemId(stableItemId(type, typeIdx), usedTypeIds);
     typeIds.push(typeId);
 
     const typeData = { ...(type || {}) };
@@ -329,8 +330,9 @@ function queueCasingTypeWrites(types, writes){
     const vars = Array.isArray(type && type.variants) ? type.variants : [];
     variantIds[typeId] = [];
     variantHashes[typeId] = {};
+    const usedVariantIds = new Set();
     vars.forEach((variant, variantIdx) => {
-      const variantId = stableItemId(variant, variantIdx);
+      const variantId = uniqueItemId(stableItemId(variant, variantIdx), usedVariantIds);
       variantIds[typeId].push(variantId);
       const variantJson = JSON.stringify(variant || {});
       const variantHash = hashString(variantJson);
@@ -341,22 +343,9 @@ function queueCasingTypeWrites(types, writes){
     });
   });
 
-  _casingTypeIds.forEach(typeId => {
-    if(typeIds.includes(typeId)) return;
-    writes.push({ type: 'delete', ref: casingTypeDoc(typeId) });
-    const oldVariants = _casingVariantIds[typeId] || [];
-    oldVariants.forEach(variantId => writes.push({ type: 'delete', ref: casingVariantDoc(typeId, variantId) }));
-  });
-
-  Object.keys(_casingVariantIds || {}).forEach(typeId => {
-    if(!typeIds.includes(typeId)) return;
-    const current = new Set(variantIds[typeId] || []);
-    (_casingVariantIds[typeId] || []).forEach(variantId => {
-      if(!current.has(variantId)){
-        writes.push({ type: 'delete', ref: casingVariantDoc(typeId, variantId) });
-      }
-    });
-  });
+  // Old casing docs are ignored once they disappear from the manifest below.
+  // Skipping delete cleanup keeps reorder/delete operations from enqueueing a
+  // long tail of Firestore writes and hitting the queued-writes limit.
 
   return { typeIds, typeHashes, variantIds, variantHashes };
 }
@@ -393,7 +382,21 @@ function queueJsonRecord(writes, ref, json, baseData, chunkRefForIndex){
 
 function stableItemId(item, idx){
   if(item && item.id !== undefined && item.id !== null) return String(item.id);
+  const label = item && (item.slug || item.key || item.name || item.title);
+  if(label !== undefined && label !== null && String(label).trim()){
+    return String(label).trim().toLowerCase().replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 80);
+  }
   return `idx_${idx}`;
+}
+
+function uniqueItemId(base, used){
+  let id = base || 'item';
+  let n = 2;
+  while(used.has(id)){
+    id = `${base}_${n++}`;
+  }
+  used.add(id);
+  return id;
 }
 
 function safeDocId(id){
@@ -657,6 +660,11 @@ function ready(){ return _readyPromise; }
 //  This usually cuts a 5MB phone photo to 200-400KB → uploads in seconds
 //  on mobile networks and loads much faster for visitors.
 async function uploadFile(fileOrBlob, pathHint){
+  const uploaded = await uploadImageSet(fileOrBlob, pathHint, { stringOnly: true });
+  return uploaded && uploaded.url ? uploaded.url : uploaded;
+}
+
+async function uploadImageSet(fileOrBlob, pathHint, opts={}){
   let blob;
   if(typeof fileOrBlob === 'string' && fileOrBlob.startsWith('data:')){
     const res = await fetch(fileOrBlob);
@@ -679,7 +687,11 @@ async function uploadFile(fileOrBlob, pathHint){
 
   if(looksLikeImage){
     try {
-      blob = await optimiseImage(blob);
+      if(opts.stringOnly){
+        blob = await optimiseImage(blob);
+      } else {
+        return await createImageSet(blob, pathHint);
+      }
     } catch(err){
       console.warn('[FB] image optimise failed:', err);
       // If the source is a format browsers can't display (HEIC/HEIF), do NOT
@@ -697,7 +709,11 @@ async function uploadFile(fileOrBlob, pathHint){
     }
   }
 
-  // Generate a unique path: uploads/{timestamp}-{random}.{ext}
+  const url = await uploadBlob(blob, pathHint);
+  return opts.stringOnly ? url : { url, type: blob.type || '', bytes: blob.size || 0 };
+}
+
+async function uploadBlob(blob, pathHint){
   const ext = guessExtFromBlobOrHint(blob, pathHint);
   const safeHint = (pathHint || 'file').replace(/[^a-z0-9_-]+/gi, '_').slice(0, 40);
   const fname = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeHint}.${ext}`;
@@ -714,6 +730,31 @@ async function uploadFile(fileOrBlob, pathHint){
   return fbUrl;
 }
 
+async function createImageSet(blob, pathHint){
+  const original = await optimiseImage(blob, 1920);
+  const fullUrl = await uploadBlob(original, pathHint);
+  const set = {
+    url: fullUrl,
+    type: original.type || '',
+    bytes: original.size || 0,
+  };
+  try {
+    const medium = await optimiseImage(blob, 960);
+    set.medium = await uploadBlob(medium, `m_${pathHint || 'image'}`);
+    set.mediumBytes = medium.size || 0;
+  } catch(err){
+    console.warn('[FB] medium thumbnail failed:', err);
+  }
+  try {
+    const thumb = await optimiseImage(blob, 480);
+    set.thumb = await uploadBlob(thumb, `t_${pathHint || 'image'}`);
+    set.thumbBytes = thumb.size || 0;
+  } catch(err){
+    console.warn('[FB] thumbnail failed:', err);
+  }
+  return set;
+}
+
 // No-op rewriter kept for backwards compatibility with index.html/admin.html.
 // (Older versions of this file rewrote URLs to/from ImageKit and to/from a
 // legacy bucket — neither applies anymore now that everything's in one
@@ -724,8 +765,8 @@ window._rewriteLegacyImageUrl = (url) => url;
 //   - Keeps aspect ratio
 //   - Caps longest side at MAX_DIM
 //   - Output: WebP at QUALITY (PNG with transparency uses 'image/png' instead)
-async function optimiseImage(blob){
-  const MAX_DIM = 1920;       // longest side
+async function optimiseImage(blob, maxDim=1920){
+  const MAX_DIM = maxDim;     // longest side
   const QUALITY = 0.85;       // 0–1; 0.85 looks identical to humans for most photos
 
   // ─── HEIC / HEIF handling ───
@@ -874,6 +915,11 @@ function guessExtFromBlobOrHint(blob, pathHint){
 }
 
 async function deleteFile(url){
+  if(url && typeof url === 'object'){
+    const urls = [url.url, url.medium, url.thumb].filter(Boolean);
+    await Promise.all(urls.map(u => deleteFile(u).catch(() => {})));
+    return;
+  }
   // Only delete if it's actually a Firebase Storage URL
   if(!url || typeof url !== 'string') return;
   if(!url.includes('firebasestorage.googleapis.com') && !url.includes('firebasestorage.app')){
@@ -1038,7 +1084,7 @@ async function deleteReviewSubmission(id){
 window.FB = {
   getDB, saveDB, onDBChange, ready,
   ensureDBKeys,
-  uploadFile, deleteFile,
+  uploadFile, uploadImageSet, deleteFile,
   signIn: signInUser,
   signOut: signOutUser,
   onAuthChange,

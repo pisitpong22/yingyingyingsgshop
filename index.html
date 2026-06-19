@@ -2263,23 +2263,34 @@ function rewriteImageUrls(d){
   const rw = (window._rewriteLegacyImageUrl || ((u) => u));
 
   // Helper to rewrite an array of image URLs in place
-  const arrRw = (arr) => Array.isArray(arr) ? arr.map(rw) : arr;
+  const rwImg = (img) => {
+    if(img && typeof img === 'object'){
+      return {
+        ...img,
+        url: rw(img.url),
+        medium: rw(img.medium),
+        thumb: rw(img.thumb),
+      };
+    }
+    return rw(img);
+  };
+  const arrRw = (arr) => Array.isArray(arr) ? arr.map(rwImg) : arr;
 
   // Settings — single-image fields and the nav/page image arrays
   if(d.settings){
     if(d.settings.hero){
-      d.settings.hero.bgImage    = rw(d.settings.hero.bgImage);
-      d.settings.hero.heroImage  = rw(d.settings.hero.heroImage);
-      d.settings.hero.phra3dFront = rw(d.settings.hero.phra3dFront);
-      d.settings.hero.phra3dBack  = rw(d.settings.hero.phra3dBack);
+      d.settings.hero.bgImage    = rwImg(d.settings.hero.bgImage);
+      d.settings.hero.heroImage  = rwImg(d.settings.hero.heroImage);
+      d.settings.hero.phra3dFront = rwImg(d.settings.hero.phra3dFront);
+      d.settings.hero.phra3dBack  = rwImg(d.settings.hero.phra3dBack);
       // phra3dGlb is a .glb file, not an image — also CDN-eligible
       d.settings.hero.phra3dGlb   = rw(d.settings.hero.phra3dGlb);
     }
     if(d.settings.payment && d.settings.payment.qrImage){
-      d.settings.payment.qrImage = rw(d.settings.payment.qrImage);
+      d.settings.payment.qrImage = rwImg(d.settings.payment.qrImage);
     }
     if(Array.isArray(d.settings.featured)){
-      d.settings.featured.forEach(f => { if(f && f.img) f.img = rw(f.img); });
+      d.settings.featured.forEach(f => { if(f && f.img) f.img = rwImg(f.img); });
     }
   }
 
@@ -2291,7 +2302,7 @@ function rewriteImageUrls(d){
 
   // Casing types — banner image + nested variants
   (d.casingTypes || []).forEach(ty => {
-    ty.bannerImg = rw(ty.bannerImg);
+    ty.bannerImg = rwImg(ty.bannerImg);
     ty.sampleImgs = arrRw(ty.sampleImgs) || [];
     (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
   });
@@ -2340,6 +2351,35 @@ function escapeHtml(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function isImageSet(img){
+  return !!(img && typeof img === 'object' && (img.url || img.medium || img.thumb));
+}
+
+function imageUrl(img, preferred='url'){
+  if(isImageSet(img)){
+    if(preferred === 'thumb') return img.thumb || img.medium || img.url || '';
+    if(preferred === 'medium') return img.medium || img.thumb || img.url || '';
+    return img.url || img.medium || img.thumb || '';
+  }
+  return String(img || '');
+}
+
+function imageSrcset(img){
+  if(!isImageSet(img)) return '';
+  const parts=[];
+  if(img.thumb) parts.push(`${escapeHtml(img.thumb)} 480w`);
+  if(img.medium) parts.push(`${escapeHtml(img.medium)} 960w`);
+  if(img.url) parts.push(`${escapeHtml(img.url)} 1920w`);
+  return parts.join(', ');
+}
+
+function imgAttrs(img, preferred='thumb', sizes='(max-width: 700px) 50vw, 360px'){
+  const src=imageUrl(img, preferred);
+  if(!src) return '';
+  const ss=imageSrcset(img);
+  return `src="${escapeHtml(src)}"${ss?` srcset="${ss}" sizes="${escapeHtml(sizes)}"`:''}`;
 }
 
 function sanitizeRichHtml(value){
@@ -2403,7 +2443,7 @@ function applySettings(){
   // HERO BG
   const bg=document.getElementById('heroBg');const ov=document.getElementById('heroBgOverlay');
   if(s.hero.bgImage){
-    bg.style.backgroundImage=`url('${s.hero.bgImage}')`;
+    bg.style.backgroundImage=`url('${imageUrl(s.hero.bgImage,'medium')}')`;
     bg.classList.add('show');
     ov.style.display='block';
   } else {
@@ -2418,10 +2458,10 @@ function applySettings(){
   //   3. Front + Back tablet images (3D)
   //   4. no visual — single-column hero
   window.PHRA_GLB        = s.hero.phra3dGlb || '';
-  window.PHRA_FRONT_IMG  = s.hero.phra3dFront || '';
-  window.PHRA_BACK_IMG   = s.hero.phra3dBack  || '';
+  window.PHRA_FRONT_IMG  = imageUrl(s.hero.phra3dFront) || '';
+  window.PHRA_BACK_IMG   = imageUrl(s.hero.phra3dBack)  || '';
   window.PHRA_MATERIAL_PRESET = s.hero.phra3dMaterial || 'gold';
-  const heroImage = s.hero.heroImage || '';
+  const heroImage = imageUrl(s.hero.heroImage,'medium') || '';
   const hero3dBlock = document.querySelector('.hero-3d');
   const heroSection = document.querySelector('.hero');
   const has3D = !!(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG));
@@ -2577,7 +2617,7 @@ function renderCustomPages(){
       // List: vertical rows of image + text
       body = `<div class="cp-list">${items.map(it => `
         <div class="cp-list-item" onclick="openCpItem('${p.id}','${it.id}')">
-          ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" src="${it.img}" alt=""></div>`:''}
+          ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','120px')} alt=""></div>`:''}
           <div class="cp-list-body">
             <h3 class="cp-list-title">${it.title || ''}</h3>
             ${it.subtitle?`<div class="cp-list-subtitle">${it.subtitle}</div>`:''}
@@ -2590,7 +2630,7 @@ function renderCustomPages(){
       // Grid: cards in responsive grid
       body = `<div class="cp-grid">${items.map(it => `
         <div class="cp-card" onclick="openCpItem('${p.id}','${it.id}')">
-          <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" src="${it.img}" alt="">`:'📄'}</div>
+          <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','280px')} alt="">`:'📄'}</div>
           <div class="cp-card-body">
             <h3 class="cp-card-title">${it.title || ''}</h3>
             ${it.subtitle?`<div class="cp-card-subtitle">${it.subtitle}</div>`:''}
@@ -2629,7 +2669,7 @@ function openCpItem(pageId, itemId){
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    ${it.img?`<div style="text-align:center;margin-bottom:22px"><img src="${it.img}" alt="" style="max-width:100%;max-height:400px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15)"></div>`:''}
+    ${it.img?`<div style="text-align:center;margin-bottom:22px"><img ${imgAttrs(it.img,'medium','min(100vw, 700px)')} alt="" style="max-width:100%;max-height:400px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15)"></div>`:''}
     <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content.</p>'}</div>
   `;
   document.getElementById('modal').classList.add('open');
@@ -2910,7 +2950,7 @@ function renderHomeReviews(){
       ? ''
       : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
     const imgsHtml = (rv.imgs && rv.imgs.length)
-      ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
+      ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','120px')} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
       : '';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
@@ -2961,7 +3001,7 @@ function buildCard(a,type,settings){
   return `
     <div class="card" onclick="openProd('${type}',${a.id})">
       <div class="card-img">
-        ${a.imgs&&a.imgs[0]?`<img loading="lazy" decoding="async" src="${a.imgs[0]}">`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
+        ${a.imgs&&a.imgs[0]?`<img loading="lazy" decoding="async" ${imgAttrs(a.imgs[0],'thumb','(max-width: 700px) 50vw, 360px')}>`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
         ${a.badge?`<div class="cbadge cbadge-gold">${a.badge}</div>`:''}
         ${pill}
         ${overlay}
@@ -2998,7 +3038,7 @@ function renderReviews(){
     const nameHtml = rv.anonymous
       ? ''
       : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
-    const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
+    const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','160px')} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
       <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
@@ -3038,7 +3078,7 @@ function renderPayment(){
         <dl class="pay-info">
           <dt>Account Name</dt><dd>${p.paynowName||'—'}</dd>
         </dl>
-        ${p.qrImage?`<div class="pay-qr"><img loading="lazy" decoding="async" src="${p.qrImage}" alt="PayNow QR"></div>`:''}
+        ${p.qrImage?`<div class="pay-qr"><img loading="lazy" decoding="async" ${imgAttrs(p.qrImage,'medium','320px')} alt="PayNow QR"></div>`:''}
       </div>
       <div class="pay-block">
         <h3>📦 Shipping</h3>
@@ -3070,13 +3110,15 @@ function buildTabs(containerId,cats,curCat,onFilter){
 
 // ── AMULETS ──
 let _aQuery='';
+let _aVisible=36;
 function searchA(){
   const v=document.getElementById('aSearch').value;
   _aQuery=v.toLowerCase().trim();
+  _aVisible=36;
   document.getElementById('aSearchClear').classList.toggle('show',!!_aQuery);
   renderA(curAcat);
 }
-function clearSearchA(){document.getElementById('aSearch').value='';_aQuery='';document.getElementById('aSearchClear').classList.remove('show');renderA(curAcat);}
+function clearSearchA(){document.getElementById('aSearch').value='';_aQuery='';_aVisible=36;document.getElementById('aSearchClear').classList.remove('show');renderA(curAcat);}
 function applySort(list,sortKey){
   const arr=[...list];
   switch(sortKey){
@@ -3105,18 +3147,24 @@ function renderA(cat){
   list=applySort(list,sort);
   const cnt=document.getElementById('aCount');
   if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'piece':'pieces'}${_aQuery?' for "'+_aQuery+'"':''}`:'';
-  document.getElementById('aGrid').innerHTML=list.length?list.map(a=>buildCard(a,'amulets',settings)).join(''):`<div class="empty-state" style="grid-column:1/-1">${_aQuery?'No items match "'+_aQuery+'".':'No items in this category.'}</div>`;
+  const visible=list.slice(0,_aVisible);
+  document.getElementById('aGrid').innerHTML=list.length
+    ? visible.map(a=>buildCard(a,'amulets',settings)).join('') + (list.length>_aVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreA()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_aVisible})</button></div>`:'')
+    : `<div class="empty-state" style="grid-column:1/-1">${_aQuery?'No items match "'+_aQuery+'".':'No items in this category.'}</div>`;
 }
-function filterA(cat,el){document.querySelectorAll('#aTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAcat=cat;renderA(cat);}
+function loadMoreA(){_aVisible+=36;renderA(curAcat);}
+function filterA(cat,el){document.querySelectorAll('#aTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAcat=cat;_aVisible=36;renderA(cat);}
 
 let _acQuery='';
+let _acVisible=36;
 function searchAc(){
   const v=document.getElementById('acSearch').value;
   _acQuery=v.toLowerCase().trim();
+  _acVisible=36;
   document.getElementById('acSearchClear').classList.toggle('show',!!_acQuery);
   renderAc(curAccat);
 }
-function clearSearchAc(){document.getElementById('acSearch').value='';_acQuery='';document.getElementById('acSearchClear').classList.remove('show');renderAc(curAccat);}
+function clearSearchAc(){document.getElementById('acSearch').value='';_acQuery='';_acVisible=36;document.getElementById('acSearchClear').classList.remove('show');renderAc(curAccat);}
 function renderAc(cat){
   const db=getDB();const settings=db.settings;
   const cats=[...new Set(db.accessories.map(a=>a.cat).filter(Boolean))];
@@ -3127,9 +3175,13 @@ function renderAc(cat){
   list=applySort(list,sort);
   const cnt=document.getElementById('acCount');
   if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'item':'items'}${_acQuery?' for "'+_acQuery+'"':''}`:'';
-  document.getElementById('acGrid').innerHTML=list.length?list.map(a=>buildCard(a,'accessories',settings)).join(''):`<div class="empty-state" style="grid-column:1/-1">${_acQuery?'No items match "'+_acQuery+'".':'No items in this category.'}</div>`;
+  const visible=list.slice(0,_acVisible);
+  document.getElementById('acGrid').innerHTML=list.length
+    ? visible.map(a=>buildCard(a,'accessories',settings)).join('') + (list.length>_acVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreAc()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_acVisible})</button></div>`:'')
+    : `<div class="empty-state" style="grid-column:1/-1">${_acQuery?'No items match "'+_acQuery+'".':'No items in this category.'}</div>`;
 }
-function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAccat=cat;renderAc(cat);}
+function loadMoreAc(){_acVisible+=36;renderAc(curAccat);}
+function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAccat=cat;_acVisible=36;renderAc(cat);}
 
 // ── CASING ──
 let _casingStyleQuery = '';
@@ -3169,7 +3221,7 @@ function renderCasingTypes(){
   // Direct Firebase Storage URLs — no proxy/resize, just pass through.
   // Upload-time optimisation in firebase-shared.js already caps images at
   // 1920px and re-encodes to WebP q85, so they're already CDN-friendly.
-  const bannerify = (url) => url;
+  const bannerify = (url) => imageUrl(url,'medium');
   grid.innerHTML=types.map((ty,i)=>{
     const count=(ty.variants||[]).length;
     const sampleCount=(ty.sampleImgs||[]).length;
@@ -3184,7 +3236,7 @@ function renderCasingTypes(){
     return `
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-banner">
-        ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" src="${bannerify(ty.bannerImg)}">`:`<span class="ftype-icon-bg">🪬</span>`}
+        ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(ty.bannerImg,'medium','(max-width: 700px) 100vw, 420px')}>`:`<span class="ftype-icon-bg">🪬</span>`}
         <div class="ftype-count">${badge}</div>
       </div>
       <div class="ftype-body">
@@ -3216,7 +3268,7 @@ function casingPhotoCount(v){
 function casingVariantKey(v){
   if(!v) return '';
   const name=String(v.name || '').trim().toLowerCase().replace(/\s+/g,' ');
-  const firstImg=Array.isArray(v.imgs) && v.imgs[0] ? String(v.imgs[0]).trim() : '';
+  const firstImg=Array.isArray(v.imgs) && v.imgs[0] ? imageUrl(v.imgs[0]).trim() : '';
   return name || firstImg || String(v.id || '');
 }
 
@@ -3408,9 +3460,9 @@ function renderVariants(typeId){
       window._lbImages=samples;
       grid.innerHTML=samples.map((img,i)=>`
         <div class="var-card" onclick="openLightbox(${i})">
-          <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" src="${img}"></div>
+          <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<3?'medium':'thumb','(max-width: 700px) 50vw, 320px')}></div>
         </div>`).join('');
-      preloadImages(samples, 6);
+      preloadImages(samples.map(img=>imageUrl(img,'thumb')), 6);
     } else {
       grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'ยังไม่มีตัวอย่างสำหรับประเภทนี้':'No samples for this type yet.'}</div>`;
     }
@@ -3418,11 +3470,11 @@ function renderVariants(typeId){
   }
   setupCasingStyleTools(vars);
   // Direct URLs — see note in renderCasingTypes about why no resize.
-  const thumbify = (url) => url;
+  const thumbify = (url) => imageUrl(url,'thumb');
   grid.innerHTML=vars.map((v,i)=>`
     <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" src="${thumbify(v.imgs[0])}">`:'🪬'}
+        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(v.imgs[0],i<4?'medium':'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
@@ -3431,7 +3483,7 @@ function renderVariants(typeId){
         <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
       </div>
     </div>`).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
-  preloadImages(vars.map(v=>v.imgs&&v.imgs[0]).filter(Boolean), 6);
+  preloadImages(vars.map(v=>v.imgs&&v.imgs[0]).filter(Boolean).map(img=>imageUrl(img,'thumb')), 6);
   applyCasingStyleFilter();
 }
 
@@ -3443,7 +3495,7 @@ function openVariant(typeId,varId){
   // store images globally for lightbox — keep originals for full-size view
   window._lbImages = imgs;
   // Direct URLs — Firebase Storage Asia bucket serves original optimised images.
-  const thumbify = (url) => url;
+  const thumbify = (url) => imageUrl(url,'medium');
   document.getElementById('modalContent').innerHTML=`
     <button class="modal-mobile-close" onclick="closeModal()" aria-label="Close">×</button>
     <div class="modal-head" style="padding-bottom:12px;margin-bottom:16px">
@@ -3457,13 +3509,13 @@ function openVariant(typeId,varId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="variant-gallery">
-      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" src="${thumbify(img)}"></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
     </div>
     <div class="modal-sticky-actions">
       <button type="button" onclick="closeModal()">${lang==='th'?'กลับไปเลือกแบบ':'Back to styles'}</button>
       <button type="button" class="primary" onclick="openContactForCasingStyle(${JSON.stringify(ty.name || '')},${JSON.stringify(v.name || '')},${JSON.stringify(v.price || '')})">${lang==='th'?'สอบถามแบบนี้':'Ask about this style'}</button>
     </div>`;
-  preloadImages(imgs, 8);
+  preloadImages(imgs.map(img=>imageUrl(img,'thumb')), 8);
   openModal('variant');
 }
 
@@ -3481,7 +3533,7 @@ function showLightboxImage(){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
   // Direct Firebase Storage URL — already optimised at upload time.
-  const url = imgs[_lbIndex];
+  const url = imageUrl(imgs[_lbIndex]);
   document.getElementById('lbImg').src = url;
   document.getElementById('lbCounter').textContent = (_lbIndex+1) + ' / ' + imgs.length;
   // hide arrows if only 1 image
@@ -3521,7 +3573,7 @@ function renderP(){
   grid.innerHTML=db.projects.map(p=>`
     <div class="proj-card" onclick="openProject(${p.id})">
       <div class="proj-img">
-        ${p.imgs&&p.imgs[0]?`<img loading="lazy" decoding="async" src="${p.imgs[0]}">`:'🎯'}
+        ${p.imgs&&p.imgs[0]?`<img loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','(max-width: 700px) 100vw, 360px')}>`:'🎯'}
         ${p.imgs&&p.imgs.length>1?`<div class="proj-photo-count">📷 ${p.imgs.length}</div>`:''}
       </div>
       <div class="proj-body">
@@ -3559,7 +3611,7 @@ function openProject(id){
     ${imgs.length?`
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase">Sample Photos · click to view full size</div>
       <div class="variant-gallery">
-        ${imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" src="${img}"></div>`).join('')}
+        ${imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','(max-width: 700px) 50vw, 260px')}></div>`).join('')}
       </div>
     `:''}`;
   document.getElementById('modal').classList.add('open');
@@ -3568,6 +3620,7 @@ function openProject(id){
 function openProd(type,id){
   const db=getDB();const s=db.settings;
   const item=db[type].find(i=>i.id===id);if(!item)return;
+  window._prodImages = item.imgs || [];
   const icon=type==='amulets'?'📿':'⛓️';
   const status=item.status||'available';
   const statusBadge=status!=='available'?`<span class="status-pill ${status}" style="position:static;display:inline-block;margin-left:8px">${status.toUpperCase()}</span>`:'';
@@ -3602,10 +3655,10 @@ function openProd(type,id){
     <div class="prod-detail">
       <div>
         <div class="prod-main-img" id="mImg">
-          ${item.imgs&&item.imgs[0]?`<img loading="lazy" decoding="async" src="${item.imgs[0]}">`:`<span style="font-size:64px">${icon}</span>`}
+          ${item.imgs&&item.imgs[0]?`<img loading="lazy" decoding="async" ${imgAttrs(item.imgs[0],'medium','min(100vw, 520px)')}>`:`<span style="font-size:64px">${icon}</span>`}
           ${status==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:status==='reserved'?`<div class="status-overlay reserved"><span>RESERVED</span></div>`:''}
         </div>
-        ${item.imgs&&item.imgs.length>1?`<div class="prod-thumbs">${item.imgs.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImg(this,'${img}')"><img loading="lazy" decoding="async" src="${img}"></div>`).join('')}</div>`:''}
+        ${item.imgs&&item.imgs.length>1?`<div class="prod-thumbs">${item.imgs.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImgIndex(this,${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','72px')}></div>`).join('')}</div>`:''}
       </div>
       <div class="prod-info">
         ${item.badge?`<span class="tag cbadge-gold" style="display:inline-block;margin-bottom:8px">${item.badge}</span>`:''}
@@ -3626,6 +3679,13 @@ function openProd(type,id){
   window._lastOpened={type,id};
 }
 function openContactWithItemBtn(type,id){openContactWithItem(type,id);}
+function swImgIndex(el,idx){
+  const img=(window._prodImages || [])[idx];
+  if(!img) return;
+  document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" ${imgAttrs(img,'medium','min(100vw, 520px)')} style="width:100%;height:100%;object-fit:cover">`;
+}
 function swImg(el,src){document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" src="${src}" style="width:100%;height:100%;object-fit:cover">`;}
 function openModal(kind){
   const modal=document.getElementById('modal');
@@ -3709,7 +3769,9 @@ async function rfHandleFiles(event){
     rfImages.push(slot);
     rfRenderPreviews();
     try {
-      const url = await window.FB.uploadFile(file, 'review');
+      const url = window.FB.uploadImageSet
+        ? await window.FB.uploadImageSet(file, 'review')
+        : await window.FB.uploadFile(file, 'review');
       slot.status = 'done';
       slot.url = url;
     } catch(err){
@@ -3725,7 +3787,7 @@ function rfRenderPreviews(){
   const wrap = document.getElementById('rfPreviews');
   wrap.innerHTML = rfImages.map((im,i) => im.status==='uploading'
     ? `<div class="rf-prev loading"><div class="rf-prev-spin"></div></div>`
-    : `<div class="rf-prev"><img src="${im.url}"><button class="rf-prev-del" onclick="rfRemoveImage(${i})">✕</button></div>`
+    : `<div class="rf-prev"><img src="${imageUrl(im.url,'thumb')}"><button class="rf-prev-del" onclick="rfRemoveImage(${i})">✕</button></div>`
   ).join('');
 }
 
@@ -3808,6 +3870,14 @@ const _imgObserver = ('IntersectionObserver' in window)
           img.src = realSrc;
           img.removeAttribute('data-src');
         }
+        if(img.dataset.srcset){
+          img.srcset = img.dataset.srcset;
+          img.removeAttribute('data-srcset');
+        }
+        if(img.dataset.sizes){
+          img.sizes = img.dataset.sizes;
+          img.removeAttribute('data-sizes');
+        }
         obs.unobserve(img);
       });
     }, { rootMargin: '1200px 0px', threshold: 0.01 })
@@ -3888,6 +3958,14 @@ function watchImage(img){
     const realSrc = img.src;
     img.removeAttribute('src');
     img.dataset.src = realSrc;
+    if(img.getAttribute('srcset')){
+      img.dataset.srcset = img.getAttribute('srcset');
+      img.removeAttribute('srcset');
+    }
+    if(img.getAttribute('sizes')){
+      img.dataset.sizes = img.getAttribute('sizes');
+      img.removeAttribute('sizes');
+    }
     _imgObserver.observe(img);
   } else if(img.complete && img.naturalWidth > 0){
     img.classList.remove('is-loading');

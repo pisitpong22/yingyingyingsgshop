@@ -2702,21 +2702,32 @@ function applyDbMigrations(d){
 // bucket, so this is only needed until existing data is migrated.
 function rewriteImageUrls(d){
   const rw = (window._rewriteLegacyImageUrl || ((u) => u));
-  const arrRw = (arr) => Array.isArray(arr) ? arr.map(rw) : arr;
+  const rwImg = (img) => {
+    if(img && typeof img === 'object'){
+      return {
+        ...img,
+        url: rw(img.url),
+        medium: rw(img.medium),
+        thumb: rw(img.thumb),
+      };
+    }
+    return rw(img);
+  };
+  const arrRw = (arr) => Array.isArray(arr) ? arr.map(rwImg) : arr;
 
   if(d.settings){
     if(d.settings.hero){
-      d.settings.hero.bgImage     = rw(d.settings.hero.bgImage);
-      d.settings.hero.heroImage   = rw(d.settings.hero.heroImage);
-      d.settings.hero.phra3dFront = rw(d.settings.hero.phra3dFront);
-      d.settings.hero.phra3dBack  = rw(d.settings.hero.phra3dBack);
+      d.settings.hero.bgImage     = rwImg(d.settings.hero.bgImage);
+      d.settings.hero.heroImage   = rwImg(d.settings.hero.heroImage);
+      d.settings.hero.phra3dFront = rwImg(d.settings.hero.phra3dFront);
+      d.settings.hero.phra3dBack  = rwImg(d.settings.hero.phra3dBack);
       d.settings.hero.phra3dGlb   = rw(d.settings.hero.phra3dGlb);
     }
     if(d.settings.payment && d.settings.payment.qrImage){
-      d.settings.payment.qrImage = rw(d.settings.payment.qrImage);
+      d.settings.payment.qrImage = rwImg(d.settings.payment.qrImage);
     }
     if(Array.isArray(d.settings.featured)){
-      d.settings.featured.forEach(f => { if(f && f.img) f.img = rw(f.img); });
+      d.settings.featured.forEach(f => { if(f && f.img) f.img = rwImg(f.img); });
     }
   }
 
@@ -2726,7 +2737,7 @@ function rewriteImageUrls(d){
   (d.reviews     || []).forEach(it => { it.imgs = arrRw(it.imgs); });
 
   (d.casingTypes || []).forEach(ty => {
-    ty.bannerImg = rw(ty.bannerImg);
+    ty.bannerImg = rwImg(ty.bannerImg);
     ty.sampleImgs = arrRw(ty.sampleImgs) || [];
     (ty.variants || []).forEach(v => { v.imgs = arrRw(v.imgs); });
   });
@@ -4097,7 +4108,7 @@ async function loadPendingReviews(){
   listEl.innerHTML = _pendingReviews.map(rv => {
     const stars = rv.rating>0 ? '★'.repeat(rv.rating)+'☆'.repeat(5-rv.rating) : (lang==='th'?'ไม่ให้คะแนน':'No rating');
     const who = rv.anonymous ? (lang==='th'?'ไม่ลงชื่อ':'Anonymous') : (rv.name||'—');
-    const imgs = (rv.imgs||[]).map(u=>`<img src="${u}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${u}','_blank')">`).join('');
+    const imgs = (rv.imgs||[]).map(u=>`<img src="${imageUrl(u,'thumb')}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${imageUrl(u)}','_blank')">`).join('');
     return `
       <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--bg-soft,#fff)">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:start">
@@ -4298,7 +4309,7 @@ function loadList(type){
     <thead><tr><th>${tr('image')}</th><th>${tr('name')}</th><th>${type==='projects'?tr('status'):tr('category')}</th><th>${type==='projects'?tr('year'):tr('price')}</th><th>${tr('actions')}</th></tr></thead>
     <tbody>${items.map(item=>`
       <tr>
-        <td>${item.imgs&&item.imgs[0]?`<img class="thumb" src="${item.imgs[0]}">`:`<div class="no-img">${icons[type]}</div>`}</td>
+        <td>${item.imgs&&item.imgs[0]?`<img class="thumb" src="${imageUrl(item.imgs[0],'thumb')}">`:`<div class="no-img">${icons[type]}</div>`}</td>
         <td><strong>${item.name}</strong></td>
         <td>${type==='projects'?`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status}</span>`:`<span class="tag">${item.cat||'-'}</span>`}</td>
         <td>${type==='projects'?(item.date||'-'):`S$${Number(item.price||0).toLocaleString()}`}</td>
@@ -4333,7 +4344,7 @@ function loadCasingTypes(){
         <button class="ho-arrow-btn" onclick="moveType(${ty.id}, -1)" ${idx === 0 ? 'disabled' : ''} title="${lang==='th'?'เลื่อนขึ้น':'Move up'}">▲</button>
         <button class="ho-arrow-btn" onclick="moveType(${ty.id}, 1)" ${idx === last ? 'disabled' : ''} title="${lang==='th'?'เลื่อนลง':'Move down'}">▼</button>
       </div>
-      <div class="type-tile-img">${ty.bannerImg?`<img src="${ty.bannerImg}">`:'🪬'}</div>
+      <div class="type-tile-img">${ty.bannerImg?`<img src="${imageUrl(ty.bannerImg,'thumb')}">`:'🪬'}</div>
       <div class="type-tile-info">
         <div class="type-tile-name">${ty.name}</div>
         <div class="type-tile-desc">${descShort}</div>
@@ -4439,7 +4450,7 @@ function loadVariants(){
             <span class="variant-order-num">${idx + 1}</span>
           </div>
         </td>
-        <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${v.imgs[0]}">`:`<div class="no-img">🪬</div>`}</td>
+        <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="no-img">🪬</div>`}</td>
         <td><strong>${v.name}</strong></td>
         <td>${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
         <td><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
@@ -4798,12 +4809,25 @@ async function delItem(type,id){
 function captureImgs(key){
   const arr = tempImgs[key] || [];
   return arr
-    .map(e => (typeof e === 'string' ? e : (e && e.status === 'done' ? e.url : null)))
-    .filter(isUsableStoredImageUrl);
+    .map(e => (typeof e === 'string' || isImageSet(e) ? e : (e && e.status === 'done' ? e.url : null)))
+    .filter(isUsableStoredImage);
 }
 
-function isUsableStoredImageUrl(url){
-  const s = String(url || '').trim();
+function isImageSet(img){
+  return !!(img && typeof img === 'object' && (img.url || img.thumb || img.medium));
+}
+
+function imageUrl(img, preferred='url'){
+  if(isImageSet(img)){
+    if(preferred === 'thumb') return img.thumb || img.medium || img.url || '';
+    if(preferred === 'medium') return img.medium || img.thumb || img.url || '';
+    return img.url || img.medium || img.thumb || '';
+  }
+  return String(img || '');
+}
+
+function isUsableStoredImage(img){
+  const s = imageUrl(img).trim();
   if(!s) return false;
   if(/^https?:\/\//i.test(s)) return true;
   return /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(s) && s.length < 350000;
@@ -4899,8 +4923,8 @@ async function uploadOne(file, key, isSingle){
   if(isSingle){
     // Clean up any previous file on Storage before replacing
     (tempImgs[key] || []).forEach(e => {
-      const u = typeof e === 'string' ? e : (e && e.url);
-      if(u && typeof u === 'string' && u.startsWith('http')){
+      const u = (e && typeof e === 'object' && e.status === 'done') ? e.url : e;
+      if(isUsableStoredImage(u)){
         FB.deleteFile(u).catch(() => {});
       }
     });
@@ -4929,7 +4953,9 @@ async function uploadOne(file, key, isSingle){
   animateProgress();
 
   try {
-    const url = await FB.uploadFile(file, file.name || key);
+    const url = (FB.uploadImageSet && file.type && file.type.startsWith('image/'))
+      ? await FB.uploadImageSet(file, file.name || key)
+      : await FB.uploadFile(file, file.name || key);
     // Verify we're still the same slot (user might have removed/reordered)
     if(tempImgs[key] && tempImgs[key][slot] === entry){
       entry.status = 'done';
@@ -5030,7 +5056,7 @@ function escapeAttr(s){
 }
 
 function safePreviewUrl(url){
-  const s = String(url || '').trim();
+  const s = imageUrl(url, 'thumb').trim();
   if(!s) return '';
   if(/^https?:\/\//i.test(s) || /^blob:/i.test(s)) return s;
   if(/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(s) && s.length < 350000) return s.replace(/\s+/g,'');
@@ -5187,11 +5213,9 @@ function ddr(e,key,single){
   if(!tempImgs[key])tempImgs[key]=[];
   const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/'));
   if(single && files[0]){
-    const r=new FileReader();r.onload=ev=>{tempImgs[key]=[ev.target.result];renderPrev(key);};r.readAsDataURL(files[0]);
+    uploadOne(files[0], key, true);
   } else {
-    files.forEach(file=>{
-      const r=new FileReader();r.onload=ev=>{tempImgs[key].push(ev.target.result);renderPrev(key);};r.readAsDataURL(file);
-    });
+    files.forEach(file=>uploadOne(file, key, false));
   }
 }
 
