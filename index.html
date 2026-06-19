@@ -1878,6 +1878,114 @@
   }
   .mobile-tabbar{display:none}
 
+  /* ─── FACEBOOK-LIKE FEED PAGE ─────────────────────────────────────────── */
+  .feed-page{
+    min-height:100vh;
+    background:
+      linear-gradient(180deg,#f2ead8 0%,#f8f0dc 38%,#fff8e8 100%);
+    padding:28px 16px 90px;
+  }
+  .feed-shell{
+    max-width:1180px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:minmax(230px,280px) minmax(0,640px) minmax(220px,280px);
+    gap:18px;
+    align-items:start;
+  }
+  .feed-sidebar,
+  .feed-card,
+  .feed-composer{
+    background:rgba(255,251,239,.92);
+    border:1px solid rgba(201,168,76,.22);
+    border-radius:18px;
+    box-shadow:0 10px 30px rgba(91,62,13,.08);
+  }
+  .feed-sidebar{
+    position:sticky;
+    top:92px;
+    padding:14px;
+  }
+  .feed-profile{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:8px;
+    border-radius:14px;
+    background:linear-gradient(135deg,rgba(232,201,106,.18),rgba(255,255,255,.45));
+  }
+  .feed-avatar{
+    width:44px;height:44px;border-radius:50%;overflow:hidden;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    box-shadow:0 0 18px rgba(201,168,76,.22);
+  }
+  .feed-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .feed-name{font-family:var(--font-display);font-weight:800;color:var(--text);line-height:1.15}
+  .feed-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+  .feed-nav-list{display:grid;gap:6px;margin-top:14px}
+  .feed-nav-pill{
+    border:none;background:transparent;color:var(--text);font:inherit;font-weight:800;
+    display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;text-align:left;
+  }
+  .feed-nav-pill:hover{background:rgba(201,168,76,.12)}
+  .feed-main{display:grid;gap:14px;min-width:0}
+  .feed-composer{padding:14px}
+  .feed-composer-row{display:flex;align-items:center;gap:10px}
+  .feed-composer-fake{
+    flex:1;border:none;border-radius:999px;background:#f3ead2;color:#7a6040;
+    padding:13px 16px;text-align:left;font:inherit;font-weight:700;cursor:pointer;
+  }
+  .feed-story-strip{
+    display:flex;gap:10px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;
+  }
+  .feed-story-strip::-webkit-scrollbar{display:none}
+  .feed-story{
+    flex:0 0 118px;height:150px;border-radius:18px;overflow:hidden;position:relative;
+    border:1px solid rgba(201,168,76,.22);background:#181005;cursor:pointer;
+    box-shadow:0 10px 24px rgba(77,48,5,.14);
+  }
+  .feed-story img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9}
+  .feed-story::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.72))}
+  .feed-story-label{position:absolute;left:10px;right:10px;bottom:10px;color:#fff;font-weight:900;font-size:12px;z-index:1;line-height:1.2}
+  .feed-card{overflow:hidden}
+  .feed-card-head{display:flex;align-items:center;gap:10px;padding:14px 14px 8px}
+  .feed-card-menu{margin-left:auto;color:#8b743d;font-weight:900}
+  .feed-post-name{font-weight:900;color:var(--text)}
+  .feed-post-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .feed-card-body{padding:0 14px 12px}
+  .feed-post-title{font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--text);margin:4px 0 6px;line-height:1.18}
+  .feed-post-text{font-size:14px;color:#674f2e;line-height:1.65;margin:0 0 10px}
+  .feed-media{
+    background:#120d05;display:grid;gap:2px;overflow:hidden;
+    border-top:1px solid rgba(201,168,76,.14);
+    border-bottom:1px solid rgba(201,168,76,.14);
+  }
+  .feed-media.one{grid-template-columns:1fr}
+  .feed-media.two{grid-template-columns:1fr 1fr}
+  .feed-media.three{grid-template-columns:1.2fr .8fr}
+  .feed-media.three img:first-child{grid-row:span 2}
+  .feed-media img{width:100%;height:100%;min-height:240px;object-fit:cover;display:block}
+  .feed-media.two img,.feed-media.three img{min-height:190px}
+  .feed-actions{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 12px 12px;
+    border-top:1px solid rgba(201,168,76,.14);
+  }
+  .feed-action{
+    border:none;background:transparent;border-radius:10px;padding:10px 8px;cursor:pointer;
+    color:#765b27;font:inherit;font-weight:800;
+  }
+  .feed-action:hover{background:rgba(201,168,76,.12)}
+  .feed-right-card{padding:14px}
+  .feed-right-title{font-weight:900;color:var(--text);margin-bottom:10px}
+  .feed-mini-list{display:grid;gap:10px}
+  .feed-mini{display:flex;gap:10px;align-items:center;cursor:pointer;padding:6px;border-radius:12px}
+  .feed-mini:hover{background:rgba(201,168,76,.1)}
+  .feed-mini-img{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#efe2bd;flex-shrink:0}
+  .feed-mini-name{font-weight:800;font-size:13px;color:var(--text);line-height:1.25}
+  .feed-mini-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
+  .feed-empty{padding:40px 18px;text-align:center;color:var(--text-muted)}
+
   @media(max-width:900px){
     .hero{
       min-height:auto;
@@ -1887,6 +1995,8 @@
     .hero-inner{padding:28px;border-radius:24px}
     #homeSections{margin:18px auto 0;padding:0 16px 88px}
     #homeSections .home-section{border-radius:22px;padding:24px !important}
+    .feed-shell{grid-template-columns:1fr;max-width:680px}
+    .feed-sidebar,.feed-right{display:none}
   }
 
   @media(max-width:768px){
@@ -2047,6 +2157,17 @@
       color:#140d04;
       box-shadow:0 10px 24px rgba(139,105,20,.22);
     }
+    .feed-page{padding:12px 10px calc(96px + env(safe-area-inset-bottom,0px))}
+    .feed-main{gap:10px}
+    .feed-composer,.feed-card{border-radius:16px}
+    .feed-story{flex-basis:104px;height:136px}
+    .feed-card-head{padding:12px 12px 6px}
+    .feed-card-body{padding:0 12px 10px}
+    .feed-post-title{font-size:19px}
+    .feed-media img{min-height:260px}
+    .feed-media.two img,.feed-media.three img{min-height:160px}
+    .feed-actions{padding:6px 8px 10px}
+    .feed-action{font-size:12.5px;padding:9px 4px}
   }
 </style>
 </head>
@@ -2138,6 +2259,42 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px" id="svcCards"></div>
     </div>
   </section>
+  </div>
+</div>
+
+<!-- FEED -->
+<div id="page-feed" class="page">
+  <div class="feed-page">
+    <div class="feed-shell">
+      <aside class="feed-sidebar">
+        <div class="feed-profile">
+          <div class="feed-avatar"><img src="/favicon/apple-touch-icon.png" alt=""></div>
+          <div>
+            <div class="feed-name" id="feedStoreName">Yingyingying</div>
+            <div class="feed-sub">Authentic Thai Amulets</div>
+          </div>
+        </div>
+        <div class="feed-nav-list" id="feedNavList"></div>
+      </aside>
+
+      <main class="feed-main">
+        <div class="feed-composer">
+          <div class="feed-composer-row">
+            <div class="feed-avatar"><img src="/favicon/apple-touch-icon.png" alt=""></div>
+            <button class="feed-composer-fake" onclick="goPage('casing')">What are you looking for today?</button>
+          </div>
+        </div>
+        <div class="feed-story-strip" id="feedStories"></div>
+        <div id="feedList"></div>
+      </main>
+
+      <aside class="feed-right">
+        <div class="feed-sidebar feed-right-card">
+          <div class="feed-right-title">Popular now</div>
+          <div class="feed-mini-list" id="feedPopular"></div>
+        </div>
+      </aside>
+    </div>
   </div>
 </div>
 
@@ -2356,6 +2513,7 @@ function defaultSettings(){
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
     nav:[
       {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
+      {id:'feed',label:'Feed',visible:true,enabled:true,builtin:true},
       {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
       {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
@@ -2515,6 +2673,10 @@ function applyDbMigrations(d){
   }
   if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
+    if(!d.settings.nav.find(n=>n.id==='feed')){
+      const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
+      d.settings.nav.splice(homeIdx>=0?homeIdx+1:0,0,{id:'feed',label:'Feed',visible:true,enabled:true,builtin:true});
+    }
     if(!d.settings.nav.find(n=>n.id==='reviews')){
       const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
       const insertAt=aboutIdx>=0?aboutIdx+1:d.settings.nav.length;
@@ -2970,11 +3132,12 @@ function openCpItem(pageId, itemId){
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
 
-const PAGE_IDS = new Set(['home','amulets','accessories','casing','projects','reviews','payment','about']);
+const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','projects','reviews','payment','about']);
 
 function navIcon(id){
   return ({
     home:'⌂',
+    feed:'▤',
     amulets:'◉',
     accessories:'✦',
     casing:'🪬',
@@ -3022,6 +3185,7 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
+    case 'feed': return ['amulets','accessories','casingTypes','projects','reviews'];
     case 'home': return [];
     default: return [];
   }
@@ -3061,6 +3225,7 @@ async function goPage(name, opts={}){
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
+  if(name==='feed')renderFeed();
   if(opts.updateUrl !== false) updatePageUrl(name);
   if(name==='home'){
     applySettings();
@@ -3879,6 +4044,168 @@ function _lbKeyHandler(e){
   if(e.key === 'Escape') closeLightbox({target:{id:'lightbox'}});
   else if(e.key === 'ArrowRight') lbNext();
   else if(e.key === 'ArrowLeft') lbPrev();
+}
+
+// ── FEED PAGE ──
+function renderFeed(){
+  const db=getDB();
+  const s=db.settings||{};
+  const logo=imageUrl(s.logoIcon) || '/favicon/apple-touch-icon.png';
+  document.querySelectorAll('.feed-avatar img').forEach(img=>{ img.src=logo; });
+  const nameEl=document.getElementById('feedStoreName');
+  if(nameEl) nameEl.textContent=s.logoText || 'Yingyingying Amulet';
+
+  const nav=document.getElementById('feedNavList');
+  if(nav){
+    nav.innerHTML=[
+      ['home','⌂','Home'],
+      ['amulets','◉','Amulets'],
+      ['casing','🪬','Casing Service'],
+      ['projects','◎','Projects'],
+      ['reviews','★','Reviews'],
+    ].map(([id,icon,label])=>`
+      <button class="feed-nav-pill" onclick="goPage('${id}')"><span>${icon}</span><span>${label}</span></button>
+    `).join('');
+  }
+
+  const posts=buildFeedPosts(db);
+  const list=document.getElementById('feedList');
+  if(list){
+    list.innerHTML=posts.length
+      ? posts.map(renderFeedPost).join('')
+      : `<div class="feed-card feed-empty">No feed posts yet. Add amulets, casing styles, projects, or reviews in admin.</div>`;
+    watchImages(list);
+  }
+
+  const stories=document.getElementById('feedStories');
+  if(stories){
+    const storyItems=posts.filter(p=>p.imgs&&p.imgs.length).slice(0,8);
+    stories.innerHTML=storyItems.map(p=>`
+      <button type="button" class="feed-story" onclick="${p.action}">
+        <img loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','120px')} alt="">
+        <span class="feed-story-label">${escapeHtml(p.title)}</span>
+      </button>
+    `).join('');
+    watchImages(stories);
+  }
+
+  const popular=document.getElementById('feedPopular');
+  if(popular){
+    const minis=posts.filter(p=>p.imgs&&p.imgs[0]).slice(0,5);
+    popular.innerHTML=minis.length ? minis.map(p=>`
+      <div class="feed-mini" onclick="${p.action}">
+        <img class="feed-mini-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','64px')} alt="">
+        <div>
+          <div class="feed-mini-name">${escapeHtml(p.title)}</div>
+          <div class="feed-mini-meta">${escapeHtml(p.kicker)}</div>
+        </div>
+      </div>
+    `).join('') : `<div class="feed-mini-meta">Add photos to show popular items.</div>`;
+    watchImages(popular);
+  }
+}
+
+function buildFeedPosts(db){
+  const posts=[];
+  const amulets=(db.amulets||[]).filter(x=>x && x.status!=='hidden').slice(0,8);
+  const accessories=(db.accessories||[]).filter(x=>x && x.status!=='hidden').slice(0,5);
+  const casing=(db.casingTypes||[]).filter(x=>x).slice(0,6);
+  const projects=(db.projects||[]).filter(x=>x).slice(0,5);
+  const reviews=(db.reviews||[]).filter(x=>x && (x.approved!==false)).slice(0,4);
+
+  amulets.forEach(item=>{
+    const price=item.hidePrice ? (db.settings.contactPmText||'PM for price') : `S$${Number(item.price||0).toLocaleString()}`;
+    posts.push({
+      type:'amulet', kicker:'Amulet collection', title:item.name||'Amulet',
+      text:[item.cat,item.temple,item.year,price].filter(Boolean).join(' · '),
+      imgs:item.imgs||[], action:`openProd('amulets',${JSON.stringify(item.id)})`,
+      cta:'View item'
+    });
+  });
+  casing.forEach(ty=>{
+    const styles=(ty.variants||[]).length;
+    posts.push({
+      type:'casing', kicker:'Casing service', title:ty.name||'Casing Service',
+      text:`${styles} style${styles===1?'':'s'} available${ty.priceText?` · ${ty.priceText}`:''}`,
+      imgs:[ty.bannerImg,...(ty.sampleImgs||[])].filter(Boolean),
+      action:`openFeedCasingType(${JSON.stringify(ty.id)})`, cta:'Browse styles'
+    });
+  });
+  accessories.forEach(item=>{
+    const price=item.hidePrice ? (db.settings.contactPmText||'PM for price') : `S$${Number(item.price||0).toLocaleString()}`;
+    posts.push({
+      type:'accessory', kicker:'Accessories', title:item.name||'Accessory',
+      text:[item.cat,price].filter(Boolean).join(' · '),
+      imgs:item.imgs||[], action:`openProd('accessories',${JSON.stringify(item.id)})`,
+      cta:'View accessory'
+    });
+  });
+  projects.forEach(p=>{
+    posts.push({
+      type:'project', kicker:'Project update', title:p.name||'Project',
+      text:truncateHtml(p.desc||'',180), imgs:p.imgs||[],
+      action:`openProject(${JSON.stringify(p.id)})`, cta:'View project'
+    });
+  });
+  reviews.forEach(rv=>{
+    const stars='★'.repeat(Math.max(0, Math.min(5, Number(rv.rating)||5)));
+    posts.push({
+      type:'review', kicker:'Customer review', title:rv.anonymous ? 'Customer review' : (rv.displayName || rv.name || 'Customer review'),
+      text:`${stars} ${truncateHtml(rv.text||'',180)}`, imgs:rv.imgs||[],
+      action:`goPage('reviews')`, cta:'Read reviews'
+    });
+  });
+  return posts.sort((a,b)=>feedTypeWeight(a.type)-feedTypeWeight(b.type));
+}
+
+function feedTypeWeight(type){
+  return ({amulet:1,casing:2,accessory:3,project:4,review:5})[type] || 9;
+}
+
+function renderFeedPost(p){
+  const imgs=(p.imgs||[]).filter(Boolean).slice(0,3);
+  const mediaClass=imgs.length===1?'one':imgs.length===2?'two':'three';
+  return `
+    <article class="feed-card">
+      <div class="feed-card-head">
+        <div class="feed-avatar"><img src="/favicon/apple-touch-icon.png" alt=""></div>
+        <div>
+          <div class="feed-post-name">Yingyingying Amulet</div>
+          <div class="feed-post-meta">${escapeHtml(p.kicker)} · Just now</div>
+        </div>
+        <div class="feed-card-menu">•••</div>
+      </div>
+      <div class="feed-card-body">
+        <h3 class="feed-post-title">${escapeHtml(p.title)}</h3>
+        ${p.text?`<p class="feed-post-text">${escapeHtml(p.text)}</p>`:''}
+      </div>
+      ${imgs.length?`
+        <div class="feed-media ${mediaClass}" onclick="${p.action}">
+          ${imgs.map((img,i)=>`<img loading="${i===0?'eager':'lazy'}" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 640px')} alt="">`).join('')}
+        </div>
+      `:''}
+      <div class="feed-actions">
+        <button class="feed-action" onclick="${p.action}">👍 Like</button>
+        <button class="feed-action" onclick="${p.action}">💬 ${escapeHtml(p.cta||'View')}</button>
+        <button class="feed-action" onclick="copyFeedLink('${escapeHtml(p.type)}')">↗ Share</button>
+      </div>
+    </article>
+  `;
+}
+
+function copyFeedLink(type){
+  const url=new URL(location.href);
+  url.hash='feed';
+  navigator.clipboard?.writeText(url.toString()).then(()=>{
+    showToast(type ? `Copied feed link` : 'Copied');
+  }).catch(()=>showToast('Copy this page link from the browser bar'));
+}
+
+async function openFeedCasingType(typeId){
+  await ensurePageData('casing');
+  await goPage('casing');
+  renderCasingTypes();
+  openCasingType(typeId);
 }
 
 // ── PROJECTS ──

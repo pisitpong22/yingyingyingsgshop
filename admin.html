@@ -2485,6 +2485,7 @@ function defaultSettings(){
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
     nav:[
       {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
+      {id:'feed',label:'Feed',visible:true,enabled:true,builtin:true},
       {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
       {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
@@ -2675,6 +2676,10 @@ function applyDbMigrations(d){
   }
   if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
+    if(!d.settings.nav.find(n=>n.id==='feed')){
+      const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
+      d.settings.nav.splice(homeIdx>=0?homeIdx+1:0,0,{id:'feed',label:'Feed',visible:true,enabled:true,builtin:true});
+    }
     if(!d.settings.nav.find(n=>n.id==='reviews')){
       const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
       const insertAt=aboutIdx>=0?aboutIdx+1:d.settings.nav.length;
