@@ -1767,6 +1767,282 @@
     .status-overlay span{padding:6px 18px;border-width:2px}
     .install-fab{bottom:16px;left:16px;padding:9px 14px;font-size:12px}
   }
+
+  /* ─── APP-LIKE STORE REDESIGN ────────────────────────────────────────────
+     A quieter social/feed feel: content cards, compact actions, and a
+     lightweight liquid-glass tab bar on mobile. */
+  body::before,
+  body::after{display:none}
+  body{
+    background:
+      linear-gradient(180deg,#0d0a06 0,#171107 240px,#fff6df 620px,#fff7e7 100%);
+  }
+  .topbar{
+    background:#0d0a06;
+    border-bottom:1px solid rgba(232,201,106,.18);
+  }
+  nav{
+    background:rgba(13,10,6,.78);
+    border-bottom:1px solid rgba(232,201,106,.18);
+    box-shadow:0 12px 30px rgba(0,0,0,.18);
+  }
+  .nav-inner{height:72px}
+  .nav-links{
+    background:rgba(255,248,226,.08);
+    border:1px solid rgba(232,201,106,.16);
+    border-radius:16px;
+    padding:5px;
+    gap:4px;
+  }
+  .nav-links a{
+    border-radius:12px;
+    padding:10px 16px;
+    font-weight:700;
+  }
+  .nav-links a.active{
+    background:linear-gradient(135deg,#e8c96a,#c9a84c);
+    color:#161006;
+    box-shadow:0 8px 22px rgba(201,168,76,.22);
+  }
+  .hero-wrap{
+    background:
+      linear-gradient(180deg,rgba(13,10,6,.94),rgba(19,13,5,.9)),
+      radial-gradient(circle at 24% 18%,rgba(232,201,106,.16),transparent 34%);
+  }
+  .hero{
+    min-height:76vh;
+    padding:44px 60px 70px;
+    grid-template-columns:minmax(0,1fr) minmax(340px,.78fr);
+  }
+  .hero-inner{
+    background:rgba(255,248,226,.07);
+    border:1px solid rgba(232,201,106,.18);
+    border-radius:28px;
+    padding:34px;
+    box-shadow:0 24px 70px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08);
+    backdrop-filter:blur(18px) saturate(145%);
+    -webkit-backdrop-filter:blur(18px) saturate(145%);
+  }
+  .eyebrow{
+    border-radius:999px;
+    margin-bottom:18px;
+    letter-spacing:2px;
+  }
+  .hero-title{
+    letter-spacing:0;
+    font-size:clamp(42px,5vw,68px);
+  }
+  .hero-desc{max-width:620px}
+  .hero-btns .btn-gold,
+  .hero-btns .btn-ol{
+    border-radius:16px;
+    min-height:48px;
+  }
+  .hero-stats{
+    background:rgba(0,0,0,.16);
+    border:1px solid rgba(232,201,106,.14);
+    border-radius:20px;
+    padding:14px 18px;
+  }
+  #homeSections{
+    max-width:1180px;
+    margin:-46px auto 0;
+    padding:0 22px 70px;
+    position:relative;
+    z-index:3;
+  }
+  #homeSections .home-section{
+    background:rgba(255,251,238,.86) !important;
+    border:1px solid rgba(201,168,76,.22);
+    border-radius:26px;
+    box-shadow:0 18px 55px rgba(97,65,14,.1);
+    padding:34px !important;
+    margin:0 0 22px;
+    overflow:hidden;
+  }
+  .featured-section,
+  .home-reviews-section{border-top:none;border-bottom:none}
+  .featured-head,
+  .home-reviews-head{text-align:left;margin-bottom:24px}
+  .featured-head .gline,
+  .home-reviews-head .gline{margin:12px 0}
+  .featured-head h2,
+  .home-reviews-head h2{font-size:28px}
+  .home-reviews-head p{margin:10px 0 0;max-width:720px}
+  .home-reviews-cta{text-align:left;margin-top:26px}
+  .trust-card,
+  .rev-card,
+  .card{
+    border-radius:22px;
+    box-shadow:0 12px 34px rgba(97,65,14,.08);
+  }
+  .mobile-tabbar{display:none}
+
+  @media(max-width:900px){
+    .hero{
+      min-height:auto;
+      padding:28px 22px 84px;
+      grid-template-columns:1fr;
+    }
+    .hero-inner{padding:28px;border-radius:24px}
+    #homeSections{margin:-44px auto 0;padding:0 16px 88px}
+    #homeSections .home-section{border-radius:22px;padding:24px !important}
+  }
+
+  @media(max-width:768px){
+    body{
+      padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));
+      background:linear-gradient(180deg,#090704 0,#151006 310px,#fff4dc 620px,#fff8e9 100%);
+    }
+    .topbar{display:none}
+    nav{
+      position:sticky;
+      top:0;
+      background:rgba(9,7,4,.58);
+      border-bottom:1px solid rgba(232,201,106,.12);
+    }
+    .nav-inner{
+      height:58px;
+      padding:0 14px;
+    }
+    .logo-icon{width:38px;height:38px}
+    .logo-text{font-size:16px}
+    .nav-links{display:none}
+    .menu-btn{display:none}
+    .hero-wrap{
+      border-bottom-left-radius:32px;
+      border-bottom-right-radius:32px;
+      overflow:hidden;
+    }
+    .hero{
+      min-height:auto;
+      padding:18px 14px 74px;
+      align-content:center;
+    }
+    .hero-3d{
+      display:none !important;
+    }
+    .hero-inner{
+      order:2;
+      padding:20px;
+      border-radius:26px;
+      text-align:left;
+      background:rgba(255,248,226,.11);
+    }
+    .hero.no-3d .hero-inner{
+      text-align:left;
+      padding:22px;
+    }
+    .eyebrow{
+      font-size:9.5px;
+      padding:6px 12px;
+      margin-bottom:14px;
+      max-width:100%;
+    }
+    .hero-title{
+      font-size:34px !important;
+      line-height:1.08 !important;
+    }
+    .hero-sub{text-align:left !important}
+    .hero-desc{
+      text-align:left !important;
+      margin-left:0;
+      margin-right:0;
+      max-width:none;
+      max-height:96px;
+      overflow:hidden;
+    }
+    .hero-btns{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .hero-btns .btn-gold,
+    .hero-btns .btn-ol{
+      width:100%;
+      padding:12px 10px;
+      font-size:12.5px;
+      justify-content:center;
+    }
+    .hero-stats{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      width:100%;
+      gap:0;
+      margin-top:18px;
+      padding:10px;
+      border-radius:20px;
+    }
+    .stat{padding:6px;text-align:center}
+    .stat-num{font-size:19px}
+    .stat-label{font-size:9.5px;letter-spacing:.8px}
+    #homeSections{
+      margin:-42px 0 0;
+      padding:0 12px 20px;
+    }
+    #homeSections .home-section{
+      border-radius:24px;
+      padding:20px !important;
+      margin-bottom:14px;
+    }
+    .featured-head h2,
+    .home-reviews-head h2{font-size:23px}
+    .home-services-section [style*="grid-template-columns"]{
+      grid-template-columns:1fr 1fr !important;
+      gap:12px !important;
+    }
+    .trust-card{padding:16px 14px;border-radius:20px}
+    .trust-icon{font-size:28px;margin-bottom:8px}
+    .trust-title{font-size:14px}
+    .trust-desc{font-size:12px;line-height:1.45}
+    .cf-wrap{bottom:calc(96px + env(safe-area-inset-bottom,0px));right:12px}
+    .install-fab{bottom:calc(96px + env(safe-area-inset-bottom,0px));left:12px}
+    .mobile-tabbar{
+      position:fixed;
+      left:10px;
+      right:10px;
+      bottom:calc(10px + env(safe-area-inset-bottom,0px));
+      z-index:300;
+      display:flex;
+      gap:6px;
+      padding:8px;
+      border-radius:28px;
+      background:rgba(255,248,226,.66);
+      border:1px solid rgba(255,255,255,.46);
+      box-shadow:0 18px 48px rgba(37,24,6,.26), inset 0 1px 0 rgba(255,255,255,.65);
+      backdrop-filter:blur(22px) saturate(170%);
+      -webkit-backdrop-filter:blur(22px) saturate(170%);
+      overflow-x:auto;
+      scrollbar-width:none;
+    }
+    .mobile-tabbar::-webkit-scrollbar{display:none}
+    .mobile-tab{
+      appearance:none;
+      border:none;
+      background:transparent;
+      color:#6e5420;
+      min-width:64px;
+      flex:1 0 64px;
+      height:56px;
+      border-radius:22px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:2px;
+      font-family:inherit;
+      font-weight:800;
+      font-size:10.5px;
+      cursor:pointer;
+      transition:background .2s, color .2s, transform .2s;
+    }
+    .mobile-tab-icon{font-size:20px;line-height:1}
+    .mobile-tab.active{
+      background:linear-gradient(135deg,rgba(232,201,106,.95),rgba(201,168,76,.92));
+      color:#140d04;
+      box-shadow:0 10px 24px rgba(139,105,20,.22);
+    }
+  }
 </style>
 </head>
 <body>
@@ -1795,6 +2071,7 @@
 </nav>
 
 <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMenu()"></div>
+<div class="mobile-tabbar" id="mobileTabbar" aria-label="Mobile navigation"></div>
 
 <!-- HOME -->
 <div id="page-home" class="page active">
@@ -2522,6 +2799,17 @@ function applySettings(){
   // NAV (built-in + custom pages)
   const visibleNav=(s.nav||[]).filter(n=>n.visible !== false && n.enabled !== false);
   document.getElementById('navLinks').innerHTML=visibleNav.map(n=>`<li><a id="nav-${n.id}" onclick="goPage('${n.id}')">${n.label}</a></li>`).join('');
+  const tabbar=document.getElementById('mobileTabbar');
+  if(tabbar){
+    tabbar.innerHTML=visibleNav.map(n=>`
+      <button type="button" class="mobile-tab" id="mtab-${n.id}" onclick="goPage('${n.id}')" aria-label="${escapeHtml(n.label)}">
+        <span class="mobile-tab-icon">${navIcon(n.id)}</span>
+        <span>${escapeHtml(shortNavLabel(n.label))}</span>
+      </button>
+    `).join('');
+  }
+  const activePage=document.querySelector('.page.active');
+  setActiveNav(activePage ? activePage.id.replace(/^page-/,'') : 'home');
 
   // CUSTOM PAGES — render their containers
   renderCustomPages();
@@ -2679,6 +2967,31 @@ function animN(id,target){const el=document.getElementById(id);if(!el)return;let
 
 const PAGE_IDS = new Set(['home','amulets','accessories','casing','projects','reviews','payment','about']);
 
+function navIcon(id){
+  return ({
+    home:'⌂',
+    amulets:'◉',
+    accessories:'✦',
+    casing:'🪬',
+    projects:'◎',
+    reviews:'★',
+    payment:'▣',
+    about:'i'
+  })[id] || '•';
+}
+
+function shortNavLabel(label){
+  const s=String(label || '').replace(/^[^\wก-๙]+/,'').trim();
+  if(s.length <= 10) return s;
+  return s.split(/\s+/)[0].slice(0,10);
+}
+
+function setActiveNav(name){
+  document.querySelectorAll('.nav-links a,.mobile-tab').forEach(a=>a.classList.remove('active'));
+  const n=document.getElementById('nav-'+name);if(n)n.classList.add('active');
+  const mt=document.getElementById('mtab-'+name);if(mt)mt.classList.add('active');
+}
+
 function pageFromUrl(){
   const params = new URLSearchParams(location.search);
   const qPage = params.get('page');
@@ -2721,9 +3034,8 @@ async function goPage(name, opts={}){
   if(navItem && !navItem.enabled)return;
   if(name!=='casing') await ensurePageData(name);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
-  const n=document.getElementById('nav-'+name);if(n)n.classList.add('active');
+  setActiveNav(name);
   window.scrollTo(0,0);
   // close mobile menu
   document.getElementById('navLinks').classList.remove('open');
