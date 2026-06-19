@@ -2467,7 +2467,7 @@ function refreshDynamic(){
   }
   else if(active.id==='panel-content-services'){renderSvcList(getDB().settings.homeServices.cards||[]);}
   else if(active.id==='panel-content-trust'){renderTrustList(getDB().settings.trustCards||[]);}
-  else if(active.id==='panel-content-contact'){renderContactList(getDB().settings.contacts||[]);}
+  else if(active.id==='panel-content-contact'){loadContact();}
   else if(active.id==='panel-content-payment'){loadPayment();}
   else if(active.id==='panel-content-featured'){loadFeatured();}
   else if(active.id==='panel-reviews'){loadReviewsPanel();}
@@ -2862,6 +2862,9 @@ function showPanel(name, el){
   if(name==='navigation'){
     loadNav(); loadSections();
   }
+  if(name==='checkout'){
+    loadPayment(); loadContact();
+  }
   if(name==='team'){
     if(!hasPerm('manageAdmins')){
       showToast(lang==='th' ? 'คุณไม่มีสิทธิ์ในส่วนนี้' : 'You do not have access to this section');
@@ -2894,6 +2897,12 @@ function showTab(panelName, tabKey){
   // shown so newly-added custom pages appear in the editor immediately.
   if(panelName === 'navigation' && tabKey === 'headers'){
     loadSections();
+  }
+  if(panelName === 'checkout' && tabKey === 'payment'){
+    loadPayment();
+  }
+  if(panelName === 'checkout' && tabKey === 'contact'){
+    loadContact();
   }
 }
 
@@ -3983,7 +3992,12 @@ function captureContacts(){
   });
   return arr;
 }
-function addContactBtn(){const cur=captureContacts();cur.push({label:'📞 New',color:'#888888',url:'',message:'Contact us'});renderContactList(cur);}
+function addContactBtn(){
+  const list=document.getElementById('contactList');
+  const cur=list && list.querySelector('[data-c-label]') ? captureContacts() : [...(getDB().settings.contacts||[])];
+  cur.push({label:'📞 New',color:'#888888',url:'',message:'Contact us'});
+  renderContactList(cur);
+}
 function rmContact(i){const cur=captureContacts();cur.splice(i,1);renderContactList(cur);}
 async function saveContact(){
   const db=getDB();
