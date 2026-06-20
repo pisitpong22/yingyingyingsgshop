@@ -5415,6 +5415,7 @@ function watchImage(img){
       }, {once:true});
       img.addEventListener('error', () => {
         img.classList.remove('is-loading');
+        removeBrokenFeedImage(img);
       }, {once:true});
     }
     return;
@@ -5430,6 +5431,7 @@ function watchImage(img){
   });
   img.addEventListener('error', () => {
     img.classList.remove('is-loading');
+    removeBrokenFeedImage(img);
   });
   if(_imgObserver && img.src){
     // Move src → data-src so the network request waits for the observer
@@ -5454,6 +5456,32 @@ function watchImage(img){
 function watchImages(root=document){
   const scope = root && root.querySelectorAll ? root : document;
   scope.querySelectorAll('img').forEach(watchImage);
+}
+
+function removeBrokenFeedImage(img){
+  if(!img || img.dataset._brokenRemoved) return;
+  img.dataset._brokenRemoved = '1';
+
+  const media = img.closest('.social-post-media,.feed-media');
+  if(media){
+    img.remove();
+    const left = media.querySelectorAll('img').length;
+    if(!left){
+      media.remove();
+      return;
+    }
+    media.classList.remove('one','two','three');
+    media.classList.add(left === 1 ? 'one' : left === 2 ? 'two' : 'three');
+    return;
+  }
+
+  const smallCard = img.closest('.feed-mini,.feed-story,.social-preview-grid > div');
+  if(smallCard){
+    smallCard.remove();
+    return;
+  }
+
+  img.remove();
 }
 
 function setupImageFadeIn(){
