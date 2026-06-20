@@ -108,7 +108,7 @@ let _isReady = false;
 
 const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
-const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews'];
+const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews', 'feedPosts'];
 // Keep every large collection chunked. A single casing type can grow past
 // Firestore's 1 MiB document limit when it contains many style/photo URLs.
 const DB_ITEM_KEYS = new Set([]);
@@ -152,6 +152,7 @@ function keysForStorePage(page){
     case 'casing': return ['settings', 'casingTypes'];
     case 'projects': return ['settings', 'projects'];
     case 'reviews': return ['settings', 'reviews'];
+    case 'feed': return ['settings', 'feedPosts', 'casingTypes'];
     case 'home': return ['settings'];
     default: return ['settings'];
   }

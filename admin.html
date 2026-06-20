@@ -1242,10 +1242,11 @@
       <div class="side-div"></div>
 
       <!-- ─── HOMEPAGE — single panel with tabs for everything that
-                 shows on the home page (hero, services, layout, trust,
+      shows on the home page (hero, services, layout, trust,
                  featured products) ─── -->
       <div class="sidebar-label" data-en="Homepage" data-th="หน้าแรก">Homepage</div>
       <div class="side-item" onclick="showPanel('home',this)" data-en="🏠 Homepage Editor" data-th="🏠 แก้ไขหน้าแรก">🏠 Homepage Editor</div>
+      <div class="side-item" onclick="showPanel('home',this);showTab('home','feed')" data-en="📰 Feed Posts" data-th="📰 โพสต์ Feed">📰 Feed Posts</div>
 
       <div class="side-div"></div>
 
@@ -1541,6 +1542,27 @@
           <button class="btn-add" onclick="addSvcCard()" data-en="➕ Add Service Card" data-th="➕ เพิ่มการ์ดบริการ">➕ Add Service Card</button>
         </div>
         <div class="save-bar"><button class="btn-gold" onclick="saveServices()" data-en="💾 Save Service Cards" data-th="💾 บันทึก">💾 Save Service Cards</button></div>
+      </div>
+
+      <!-- FEED POSTS -->
+      <div class="tab-content" data-tab-content="feed" data-parent="home">
+        <h3 class="subsection-title" data-en="📰 Feed Posts" data-th="📰 โพสต์ Feed">📰 Feed Posts</h3>
+        <div class="subsection-sub"
+             data-en="Add pinned announcements or any shop update to the Facebook-style Feed page. Casing style updates are generated automatically from real casing photos."
+             data-th="เพิ่มประกาศหรืออัปเดตร้านในหน้า Feed สไตล์ Facebook ส่วนอัปเดตกรอบจะสร้างจากรูปกรอบจริงอัตโนมัติ">
+          Add pinned announcements or any shop update to the Feed page.
+        </div>
+        <div class="form-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div>
+              <div class="form-section-title" data-en="✍️ Manual Feed Posts" data-th="✍️ โพสต์ที่ลงเอง">✍️ Manual Feed Posts</div>
+              <div class="form-section-desc" data-en="Newest/pinned posts show above automatic casing updates." data-th="โพสต์ใหม่/ปักหมุดจะแสดงเหนืออัปเดตกรอบอัตโนมัติ">Newest/pinned posts show above automatic casing updates.</div>
+            </div>
+            <button class="btn-add" onclick="addFeedPost()" data-en="➕ Add Feed Post" data-th="➕ เพิ่มโพสต์ Feed">➕ Add Feed Post</button>
+          </div>
+          <div id="feedPostList"></div>
+        </div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveFeedPosts()" data-en="💾 Save Feed Posts" data-th="💾 บันทึก Feed">💾 Save Feed Posts</button></div>
       </div>
 
       <!-- SECTIONS -->
@@ -2695,6 +2717,7 @@ function applyDbMigrations(d){
     if(d[k])d[k].forEach(it=>{if(!it.status)it.status='available';if(it.hidePrice===undefined)it.hidePrice=false;if(!it.featured)it.featured=false;});
   });
   if(!d.reviews)d.reviews=[];
+  if(!d.feedPosts)d.feedPosts=[];
   if(!d.amulets)d.amulets=[];
   if(!d.accessories)d.accessories=[];
   if(!d.projects)d.projects=[];
@@ -2740,6 +2763,7 @@ function rewriteImageUrls(d){
   (d.accessories || []).forEach(it => { it.imgs = arrRw(it.imgs); });
   (d.projects    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
   (d.reviews     || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.feedPosts   || []).forEach(it => { it.imgs = arrRw(it.imgs); });
 
   (d.casingTypes || []).forEach(ty => {
     ty.bannerImg = rwImg(ty.bannerImg);
@@ -2756,7 +2780,7 @@ function rewriteImageUrls(d){
 function getDB(){
   let d = FB.getDB();
   if(!d || !Object.keys(d).length){
-    return {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[]};
+    return {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[],feedPosts:[]};
   }
   return applyDbMigrations(d);
 }
@@ -2859,7 +2883,7 @@ function showPanel(name, el){
   if(name==='reviews')loadReviewsPanel();
   // Composite panels — load all their sub-screens once when entered
   if(name==='home'){
-    loadHero(); loadHomeLayout(); loadServices(); loadTrust(); loadFeatured();
+    loadHero(); loadHomeLayout(); loadServices(); loadTrust(); loadFeatured(); loadFeedPosts();
   }
   if(name==='store'){
     loadBranding();
@@ -2908,6 +2932,9 @@ function showTab(panelName, tabKey){
   }
   if(panelName === 'checkout' && tabKey === 'contact'){
     loadContact();
+  }
+  if(panelName === 'home' && tabKey === 'feed'){
+    loadFeedPosts();
   }
 }
 
@@ -3708,6 +3735,122 @@ async function saveServices(){
   db.settings.homeServices.title=document.getElementById('svc_title').value;
   db.settings.homeServices.cards=captureSvc();
   await persistDB(db,tr('serviceSaved'));
+}
+
+// FEED POSTS
+function loadFeedPosts(){
+  renderFeedPostList(getDB().feedPosts || []);
+}
+
+function feedPostTargetOptions(selected){
+  const nav=(getDB().settings.nav||[]).filter(n=>n && n.visible !== false && n.enabled !== false);
+  return [`<option value="" ${!selected?'selected':''}>No button link</option>`]
+    .concat(nav.map(n=>`<option value="${escapeAttr(n.id)}" ${String(selected||'')===String(n.id)?'selected':''}>${escapeHtml(n.label||n.id)}</option>`))
+    .join('');
+}
+
+function renderFeedPostList(posts){
+  const list=document.getElementById('feedPostList');
+  if(!list) return;
+  const arr=Array.isArray(posts) ? posts : [];
+  if(!arr.length){
+    list.innerHTML=`<div class="empty-state" style="padding:24px" data-en="No manual Feed posts yet. Automatic casing updates will still show from real casing photos." data-th="ยังไม่มีโพสต์ Feed ที่ลงเอง แต่อัปเดตกรอบจะยังแสดงจากรูปกรอบจริงอัตโนมัติ">${lang==='th'?'ยังไม่มีโพสต์ Feed ที่ลงเอง แต่อัปเดตกรอบจะยังแสดงจากรูปกรอบจริงอัตโนมัติ':'No manual Feed posts yet. Automatic casing updates will still show from real casing photos.'}</div>`;
+    return;
+  }
+  list.innerHTML=arr.map((p,i)=>{
+    const key=`feed_post_imgs_${i}`;
+    return `
+      <div class="rep-row" style="align-items:flex-start">
+        <div class="rep-fields">
+          <input type="hidden" data-fp-id="${i}" value="${escapeAttr(p.id || '')}">
+          <input type="hidden" data-fp-created="${i}" value="${escapeAttr(p.createdAt || '')}">
+          <div class="fg"><label class="fl" data-en="Title" data-th="หัวข้อ">Title</label><input class="fi" data-fp-title="${i}" value="${escapeAttr(p.title || '')}" placeholder="New casing update"></div>
+          <div class="fg"><label class="fl" data-en="Button Text" data-th="ข้อความปุ่ม">Button Text</label><input class="fi" data-fp-btn="${i}" value="${escapeAttr(p.buttonLabel || 'View')}" placeholder="View"></div>
+          <div class="fg"><label class="fl" data-en="Button Link" data-th="ลิงก์ปุ่ม">Button Link</label><select class="fi" data-fp-target="${i}">${feedPostTargetOptions(p.buttonTarget)}</select></div>
+          <div class="fg" style="display:flex;align-items:end;gap:14px;flex-wrap:wrap">
+            <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" data-fp-enabled="${i}" ${p.enabled!==false?'checked':''} style="width:auto"> <span data-en="Show" data-th="แสดง">Show</span></label>
+            <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0"><input type="checkbox" data-fp-pinned="${i}" ${p.pinned?'checked':''} style="width:auto"> <span data-en="Pinned" data-th="ปักหมุด">Pinned</span></label>
+          </div>
+          <div class="fg full"><label class="fl" data-en="Post Text" data-th="ข้อความโพสต์">Post Text</label><textarea class="fta" data-fp-text="${i}" style="min-height:110px">${escapeHtml(p.text || '')}</textarea></div>
+          <div class="fg full">
+            <label class="fl" data-en="Images" data-th="รูปภาพ">Images</label>
+            <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'${key}')">
+              <input type="file" multiple accept="image/*" onchange="handleImgs(event,'${key}')">
+              <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag images" data-th="คลิกหรือลากรูป">Click or drag images</div>
+            </div>
+            <div class="prev-grid" id="${key}_p"></div>
+          </div>
+        </div>
+        <div style="display:grid;gap:8px">
+          <button class="btn-edit" onclick="moveFeedPost(${i},-1)" title="Move up">▲</button>
+          <button class="btn-edit" onclick="moveFeedPost(${i},1)" title="Move down">▼</button>
+          <button class="rep-rm" onclick="rmFeedPost(${i})">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  arr.forEach((p,i)=>{
+    const key=`feed_post_imgs_${i}`;
+    tempImgs[key]=[...(p.imgs||[])];
+    renderPrev(key);
+  });
+  applyLang();
+}
+
+function captureFeedPosts(){
+  const arr=[];
+  document.querySelectorAll('[data-fp-title]').forEach(el=>{
+    const i=el.dataset.fpTitle;
+    arr.push({
+      id:Number(document.querySelector(`[data-fp-id="${i}"]`)?.value)||Date.now()+Number(i||0),
+      createdAt:Number(document.querySelector(`[data-fp-created="${i}"]`)?.value)||Date.now(),
+      title:el.value.trim(),
+      text:document.querySelector(`[data-fp-text="${i}"]`)?.value || '',
+      buttonLabel:document.querySelector(`[data-fp-btn="${i}"]`)?.value.trim() || 'View',
+      buttonTarget:document.querySelector(`[data-fp-target="${i}"]`)?.value || '',
+      enabled:!!document.querySelector(`[data-fp-enabled="${i}"]`)?.checked,
+      pinned:!!document.querySelector(`[data-fp-pinned="${i}"]`)?.checked,
+      imgs:captureImgs(`feed_post_imgs_${i}`),
+    });
+  });
+  return arr;
+}
+
+function addFeedPost(){
+  const cur=captureFeedPosts();
+  cur.unshift({
+    id:Date.now(),
+    createdAt:Date.now(),
+    title:'New update',
+    text:'',
+    buttonLabel:'View',
+    buttonTarget:'feed',
+    enabled:true,
+    pinned:false,
+    imgs:[],
+  });
+  renderFeedPostList(cur);
+}
+
+function rmFeedPost(i){
+  const cur=captureFeedPosts();
+  cur.splice(i,1);
+  renderFeedPostList(cur);
+}
+
+function moveFeedPost(i,dir){
+  const cur=captureFeedPosts();
+  const j=i+dir;
+  if(j<0 || j>=cur.length) return;
+  [cur[i],cur[j]]=[cur[j],cur[i]];
+  renderFeedPostList(cur);
+}
+
+async function saveFeedPosts(){
+  if(!ensureUploadsDone()) return;
+  const db=getDB();
+  db.feedPosts=captureFeedPosts();
+  await persistDB(db, lang==='th' ? '✅ บันทึก Feed แล้ว' : '✅ Feed posts saved');
 }
 
 // SECTIONS
@@ -5426,6 +5569,7 @@ function buildCompositePanels(){
       {tab:'hero',     en:'⭐ Hero',         th:'⭐ ส่วน Hero'},
       {tab:'layout',   en:'🏠 Layout',       th:'🏠 จัดเลย์เอาท์'},
       {tab:'services', en:'🎯 Services',     th:'🎯 บริการ'},
+      {tab:'feed',     en:'📰 Feed Posts',   th:'📰 โพสต์ Feed'},
       {tab:'featured', en:'✨ Featured',     th:'✨ แนะนำ'},
       {tab:'trust',    en:'🏆 Trust',        th:'🏆 น่าเชื่อถือ'},
     ],
@@ -5621,7 +5765,7 @@ async function bootAdmin(){
       document.getElementById('adminUser').textContent = '👤 ' + (user.email || 'admin');
       // If the DB doc doesn't exist yet (first run), create it with defaults
       if(!FB.getDB() || !Object.keys(FB.getDB()).length){
-        const seed = {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[]};
+        const seed = {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[],feedPosts:[]};
         try { await FB.saveDB(seed); console.log('[admin] seeded empty DB with defaults'); }
         catch(e){ console.error('[admin] failed to seed DB:', e); }
       }

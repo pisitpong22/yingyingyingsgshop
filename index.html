@@ -1948,6 +1948,17 @@
   .feed-story img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9}
   .feed-story::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.72))}
   .feed-story-label{position:absolute;left:10px;right:10px;bottom:10px;color:#fff;font-weight:900;font-size:12px;z-index:1;line-height:1.2}
+  .feed-story-nav{
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(145deg,#261901 0%,#7b6424 100%);
+  }
+  .feed-story-nav.alt{background:linear-gradient(145deg,#263431 0%,#75807a 100%)}
+  .feed-story-nav.red{background:linear-gradient(145deg,#421019 0%,#8d4150 100%)}
+  .feed-story-icon{
+    width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,246,207,.78);font-size:26px;color:#171006;position:relative;z-index:1;
+    box-shadow:0 0 0 12px rgba(217,185,78,.35);
+  }
   .feed-card{overflow:hidden}
   .feed-card-head{display:flex;align-items:center;gap:10px;padding:14px 14px 8px}
   .feed-card-menu{margin-left:auto;color:#8b743d;font-weight:900}
@@ -1985,6 +1996,12 @@
   .feed-mini-name{font-weight:800;font-size:13px;color:var(--text);line-height:1.25}
   .feed-mini-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
   .feed-empty{padding:40px 18px;text-align:center;color:var(--text-muted)}
+  .feed-load-more{
+    border:1px solid rgba(201,168,76,.36);background:rgba(255,251,239,.92);border-radius:18px;
+    padding:14px 18px;color:#73551b;font:inherit;font-weight:900;cursor:pointer;
+    box-shadow:0 10px 30px rgba(91,62,13,.08);
+  }
+  .feed-load-more:hover{background:#fff7df}
 
   @media(max-width:900px){
     .hero{
@@ -2692,6 +2709,7 @@ function applyDbMigrations(d){
     if(d[k])d[k].forEach(it=>{if(!it.status)it.status='available';if(it.hidePrice===undefined)it.hidePrice=false;if(!it.featured)it.featured=false;});
   });
   if(!d.reviews)d.reviews=[];
+  if(!d.feedPosts)d.feedPosts=[];
   if(!d.amulets)d.amulets=[];
   if(!d.accessories)d.accessories=[];
   if(!d.projects)d.projects=[];
@@ -2743,6 +2761,7 @@ function rewriteImageUrls(d){
   (d.accessories|| []).forEach(it => { it.imgs = arrRw(it.imgs); });
   (d.projects   || []).forEach(it => { it.imgs = arrRw(it.imgs); });
   (d.reviews    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.feedPosts  || []).forEach(it => { it.imgs = arrRw(it.imgs); });
 
   // Casing types — banner image + nested variants
   (d.casingTypes || []).forEach(ty => {
@@ -2764,6 +2783,7 @@ function seedDB(){
     casingTypes:[],
     projects:[],
     reviews:[],
+    feedPosts:[],
   };
 }
 
@@ -3185,7 +3205,7 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['amulets','accessories','casingTypes','projects','reviews'];
+    case 'feed': return ['feedPosts','casingTypes'];
     case 'home': return [];
     default: return [];
   }
@@ -3225,7 +3245,7 @@ async function goPage(name, opts={}){
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
-  if(name==='feed')renderFeed();
+  if(name==='feed'){_feedVisible=10;renderFeed();}
   if(opts.updateUrl !== false) updatePageUrl(name);
   if(name==='home'){
     applySettings();
@@ -4047,6 +4067,8 @@ function _lbKeyHandler(e){
 }
 
 // ── FEED PAGE ──
+let _feedVisible = 10;
+
 function renderFeed(){
   const db=getDB();
   const s=db.settings||{};
@@ -4057,41 +4079,32 @@ function renderFeed(){
 
   const nav=document.getElementById('feedNavList');
   if(nav){
-    nav.innerHTML=[
-      ['home','⌂','Home'],
-      ['amulets','◉','Amulets'],
-      ['casing','🪬','Casing Service'],
-      ['projects','◎','Projects'],
-      ['reviews','★','Reviews'],
-    ].map(([id,icon,label])=>`
-      <button class="feed-nav-pill" onclick="goPage('${id}')"><span>${icon}</span><span>${label}</span></button>
+    const visibleNav=feedVisibleNav(s);
+    nav.innerHTML=visibleNav.map(n=>`
+      <button class="feed-nav-pill" onclick="goPage('${escapeHtml(n.id)}')"><span>${navIcon(n.id)}</span><span>${escapeHtml(n.label)}</span></button>
     `).join('');
   }
 
   const posts=buildFeedPosts(db);
   const list=document.getElementById('feedList');
   if(list){
-    list.innerHTML=posts.length
-      ? posts.map(renderFeedPost).join('')
+    const shown=posts.slice(0,_feedVisible);
+    list.innerHTML=shown.length
+      ? shown.map(renderFeedPost).join('') + (posts.length>shown.length ? `<button class="feed-load-more" onclick="loadMoreFeed()">${lang==='th'?'โหลดอัปเดตเพิ่ม':'Load more updates'}</button>` : '')
       : `<div class="feed-card feed-empty">No feed posts yet. Add amulets, casing styles, projects, or reviews in admin.</div>`;
     watchImages(list);
   }
 
   const stories=document.getElementById('feedStories');
   if(stories){
-    const storyItems=posts.filter(p=>p.imgs&&p.imgs.length).slice(0,8);
-    stories.innerHTML=storyItems.map(p=>`
-      <button type="button" class="feed-story" onclick="${p.action}">
-        <img loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','120px')} alt="">
-        <span class="feed-story-label">${escapeHtml(p.title)}</span>
-      </button>
-    `).join('');
+    const storyItems=buildFeedStories(db, posts);
+    stories.innerHTML=storyItems.map(renderFeedStory).join('');
     watchImages(stories);
   }
 
   const popular=document.getElementById('feedPopular');
   if(popular){
-    const minis=posts.filter(p=>p.imgs&&p.imgs[0]).slice(0,5);
+    const minis=posts.filter(p=>p.type==='casing' && p.imgs&&p.imgs[0]).slice(0,5);
     popular.innerHTML=minis.length ? minis.map(p=>`
       <div class="feed-mini" onclick="${p.action}">
         <img class="feed-mini-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','64px')} alt="">
@@ -4105,61 +4118,100 @@ function renderFeed(){
   }
 }
 
-function buildFeedPosts(db){
-  const posts=[];
-  const amulets=(db.amulets||[]).filter(x=>x && x.status!=='hidden').slice(0,8);
-  const accessories=(db.accessories||[]).filter(x=>x && x.status!=='hidden').slice(0,5);
-  const casing=(db.casingTypes||[]).filter(x=>x).slice(0,6);
-  const projects=(db.projects||[]).filter(x=>x).slice(0,5);
-  const reviews=(db.reviews||[]).filter(x=>x && (x.approved!==false)).slice(0,4);
-
-  amulets.forEach(item=>{
-    const price=item.hidePrice ? (db.settings.contactPmText||'PM for price') : `S$${Number(item.price||0).toLocaleString()}`;
-    posts.push({
-      type:'amulet', kicker:'Amulet collection', title:item.name||'Amulet',
-      text:[item.cat,item.temple,item.year,price].filter(Boolean).join(' · '),
-      imgs:item.imgs||[], action:`openProd('amulets',${JSON.stringify(item.id)})`,
-      cta:'View item'
-    });
-  });
-  casing.forEach(ty=>{
-    const styles=(ty.variants||[]).length;
-    posts.push({
-      type:'casing', kicker:'Casing service', title:ty.name||'Casing Service',
-      text:`${styles} style${styles===1?'':'s'} available${ty.priceText?` · ${ty.priceText}`:''}`,
-      imgs:[ty.bannerImg,...(ty.sampleImgs||[])].filter(Boolean),
-      action:`openFeedCasingType(${JSON.stringify(ty.id)})`, cta:'Browse styles'
-    });
-  });
-  accessories.forEach(item=>{
-    const price=item.hidePrice ? (db.settings.contactPmText||'PM for price') : `S$${Number(item.price||0).toLocaleString()}`;
-    posts.push({
-      type:'accessory', kicker:'Accessories', title:item.name||'Accessory',
-      text:[item.cat,price].filter(Boolean).join(' · '),
-      imgs:item.imgs||[], action:`openProd('accessories',${JSON.stringify(item.id)})`,
-      cta:'View accessory'
-    });
-  });
-  projects.forEach(p=>{
-    posts.push({
-      type:'project', kicker:'Project update', title:p.name||'Project',
-      text:truncateHtml(p.desc||'',180), imgs:p.imgs||[],
-      action:`openProject(${JSON.stringify(p.id)})`, cta:'View project'
-    });
-  });
-  reviews.forEach(rv=>{
-    const stars='★'.repeat(Math.max(0, Math.min(5, Number(rv.rating)||5)));
-    posts.push({
-      type:'review', kicker:'Customer review', title:rv.anonymous ? 'Customer review' : (rv.displayName || rv.name || 'Customer review'),
-      text:`${stars} ${truncateHtml(rv.text||'',180)}`, imgs:rv.imgs||[],
-      action:`goPage('reviews')`, cta:'Read reviews'
-    });
-  });
-  return posts.sort((a,b)=>feedTypeWeight(a.type)-feedTypeWeight(b.type));
+function loadMoreFeed(){
+  _feedVisible += 10;
+  renderFeed();
 }
 
-function feedTypeWeight(type){
-  return ({amulet:1,casing:2,accessory:3,project:4,review:5})[type] || 9;
+function feedVisibleNav(settings){
+  return (settings.nav||[])
+    .filter(n=>n && n.visible !== false && n.enabled !== false)
+    .slice(0,10);
+}
+
+function buildFeedStories(db, posts){
+  const navStories=feedVisibleNav(db.settings||{})
+    .filter(n=>n.id !== 'feed')
+    .slice(0,8)
+    .map((n,i)=>({
+      type:'nav',
+      label:n.label,
+      icon:navIcon(n.id),
+      tone:i%3===1?'alt':i%3===2?'red':'',
+      action:`goPage('${String(n.id).replace(/'/g,"\\'")}')`
+    }));
+  if(navStories.length) return navStories;
+  return posts.filter(p=>p.imgs&&p.imgs.length).slice(0,8);
+}
+
+function renderFeedStory(st){
+  if(st.type === 'nav'){
+    return `
+      <button type="button" class="feed-story feed-story-nav ${st.tone||''}" onclick="${st.action}">
+        <span class="feed-story-icon">${st.icon}</span>
+        <span class="feed-story-label">${escapeHtml(st.label)}</span>
+      </button>
+    `;
+  }
+  return `
+    <button type="button" class="feed-story" onclick="${st.action}">
+      <img loading="lazy" decoding="async" ${imgAttrs(st.imgs[0],'thumb','120px')} alt="">
+      <span class="feed-story-label">${escapeHtml(st.title)}</span>
+    </button>
+  `;
+}
+
+function buildFeedPosts(db){
+  const manual=(db.feedPosts||[])
+    .filter(p=>p && p.enabled !== false)
+    .map((p,i)=>({
+      type:'manual',
+      kicker:p.pinned ? 'Pinned update' : 'Shop update',
+      title:p.title || 'Shop update',
+      text:p.text || '',
+      imgs:p.imgs || [],
+      action:feedPostAction(p),
+      cta:p.buttonLabel || 'View',
+      pinned:!!p.pinned,
+      ts:Number(p.createdAt || 0) || 0,
+      score:1000 - i
+    }));
+  const casing=buildCasingUpdatePosts(db);
+  return [...manual,...casing].sort((a,b)=>{
+    if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    if((b.ts||0) !== (a.ts||0)) return (b.ts||0) - (a.ts||0);
+    return (b.score||0) - (a.score||0);
+  });
+}
+
+function buildCasingUpdatePosts(db){
+  const posts=[];
+  (db.casingTypes||[]).forEach(ty=>{
+    const typeName=ty.name || 'Casing Service';
+    const variants=(ty.variants||[]).filter(v=>v);
+    variants.forEach(v=>{
+      const imgs=(v.imgs||[]).filter(Boolean);
+      if(!imgs.length) return;
+      const price=v.price!=='' && v.price!==undefined && v.price!==null ? `S$${Number(v.price).toLocaleString()}` : '';
+      posts.push({
+        type:'casing',
+        kicker:'Live casing update',
+        title:[typeName, v.name || 'Style'].filter(Boolean).join(' · '),
+        text:[`${imgs.length} real sample photo${imgs.length===1?'':'s'} available now`, price].filter(Boolean).join(' · '),
+        imgs,
+        action:`openFeedCasingType(${JSON.stringify(ty.id)},${JSON.stringify(v.id)})`,
+        cta:'See this style',
+        score:imgs.length
+      });
+    });
+  });
+  return posts.sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,28);
+}
+
+function feedPostAction(p){
+  const target=String(p.buttonTarget || '').trim();
+  if(target && /^[a-z0-9_-]+$/i.test(target)) return `goPage('${target}')`;
+  return `copyFeedLink('feed')`;
 }
 
 function renderFeedPost(p){
@@ -4181,7 +4233,7 @@ function renderFeedPost(p){
       </div>
       ${imgs.length?`
         <div class="feed-media ${mediaClass}" onclick="${p.action}">
-          ${imgs.map((img,i)=>`<img loading="${i===0?'eager':'lazy'}" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 640px')} alt="">`).join('')}
+          ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 640px')} alt="">`).join('')}
         </div>
       `:''}
       <div class="feed-actions">
@@ -4201,11 +4253,14 @@ function copyFeedLink(type){
   }).catch(()=>showToast('Copy this page link from the browser bar'));
 }
 
-async function openFeedCasingType(typeId){
+async function openFeedCasingType(typeId, variantId){
   await ensurePageData('casing');
   await goPage('casing');
   renderCasingTypes();
   openCasingType(typeId);
+  if(variantId!==undefined && variantId!==null){
+    setTimeout(()=>openVariant(typeId, variantId), 80);
+  }
 }
 
 // ── PROJECTS ──
