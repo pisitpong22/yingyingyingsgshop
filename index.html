@@ -1889,6 +1889,7 @@
 
   /* ─── LUXURY SOCIAL HOME ─────────────────────────────────────────────── */
   .legacy-home{display:none}
+  #page-feed{display:none !important}
   .social-home{
     min-height:100vh;
     background:
@@ -2008,6 +2009,7 @@
   .social-help-title{font-weight:950;color:#271908;margin-bottom:6px}
   .social-help-text{font-size:12px;color:#735d36;line-height:1.55;margin-bottom:12px}
   .social-main{display:grid;gap:12px;min-width:0}
+  .social-main-anchor{scroll-margin-top:90px}
   .social-composer{padding:12px}
   .social-composer-row{display:flex;gap:10px;align-items:center}
   .social-mini-avatar{
@@ -2547,7 +2549,7 @@
         </div>
       </aside>
 
-      <main class="social-main">
+      <main class="social-main social-main-anchor" id="homeFeed">
         <div class="social-composer">
           <div class="social-composer-row">
             <div class="social-mini-avatar" id="socialMiniAvatar">Y</div>
@@ -3423,7 +3425,7 @@ function applySettings(){
   }
 
   // NAV (built-in + custom pages)
-  const visibleNav=(s.nav||[]).filter(n=>n.visible !== false && n.enabled !== false);
+  const visibleNav=(s.nav||[]).filter(n=>n.visible !== false && n.enabled !== false && n.id !== 'feed');
   document.getElementById('navLinks').innerHTML=visibleNav.map(n=>`<li><a id="nav-${n.id}" onclick="goPage('${n.id}')">${n.label}</a></li>`).join('');
   const tabbar=document.getElementById('mobileTabbar');
   if(tabbar){
@@ -3818,7 +3820,8 @@ function pageFromUrl(){
 function updatePageUrl(name){
   const url = new URL(location.href);
   url.searchParams.delete('page');
-  url.hash = (!name || name === 'home') ? '' : encodeURIComponent(name);
+  const target = name === 'feed' ? 'home' : name;
+  url.hash = (!target || target === 'home') ? '' : encodeURIComponent(target);
   history.replaceState(null, '', url.pathname + url.search + url.hash);
 }
 
@@ -3842,29 +3845,15 @@ async function ensurePageData(name){
 }
 
 async function goPage(name, opts={}){
+  if(name === 'feed'){
+    await goPage('home', {updateUrl: opts.updateUrl});
+    const el=document.getElementById('homeFeed');
+    if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),80);
+    return;
+  }
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
-  if(name==='feed'){
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    const pg=document.getElementById('page-feed');
-    if(pg) pg.classList.add('active');
-    setActiveNav('feed');
-    window.scrollTo(0,0);
-    document.getElementById('navLinks').classList.remove('open');
-    document.getElementById('mobileOverlay').classList.remove('open');
-    _feedVisible=10;
-    renderFeedSkeleton();
-    if(opts.updateUrl !== false) updatePageUrl('feed');
-    ensurePageData('feed').then(()=>{
-      if(document.getElementById('page-feed')?.classList.contains('active')) renderFeed();
-    }).catch(err=>{
-      console.warn('[feed] load failed:', err);
-      const list=document.getElementById('feedList');
-      if(list) list.innerHTML=`<div class="feed-card feed-empty">${lang==='th'?'โหลด Feed ไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load Feed. Please refresh.'}</div>`;
-    });
-    return;
-  }
   if(name!=='casing') await ensurePageData(name);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
@@ -4866,7 +4855,7 @@ function loadMoreFeed(){
 
 function feedVisibleNav(settings){
   return (settings.nav||[])
-    .filter(n=>n && n.visible !== false && n.enabled !== false)
+    .filter(n=>n && n.visible !== false && n.enabled !== false && n.id !== 'feed')
     .slice(0,10);
 }
 
