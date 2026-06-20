@@ -1892,17 +1892,16 @@
     min-height:100vh;
     background:
       linear-gradient(180deg,#fff8e8 0%,#f2ead8 48%,#fff8e8 100%);
-    padding:22px 16px 90px;
+    padding:18px 20px 90px;
   }
   .feed-shell{
-    max-width:1080px;
+    max-width:1240px;
     margin:0 auto;
     display:grid;
-    grid-template-columns:1fr;
-    gap:20px;
+    grid-template-columns:220px minmax(0,680px) 240px;
+    gap:18px;
     align-items:start;
   }
-  .feed-sidebar,.feed-right{display:none}
   .feed-sidebar,
   .feed-card,
   .feed-composer,
@@ -1915,7 +1914,7 @@
   .feed-sidebar{
     position:sticky;
     top:92px;
-    padding:14px;
+    padding:12px;
   }
   .feed-profile{
     display:flex;
@@ -1940,33 +1939,33 @@
     display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;text-align:left;
   }
   .feed-nav-pill:hover{background:rgba(201,168,76,.12)}
-  .feed-main{display:grid;gap:20px;min-width:0}
-  .feed-top-card{padding:16px 18px}
-  .feed-search-row{display:grid;grid-template-columns:minmax(0,1fr) 74px 74px;gap:16px;align-items:center;margin-bottom:10px}
+  .feed-main{display:grid;gap:12px;min-width:0}
+  .feed-top-card{padding:12px}
+  .feed-search-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px;gap:8px;align-items:center;margin-bottom:10px}
   .feed-search-pill{
-    min-height:70px;border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.72);
-    display:flex;align-items:center;gap:14px;padding:0 28px;color:#a1a0a0;font-size:27px;font-weight:900;
+    min-height:44px;border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.72);
+    display:flex;align-items:center;gap:10px;padding:0 16px;color:#a1a0a0;font-size:14px;font-weight:900;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
   }
-  .feed-search-pill span:first-child{font-size:18px;color:#b58d29}
+  .feed-search-pill span:first-child{font-size:13px;color:#b58d29}
   .feed-round-btn{
-    width:74px;height:74px;border-radius:50%;border:1px solid rgba(120,94,48,.14);background:rgba(255,255,255,.72);
-    display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#201609;
+    width:44px;height:44px;border-radius:50%;border:1px solid rgba(120,94,48,.14);background:rgba(255,255,255,.72);
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#201609;
     box-shadow:0 8px 22px rgba(91,62,13,.08);
     cursor:pointer;
   }
-  .feed-composer{padding:26px}
+  .feed-composer{padding:12px}
   .feed-composer-row{display:flex;align-items:center;gap:10px}
   .feed-composer-fake{
     flex:1;border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.62);color:#7a6040;
-    padding:22px 26px;text-align:left;font:inherit;font-size:24px;font-weight:900;cursor:pointer;
+    padding:12px 16px;text-align:left;font:inherit;font-size:14px;font-weight:900;cursor:pointer;
   }
   .feed-story-strip{
-    display:flex;gap:18px;overflow-x:auto;padding:6px 0 14px;scrollbar-width:none;
+    display:flex;gap:10px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;
   }
   .feed-story-strip::-webkit-scrollbar{display:none}
   .feed-story{
-    flex:0 0 178px;height:220px;border-radius:24px;overflow:hidden;position:relative;
+    flex:0 0 104px;height:132px;border-radius:16px;overflow:hidden;position:relative;
     border:1px solid rgba(201,168,76,.22);background:#181005;cursor:pointer;
     box-shadow:0 10px 24px rgba(77,48,5,.14);
   }
@@ -1980,19 +1979,18 @@
   .feed-story-nav.alt{background:linear-gradient(145deg,#263431 0%,#75807a 100%)}
   .feed-story-nav.red{background:linear-gradient(145deg,#421019 0%,#8d4150 100%)}
   .feed-story-icon{
-    width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    background:rgba(255,246,207,.78);font-size:26px;color:#171006;position:relative;z-index:1;
-    box-shadow:0 0 0 12px rgba(217,185,78,.35);
+    width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,246,207,.78);font-size:20px;color:#171006;position:relative;z-index:1;
+    box-shadow:0 0 0 9px rgba(217,185,78,.35);
   }
-  .feed-card{overflow:hidden;border-radius:28px}
-  .feed-card-head{display:flex;align-items:center;gap:14px;padding:26px 28px 10px}
+  .feed-card{overflow:hidden;border-radius:18px}
+  .feed-card-head{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
   .feed-card-menu{margin-left:auto;color:#8b743d;font-weight:900}
   .feed-post-name{font-weight:900;color:var(--text)}
   .feed-post-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
-  .feed-card-body{padding:0 14px 12px}
-  .feed-card-body{padding:0 28px 20px}
-  .feed-post-title{font-family:'Inter',sans-serif;font-size:28px;font-weight:950;color:var(--text);margin:10px 0 8px;line-height:1.18}
-  .feed-post-text{font-size:20px;font-weight:800;color:#57442a;line-height:1.55;margin:0 0 14px}
+  .feed-card-body{padding:0 16px 12px}
+  .feed-post-title{font-family:'Inter',sans-serif;font-size:20px;font-weight:950;color:var(--text);margin:8px 0 6px;line-height:1.18}
+  .feed-post-text{font-size:15px;font-weight:800;color:#57442a;line-height:1.5;margin:0 0 10px}
   .feed-media{
     background:#120d05;display:grid;gap:2px;overflow:hidden;
     border-top:1px solid rgba(201,168,76,.14);
@@ -2002,15 +2000,15 @@
   .feed-media.two{grid-template-columns:1fr 1fr}
   .feed-media.three{grid-template-columns:1.2fr .8fr}
   .feed-media.three img:first-child{grid-row:span 2}
-  .feed-media img{width:100%;height:100%;min-height:430px;object-fit:cover;display:block}
-  .feed-media.two img,.feed-media.three img{min-height:310px}
+  .feed-media img{width:100%;height:100%;min-height:320px;object-fit:cover;display:block}
+  .feed-media.two img,.feed-media.three img{min-height:230px}
   .feed-actions{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:16px 22px 20px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 12px 10px;
     border-top:1px solid rgba(201,168,76,.14);
   }
   .feed-action{
     border:none;background:transparent;border-radius:10px;padding:10px 8px;cursor:pointer;
-    color:#765b27;font:inherit;font-size:22px;font-weight:900;
+    color:#765b27;font:inherit;font-size:13px;font-weight:900;
   }
   .feed-action:hover{background:rgba(201,168,76,.12)}
   .feed-right-card{padding:14px}
@@ -2028,6 +2026,26 @@
     box-shadow:0 10px 30px rgba(91,62,13,.08);
   }
   .feed-load-more:hover{background:#fff7df}
+  .feed-skeleton-card{
+    min-height:180px;
+    padding:16px;
+  }
+  .feed-skel-line,
+  .feed-skel-avatar,
+  .feed-skel-media,
+  .feed-skel-story{
+    background:linear-gradient(90deg,rgba(120,94,48,.08),rgba(255,255,255,.64),rgba(120,94,48,.08));
+    background-size:220% 100%;
+    animation:feedShimmer 1.25s ease-in-out infinite;
+  }
+  .feed-skel-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .feed-skel-avatar{width:44px;height:44px;border-radius:50%;flex-shrink:0}
+  .feed-skel-line{height:12px;border-radius:999px;margin:8px 0}
+  .feed-skel-line.short{width:42%}
+  .feed-skel-line.mid{width:68%}
+  .feed-skel-media{height:260px;border-radius:14px;margin-top:16px}
+  .feed-skel-story{flex:0 0 104px;height:132px;border-radius:16px}
+  @keyframes feedShimmer{to{background-position:-220% 0}}
 
   /* ─── CONTACT PAGE ───────────────────────────────────────────────────── */
   .contact-page{
@@ -2396,6 +2414,14 @@
         <div class="feed-sidebar feed-right-card">
           <div class="feed-right-title">Popular now</div>
           <div class="feed-mini-list" id="feedPopular"></div>
+        </div>
+        <div class="feed-sidebar feed-right-card" style="margin-top:12px">
+          <div class="feed-right-title">Quick preview</div>
+          <div class="feed-mini-list" id="feedQuickPreview"></div>
+        </div>
+        <div class="feed-sidebar feed-right-card" style="margin-top:12px">
+          <div class="feed-right-title">Trust</div>
+          <div class="feed-mini-list" id="feedTrust"></div>
         </div>
       </aside>
     </div>
@@ -3375,6 +3401,26 @@ async function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
+  if(name==='feed'){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const pg=document.getElementById('page-feed');
+    if(pg) pg.classList.add('active');
+    setActiveNav('feed');
+    window.scrollTo(0,0);
+    document.getElementById('navLinks').classList.remove('open');
+    document.getElementById('mobileOverlay').classList.remove('open');
+    _feedVisible=10;
+    renderFeedSkeleton();
+    if(opts.updateUrl !== false) updatePageUrl('feed');
+    ensurePageData('feed').then(()=>{
+      if(document.getElementById('page-feed')?.classList.contains('active')) renderFeed();
+    }).catch(err=>{
+      console.warn('[feed] load failed:', err);
+      const list=document.getElementById('feedList');
+      if(list) list.innerHTML=`<div class="feed-card feed-empty">${lang==='th'?'โหลด Feed ไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load Feed. Please refresh.'}</div>`;
+    });
+    return;
+  }
   if(name!=='casing') await ensurePageData(name);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
@@ -3400,7 +3446,6 @@ async function goPage(name, opts={}){
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
   if(name==='contact')renderContactPage();
-  if(name==='feed'){_feedVisible=10;renderFeed();}
   if(opts.updateUrl !== false) updatePageUrl(name);
   if(name==='home'){
     applySettings();
@@ -4242,6 +4287,59 @@ function _lbKeyHandler(e){
 // ── FEED PAGE ──
 let _feedVisible = 10;
 
+function renderFeedSkeleton(){
+  const stories=document.getElementById('feedStories');
+  if(stories){
+    stories.innerHTML=Array.from({length:5},()=>`<div class="feed-skel-story"></div>`).join('');
+  }
+  const list=document.getElementById('feedList');
+  if(list){
+    list.innerHTML=Array.from({length:3},()=>`
+      <article class="feed-card feed-skeleton-card" aria-label="Loading feed">
+        <div class="feed-skel-head">
+          <div class="feed-skel-avatar"></div>
+          <div style="flex:1">
+            <div class="feed-skel-line short"></div>
+            <div class="feed-skel-line mid"></div>
+          </div>
+        </div>
+        <div class="feed-skel-line mid"></div>
+        <div class="feed-skel-line"></div>
+        <div class="feed-skel-media"></div>
+      </article>
+    `).join('');
+  }
+  const popular=document.getElementById('feedPopular');
+  if(popular){
+    popular.innerHTML=Array.from({length:4},()=>`
+      <div class="feed-mini">
+        <div class="feed-mini-img feed-skel-avatar"></div>
+        <div style="flex:1">
+          <div class="feed-skel-line mid"></div>
+          <div class="feed-skel-line short"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+  const quick=document.getElementById('feedQuickPreview');
+  if(quick){
+    quick.innerHTML=Array.from({length:2},()=>`
+      <div class="feed-mini" style="display:block">
+        <div class="feed-skel-media" style="height:86px;border-radius:12px;margin-bottom:8px"></div>
+        <div class="feed-skel-line mid"></div>
+      </div>
+    `).join('');
+  }
+  const trust=document.getElementById('feedTrust');
+  if(trust){
+    trust.innerHTML=Array.from({length:3},()=>`
+      <div class="feed-mini">
+        <div class="feed-skel-line mid" style="flex:1"></div>
+      </div>
+    `).join('');
+  }
+}
+
 function renderFeed(){
   const db=getDB();
   const s=db.settings||{};
@@ -4288,6 +4386,32 @@ function renderFeed(){
       </div>
     `).join('') : `<div class="feed-mini-meta">Add photos to show popular items.</div>`;
     watchImages(popular);
+  }
+
+  const quick=document.getElementById('feedQuickPreview');
+  if(quick){
+    const quickItems=posts.filter(p=>p.imgs&&p.imgs[0]).slice(0,2);
+    quick.innerHTML=quickItems.length ? quickItems.map(p=>`
+      <div class="feed-mini" onclick="${p.action}" style="display:block">
+        <img class="feed-mini-img" style="width:100%;height:86px;border-radius:12px;margin-bottom:8px" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','220px')} alt="">
+        <div class="feed-mini-name">${escapeHtml(p.title)}</div>
+      </div>
+    `).join('') : `<div class="feed-mini-meta">Add photos to show previews.</div>`;
+    watchImages(quick);
+  }
+
+  const trust=document.getElementById('feedTrust');
+  if(trust){
+    trust.innerHTML=[
+      ['Certified','Genuine'],
+      ['Shipping','Worldwide'],
+      ['Contact','Facebook']
+    ].map(([a,b])=>`
+      <div class="feed-mini" style="justify-content:space-between;cursor:default">
+        <div class="feed-mini-name">${a}</div>
+        <div class="feed-mini-meta" style="font-weight:900;color:#9a741c">${b}</div>
+      </div>
+    `).join('');
   }
 }
 
