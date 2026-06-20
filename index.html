@@ -1927,6 +1927,7 @@
     display:grid;grid-template-columns:minmax(0,.92fr) minmax(340px,.75fr);gap:34px;align-items:center;
   }
   .social-brand-block{display:flex;align-items:end;gap:18px;min-width:0}
+  .social-brand-block .social-avatar{display:none}
   .social-avatar{
     width:108px;height:108px;border-radius:28px;overflow:hidden;flex-shrink:0;
     background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));
@@ -1968,16 +1969,9 @@
     filter:blur(24px);
     z-index:-1;
   }
-  .social-visual .social-actions{
-    position:absolute;
-    left:50%;
-    bottom:18px;
-    transform:translateX(-50%);
-    justify-content:center;
-    width:max-content;
-    max-width:100%;
-  }
+  .social-visual .social-actions{display:none}
   .social-tabs{
+    display:none;
     position:relative;z-index:3;max-width:1180px;margin:28px auto 0;
     display:flex;gap:8px;overflow:auto;padding:8px;border-radius:22px;
     background:rgba(255,248,226,.16);border:1px solid rgba(255,248,226,.2);
@@ -3083,7 +3077,7 @@ function applyDbMigrations(d){
     const knownIds = def.homeOrder.map(s => s.id);
     d.settings.homeOrder = d.settings.homeOrder.filter(x => x && knownIds.includes(x.id));
   }
-  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);c.label=stripContactIcon(c.label);});}
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);if(c.showFloat===undefined)c.showFloat=true;c.label=stripContactIcon(c.label);});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
     if(!d.settings.nav.find(n=>n.id==='feed')){
       const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
@@ -3489,7 +3483,7 @@ function applySettings(){
       <div class="trust-desc">${t.desc}</div>
     </div>`).join('');
 
-  document.getElementById('contactFloat').innerHTML=(s.contacts||[]).map(c=>`
+  document.getElementById('contactFloat').innerHTML=(s.contacts||[]).filter(c=>c && c.showFloat !== false).map(c=>`
     <button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${contactDisplay(c)}</button>
   `).join('');
   renderContactPage();

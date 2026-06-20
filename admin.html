@@ -2699,7 +2699,7 @@ function applyDbMigrations(d){
     if(d.settings.reviews.homeCount===undefined)d.settings.reviews.homeCount=3;
     if(d.settings.reviews.homeMode===undefined)d.settings.reviews.homeMode='top';
   }
-  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);c.label=stripContactIcon(c.label);});}
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);if(c.showFloat===undefined)c.showFloat=true;c.label=stripContactIcon(c.label);});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
     if(!d.settings.nav.find(n=>n.id==='feed')){
       const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
@@ -4212,6 +4212,12 @@ function renderContactList(arr){
         <div class="fg"><label class="fl">${tr('color')}</label><input type="color" class="color-input" data-c-color="${i}" value="${c.color||'#1877f2'}" style="width:100%;height:42px"></div>
         <div class="fg"><label class="fl">${tr('contactUrl')}</label><input class="fi" data-c-url="${i}" value="${c.url||''}" placeholder="https://facebook.com/...">
           <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${tr('contactUrlHint')}</div></div>
+        <div class="fg" style="display:flex;align-items:end;padding-bottom:8px">
+          <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0">
+            <input type="checkbox" data-c-float="${i}" ${c.showFloat!==false?'checked':''} style="width:auto">
+            <span>${lang==='th'?'แสดงเป็นปุ่มลอย':'Show floating'}</span>
+          </label>
+        </div>
         <div class="fg" style="grid-column:span 2"><label class="fl">${tr('clickMessage')}</label><input class="fi" data-c-msg="${i}" value="${c.message||''}"></div>
       </div>
       <button class="rep-rm" onclick="rmContact(${i})">✕</button>
@@ -4226,6 +4232,7 @@ function captureContacts(){
       label:el.value,
       color:document.querySelector(`[data-c-color="${i}"]`).value,
       url:document.querySelector(`[data-c-url="${i}"]`)?document.querySelector(`[data-c-url="${i}"]`).value:'',
+      showFloat:!!document.querySelector(`[data-c-float="${i}"]`)?.checked,
       message:document.querySelector(`[data-c-msg="${i}"]`).value
     });
   });
@@ -4234,7 +4241,7 @@ function captureContacts(){
 function addContactBtn(){
   const list=document.getElementById('contactList');
   const cur=list && list.querySelector('[data-c-label]') ? captureContacts() : [...(getDB().settings.contacts||[])];
-  cur.push({icon:'☎',label:'New',color:'#888888',url:'',message:'Contact us'});
+  cur.push({icon:'☎',label:'New',color:'#888888',url:'',message:'Contact us',showFloat:true});
   renderContactList(cur);
 }
 function rmContact(i){const cur=captureContacts();cur.splice(i,1);renderContactList(cur);}
