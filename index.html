@@ -1897,16 +1897,19 @@
   }
   .social-cover{
     position:relative;
-    min-height:360px;
-    padding:34px 22px 24px;
+    min-height:calc(100vh - 110px);
+    padding:70px 22px 96px;
     overflow:hidden;
     color:#fff8df;
     border-bottom:1px solid rgba(201,168,76,.22);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
   }
   .social-cover-bg{
     position:absolute;inset:0;
     background:
-      linear-gradient(90deg,rgba(6,4,1,.94),rgba(25,17,5,.62),rgba(6,4,1,.76)),
+      linear-gradient(90deg,rgba(6,4,1,.9),rgba(25,17,5,.46),rgba(6,4,1,.72)),
       radial-gradient(circle at 72% 42%,rgba(232,201,106,.25),transparent 36%);
     background-size:cover;
     background-position:center;
@@ -1914,13 +1917,14 @@
     transform:scale(1.02);
   }
   .social-cover::after{
-    content:'';position:absolute;inset:auto 0 0;height:160px;
-    background:linear-gradient(180deg,transparent,rgba(246,237,216,.96));
+    content:'';position:absolute;inset:auto 0 0;height:260px;
+    background:linear-gradient(180deg,transparent 0%,rgba(246,237,216,.42) 55%,rgba(246,237,216,.98) 100%);
   }
   .social-profile-card{
     position:relative;z-index:1;
     max-width:1180px;margin:0 auto;
-    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:end;
+    width:100%;
+    display:grid;grid-template-columns:minmax(0,.92fr) minmax(340px,.75fr);gap:34px;align-items:center;
   }
   .social-brand-block{display:flex;align-items:end;gap:18px;min-width:0}
   .social-avatar{
@@ -1941,8 +1945,40 @@
     backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   }
   .social-action.primary{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#150d02;border-color:transparent}
+  .social-visual{
+    position:relative;
+    min-height:520px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .social-3d{
+    width:min(46vw,560px);
+    height:min(68vh,650px);
+    max-height:none;
+    z-index:2;
+    filter:drop-shadow(0 28px 60px rgba(0,0,0,.38));
+  }
+  .social-3d::after{
+    content:'';
+    position:absolute;
+    left:18%;right:18%;bottom:10%;
+    height:22%;
+    background:radial-gradient(ellipse,rgba(232,201,106,.24),transparent 68%);
+    filter:blur(24px);
+    z-index:-1;
+  }
+  .social-visual .social-actions{
+    position:absolute;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    justify-content:center;
+    width:max-content;
+    max-width:100%;
+  }
   .social-tabs{
-    position:relative;z-index:1;max-width:1180px;margin:28px auto 0;
+    position:relative;z-index:3;max-width:1180px;margin:28px auto 0;
     display:flex;gap:8px;overflow:auto;padding:8px;border-radius:22px;
     background:rgba(255,248,226,.16);border:1px solid rgba(255,248,226,.2);
     backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
@@ -1955,7 +1991,7 @@
   }
   .social-tab.active,.social-tab:hover{background:rgba(232,201,106,.92);color:#160e03}
   .social-shell{
-    max-width:1180px;margin:-18px auto 0;padding:0 18px;
+    max-width:1180px;margin:-72px auto 0;padding:0 18px;
     display:grid;grid-template-columns:220px minmax(0,1fr) 250px;gap:16px;align-items:start;
     position:relative;z-index:2;
   }
@@ -2026,19 +2062,25 @@
   #page-home #homeSections{display:none}
 
   @media(max-width:1020px){
-    .social-shell{grid-template-columns:1fr;max-width:720px}
+    .social-cover{min-height:auto;padding:44px 18px 96px}
+    .social-shell{grid-template-columns:1fr;max-width:720px;margin:-56px auto 0}
     .social-left,.social-right{display:none}
     .social-profile-card{grid-template-columns:1fr}
     .social-actions{justify-content:flex-start}
+    .social-visual{min-height:360px;order:-1}
+    .social-3d{width:min(88vw,520px);height:360px}
+    .social-visual .social-actions{position:relative;left:auto;bottom:auto;transform:none;margin-top:-22px}
   }
 
   @media(max-width:768px){
     .social-home{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
-    .social-cover{min-height:310px;padding:24px 16px 20px}
+    .social-cover{min-height:auto;padding:24px 16px 78px}
     .social-brand-block{align-items:center;gap:14px}
     .social-avatar{width:76px;height:76px;border-radius:22px}
     .social-title{font-size:34px}
     .social-desc{font-size:13.5px;line-height:1.65}
+    .social-visual{min-height:300px;margin:-8px 0 6px}
+    .social-3d{height:300px;width:100%}
     .social-tabs{margin-top:20px;border-radius:20px}
     .social-tab{padding:9px 12px;font-size:12px}
     .social-shell{margin:-12px auto 0;padding:0 12px}
@@ -2491,7 +2533,12 @@
             <p class="social-desc" id="socialDesc">Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.</p>
           </div>
         </div>
-        <div class="social-actions" id="socialActions"></div>
+        <div class="social-visual">
+          <div class="hero-3d social-3d">
+            <canvas id="phra3d"></canvas>
+          </div>
+          <div class="social-actions" id="socialActions"></div>
+        </div>
       </div>
       <div class="social-tabs" id="socialTabs"></div>
     </section>
@@ -2547,7 +2594,7 @@
       <div class="hero-stats" id="heroStats"></div>
     </div>
     <div class="hero-3d">
-      <canvas id="phra3d"></canvas>
+      <canvas id="phra3dLegacy"></canvas>
     </div>
     <div class="scroll-cue">Scroll to explore</div>
   </section>
@@ -3327,10 +3374,12 @@ function applySettings(){
   const has3D = !!(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG));
   const hasHeroVisual = !!(heroImage || has3D);
   if(hero3dBlock){
+    const isSocial3d = hero3dBlock.classList.contains('social-3d');
+    const shouldUseStillImage = !!heroImage && !(isSocial3d && has3D);
     // Clean previous content (image element or canvas leftover)
     const existingImg = hero3dBlock.querySelector('.hero-still-img');
     const canvas = document.getElementById('phra3d');
-    if(heroImage){
+    if(shouldUseStillImage){
       // Still image mode — hide canvas, show image
       if(canvas) canvas.style.display = 'none';
       if(existingImg){
