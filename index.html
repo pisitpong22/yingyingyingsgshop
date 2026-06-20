@@ -1887,6 +1887,169 @@
   }
   .mobile-tabbar{display:none}
 
+  /* ─── LUXURY SOCIAL HOME ─────────────────────────────────────────────── */
+  .legacy-home{display:none}
+  .social-home{
+    min-height:100vh;
+    background:
+      linear-gradient(180deg,#100b04 0%,#211606 230px,#f6edd8 520px,#fff8e8 100%);
+    padding-bottom:96px;
+  }
+  .social-cover{
+    position:relative;
+    min-height:360px;
+    padding:34px 22px 24px;
+    overflow:hidden;
+    color:#fff8df;
+    border-bottom:1px solid rgba(201,168,76,.22);
+  }
+  .social-cover-bg{
+    position:absolute;inset:0;
+    background:
+      linear-gradient(90deg,rgba(6,4,1,.94),rgba(25,17,5,.62),rgba(6,4,1,.76)),
+      radial-gradient(circle at 72% 42%,rgba(232,201,106,.25),transparent 36%);
+    background-size:cover;
+    background-position:center;
+    filter:saturate(1.05);
+    transform:scale(1.02);
+  }
+  .social-cover::after{
+    content:'';position:absolute;inset:auto 0 0;height:160px;
+    background:linear-gradient(180deg,transparent,rgba(246,237,216,.96));
+  }
+  .social-profile-card{
+    position:relative;z-index:1;
+    max-width:1180px;margin:0 auto;
+    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:end;
+  }
+  .social-brand-block{display:flex;align-items:end;gap:18px;min-width:0}
+  .social-avatar{
+    width:108px;height:108px;border-radius:28px;overflow:hidden;flex-shrink:0;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));
+    border:1px solid rgba(255,242,184,.5);
+    box-shadow:0 22px 60px rgba(0,0,0,.28),0 0 0 8px rgba(255,248,226,.1);
+  }
+  .social-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+  .social-kicker{font-size:11px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--gold-light);margin-bottom:8px}
+  .social-title{font-family:var(--font-display);font-size:clamp(36px,5vw,70px);line-height:.98;color:#fff;margin:0;text-shadow:0 18px 50px rgba(0,0,0,.38)}
+  .social-desc{max-width:680px;color:#e3d29a;font-size:15px;line-height:1.7;margin-top:14px}
+  .social-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .social-action{
+    border:1px solid rgba(232,201,106,.34);border-radius:999px;
+    background:rgba(255,248,226,.12);color:#fff5d1;
+    padding:12px 18px;font:inherit;font-weight:900;cursor:pointer;
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  }
+  .social-action.primary{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#150d02;border-color:transparent}
+  .social-tabs{
+    position:relative;z-index:1;max-width:1180px;margin:28px auto 0;
+    display:flex;gap:8px;overflow:auto;padding:8px;border-radius:22px;
+    background:rgba(255,248,226,.16);border:1px solid rgba(255,248,226,.2);
+    backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+    scrollbar-width:none;
+  }
+  .social-tabs::-webkit-scrollbar{display:none}
+  .social-tab{
+    border:none;border-radius:16px;background:transparent;color:#f6e9bb;
+    padding:10px 15px;font:inherit;font-weight:900;cursor:pointer;white-space:nowrap;
+  }
+  .social-tab.active,.social-tab:hover{background:rgba(232,201,106,.92);color:#160e03}
+  .social-shell{
+    max-width:1180px;margin:-18px auto 0;padding:0 18px;
+    display:grid;grid-template-columns:220px minmax(0,1fr) 250px;gap:16px;align-items:start;
+    position:relative;z-index:2;
+  }
+  .social-panel,
+  .social-post,
+  .social-composer{
+    background:rgba(255,251,239,.94);
+    border:1px solid rgba(201,168,76,.22);
+    border-radius:22px;
+    box-shadow:0 18px 50px rgba(75,48,8,.09);
+  }
+  .social-panel{padding:14px;position:sticky;top:92px}
+  .social-menu{display:grid;gap:6px}
+  .social-menu button{
+    border:none;background:transparent;text-align:left;border-radius:14px;padding:11px 12px;
+    font:inherit;font-weight:900;color:#37240a;cursor:pointer;display:flex;gap:10px;align-items:center;
+  }
+  .social-menu button:hover,.social-menu button.active{background:rgba(201,168,76,.18)}
+  .social-help{margin-top:14px;padding:14px;border-radius:18px;background:#fff8df;border:1px solid rgba(201,168,76,.2)}
+  .social-help-title{font-weight:950;color:#271908;margin-bottom:6px}
+  .social-help-text{font-size:12px;color:#735d36;line-height:1.55;margin-bottom:12px}
+  .social-main{display:grid;gap:12px;min-width:0}
+  .social-composer{padding:12px}
+  .social-composer-row{display:flex;gap:10px;align-items:center}
+  .social-mini-avatar{
+    width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    display:flex;align-items:center;justify-content:center;font-weight:950;color:#170f03;overflow:hidden;flex-shrink:0;
+  }
+  .social-mini-avatar img{width:100%;height:100%;object-fit:cover}
+  .social-search{
+    flex:1;border:1px solid rgba(120,94,48,.16);border-radius:999px;background:rgba(255,255,255,.7);
+    padding:13px 18px;font:inherit;font-weight:900;color:#7a6040;text-align:left;cursor:pointer;
+  }
+  .social-shortcuts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .social-shortcut{
+    border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.72);
+    padding:10px 8px;font:inherit;font-weight:900;color:#5e481c;cursor:pointer;
+  }
+  .social-post{overflow:hidden}
+  .social-post-head{display:flex;align-items:center;gap:10px;padding:14px 16px 8px}
+  .social-post-name{font-weight:950;color:#211404}
+  .social-post-meta{font-size:12px;color:#806a42;margin-top:2px}
+  .social-post-body{padding:0 16px 12px}
+  .social-post-title{font-size:21px;font-weight:950;line-height:1.2;margin:8px 0;color:#241605}
+  .social-post-text{font-size:15px;font-weight:700;line-height:1.55;color:#604a2b}
+  .social-post-media{background:#130d04;display:grid;gap:2px;overflow:hidden}
+  .social-post-media.one{grid-template-columns:1fr}
+  .social-post-media.two{grid-template-columns:1fr 1fr}
+  .social-post-media.three{grid-template-columns:1.2fr .8fr}
+  .social-post-media.three img:first-child{grid-row:span 2}
+  .social-post-media img{width:100%;height:100%;min-height:330px;object-fit:cover;display:block}
+  .social-post-media.two img,.social-post-media.three img{min-height:225px}
+  .social-post-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 12px 10px;border-top:1px solid rgba(201,168,76,.14)}
+  .social-post-actions button{border:none;background:transparent;border-radius:12px;padding:10px 6px;font:inherit;font-weight:900;color:#765b27;cursor:pointer}
+  .social-post-actions button:hover{background:rgba(201,168,76,.12)}
+  .social-right{display:grid;gap:12px}
+  .social-widget-title{font-family:var(--font-display);font-size:20px;font-weight:800;color:#2b1a05;margin-bottom:10px}
+  .social-widget-list{display:grid;gap:9px}
+  .social-widget-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:900;color:#2e1d08}
+  .social-widget-row small{color:#92712a;font-weight:950}
+  .social-preview-img{width:100%;height:92px;border-radius:14px;object-fit:cover;background:#241805;margin-bottom:8px}
+  .social-skeleton{
+    background:linear-gradient(90deg,rgba(120,94,48,.08),rgba(255,255,255,.62),rgba(120,94,48,.08));
+    background-size:220% 100%;animation:feedShimmer 1.25s ease-in-out infinite;
+  }
+  .social-skel-line{height:12px;border-radius:999px;margin:8px 0}
+  .social-skel-media{height:280px;border-radius:0}
+  #page-home #homeSections{display:none}
+
+  @media(max-width:1020px){
+    .social-shell{grid-template-columns:1fr;max-width:720px}
+    .social-left,.social-right{display:none}
+    .social-profile-card{grid-template-columns:1fr}
+    .social-actions{justify-content:flex-start}
+  }
+
+  @media(max-width:768px){
+    .social-home{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+    .social-cover{min-height:310px;padding:24px 16px 20px}
+    .social-brand-block{align-items:center;gap:14px}
+    .social-avatar{width:76px;height:76px;border-radius:22px}
+    .social-title{font-size:34px}
+    .social-desc{font-size:13.5px;line-height:1.65}
+    .social-tabs{margin-top:20px;border-radius:20px}
+    .social-tab{padding:9px 12px;font-size:12px}
+    .social-shell{margin:-12px auto 0;padding:0 12px}
+    .social-composer,.social-post{border-radius:18px}
+    .social-shortcuts{grid-template-columns:repeat(2,1fr)}
+    .social-post-title{font-size:19px}
+    .social-post-media img{min-height:260px}
+    .social-post-media.two img,.social-post-media.three img{min-height:160px}
+    .social-post-actions button{font-size:12.5px}
+  }
+
   /* ─── FACEBOOK-LIKE FEED PAGE ─────────────────────────────────────────── */
   .feed-page{
     min-height:100vh;
@@ -2316,7 +2479,62 @@
 
 <!-- HOME -->
 <div id="page-home" class="page active">
-  <div class="hero-wrap">
+  <div class="social-home">
+    <section class="social-cover">
+      <div class="social-cover-bg" id="socialCoverBg"></div>
+      <div class="social-profile-card">
+        <div class="social-brand-block">
+          <div class="social-avatar"><img id="socialAvatarImg" src="/favicon/apple-touch-icon.png" alt=""></div>
+          <div>
+            <div class="social-kicker" id="socialKicker">Certified Genuine · Worldwide Shipping</div>
+            <h1 class="social-title" id="socialTitle">Yingyingying Amulet</h1>
+            <p class="social-desc" id="socialDesc">Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.</p>
+          </div>
+        </div>
+        <div class="social-actions" id="socialActions"></div>
+      </div>
+      <div class="social-tabs" id="socialTabs"></div>
+    </section>
+
+    <div class="social-shell">
+      <aside class="social-panel social-left">
+        <div class="social-menu" id="socialMenu"></div>
+        <div class="social-help">
+          <div class="social-help-title">Need help choosing?</div>
+          <div class="social-help-text">Message us from any page for casing, amulet, payment, or shipping questions.</div>
+          <button class="social-action primary" style="width:100%;padding:10px 12px" onclick="goPage('contact')">Contact</button>
+        </div>
+      </aside>
+
+      <main class="social-main">
+        <div class="social-composer">
+          <div class="social-composer-row">
+            <div class="social-mini-avatar" id="socialMiniAvatar">Y</div>
+            <button class="social-search" onclick="goPage('casing')">What are you looking for today?</button>
+          </div>
+          <div class="social-shortcuts" id="socialShortcuts"></div>
+        </div>
+        <div id="socialFeedList"></div>
+      </main>
+
+      <aside class="social-right">
+        <div class="social-panel">
+          <div class="social-widget-title">Popular Casing</div>
+          <div class="social-widget-list" id="socialPopular"></div>
+        </div>
+        <div class="social-panel">
+          <div class="social-widget-title">Quick Preview</div>
+          <div class="social-widget-list" id="socialPreview"></div>
+        </div>
+        <div class="social-panel">
+          <div class="social-widget-title">Trust</div>
+          <div class="social-widget-list" id="socialTrust"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="hero-wrap legacy-home">
   <section class="hero">
     <div class="hero-bg" id="heroBg"></div>
     <div class="hero-bg-overlay" id="heroBgOverlay" style="display:none"></div>
@@ -3226,6 +3444,8 @@ function applySettings(){
     <button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${contactDisplay(c)}</button>
   `).join('');
   renderContactPage();
+  renderSocialHomeBase();
+  if(document.getElementById('page-home')?.classList.contains('active')) scheduleSocialHomeFeedLoad();
 
   // ── FEATURED on home ──
   renderFeatured();
@@ -3253,6 +3473,187 @@ function applySettings(){
       animN('stat-'+i,target);
     });
   },100);
+}
+
+let _socialHomeFeedLoading=false;
+
+function renderSocialHomeBase(){
+  const db=getDB();
+  const s=db.settings||{};
+  const logo=imageUrl(s.logoIcon) || '/favicon/apple-touch-icon.png';
+  const cover=imageUrl(s.hero && s.hero.bgImage,'medium') || imageUrl(s.hero && s.hero.heroImage,'medium') || '';
+  const title=s.logoText || 'Yingyingying Amulet';
+  const desc=(s.hero && (s.hero.desc || s.hero.sub)) || 'Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.';
+
+  const coverEl=document.getElementById('socialCoverBg');
+  if(coverEl && cover){
+    coverEl.style.backgroundImage=`linear-gradient(90deg,rgba(6,4,1,.94),rgba(25,17,5,.62),rgba(6,4,1,.76)),url('${cover}')`;
+  }
+  const avatar=document.getElementById('socialAvatarImg');
+  if(avatar) avatar.src=logo;
+  const mini=document.getElementById('socialMiniAvatar');
+  if(mini) mini.innerHTML=`<img src="${escapeHtml(logo)}" alt="">`;
+  const titleEl=document.getElementById('socialTitle');
+  if(titleEl) titleEl.textContent=title;
+  const kicker=document.getElementById('socialKicker');
+  if(kicker) kicker.textContent=s.topbar || 'Certified Genuine · Worldwide Shipping';
+  const descEl=document.getElementById('socialDesc');
+  if(descEl) descEl.textContent=String(desc || '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+
+  const visible=feedVisibleNav(s);
+  const tabs=document.getElementById('socialTabs');
+  if(tabs){
+    tabs.innerHTML=visible.map(n=>`
+      <button class="social-tab ${n.id==='home'?'active':''}" onclick="socialNav('${escapeHtml(n.id)}')">${navIcon(n.id)} ${escapeHtml(n.label)}</button>
+    `).join('');
+  }
+  const menu=document.getElementById('socialMenu');
+  if(menu){
+    menu.innerHTML=visible.map(n=>`
+      <button class="${n.id==='home'?'active':''}" onclick="socialNav('${escapeHtml(n.id)}')"><span>${navIcon(n.id)}</span><span>${escapeHtml(n.label)}</span></button>
+    `).join('');
+  }
+  const shortcuts=document.getElementById('socialShortcuts');
+  if(shortcuts){
+    const preferred=['amulets','casing','accessories','reviews'];
+    const items=preferred.map(id=>visible.find(n=>n.id===id)).filter(Boolean);
+    shortcuts.innerHTML=items.map(n=>`
+      <button class="social-shortcut" onclick="goPage('${escapeHtml(n.id)}')">${navIcon(n.id)} ${escapeHtml(n.label)}</button>
+    `).join('');
+  }
+  const actions=document.getElementById('socialActions');
+  if(actions){
+    const contacts=(s.contacts||[]).slice(0,3);
+    actions.innerHTML=[
+      `<button class="social-action primary" onclick="goPage('casing')">🪬 Casing Service</button>`,
+      contacts[0] ? `<button class="social-action" onclick="onContactClick(${JSON.stringify(contacts[0].url||'').replace(/"/g,'&quot;')},${JSON.stringify(contacts[0].message||'').replace(/"/g,'&quot;')})">${escapeHtml(contactDisplay(contacts[0]))}</button>` : `<button class="social-action" onclick="goPage('contact')">Contact</button>`
+    ].join('');
+  }
+}
+
+function socialNav(id){
+  if(id === 'home'){
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  goPage(id);
+}
+
+function renderSocialHomeSkeleton(){
+  const list=document.getElementById('socialFeedList');
+  if(list){
+    list.innerHTML=Array.from({length:3},()=>`
+      <article class="social-post">
+        <div class="social-post-head">
+          <div class="social-mini-avatar social-skeleton"></div>
+          <div style="flex:1">
+            <div class="social-skeleton social-skel-line" style="width:36%"></div>
+            <div class="social-skeleton social-skel-line" style="width:55%"></div>
+          </div>
+        </div>
+        <div class="social-post-body">
+          <div class="social-skeleton social-skel-line" style="width:72%"></div>
+          <div class="social-skeleton social-skel-line" style="width:52%"></div>
+        </div>
+        <div class="social-skeleton social-skel-media"></div>
+      </article>
+    `).join('');
+  }
+  ['socialPopular','socialPreview','socialTrust'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=Array.from({length:id==='socialPreview'?2:3},()=>`<div class="social-skeleton social-skel-line"></div>`).join('');
+  });
+}
+
+function scheduleSocialHomeFeedLoad(){
+  if(_socialHomeFeedLoading) return;
+  renderSocialHomeSkeleton();
+  _socialHomeFeedLoading=true;
+  ensurePageData('feed').then(()=>{
+    renderSocialHomeFeed();
+  }).catch(err=>{
+    console.warn('[home feed] load failed:', err);
+    const list=document.getElementById('socialFeedList');
+    if(list) list.innerHTML=`<div class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'โหลด Feed ไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load the feed. Please refresh.'}</div>`;
+  }).finally(()=>{
+    _socialHomeFeedLoading=false;
+  });
+}
+
+function renderSocialHomeFeed(){
+  const db=getDB();
+  const posts=buildFeedPosts(db).slice(0,6);
+  const list=document.getElementById('socialFeedList');
+  if(list){
+    list.innerHTML=posts.length
+      ? posts.map(renderSocialPost).join('')
+      : `<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'ยังไม่มีอัปเดตใน Feed':'No feed updates yet.'}</article>`;
+    watchImages(list);
+  }
+  renderSocialWidgets(posts);
+}
+
+function renderSocialPost(p){
+  const imgs=feedImages(p.imgs).slice(0,3);
+  const mediaClass=imgs.length===1?'one':imgs.length===2?'two':'three';
+  const logo=imageUrl(getDB().settings.logoIcon) || '/favicon/apple-touch-icon.png';
+  return `
+    <article class="social-post">
+      <div class="social-post-head">
+        <div class="social-mini-avatar"><img src="${escapeHtml(logo)}" alt=""></div>
+        <div>
+          <div class="social-post-name">YingyingyingSG</div>
+          <div class="social-post-meta">${escapeHtml(p.kicker || 'Shop update')} · ${escapeHtml(feedTimeLabel(p.ts))}</div>
+        </div>
+      </div>
+      <div class="social-post-body">
+        <h3 class="social-post-title">${escapeHtml(p.title)}</h3>
+        ${p.text?`<p class="social-post-text">${escapeHtml(p.text)}</p>`:''}
+      </div>
+      ${imgs.length?`
+        <div class="social-post-media ${mediaClass}" onclick="${p.action}">
+          ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 680px')} alt="">`).join('')}
+        </div>
+      `:''}
+      <div class="social-post-actions">
+        <button onclick="${p.action}">👍 Like</button>
+        <button onclick="${p.action}">💬 ${escapeHtml(p.cta || 'Ask')}</button>
+        <button onclick="copyFeedLink('${escapeHtml(p.type)}')">↗ Share</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderSocialWidgets(posts){
+  const popular=document.getElementById('socialPopular');
+  if(popular){
+    const casing=posts.filter(p=>p.type==='casing').slice(0,5);
+    popular.innerHTML=casing.length ? casing.map(p=>`
+      <div class="social-widget-row" onclick="${p.action}" style="cursor:pointer">
+        <span>${escapeHtml((p.title||'').split(' · ').pop())}</span>
+        <small>${(p.imgs||[]).length} photos</small>
+      </div>
+    `).join('') : `<div class="social-widget-row"><span>Casing</span><small>Updating</small></div>`;
+  }
+  const preview=document.getElementById('socialPreview');
+  if(preview){
+    const imgs=posts.filter(p=>p.imgs&&p.imgs[0]).slice(0,2);
+    preview.innerHTML=imgs.length ? imgs.map(p=>`
+      <div onclick="${p.action}" style="cursor:pointer">
+        <img class="social-preview-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','250px')} alt="">
+        <div class="social-widget-row"><span>${escapeHtml((p.title||'Update').split(' · ').pop())}</span></div>
+      </div>
+    `).join('') : `<div class="social-widget-row"><span>Photos</span><small>Soon</small></div>`;
+    watchImages(preview);
+  }
+  const trust=document.getElementById('socialTrust');
+  if(trust){
+    trust.innerHTML=[
+      ['Certified','Genuine'],
+      ['Shipping','Worldwide'],
+      ['Contact','Fast reply']
+    ].map(([a,b])=>`<div class="social-widget-row"><span>${a}</span><small>${b}</small></div>`).join('');
+  }
 }
 
 function renderCustomPages(){
