@@ -1358,6 +1358,7 @@
   /* VARIANT GALLERY — masonry style, original aspect ratios, many at once */
   .variant-gallery{column-count:5;column-gap:10px}
   .variant-photo{
+    display:block;width:100%;padding:0;border:0;text-align:inherit;
     break-inside:avoid;margin-bottom:10px;
     border-radius:14px;overflow:hidden;
     background:#2d1e06;cursor:zoom-in;
@@ -1382,11 +1383,13 @@
   #lbNext{right:18px}
   #lbPrev:hover,#lbNext:hover{background:rgba(255,255,255,.22);transform:translateY(-50%) scale(1.05)}
   #lbCounter{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:white;padding:6px 16px;border-radius:25px;font-size:13px;font-weight:500;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15)}
+  #lbHint{position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.46);color:#fff4ce;padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.2px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);pointer-events:none;white-space:nowrap}
   @media(max-width:768px){
     #lbClose{top:12px;right:12px;width:38px;height:38px;font-size:18px}
-    #lbPrev,#lbNext{width:42px;height:42px;font-size:26px}
-    #lbPrev{left:8px}#lbNext{right:8px}
-    #lbCounter{bottom:14px;font-size:12px;padding:5px 13px}
+    #lbPrev,#lbNext{width:48px;height:48px;font-size:30px;background:rgba(255,255,255,.18)}
+    #lbPrev{left:10px}#lbNext{right:10px}
+    #lbCounter{bottom:14px;font-size:12px;padding:6px 13px}
+    #lbHint{top:auto;bottom:52px;font-size:11.5px}
   }
 
   .cf-wrap{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
@@ -1544,13 +1547,21 @@
 
     /* MODAL — full screen on mobile */
     .modal-overlay{padding:0;align-items:flex-end}
+    .modal-overlay.variant-open{
+      align-items:center;
+      justify-content:center;
+      padding:16px 12px;
+    }
     .modal{max-width:100%;max-height:96vh;border-radius:18px 18px 0 0;padding:22px 18px;animation:slideUpMobile .35s ease}
     .modal.variant-modal{
-      height:96vh;
+      width:min(100%,680px);
+      height:min(84vh,720px);
+      max-height:84vh;
       padding:0;
       display:flex;
       flex-direction:column;
       overflow:hidden;
+      border-radius:24px;
     }
     .modal.variant-modal .modal-head{
       position:sticky;
@@ -1568,8 +1579,12 @@
       overflow-y:auto;
       column-count:2;
       column-gap:10px;
-      padding:16px 14px 86px;
+      padding:12px 14px 18px;
       -webkit-overflow-scrolling:touch;
+    }
+    .modal.variant-modal .variant-photo{
+      border-radius:16px;
+      box-shadow:0 4px 14px rgba(0,0,0,.12);
     }
     .modal.variant-modal .modal-close{display:none}
     .modal-mobile-close{
@@ -1592,7 +1607,7 @@
       -webkit-backdrop-filter:blur(10px);
     }
     .modal-sticky-actions{
-      display:flex;
+      display:none;
       position:fixed;
       left:0;
       right:0;
@@ -2910,6 +2925,7 @@
 <div id="lightbox" onclick="closeLightbox(event)">
   <button id="lbClose" onclick="closeLightbox(event)" aria-label="Close">✕</button>
   <button id="lbPrev" onclick="lbPrev(event)" aria-label="Previous">‹</button>
+  <div id="lbHint"></div>
   <div id="lbImgWrap"><img loading="lazy" decoding="async" id="lbImg" src="" alt=""></div>
   <button id="lbNext" onclick="lbNext(event)" aria-label="Next">›</button>
   <div id="lbCounter"></div>
@@ -4686,16 +4702,12 @@ function openVariant(typeId,varId){
           <div class="modal-title" style="font-size:24px">${v.name}</div>
           ${v.price?`<div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--gold-dark)">S$${Number(v.price).toLocaleString()}</div>`:''}
         </div>
-        ${imgs.length?`<div style="font-size:12px;color:var(--text-muted);margin-top:6px">📷 ${imgs.length} sample${imgs.length>1?'s':''} · click any photo to view full size</div>`:''}
+        ${imgs.length?`<div style="font-size:12px;color:var(--text-muted);margin-top:6px">📷 ${imgs.length} sample${imgs.length>1?'s':''} · ${lang==='th'?'แตะรูปเพื่อดูภาพใหญ่ แล้วปัด/กดลูกศรเพื่อดูรูปต่อไป':'tap any photo to enlarge, then swipe or use arrows'}</div>`:''}
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="variant-gallery">
-      ${imgs.length?imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></div>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
-    </div>
-    <div class="modal-sticky-actions">
-      <button type="button" onclick="closeModal()">${lang==='th'?'กลับไปเลือกแบบ':'Back to styles'}</button>
-      <button type="button" class="primary" onclick="openContactForCasingStyle(${JSON.stringify(ty.name || '')},${JSON.stringify(v.name || '')},${JSON.stringify(v.price || '')})">${lang==='th'?'สอบถามแบบนี้':'Ask about this style'}</button>
+      ${imgs.length?imgs.map((img,i)=>`<button type="button" class="variant-photo" onclick="openLightbox(${i})" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></button>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
     </div>`;
   preloadImages(imgs.map(img=>imageUrl(img,'thumb')), 8);
   openModal('variant');
@@ -4722,6 +4734,11 @@ function showLightboxImage(){
   const single = imgs.length <= 1;
   document.getElementById('lbPrev').style.display = single ? 'none' : 'flex';
   document.getElementById('lbNext').style.display = single ? 'none' : 'flex';
+  const hint=document.getElementById('lbHint');
+  if(hint){
+    hint.style.display = single ? 'none' : 'block';
+    hint.textContent = lang === 'th' ? 'ปัดซ้าย/ขวา หรือกดลูกศรเพื่อดูรูปต่อไป' : 'Swipe left/right or tap arrows for more photos';
+  }
 }
 function lbNext(e){
   if(e) e.stopPropagation();
@@ -4745,6 +4762,18 @@ function _lbKeyHandler(e){
   else if(e.key === 'ArrowRight') lbNext();
   else if(e.key === 'ArrowLeft') lbPrev();
 }
+let _lbTouchX = null;
+document.getElementById('lightbox')?.addEventListener('touchstart', e => {
+  _lbTouchX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null;
+}, {passive:true});
+document.getElementById('lightbox')?.addEventListener('touchend', e => {
+  if(_lbTouchX === null) return;
+  const endX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : _lbTouchX;
+  const diff = endX - _lbTouchX;
+  _lbTouchX = null;
+  if(Math.abs(diff) < 42) return;
+  diff < 0 ? lbNext(e) : lbPrev(e);
+}, {passive:true});
 
 // ── FEED PAGE ──
 let _feedVisible = 10;
@@ -5183,6 +5212,7 @@ function openModal(kind){
   if(content){
     content.classList.toggle('variant-modal', kind === 'variant');
   }
+  modal.classList.toggle('variant-open', kind === 'variant');
   modal.classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -5190,6 +5220,7 @@ function closeModal(e){
   const modal=document.getElementById('modal');
   if(!e||e.target===modal){
     modal.classList.remove('open');
+    modal.classList.remove('variant-open');
     const content=document.getElementById('modalContent');
     if(content) content.classList.remove('variant-modal');
     document.body.style.overflow='';
