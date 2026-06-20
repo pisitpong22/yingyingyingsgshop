@@ -2915,6 +2915,14 @@
 const DB_KEY = 'yyy_db';
 let curAcat='all', curAccat='all', curCasingType=null;
 
+function safeWatchImages(root=document){
+  const scope = root && root.querySelectorAll ? root : document;
+  const imgs = scope.querySelectorAll ? scope.querySelectorAll('img') : [];
+  imgs.forEach(img => {
+    if(typeof watchImage === 'function') watchImage(img);
+  });
+}
+
 // ── DEFAULTS ──
 function defaultSettings(){
   return {
@@ -3641,7 +3649,7 @@ function renderSocialHomeFeed(){
     list.innerHTML=posts.length
       ? posts.map(renderSocialPost).join('')
       : `<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'ยังไม่มีอัปเดตใน Feed':'No feed updates yet.'}</article>`;
-    watchImages(list);
+    safeWatchImages(list);
   }
   renderSocialWidgets(posts);
 }
@@ -3697,7 +3705,7 @@ function renderSocialWidgets(posts){
         <div class="social-widget-row"><span>${escapeHtml((p.title||'Update').split(' · ').pop())}</span></div>
       </div>
     `).join('') : `<div class="social-widget-row"><span>Photos</span><small>Soon</small></div>`;
-    watchImages(preview);
+    safeWatchImages(preview);
   }
   const trust=document.getElementById('socialTrust');
   if(trust){
@@ -4805,14 +4813,14 @@ function renderFeed(){
     list.innerHTML=shown.length
       ? shown.map(renderFeedPost).join('') + (posts.length>shown.length ? `<button class="feed-load-more" onclick="loadMoreFeed()">${lang==='th'?'โหลดอัปเดตเพิ่ม':'Load more updates'}</button>` : '')
       : `<div class="feed-card feed-empty">No feed posts yet. Add amulets, casing styles, projects, or reviews in admin.</div>`;
-    watchImages(list);
+    safeWatchImages(list);
   }
 
   const stories=document.getElementById('feedStories');
   if(stories){
     const storyItems=buildFeedStories(db, posts);
     stories.innerHTML=storyItems.map(renderFeedStory).join('');
-    watchImages(stories);
+    safeWatchImages(stories);
   }
 
   const popular=document.getElementById('feedPopular');
@@ -4827,7 +4835,7 @@ function renderFeed(){
         </div>
       </div>
     `).join('') : `<div class="feed-mini-meta">Add photos to show popular items.</div>`;
-    watchImages(popular);
+    safeWatchImages(popular);
   }
 
   const quick=document.getElementById('feedQuickPreview');
@@ -4839,7 +4847,7 @@ function renderFeed(){
         <div class="feed-mini-name">${escapeHtml(p.title)}</div>
       </div>
     `).join('') : `<div class="feed-mini-meta">Add photos to show previews.</div>`;
-    watchImages(quick);
+    safeWatchImages(quick);
   }
 
   const trust=document.getElementById('feedTrust');
@@ -5443,8 +5451,13 @@ function watchImage(img){
   }
 }
 
+function watchImages(root=document){
+  const scope = root && root.querySelectorAll ? root : document;
+  scope.querySelectorAll('img').forEach(watchImage);
+}
+
 function setupImageFadeIn(){
-  document.querySelectorAll('img').forEach(watchImage);
+  safeWatchImages(document);
 }
 setupImageFadeIn();
 
@@ -5478,17 +5491,17 @@ async function bootIndex(){
     }, 400);
     return;
   }
-  // Wait for first DB load from Firestore
+  // Wait only for the lightweight first DB load, then show the page.
+  // Heavier page data such as casing galleries loads after navigation so
+  // visitors see the UI/skeleton instead of staring at the splash screen.
   await window.FB.ready();
   applySettings();
-  await goPageFromUrl();
-  // Now reveal the page — adds fb-ready class which fades out the splash
-  // and shows any elements that were hidden to avoid the FOUC flash.
   document.documentElement.classList.add('fb-ready');
   setTimeout(() => {
     const s = document.getElementById('fbSplash');
     if(s) s.remove();
   }, 400);
+  goPageFromUrl();
   warmHomeData();
   // Subscribe to live updates — if admin changes something, the visible
   // site updates without a refresh.

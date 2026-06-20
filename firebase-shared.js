@@ -147,11 +147,11 @@ function requestedPageFromUrl(){
 
 function keysForStorePage(page){
   switch(page){
-    case 'amulets': return ['settings', 'amulets'];
-    case 'accessories': return ['settings', 'accessories'];
-    case 'casing': return ['settings', 'casingTypes'];
-    case 'projects': return ['settings', 'projects'];
-    case 'reviews': return ['settings', 'reviews'];
+    case 'amulets':
+    case 'accessories':
+    case 'casing':
+    case 'projects':
+    case 'reviews':
     case 'feed': return ['settings'];
     case 'home': return ['settings'];
     default: return ['settings'];
