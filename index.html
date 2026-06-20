@@ -1788,25 +1788,33 @@
     border-bottom:1px solid rgba(232,201,106,.18);
   }
   nav{
-    background:rgba(13,10,6,.78);
-    border-bottom:1px solid rgba(232,201,106,.18);
-    box-shadow:0 12px 30px rgba(0,0,0,.18);
+    background:linear-gradient(180deg,rgba(18,13,6,.9),rgba(10,8,5,.82));
+    border-bottom:1px solid rgba(232,201,106,.2);
+    box-shadow:0 12px 32px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,248,226,.04);
   }
   .nav-inner{height:72px}
   .nav-links{
-    background:linear-gradient(135deg,rgba(255,248,226,.10),rgba(255,248,226,.04));
-    border:1px solid rgba(232,201,106,.22);
+    background:linear-gradient(135deg,rgba(255,248,226,.14),rgba(255,248,226,.045));
+    border:1px solid rgba(232,201,106,.28);
     border-radius:999px;
-    padding:6px;
+    padding:5px;
     gap:6px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.18);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 34px rgba(0,0,0,.22);
+    backdrop-filter:blur(18px) saturate(140%);
+    -webkit-backdrop-filter:blur(18px) saturate(140%);
   }
   .nav-links a{
     border-radius:999px;
-    padding:10px 18px;
-    font-weight:800;
+    padding:10px 17px;
+    font-weight:900;
     font-size:13px;
-    letter-spacing:.1px;
+    letter-spacing:.15px;
+    color:#eadcae;
+  }
+  .nav-links a:hover{
+    background:rgba(232,201,106,.16);
+    color:#fff5ca;
+    box-shadow:inset 0 0 0 1px rgba(232,201,106,.12);
   }
   .nav-links a.active{
     background:linear-gradient(135deg,#e8c96a,#c9a84c);
@@ -1890,10 +1898,6 @@
   /* ─── LUXURY SOCIAL HOME ─────────────────────────────────────────────── */
   .legacy-home{display:none}
   #page-feed{display:none !important}
-  body.is-home-page .nav-links,
-  body.is-home-page .menu-btn{
-    display:none !important;
-  }
   .social-home{
     min-height:100vh;
     background:
@@ -1976,9 +1980,8 @@
   }
   .social-visual .social-actions{display:none}
   .social-tabs{
-    display:none;
     position:relative;z-index:3;max-width:1180px;margin:28px auto 0;
-    display:flex;gap:8px;overflow:auto;padding:8px;border-radius:22px;
+    display:none !important;gap:8px;overflow:auto;padding:8px;border-radius:22px;
     background:rgba(255,248,226,.16);border:1px solid rgba(255,248,226,.2);
     backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
     scrollbar-width:none;
