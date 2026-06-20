@@ -2806,6 +2806,39 @@ function deepScrubUndefined(val){
 
 // Save to Firestore and only resolve after Firebase confirms the write.
 let _saveTail = Promise.resolve();
+const _pendingDeleteUrls = new Set();
+
+function collectStoredImageUrls(img){
+  if(!img) return [];
+  if(typeof img === 'string') return /^https?:\/\//i.test(img) ? [img] : [];
+  if(typeof img === 'object'){
+    return [img.url, img.medium, img.thumb]
+      .filter(u => typeof u === 'string' && /^https?:\/\//i.test(u));
+  }
+  return [];
+}
+
+function stageImageDelete(img){
+  collectStoredImageUrls(img).forEach(u => _pendingDeleteUrls.add(u));
+}
+
+function dbReferencesUrl(value, url){
+  if(!url) return false;
+  if(typeof value === 'string') return value === url;
+  if(Array.isArray(value)) return value.some(v => dbReferencesUrl(v, url));
+  if(value && typeof value === 'object') return Object.values(value).some(v => dbReferencesUrl(v, url));
+  return false;
+}
+
+async function flushPendingImageDeletes(db){
+  const urls=[..._pendingDeleteUrls];
+  _pendingDeleteUrls.clear();
+  const safeToDelete=urls.filter(u => !dbReferencesUrl(db, u));
+  await Promise.all(safeToDelete.map(u => FB.deleteFile(u).catch(err => {
+    console.warn('delete image after save failed:', err);
+  })));
+}
+
 async function saveDB(db){
   const cleanDb = deepScrubUndefined(db);
   const job = _saveTail.then(() => FB.saveDB(cleanDb));
@@ -2824,6 +2857,7 @@ async function persistDB(db, successMsg){
   showToast(lang === 'th' ? 'กำลังบันทึก... กรุณารอจนเสร็จ' : 'Saving... please wait', { sticky: true });
   try {
     await saveDB(db);
+    await flushPendingImageDeletes(db);
     if(successMsg) showToast(successMsg);
     return true;
   } catch(err) {
@@ -5083,12 +5117,12 @@ async function uploadOne(file, key, isSingle){
   };
   let slot;
   if(isSingle){
-    // Clean up any previous file on Storage before replacing
+    // Delete replaced files only after the DB save succeeds. If we delete
+    // Storage first and the save fails, the storefront can still point at a
+    // missing image.
     (tempImgs[key] || []).forEach(e => {
-      const u = (e && typeof e === 'object' && e.status === 'done') ? e.url : e;
-      if(isUsableStoredImage(u)){
-        FB.deleteFile(u).catch(() => {});
-      }
+      const img = (e && typeof e === 'object' && e.status === 'done') ? e.url : e;
+      stageImageDelete(img);
     });
     tempImgs[key] = [entry];
     slot = 0;
@@ -5244,12 +5278,10 @@ function moveImg(key, idx, dir){
 
 function rmImg(key, idx){
   const entry = (tempImgs[key] || [])[idx];
-  const url = typeof entry === 'string' ? entry : (entry && entry.url);
+  const img = (entry && typeof entry === 'object' && entry.status === 'done') ? entry.url : entry;
   tempImgs[key].splice(idx, 1);
   renderPrev(key);
-  if(url && typeof url === 'string' && url.startsWith('http')){
-    FB.deleteFile(url).catch(() => {});
-  }
+  stageImageDelete(img);
 }
 
 // ─── RICH TEXT EDITOR ────────────────────────────────────────────────────
