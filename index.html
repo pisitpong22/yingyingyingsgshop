@@ -1890,6 +1890,10 @@
   /* ─── LUXURY SOCIAL HOME ─────────────────────────────────────────────── */
   .legacy-home{display:none}
   #page-feed{display:none !important}
+  body.is-home-page .nav-links,
+  body.is-home-page .menu-btn{
+    display:none !important;
+  }
   .social-home{
     min-height:100vh;
     background:
@@ -3614,12 +3618,13 @@ function scheduleSocialHomeFeedLoad(){
   if(_socialHomeFeedLoading) return;
   renderSocialHomeSkeleton();
   _socialHomeFeedLoading=true;
-  ensurePageData('feed').then(()=>{
+  const loader=(window.FB && typeof window.FB.ensureDBKeys === 'function')
+    ? window.FB.ensureDBKeys(['settings','feedPosts','casingTypes'])
+    : Promise.resolve();
+  loader.catch(err=>{
+    console.warn('[home feed] partial load failed:', err);
+  }).then(()=>{
     renderSocialHomeFeed();
-  }).catch(err=>{
-    console.warn('[home feed] load failed:', err);
-    const list=document.getElementById('socialFeedList');
-    if(list) list.innerHTML=`<div class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'โหลด Feed ไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load the feed. Please refresh.'}</div>`;
   }).finally(()=>{
     _socialHomeFeedLoading=false;
   });
@@ -3801,6 +3806,7 @@ function shortNavLabel(label){
 }
 
 function setActiveNav(name){
+  document.body.classList.toggle('is-home-page', name === 'home');
   document.querySelectorAll('.nav-links a,.mobile-tab').forEach(a=>a.classList.remove('active'));
   const n=document.getElementById('nav-'+name);if(n)n.classList.add('active');
   const mt=document.getElementById('mtab-'+name);if(mt)mt.classList.add('active');
@@ -4971,6 +4977,7 @@ function feedTimeLabel(ts){
 
 function feedPostAction(p){
   const target=String(p.buttonTarget || '').trim();
+  if(target === 'feed') return `goPage('home')`;
   if(target && /^[a-z0-9_-]+$/i.test(target)) return `goPage('${target}')`;
   return `copyFeedLink('feed')`;
 }

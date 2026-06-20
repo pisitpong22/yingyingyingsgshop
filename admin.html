@@ -2887,7 +2887,7 @@ function recordSiteFeedUpdate(db){
       text,
       createdAt:now,
       buttonLabel:lang === 'th' ? 'ดูอัปเดต' : 'View update',
-      buttonTarget:'feed',
+      buttonTarget:'home',
       imgs:[]
     },
     ...posts
@@ -2903,6 +2903,8 @@ async function persistDB(db, successMsg, opts={}){
     if(successMsg) showToast(successMsg);
     return true;
   } catch(err) {
+    const msg=err && err.message ? err.message : String(err || 'Unknown error');
+    showToast((lang === 'th' ? 'บันทึกไม่สำเร็จ: ' : 'Save failed: ') + msg);
     return false;
   }
 }
@@ -3937,9 +3939,13 @@ function moveFeedPost(i,dir){
 async function saveFeedPosts(){
   if(!ensureUploadsDone()) return;
   const db=getDB();
-  const systemPosts=(db.feedPosts||[]).filter(p=>p && p.system);
+  const systemPosts=(db.feedPosts||[])
+    .filter(p=>p && p.system)
+    .slice(0,30)
+    .map(p=>({...p, buttonTarget:p.buttonTarget === 'feed' ? 'home' : p.buttonTarget}));
   db.feedPosts=[...captureFeedPosts(), ...systemPosts].slice(0,80);
-  await persistDB(db, lang==='th' ? '✅ บันทึก Feed แล้ว' : '✅ Feed posts saved', {skipFeedUpdate:true});
+  const ok=await persistDB(db, lang==='th' ? '✅ บันทึก Feed แล้ว' : '✅ Feed posts saved', {skipFeedUpdate:true});
+  if(ok) loadFeedPosts();
 }
 
 // SECTIONS
