@@ -2860,9 +2860,44 @@ async function saveDB(db){
   }
 }
 
-async function persistDB(db, successMsg){
+function currentAdminAreaLabel(){
+  const activePanel=document.querySelector('.panel.active');
+  const panelTitle=activePanel?.querySelector('.panel-title')?.textContent?.trim();
+  const activeTab=activePanel?.querySelector('.tab-btn.active')?.textContent?.trim();
+  return [panelTitle, activeTab].filter(Boolean).join(' · ') || 'Website';
+}
+
+function recordSiteFeedUpdate(db){
+  if(!db) return;
+  const now=Date.now();
+  const posts=Array.isArray(db.feedPosts) ? db.feedPosts : [];
+  const area=currentAdminAreaLabel();
+  const recent=posts.find(p=>p && p.system && now - Number(p.createdAt || 0) < 30000);
+  if(recent) return;
+  const text=lang === 'th'
+    ? `มีการบันทึกอัปเดตในส่วน ${area}`
+    : `${area} was updated.`;
+  db.feedPosts=[
+    {
+      id:now,
+      system:true,
+      enabled:true,
+      pinned:false,
+      title:lang === 'th' ? 'อัปเดตเว็บไซต์' : 'Website updated',
+      text,
+      createdAt:now,
+      buttonLabel:lang === 'th' ? 'ดูอัปเดต' : 'View update',
+      buttonTarget:'feed',
+      imgs:[]
+    },
+    ...posts
+  ].slice(0,80);
+}
+
+async function persistDB(db, successMsg, opts={}){
   showToast(lang === 'th' ? 'กำลังบันทึก... กรุณารอจนเสร็จ' : 'Saving... please wait', { sticky: true });
   try {
+    if(!opts.skipFeedUpdate) recordSiteFeedUpdate(db);
     await saveDB(db);
     await flushPendingImageDeletes(db);
     if(successMsg) showToast(successMsg);
@@ -3792,7 +3827,7 @@ async function saveServices(){
 
 // FEED POSTS
 function loadFeedPosts(){
-  renderFeedPostList(getDB().feedPosts || []);
+  renderFeedPostList((getDB().feedPosts || []).filter(p=>p && !p.system));
 }
 
 function feedPostTargetOptions(selected){
@@ -3902,8 +3937,9 @@ function moveFeedPost(i,dir){
 async function saveFeedPosts(){
   if(!ensureUploadsDone()) return;
   const db=getDB();
-  db.feedPosts=captureFeedPosts();
-  await persistDB(db, lang==='th' ? '✅ บันทึก Feed แล้ว' : '✅ Feed posts saved');
+  const systemPosts=(db.feedPosts||[]).filter(p=>p && p.system);
+  db.feedPosts=[...captureFeedPosts(), ...systemPosts].slice(0,80);
+  await persistDB(db, lang==='th' ? '✅ บันทึก Feed แล้ว' : '✅ Feed posts saved', {skipFeedUpdate:true});
 }
 
 // SECTIONS
@@ -4611,11 +4647,12 @@ async function saveType(){
   const price=document.getElementById('ft_price').value.trim();
   if(!name){showToast(tr('needName'));return;}
   const db=getDB();if(!db.casingTypes)db.casingTypes=[];
+  const updatedAt=Date.now();
   if(curEditTypeId){
     const ty=db.casingTypes.find(t=>t.id===curEditTypeId);
-    if(ty){ty.name=name;ty.priceRange=price;ty.desc=rteGetHtml('ft_desc');ty.bannerImg=(captureImgs('ft_banner')[0]||'');ty.sampleImgs=captureImgs('ft_samples');delete ty.price;}
+    if(ty){ty.name=name;ty.priceRange=price;ty.desc=rteGetHtml('ft_desc');ty.bannerImg=(captureImgs('ft_banner')[0]||'');ty.sampleImgs=captureImgs('ft_samples');ty.updatedAt=updatedAt;delete ty.price;}
   } else {
-    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[]});
+    db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[],updatedAt});
   }
   if(!(await persistDB(db,tr('saved')))) return;
   tempImgs={};closeModal('typeModal');loadCasingTypes();loadDash();
@@ -4819,13 +4856,15 @@ async function saveVariant(){
   if(!name){showToast(tr('needName'));return;}
   const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
   if(!ty.variants)ty.variants=[];
-  const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs')};
+  const updatedAt=Date.now();
+  const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs'),updatedAt};
   if(curEditVariantId){
     const v=ty.variants.find(x=>String(x.id)===String(curEditVariantId));
     if(v)Object.assign(v,data);
   } else {
     ty.variants.push({id:genId(ty.variants),...data});
   }
+  ty.updatedAt=updatedAt;
   if(!(await persistDB(db,tr('saved')))) return;
   tempImgs={};closeModal('variantModal');loadVariants();
 }

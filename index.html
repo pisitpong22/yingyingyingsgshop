@@ -1891,23 +1891,25 @@
   .feed-page{
     min-height:100vh;
     background:
-      linear-gradient(180deg,#f2ead8 0%,#f8f0dc 38%,#fff8e8 100%);
-    padding:28px 16px 90px;
+      linear-gradient(180deg,#fff8e8 0%,#f2ead8 48%,#fff8e8 100%);
+    padding:22px 16px 90px;
   }
   .feed-shell{
-    max-width:1180px;
+    max-width:1080px;
     margin:0 auto;
     display:grid;
-    grid-template-columns:minmax(230px,280px) minmax(0,640px) minmax(220px,280px);
-    gap:18px;
+    grid-template-columns:1fr;
+    gap:20px;
     align-items:start;
   }
+  .feed-sidebar,.feed-right{display:none}
   .feed-sidebar,
   .feed-card,
-  .feed-composer{
+  .feed-composer,
+  .feed-top-card{
     background:rgba(255,251,239,.92);
     border:1px solid rgba(201,168,76,.22);
-    border-radius:18px;
+    border-radius:28px;
     box-shadow:0 10px 30px rgba(91,62,13,.08);
   }
   .feed-sidebar{
@@ -1938,19 +1940,33 @@
     display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;text-align:left;
   }
   .feed-nav-pill:hover{background:rgba(201,168,76,.12)}
-  .feed-main{display:grid;gap:14px;min-width:0}
-  .feed-composer{padding:14px}
+  .feed-main{display:grid;gap:20px;min-width:0}
+  .feed-top-card{padding:16px 18px}
+  .feed-search-row{display:grid;grid-template-columns:minmax(0,1fr) 74px 74px;gap:16px;align-items:center;margin-bottom:10px}
+  .feed-search-pill{
+    min-height:70px;border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.72);
+    display:flex;align-items:center;gap:14px;padding:0 28px;color:#a1a0a0;font-size:27px;font-weight:900;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  .feed-search-pill span:first-child{font-size:18px;color:#b58d29}
+  .feed-round-btn{
+    width:74px;height:74px;border-radius:50%;border:1px solid rgba(120,94,48,.14);background:rgba(255,255,255,.72);
+    display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#201609;
+    box-shadow:0 8px 22px rgba(91,62,13,.08);
+    cursor:pointer;
+  }
+  .feed-composer{padding:26px}
   .feed-composer-row{display:flex;align-items:center;gap:10px}
   .feed-composer-fake{
-    flex:1;border:none;border-radius:999px;background:#f3ead2;color:#7a6040;
-    padding:13px 16px;text-align:left;font:inherit;font-weight:700;cursor:pointer;
+    flex:1;border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.62);color:#7a6040;
+    padding:22px 26px;text-align:left;font:inherit;font-size:24px;font-weight:900;cursor:pointer;
   }
   .feed-story-strip{
-    display:flex;gap:10px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;
+    display:flex;gap:18px;overflow-x:auto;padding:6px 0 14px;scrollbar-width:none;
   }
   .feed-story-strip::-webkit-scrollbar{display:none}
   .feed-story{
-    flex:0 0 118px;height:150px;border-radius:18px;overflow:hidden;position:relative;
+    flex:0 0 178px;height:220px;border-radius:24px;overflow:hidden;position:relative;
     border:1px solid rgba(201,168,76,.22);background:#181005;cursor:pointer;
     box-shadow:0 10px 24px rgba(77,48,5,.14);
   }
@@ -1968,14 +1984,15 @@
     background:rgba(255,246,207,.78);font-size:26px;color:#171006;position:relative;z-index:1;
     box-shadow:0 0 0 12px rgba(217,185,78,.35);
   }
-  .feed-card{overflow:hidden}
-  .feed-card-head{display:flex;align-items:center;gap:10px;padding:14px 14px 8px}
+  .feed-card{overflow:hidden;border-radius:28px}
+  .feed-card-head{display:flex;align-items:center;gap:14px;padding:26px 28px 10px}
   .feed-card-menu{margin-left:auto;color:#8b743d;font-weight:900}
   .feed-post-name{font-weight:900;color:var(--text)}
   .feed-post-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
   .feed-card-body{padding:0 14px 12px}
-  .feed-post-title{font-family:var(--font-display);font-size:22px;font-weight:900;color:var(--text);margin:4px 0 6px;line-height:1.18}
-  .feed-post-text{font-size:14px;color:#674f2e;line-height:1.65;margin:0 0 10px}
+  .feed-card-body{padding:0 28px 20px}
+  .feed-post-title{font-family:'Inter',sans-serif;font-size:28px;font-weight:950;color:var(--text);margin:10px 0 8px;line-height:1.18}
+  .feed-post-text{font-size:20px;font-weight:800;color:#57442a;line-height:1.55;margin:0 0 14px}
   .feed-media{
     background:#120d05;display:grid;gap:2px;overflow:hidden;
     border-top:1px solid rgba(201,168,76,.14);
@@ -1985,15 +2002,15 @@
   .feed-media.two{grid-template-columns:1fr 1fr}
   .feed-media.three{grid-template-columns:1.2fr .8fr}
   .feed-media.three img:first-child{grid-row:span 2}
-  .feed-media img{width:100%;height:100%;min-height:240px;object-fit:cover;display:block}
-  .feed-media.two img,.feed-media.three img{min-height:190px}
+  .feed-media img{width:100%;height:100%;min-height:430px;object-fit:cover;display:block}
+  .feed-media.two img,.feed-media.three img{min-height:310px}
   .feed-actions{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 12px 12px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:16px 22px 20px;
     border-top:1px solid rgba(201,168,76,.14);
   }
   .feed-action{
     border:none;background:transparent;border-radius:10px;padding:10px 8px;cursor:pointer;
-    color:#765b27;font:inherit;font-weight:800;
+    color:#765b27;font:inherit;font-size:22px;font-weight:900;
   }
   .feed-action:hover{background:rgba(201,168,76,.12)}
   .feed-right-card{padding:14px}
@@ -2224,8 +2241,15 @@
       color:#140d04;
       box-shadow:0 10px 24px rgba(139,105,20,.22);
     }
-    .feed-page{padding:12px 10px calc(96px + env(safe-area-inset-bottom,0px))}
+    .feed-page{padding:0 0 calc(96px + env(safe-area-inset-bottom,0px))}
+    .feed-shell{max-width:none}
     .feed-main{gap:10px}
+    .feed-top-card{padding:12px;border-radius:0;border-left:none;border-right:none}
+    .feed-search-row{grid-template-columns:minmax(0,1fr) 58px 58px;gap:10px;margin-bottom:4px}
+    .feed-search-pill{min-height:58px;padding:0 18px;font-size:18px}
+    .feed-round-btn{width:58px;height:58px;font-size:20px}
+    .feed-composer{margin:0 14px;padding:18px}
+    .feed-composer-fake{padding:16px 18px;font-size:18px}
     .feed-composer,.feed-card{border-radius:16px}
     .feed-story{flex-basis:104px;height:136px}
     .feed-card-head{padding:12px 12px 6px}
@@ -2351,13 +2375,20 @@
       </aside>
 
       <main class="feed-main">
+        <div class="feed-top-card">
+          <div class="feed-search-row">
+            <div class="feed-search-pill"><span>⌕</span><span>Search amulets, casing, colors...</span></div>
+            <button class="feed-round-btn" type="button" onclick="toggleLang()">TH</button>
+            <button class="feed-round-btn" type="button" onclick="goPage('contact')">💬</button>
+          </div>
+          <div class="feed-story-strip" id="feedStories"></div>
+        </div>
         <div class="feed-composer">
           <div class="feed-composer-row">
             <div class="feed-avatar"><img src="/favicon/apple-touch-icon.png" alt=""></div>
             <button class="feed-composer-fake" onclick="goPage('casing')">What are you looking for today?</button>
           </div>
         </div>
-        <div class="feed-story-strip" id="feedStories"></div>
         <div id="feedList"></div>
       </main>
 
@@ -2916,6 +2947,26 @@ function contactLabel(c){
 
 function contactDisplay(c){
   return `${contactIcon(c)} ${contactLabel(c)}`.trim();
+}
+
+function isUsableImage(img){
+  const u=imageUrl(img,'thumb').trim();
+  if(!u) return false;
+  if(/^https?:\/\//i.test(u) || /^\//.test(u) || /^blob:/i.test(u)) return true;
+  if(!/^data:image\/[a-z0-9.+-]+;base64,/i.test(u)) return false;
+  const data=u.slice(u.indexOf(',') + 1);
+  return data.length > 16 && !/\s/.test(data) && /^[A-Za-z0-9+/=]+$/.test(data);
+}
+
+function feedImages(imgs){
+  return (Array.isArray(imgs) ? imgs : []).filter(isUsableImage);
+}
+
+function toggleLang(){
+  document.body.classList.toggle('th');
+  applySettings();
+  const active=document.querySelector('.page.active');
+  if(active && active.id === 'page-feed') renderFeed();
 }
 
 function isImageSet(img){
@@ -4252,12 +4303,17 @@ function feedVisibleNav(settings){
 }
 
 function buildFeedStories(db, posts){
-  const navStories=feedVisibleNav(db.settings||{})
-    .filter(n=>n.id !== 'feed')
+  const nav=feedVisibleNav(db.settings||{});
+  const preferred=['amulets','casing','projects','reviews','accessories','contact','about'];
+  const ordered=preferred
+    .map(id=>nav.find(n=>n.id===id))
+    .filter(Boolean)
+    .concat(nav.filter(n=>!preferred.includes(n.id) && n.id !== 'feed' && n.id !== 'home'));
+  const navStories=ordered
     .slice(0,8)
     .map((n,i)=>({
       type:'nav',
-      label:n.label,
+      label:n.id === 'amulets' ? 'New Amulets' : n.label,
       icon:navIcon(n.id),
       tone:i%3===1?'alt':i%3===2?'red':'',
       action:`goPage('${String(n.id).replace(/'/g,"\\'")}')`
@@ -4287,11 +4343,11 @@ function buildFeedPosts(db){
   const manual=(db.feedPosts||[])
     .filter(p=>p && p.enabled !== false)
     .map((p,i)=>({
-      type:'manual',
-      kicker:p.pinned ? 'Pinned update' : 'Shop update',
+      type:p.system ? 'system' : 'manual',
+      kicker:p.pinned ? 'Pinned update' : (p.system ? 'Website update' : 'Shop update'),
       title:p.title || 'Shop update',
       text:p.text || '',
-      imgs:p.imgs || [],
+      imgs:feedImages(p.imgs),
       action:feedPostAction(p),
       cta:p.buttonLabel || 'View',
       pinned:!!p.pinned,
@@ -4307,27 +4363,53 @@ function buildFeedPosts(db){
 }
 
 function buildCasingUpdatePosts(db){
-  const posts=[];
+  const byKey=new Map();
   (db.casingTypes||[]).forEach(ty=>{
     const typeName=ty.name || 'Casing Service';
     const variants=(ty.variants||[]).filter(v=>v);
     variants.forEach(v=>{
-      const imgs=(v.imgs||[]).filter(Boolean);
+      const imgs=feedImages(v.imgs);
       if(!imgs.length) return;
       const price=v.price!=='' && v.price!==undefined && v.price!==null ? `S$${Number(v.price).toLocaleString()}` : '';
-      posts.push({
+      const title=[typeName, v.name || 'Style'].filter(Boolean).join(' · ');
+      const key=feedPostKey(typeName, v.name || 'Style');
+      const post={
         type:'casing',
         kicker:'Live casing update',
-        title:[typeName, v.name || 'Style'].filter(Boolean).join(' · '),
+        title,
         text:[`${imgs.length} real sample photo${imgs.length===1?'':'s'} available now`, price].filter(Boolean).join(' · '),
         imgs,
         action:`openFeedCasingType(${JSON.stringify(ty.id)},${JSON.stringify(v.id)})`,
         cta:'See this style',
+        ts:Number(v.updatedAt || ty.updatedAt || 0) || 0,
         score:imgs.length
-      });
+      };
+      const prev=byKey.get(key);
+      if(!prev || (post.ts||0) > (prev.ts||0) || post.score > prev.score) byKey.set(key, post);
     });
   });
+  const posts=[...byKey.values()];
   return posts.sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,28);
+}
+
+function feedPostKey(typeName, styleName){
+  return `${String(typeName||'').trim().toLowerCase()}|${String(styleName||'').trim().toLowerCase()}`;
+}
+
+function feedTimeLabel(ts){
+  const n=Number(ts||0);
+  if(!n) return lang === 'th' ? 'อัปเดตล่าสุด' : 'Updated recently';
+  const diff=Math.max(0, Date.now() - n);
+  if(diff < 60000) return lang === 'th' ? 'เมื่อสักครู่' : 'Just now';
+  if(diff < 3600000){
+    const m=Math.max(1, Math.floor(diff/60000));
+    return lang === 'th' ? `${m} นาทีที่แล้ว` : `${m} min ago`;
+  }
+  if(diff < 86400000){
+    const h=Math.max(1, Math.floor(diff/3600000));
+    return lang === 'th' ? `${h} ชม.ที่แล้ว` : `${h} hr ago`;
+  }
+  return new Date(n).toLocaleString(lang === 'th' ? 'th-TH' : 'en-SG', {dateStyle:'medium', timeStyle:'short'});
 }
 
 function feedPostAction(p){
@@ -4337,7 +4419,7 @@ function feedPostAction(p){
 }
 
 function renderFeedPost(p){
-  const imgs=(p.imgs||[]).filter(Boolean).slice(0,3);
+  const imgs=feedImages(p.imgs).slice(0,3);
   const mediaClass=imgs.length===1?'one':imgs.length===2?'two':'three';
   return `
     <article class="feed-card">
@@ -4345,7 +4427,7 @@ function renderFeedPost(p){
         <div class="feed-avatar"><img src="/favicon/apple-touch-icon.png" alt=""></div>
         <div>
           <div class="feed-post-name">Yingyingying Amulet</div>
-          <div class="feed-post-meta">${escapeHtml(p.kicker)} · Just now</div>
+          <div class="feed-post-meta">${escapeHtml(p.kicker)} · ${escapeHtml(feedTimeLabel(p.ts))}</div>
         </div>
         <div class="feed-card-menu">•••</div>
       </div>
