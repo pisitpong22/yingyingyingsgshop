@@ -2511,6 +2511,7 @@ function defaultSettings(){
       {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
       {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
+      {id:'contact',label:'Contact',visible:true,enabled:true,builtin:true},
       {id:'projects',label:'Projects',visible:true,enabled:true,builtin:true},
       {id:'about',label:'About Us',visible:true,enabled:true,builtin:true},
       {id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true},
@@ -2560,9 +2561,11 @@ function defaultSettings(){
       {icon:'📱',title:'Multi-Channel',desc:'Facebook, Line & Instagram'},
     ],
     contacts:[
-      {label:'📘 Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger'},
-      {label:'💬 Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line'},
-      {label:'📱 WhatsApp',color:'#25d366',url:'https://wa.me/6500000000',message:'Contact us on WhatsApp'},
+      {icon:'f',label:'Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger'},
+      {icon:'▶',label:'YouTube',color:'#ff0033',url:'',message:'Visit our YouTube'},
+      {icon:'♪',label:'TikTok',color:'#111111',url:'',message:'Visit our TikTok'},
+      {icon:'◎',label:'Instagram',color:'#c13584',url:'',message:'Visit our Instagram'},
+      {icon:'💬',label:'Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line'},
     ],
     contactBtnText:'📞 Contact to Order',
     contactBtnMessage:'📞 Contact us to order or for more information',
@@ -2696,11 +2699,15 @@ function applyDbMigrations(d){
     if(d.settings.reviews.homeCount===undefined)d.settings.reviews.homeCount=3;
     if(d.settings.reviews.homeMode===undefined)d.settings.reviews.homeMode='top';
   }
-  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';});}
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);c.label=stripContactIcon(c.label);});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
     if(!d.settings.nav.find(n=>n.id==='feed')){
       const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
       d.settings.nav.splice(homeIdx>=0?homeIdx+1:0,0,{id:'feed',label:'Feed',visible:true,enabled:true,builtin:true});
+    }
+    if(!d.settings.nav.find(n=>n.id==='contact')){
+      const casingIdx=d.settings.nav.findIndex(n=>n.id==='casing');
+      d.settings.nav.splice(casingIdx>=0?casingIdx+1:d.settings.nav.length,0,{id:'contact',label:'Contact',visible:true,enabled:true,builtin:true});
     }
     if(!d.settings.nav.find(n=>n.id==='reviews')){
       const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
@@ -3655,6 +3662,18 @@ function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function extractContactIcon(label){
+  const s=String(label||'').trim();
+  const m=s.match(/^(\S+)\s+/);
+  return m && /[^\w]/.test(m[1]) ? m[1] : '☎';
+}
+
+function stripContactIcon(label){
+  const s=String(label||'').trim();
+  const m=s.match(/^(\S+)\s+(.+)$/);
+  return (m && /[^\w]/.test(m[1]) ? m[2] : s) || 'Contact';
+}
+
 function hoMove(idx, dir){
   const target = idx + dir;
   if(target < 0 || target >= _homeOrderDraft.length) return;
@@ -4152,9 +4171,10 @@ function renderContactList(arr){
   document.getElementById('contactList').innerHTML=arr.map((c,i)=>`
     <div class="rep-row">
       <div class="rep-fields">
-        <div class="fg"><label class="fl">${tr('label')}</label><input class="fi" data-c-label="${i}" value="${c.label||''}"></div>
+        <div class="fg"><label class="fl">${lang==='th'?'ไอคอน':'Icon'}</label><input class="fi" data-c-icon="${i}" value="${c.icon||extractContactIcon(c.label)}" placeholder="f / ▶ / ♪ / ◎ / 💬"></div>
+        <div class="fg"><label class="fl">${tr('label')}</label><input class="fi" data-c-label="${i}" value="${stripContactIcon(c.label)||''}" placeholder="Facebook / YouTube / TikTok / Instagram"></div>
         <div class="fg"><label class="fl">${tr('color')}</label><input type="color" class="color-input" data-c-color="${i}" value="${c.color||'#1877f2'}" style="width:100%;height:42px"></div>
-        <div class="fg" style="grid-column:span 2"><label class="fl">${tr('contactUrl')}</label><input class="fi" data-c-url="${i}" value="${c.url||''}" placeholder="https://wa.me/65... or https://m.me/...">
+        <div class="fg"><label class="fl">${tr('contactUrl')}</label><input class="fi" data-c-url="${i}" value="${c.url||''}" placeholder="https://facebook.com/...">
           <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${tr('contactUrlHint')}</div></div>
         <div class="fg" style="grid-column:span 2"><label class="fl">${tr('clickMessage')}</label><input class="fi" data-c-msg="${i}" value="${c.message||''}"></div>
       </div>
@@ -4166,6 +4186,7 @@ function captureContacts(){
   const arr=[];document.querySelectorAll('[data-c-label]').forEach(el=>{
     const i=el.dataset.cLabel;
     arr.push({
+      icon:document.querySelector(`[data-c-icon="${i}"]`)?.value || '☎',
       label:el.value,
       color:document.querySelector(`[data-c-color="${i}"]`).value,
       url:document.querySelector(`[data-c-url="${i}"]`)?document.querySelector(`[data-c-url="${i}"]`).value:'',
@@ -4177,7 +4198,7 @@ function captureContacts(){
 function addContactBtn(){
   const list=document.getElementById('contactList');
   const cur=list && list.querySelector('[data-c-label]') ? captureContacts() : [...(getDB().settings.contacts||[])];
-  cur.push({label:'📞 New',color:'#888888',url:'',message:'Contact us'});
+  cur.push({icon:'☎',label:'New',color:'#888888',url:'',message:'Contact us'});
   renderContactList(cur);
 }
 function rmContact(i){const cur=captureContacts();cur.splice(i,1);renderContactList(cur);}

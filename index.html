@@ -1390,8 +1390,14 @@
   }
 
   .cf-wrap{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
-  .cf-btn{display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:50px;border:none;cursor:pointer;font-size:14px;font-weight:700;font-family:'Inter',sans-serif;transition:all .3s;box-shadow:0 4px 16px rgba(0,0,0,.2);color:white}
-  .cf-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+  .cf-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    min-width:54px;max-width:190px;min-height:46px;padding:11px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.34);
+    cursor:pointer;font-size:13px;font-weight:900;font-family:'Inter',sans-serif;line-height:1.1;
+    transition:all .25s;box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.25);color:white;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .cf-btn:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.3)}
 
   #toast{position:fixed;top:24px;right:24px;background:var(--deep);color:var(--gold-light);padding:13px 22px;border-radius:10px;font-size:14px;font-weight:500;border:1px solid rgba(201,168,76,.3);z-index:500;display:none;max-width:90vw;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:slideInTR .3s ease}
   @keyframes slideInTR{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -1788,21 +1794,24 @@
   }
   .nav-inner{height:72px}
   .nav-links{
-    background:rgba(255,248,226,.08);
-    border:1px solid rgba(232,201,106,.16);
-    border-radius:16px;
-    padding:5px;
-    gap:4px;
+    background:linear-gradient(135deg,rgba(255,248,226,.10),rgba(255,248,226,.04));
+    border:1px solid rgba(232,201,106,.22);
+    border-radius:999px;
+    padding:6px;
+    gap:6px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 30px rgba(0,0,0,.18);
   }
   .nav-links a{
-    border-radius:12px;
-    padding:10px 16px;
-    font-weight:700;
+    border-radius:999px;
+    padding:10px 18px;
+    font-weight:800;
+    font-size:13px;
+    letter-spacing:.1px;
   }
   .nav-links a.active{
     background:linear-gradient(135deg,#e8c96a,#c9a84c);
     color:#161006;
-    box-shadow:0 8px 22px rgba(201,168,76,.22);
+    box-shadow:0 8px 22px rgba(201,168,76,.26);
   }
   .hero-wrap{
     background:
@@ -1846,8 +1855,8 @@
   }
   #homeSections{
     max-width:1180px;
-    margin:-46px auto 0;
-    padding:0 22px 70px;
+    margin:0 auto;
+    padding:42px 22px 70px;
     position:relative;
     z-index:3;
   }
@@ -2003,6 +2012,45 @@
   }
   .feed-load-more:hover{background:#fff7df}
 
+  /* ─── CONTACT PAGE ───────────────────────────────────────────────────── */
+  .contact-page{
+    min-height:calc(100vh - 120px);
+    background:linear-gradient(180deg,#110c05 0%,#211604 260px,#fff6df 620px,#fff9ee 100%);
+    padding:54px 22px 92px;
+  }
+  .contact-shell{
+    max-width:1120px;margin:0 auto;display:grid;grid-template-columns:minmax(0,.9fr) minmax(360px,1.1fr);gap:24px;align-items:start;
+  }
+  .contact-hero-card,
+  .contact-links-card{
+    border:1px solid rgba(201,168,76,.25);
+    border-radius:28px;
+    background:rgba(255,251,238,.9);
+    box-shadow:0 24px 70px rgba(45,28,5,.14),inset 0 1px 0 rgba(255,255,255,.55);
+    overflow:hidden;
+  }
+  .contact-hero-card{
+    position:sticky;top:100px;padding:34px;background:linear-gradient(145deg,rgba(28,19,5,.92),rgba(94,73,24,.76));color:#fff6df;
+    backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
+  }
+  .contact-kicker{font-size:11px;font-weight:900;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold-light);margin-bottom:12px}
+  .contact-title{font-family:var(--font-display);font-size:clamp(34px,4vw,58px);line-height:1.02;margin-bottom:16px;color:#fff}
+  .contact-desc{color:#dfcf9f;line-height:1.8;font-size:15px;max-width:520px}
+  .contact-links-card{padding:20px;display:grid;gap:12px}
+  .contact-link{
+    display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:14px;align-items:center;
+    border:1px solid rgba(201,168,76,.18);border-radius:20px;background:rgba(255,255,255,.62);
+    padding:14px;color:var(--text);text-decoration:none;cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s;
+  }
+  .contact-link:hover{transform:translateY(-2px);border-color:rgba(201,168,76,.5);box-shadow:0 12px 28px rgba(97,65,14,.10)}
+  .contact-link-icon{
+    width:58px;height:58px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:26px;font-weight:900;box-shadow:0 10px 24px rgba(0,0,0,.12);
+  }
+  .contact-link-title{font-weight:900;font-size:17px;color:var(--text);line-height:1.2}
+  .contact-link-meta{font-size:12px;color:var(--text-muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .contact-link-arrow{font-size:22px;color:var(--gold-dark);font-weight:900;padding-right:6px}
+
   @media(max-width:900px){
     .hero{
       min-height:auto;
@@ -2014,6 +2062,8 @@
     #homeSections .home-section{border-radius:22px;padding:24px !important}
     .feed-shell{grid-template-columns:1fr;max-width:680px}
     .feed-sidebar,.feed-right{display:none}
+    .contact-shell{grid-template-columns:1fr;max-width:680px}
+    .contact-hero-card{position:relative;top:auto}
   }
 
   @media(max-width:768px){
@@ -2185,6 +2235,12 @@
     .feed-media.two img,.feed-media.three img{min-height:160px}
     .feed-actions{padding:6px 8px 10px}
     .feed-action{font-size:12.5px;padding:9px 4px}
+    .contact-page{padding:22px 12px calc(100px + env(safe-area-inset-bottom,0px))}
+    .contact-hero-card{padding:24px;border-radius:24px}
+    .contact-links-card{border-radius:24px;padding:12px}
+    .contact-link{grid-template-columns:48px minmax(0,1fr) 20px;padding:12px;border-radius:18px}
+    .contact-link-icon{width:48px;height:48px;border-radius:16px;font-size:22px}
+    .contact-link-title{font-size:15px}
   }
 </style>
 </head>
@@ -2311,6 +2367,20 @@
           <div class="feed-mini-list" id="feedPopular"></div>
         </div>
       </aside>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div id="page-contact" class="page">
+  <div class="contact-page">
+    <div class="contact-shell">
+      <section class="contact-hero-card">
+        <div class="contact-kicker">Contact YingyingyingSG</div>
+        <h2 class="contact-title">Talk to us directly</h2>
+        <p class="contact-desc">Choose your preferred channel for orders, casing questions, payments, shipping, or general amulet enquiries.</p>
+      </section>
+      <section class="contact-links-card" id="contactPageLinks"></section>
     </div>
   </div>
 </div>
@@ -2534,6 +2604,7 @@ function defaultSettings(){
       {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
       {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
+      {id:'contact',label:'Contact',visible:true,enabled:true,builtin:true},
       {id:'projects',label:'Projects',visible:true,enabled:true,builtin:true},
       {id:'about',label:'About Us',visible:true,enabled:true,builtin:true},
       {id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true},
@@ -2595,9 +2666,11 @@ function defaultSettings(){
       {icon:'📱',title:'Multi-Channel',desc:'Facebook, Line & Instagram — always available'},
     ],
     contacts:[
-      {label:'📘 Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger'},
-      {label:'💬 Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line'},
-      {label:'📱 WhatsApp',color:'#25d366',url:'https://wa.me/6500000000',message:'Contact us on WhatsApp'},
+      {icon:'f',label:'Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger'},
+      {icon:'▶',label:'YouTube',color:'#ff0033',url:'',message:'Visit our YouTube'},
+      {icon:'♪',label:'TikTok',color:'#111111',url:'',message:'Visit our TikTok'},
+      {icon:'◎',label:'Instagram',color:'#c13584',url:'',message:'Visit our Instagram'},
+      {icon:'💬',label:'Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line'},
     ],
     contactBtnText:'📞 Contact to Order',
     contactBtnMessage:'📞 Contact us to order or for more information',
@@ -2688,11 +2761,15 @@ function applyDbMigrations(d){
     const knownIds = def.homeOrder.map(s => s.id);
     d.settings.homeOrder = d.settings.homeOrder.filter(x => x && knownIds.includes(x.id));
   }
-  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';});}
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);c.label=stripContactIcon(c.label);});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
     if(!d.settings.nav.find(n=>n.id==='feed')){
       const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
       d.settings.nav.splice(homeIdx>=0?homeIdx+1:0,0,{id:'feed',label:'Feed',visible:true,enabled:true,builtin:true});
+    }
+    if(!d.settings.nav.find(n=>n.id==='contact')){
+      const casingIdx=d.settings.nav.findIndex(n=>n.id==='casing');
+      d.settings.nav.splice(casingIdx>=0?casingIdx+1:d.settings.nav.length,0,{id:'contact',label:'Contact',visible:true,enabled:true,builtin:true});
     }
     if(!d.settings.nav.find(n=>n.id==='reviews')){
       const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
@@ -2815,6 +2892,30 @@ function escapeHtml(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function extractContactIcon(label){
+  const s=String(label||'').trim();
+  const m=s.match(/^(\S+)\s+/);
+  return m && /[^\w]/.test(m[1]) ? m[1] : '☎';
+}
+
+function stripContactIcon(label){
+  const s=String(label||'').trim();
+  const m=s.match(/^(\S+)\s+(.+)$/);
+  return (m && /[^\w]/.test(m[1]) ? m[2] : s) || 'Contact';
+}
+
+function contactIcon(c){
+  return c && c.icon ? c.icon : extractContactIcon(c && c.label);
+}
+
+function contactLabel(c){
+  return stripContactIcon(c && c.label);
+}
+
+function contactDisplay(c){
+  return `${contactIcon(c)} ${contactLabel(c)}`.trim();
 }
 
 function isImageSet(img){
@@ -3045,8 +3146,9 @@ function applySettings(){
     </div>`).join('');
 
   document.getElementById('contactFloat').innerHTML=(s.contacts||[]).map(c=>`
-    <button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${c.label}</button>
+    <button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${contactDisplay(c)}</button>
   `).join('');
+  renderContactPage();
 
   // ── FEATURED on home ──
   renderFeatured();
@@ -3152,7 +3254,7 @@ function openCpItem(pageId, itemId){
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
 
-const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','projects','reviews','payment','about']);
+const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','contact','projects','reviews','payment','about']);
 
 function navIcon(id){
   return ({
@@ -3161,6 +3263,7 @@ function navIcon(id){
     amulets:'◉',
     accessories:'✦',
     casing:'🪬',
+    contact:'☎',
     projects:'◎',
     reviews:'★',
     payment:'▣',
@@ -3245,6 +3348,7 @@ async function goPage(name, opts={}){
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
+  if(name==='contact')renderContactPage();
   if(name==='feed'){_feedVisible=10;renderFeed();}
   if(opts.updateUrl !== false) updatePageUrl(name);
   if(name==='home'){
@@ -3281,6 +3385,24 @@ function onContactClick(url,msg){
   } else if(msg){
     showToast(msg);
   }
+}
+
+function renderContactPage(){
+  const db=getDB();
+  const s=db.settings||{};
+  const box=document.getElementById('contactPageLinks');
+  if(!box) return;
+  const contacts=s.contacts||[];
+  box.innerHTML=contacts.length ? contacts.map(c=>`
+    <button type="button" class="contact-link" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">
+      <span class="contact-link-icon" style="background:${escapeHtml(c.color||'#888')}">${escapeHtml(contactIcon(c))}</span>
+      <span>
+        <span class="contact-link-title">${escapeHtml(contactLabel(c))}</span>
+        <span class="contact-link-meta">${escapeHtml(c.url || c.message || 'Tap to contact us')}</span>
+      </span>
+      <span class="contact-link-arrow">↗</span>
+    </button>
+  `).join('') : `<div class="feed-empty">${lang==='th'?'ยังไม่มีช่องทางติดต่อ':'No contact channels yet.'}</div>`;
 }
 
 // ── PRE-FILL contact message with item name/price ──
@@ -3594,7 +3716,7 @@ function renderPayment(){
         <div class="pay-policy">${policyEsc}</div>
       </div>
       <div class="pay-cta">
-        ${(s.contacts||[]).map(c=>`<button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${c.label}</button>`).join('')}
+        ${(s.contacts||[]).map(c=>`<button class="cf-btn" style="background:${c.color}" onclick="onContactClick(${JSON.stringify(c.url||'').replace(/"/g,'&quot;')},${JSON.stringify(c.message||'').replace(/"/g,'&quot;')})">${contactDisplay(c)}</button>`).join('')}
       </div>
     </div>`;
 }
@@ -4339,7 +4461,7 @@ function openProd(type,id){
     `<div style="background:#f8d7da;color:#721c24;padding:14px;border-radius:10px;text-align:center;font-weight:600;border:1px solid #f5c6cb">❌ This item has been sold</div>`:
     contacts.length?
       `<div class="contact-group">
-        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" style="background:${c.color}" onclick="openContactWithItemBtn('${type}',${id})">${c.label} →</button>`).join('')}
+        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" style="background:${c.color}" onclick="openContactWithItemBtn('${type}',${id})">${contactDisplay(c)} →</button>`).join('')}
       </div>`:
       `<button class="btn-gold" style="width:100%" onclick="showToast('${(s.contactBtnMessage||'').replace(/'/g,"\\'")}')">${s.contactBtnText||'Contact'}</button>`;
 
