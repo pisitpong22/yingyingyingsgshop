@@ -1438,8 +1438,12 @@
   #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:600;align-items:center;justify-content:center;padding:24px;animation:lbFade .25s ease}
   #lightbox.open{display:flex}
   @keyframes lbFade{from{opacity:0}to{opacity:1}}
-  #lbImgWrap{max-width:95vw;max-height:90vh;display:flex;align-items:center;justify-content:center;cursor:default}
-  #lbImg{max-width:95vw;max-height:90vh;width:auto;height:auto;object-fit:contain;border-radius:14px;box-shadow:0 12px 60px rgba(0,0,0,.5)}
+  #lbImgWrap{max-width:95vw;max-height:90vh;display:flex;align-items:center;justify-content:center;cursor:default;position:relative;min-width:180px;min-height:180px}
+  #lbImg{max-width:95vw;max-height:90vh;width:auto;height:auto;object-fit:contain;border-radius:14px;box-shadow:0 12px 60px rgba(0,0,0,.5);opacity:0;transition:opacity .18s ease}
+  #lbImg.is-loaded{opacity:1}
+  #lightbox.lb-loading #lbImgWrap::before,
+  #lightbox.lb-error #lbImgWrap::before{content:'Loading image...';position:absolute;color:#f5e7b4;font-weight:800;letter-spacing:.3px}
+  #lightbox.lb-error #lbImgWrap::before{content:'Could not load image';color:#ffdfdf}
   #lbClose{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:2}
   #lbClose:hover{background:rgba(255,255,255,.2);transform:scale(1.05)}
   #lbPrev,#lbNext{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;width:50px;height:50px;border-radius:50%;font-size:32px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:2;font-family:'Inter',sans-serif;padding:0}
@@ -3008,6 +3012,10 @@
 <script>
 const DB_KEY = 'yyy_db';
 let curAcat='all', curAccat='all', curCasingType=null;
+const loadState = {
+  homeFeed: 'idle', // idle | loading | loaded | empty | error
+  casing: 'idle',
+};
 
 function safeWatchImages(root=document){
   const scope = root && root.querySelectorAll ? root : document;
@@ -3695,6 +3703,7 @@ function socialNav(id){
 }
 
 function renderSocialHomeSkeleton(){
+  loadState.homeFeed='loading';
   const list=document.getElementById('socialFeedList');
   if(list){
     list.innerHTML=Array.from({length:3},()=>`
@@ -3723,13 +3732,14 @@ function renderSocialHomeSkeleton(){
 function scheduleSocialHomeFeedLoad(){
   if(_socialHomeFeedLoading) return;
   renderSocialHomeSkeleton();
+  if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
   _socialHomeFeedLoading=true;
-  const loader=(window.FB && typeof window.FB.ensureDBKeys === 'function')
-    ? window.FB.ensureDBKeys(['settings','feedPosts'])
-    : Promise.resolve();
+  const loader=window.FB.ensureDBKeys(['settings','feedPosts']);
   loader.catch(err=>{
+    loadState.homeFeed='error';
     console.warn('[home feed] partial load failed:', err);
   }).then(()=>{
+    if(loadState.homeFeed !== 'error') loadState.homeFeed='loaded';
     renderSocialHomeFeed();
     scheduleSocialCasingPreviewLoad();
   }).finally(()=>{
@@ -3760,9 +3770,18 @@ function renderSocialHomeFeed(){
   const posts=buildFeedPosts(db).slice(0,6);
   const list=document.getElementById('socialFeedList');
   if(list){
-    list.innerHTML=posts.length
-      ? posts.map(renderSocialPost).join('')
-      : `<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'ยังไม่มีอัปเดตใน Feed':'No feed updates yet.'}</article>`;
+    if(loadState.homeFeed === 'loading' || loadState.homeFeed === 'idle'){
+      renderSocialHomeSkeleton();
+      return;
+    }
+    if(loadState.homeFeed === 'error'){
+      list.innerHTML=`<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'โหลด Feed ไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load feed. Please refresh.'}</article>`;
+    } else if(posts.length){
+      list.innerHTML=posts.map(renderSocialPost).join('');
+    } else {
+      loadState.homeFeed='empty';
+      list.innerHTML=`<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'ยังไม่มีอัปเดตใน Feed':'No feed updates yet.'}</article>`;
+    }
     safeWatchImages(list);
   }
   renderSocialWidgets(posts);
@@ -3972,6 +3991,8 @@ function dataKeysForPage(name){
 async function ensurePageData(name){
   if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
     await window.FB.ensureDBKeys(['settings', ...dataKeysForPage(name)]);
+  } else {
+    throw new Error('Firebase is not available yet');
   }
 }
 
@@ -3995,15 +4016,18 @@ async function goPage(name, opts={}){
   document.getElementById('mobileOverlay').classList.remove('open');
   if(name==='amulets'){curAcat='all';renderA('all');}
   if(name==='accessories'){curAccat='all';renderAc('all');}
-  if(name==='casing'){
-    curCasingType=null;
-    renderCasingLoading();
-    ensurePageData(name).then(()=>{
-      if(document.getElementById('page-casing')?.classList.contains('active')) renderCasingTypes();
-    }).catch(err=>{
-      console.warn('[casing] load failed:', err);
-      const grid=document.getElementById('cTypeGrid');
-      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load casing data. Please refresh.'}</div>`;
+	  if(name==='casing'){
+	    curCasingType=null;
+	    loadState.casing='loading';
+	    renderCasingLoading();
+	    ensurePageData(name).then(()=>{
+	      loadState.casing='loaded';
+	      if(document.getElementById('page-casing')?.classList.contains('active')) renderCasingTypes();
+	    }).catch(err=>{
+	      loadState.casing='error';
+	      console.warn('[casing] load failed:', err);
+	      const grid=document.getElementById('cTypeGrid');
+	      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load casing data. Please refresh.'}</div>`;
     });
   }
   if(name==='projects')renderP();
@@ -4478,6 +4502,7 @@ let _variantRenderToken = 0;
 let _modalGalleryToken = 0;
 
 function renderCasingLoading(){
+  loadState.casing = loadState.casing === 'loaded' ? 'loaded' : 'loading';
   const typesWrap=document.getElementById('casingTypes');
   const variantsWrap=document.getElementById('casingVariants');
   const grid=document.getElementById('cTypeGrid');
@@ -4507,7 +4532,19 @@ function renderCasingTypes(){
   document.getElementById('casingVariants').style.display='none';
   const types=db.casingTypes||[];
   const grid=document.getElementById('cTypeGrid');
-  if(!types.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No casing types available yet.</div>`;return;}
+  if(!types.length){
+    if(loadState.casing === 'loading' || loadState.casing === 'idle'){
+      renderCasingLoading();
+      return;
+    }
+    if(loadState.casing === 'error'){
+      grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load casing data. Please refresh.'}</div>`;
+      return;
+    }
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No casing types available yet.</div>`;
+    return;
+  }
+  loadState.casing='loaded';
   // Direct Firebase Storage URLs — no proxy/resize, just pass through.
   // Upload-time optimisation in firebase-shared.js already caps images at
   // 1920px and re-encodes to WebP q85, so they're already CDN-friendly.
@@ -4857,7 +4894,7 @@ function renderVariants(typeId){
 }
 
 function variantPhotoHtml(img, i){
-  return `<button type="button" class="variant-photo" onclick="openLightbox(${i})" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<6?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></button>`;
+  return `<button type="button" class="variant-photo" onclick="openLightbox(${i},this)" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<6?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></button>`;
 }
 
 function appendVariantPhotosProgressively(gallery, imgs, start, token){
@@ -4877,7 +4914,7 @@ function openVariant(typeId,varId){
   const db=getDB();
   const ty=(db.casingTypes||[]).find(x=>x.id===typeId);if(!ty)return;
   const v=(ty.variants||[]).find(x=>x.id===varId);if(!v)return;
-  const imgs=v.imgs||[];
+  const imgs=feedImages(v.imgs||[]);
   // store images globally for lightbox — keep originals for full-size view
   window._lbImages = imgs;
   // Direct URLs — Firebase Storage Asia bucket serves original optimised images.
@@ -4909,50 +4946,216 @@ function openVariant(typeId,varId){
 
 // LIGHTBOX
 let _lbIndex = 0;
-function openLightbox(idx){
+let _lbLoadSeq = 0;
+let _lbSourceIndex = -1;
+let _lbSourceUrl = '';
+let _lbObjectUrl = '';
+let _pendingLightboxSourceUrl = '';
+function getLightboxImg(){
+  let img=document.getElementById('lbImg');
+  if(img) return img;
+  const wrap=document.getElementById('lbImgWrap');
+  if(!wrap) return null;
+  img=document.createElement('img');
+  img.id='lbImg';
+  img.loading='eager';
+  img.decoding='async';
+  img.fetchPriority='high';
+  img.alt='';
+  wrap.appendChild(img);
+  return img;
+}
+function setLightboxPreviewSrc(rawUrl){
+  const imgEl=getLightboxImg();
+  const lb=document.getElementById('lightbox');
+  if(!imgEl || !rawUrl) return;
+  const seq=++_lbLoadSeq;
+  revokeLightboxObjectUrl();
+  imgEl.loading='eager';
+  imgEl.decoding='async';
+  imgEl.dataset._watched='1';
+  imgEl.removeAttribute('srcset');
+  imgEl.removeAttribute('sizes');
+  imgEl.alt='';
+  imgEl.classList.remove('is-loaded');
+  imgEl.removeAttribute('src');
+  if(lb){
+    lb.classList.add('lb-loading');
+    lb.classList.remove('lb-error');
+  }
+  const assignDisplayUrl=(displayUrl)=>{
+    if(seq !== _lbLoadSeq) return;
+    imgEl.onload=()=>{
+      if(seq !== _lbLoadSeq) return;
+      imgEl.classList.add('is-loaded');
+      if(lb) lb.classList.remove('lb-loading','lb-error');
+    };
+    imgEl.onerror=()=>{
+      if(seq !== _lbLoadSeq) return;
+      imgEl.classList.remove('is-loaded');
+      if(lb){
+        lb.classList.remove('lb-loading');
+        lb.classList.add('lb-error');
+      }
+    };
+    imgEl.src = displayUrl;
+  };
+  if(!/^data:image\/[a-z0-9.+-]+;base64,/i.test(rawUrl) || rawUrl.length <= 700000){
+    assignDisplayUrl(rawUrl);
+    return;
+  }
+  lightboxDisplayUrl(rawUrl).then(assignDisplayUrl).catch(()=>{
+    if(seq !== _lbLoadSeq) return;
+    if(lb){
+      lb.classList.remove('lb-loading');
+      lb.classList.add('lb-error');
+    }
+  });
+}
+function lightboxElementUrl(sourceEl){
+  const img = sourceEl && sourceEl.tagName === 'IMG'
+    ? sourceEl
+    : sourceEl && sourceEl.querySelector
+      ? sourceEl.querySelector('img')
+      : null;
+  if(!img) return '';
+  return img.currentSrc || img.getAttribute('src') || img.dataset.src || '';
+}
+document.addEventListener('click', e => {
+  const btn=e.target && e.target.closest ? e.target.closest('.variant-photo') : null;
+  if(!btn || !btn.closest('#modalContent')) return;
+  _pendingLightboxSourceUrl = lightboxElementUrl(btn);
+}, true);
+function revokeLightboxObjectUrl(){
+  if(_lbObjectUrl){
+    try{ URL.revokeObjectURL(_lbObjectUrl); }catch(e){}
+    _lbObjectUrl='';
+  }
+}
+async function lightboxDisplayUrl(url){
+  if(!url) return '';
+  // Very large data URLs can fail silently in some mobile browsers. Convert
+  // them to a blob URL before assigning to the full-size preview image.
+  if(/^data:image\/[a-z0-9.+-]+;base64,/i.test(url) && url.length > 700000 && window.fetch && window.URL && URL.createObjectURL){
+    try{
+      const blob = await fetch(url).then(r=>r.blob());
+      revokeLightboxObjectUrl();
+      _lbObjectUrl = URL.createObjectURL(blob);
+      return _lbObjectUrl;
+    }catch(e){
+      return url;
+    }
+  }
+  return url;
+}
+function openLightbox(idx, sourceEl){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
   const nextIndex = Number(idx);
   _lbIndex = Math.max(0, Math.min(Number.isFinite(nextIndex) ? nextIndex : 0, imgs.length - 1));
+  _lbSourceIndex = _lbIndex;
+  _lbSourceUrl = lightboxElementUrl(sourceEl) || _pendingLightboxSourceUrl;
+  if(!_lbSourceUrl){
+    const modalPhotos=[...document.querySelectorAll('#modalContent .variant-photo')];
+    _lbSourceUrl = lightboxElementUrl(modalPhotos[_lbIndex]);
+  }
   const lb = document.getElementById('lightbox');
   if(!lb) return;
-  showLightboxImage();
   lb.classList.add('open');
+  lb.classList.add('lb-loading');
+  lb.classList.remove('lb-error');
+  if(_lbSourceUrl){
+    setLightboxPreviewSrc(_lbSourceUrl);
+    updateLightboxControls(imgs.length);
+  } else {
+    showLightboxImage();
+  }
   document.addEventListener('keydown', _lbKeyHandler);
+}
+function updateLightboxControls(total){
+  document.getElementById('lbCounter').textContent = (_lbIndex+1) + ' / ' + total;
+  const single = total <= 1;
+  document.getElementById('lbPrev').style.display = single ? 'none' : 'flex';
+  document.getElementById('lbNext').style.display = single ? 'none' : 'flex';
+  const hint=document.getElementById('lbHint');
+  if(hint){
+    hint.style.display = single ? 'none' : 'block';
+    hint.textContent = lang === 'th' ? 'ปัดซ้าย/ขวา หรือกดลูกศรเพื่อดูรูปต่อไป' : 'Swipe left/right or tap arrows for more photos';
+  }
+}
+function lightboxUrlCandidates(img, sourceUrl=''){
+  const small = window.matchMedia && window.matchMedia('(max-width: 700px)').matches;
+  const prefs = small ? ['medium','url','thumb'] : ['url','medium','thumb'];
+  const urls=[];
+  if(sourceUrl && isUsableImage(sourceUrl)) urls.push(sourceUrl);
+  prefs.forEach(pref=>{
+    const u=imageUrl(img,pref);
+    if(u && isUsableImage(u) && !urls.includes(u)) urls.push(u);
+  });
+  return urls;
 }
 function showLightboxImage(){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
   _lbIndex = ((_lbIndex % imgs.length) + imgs.length) % imgs.length;
-  const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 700px)').matches;
-  const url = isSmallScreen
-    ? (imageUrl(imgs[_lbIndex],'medium') || imageUrl(imgs[_lbIndex],'url') || imageUrl(imgs[_lbIndex],'thumb'))
-    : (imageUrl(imgs[_lbIndex],'url') || imageUrl(imgs[_lbIndex],'medium') || imageUrl(imgs[_lbIndex],'thumb'));
-  const imgEl=document.getElementById('lbImg');
+  const urls = lightboxUrlCandidates(imgs[_lbIndex], _lbSourceIndex === _lbIndex ? _lbSourceUrl : '');
+  const imgEl=getLightboxImg();
+  const lb=document.getElementById('lightbox');
+  if(imgEl && _lbSourceIndex === _lbIndex && _lbSourceUrl && imgEl.getAttribute('src')){
+    updateLightboxControls(imgs.length);
+    return;
+  }
   if(imgEl){
+    const seq=++_lbLoadSeq;
+    revokeLightboxObjectUrl();
     imgEl.loading='eager';
     imgEl.decoding='async';
+    imgEl.dataset._watched='1';
     imgEl.removeAttribute('srcset');
     imgEl.removeAttribute('sizes');
     imgEl.alt='';
+    imgEl.classList.remove('is-loaded');
     imgEl.removeAttribute('src');
-    imgEl.onload=()=>imgEl.classList.add('is-loaded');
-    imgEl.onerror=()=>imgEl.classList.remove('is-loaded');
-    requestAnimationFrame(()=>{ imgEl.src = url; });
+    if(lb){
+      lb.classList.add('lb-loading');
+      lb.classList.remove('lb-error');
+    }
+    const tryUrl=(idx=0)=>{
+      if(seq !== _lbLoadSeq) return;
+      const url=urls[idx];
+      if(!url){
+        if(lb){
+          lb.classList.remove('lb-loading');
+          lb.classList.add('lb-error');
+        }
+        return;
+      }
+      lightboxDisplayUrl(url).then(displayUrl=>{
+        if(seq !== _lbLoadSeq) return;
+        imgEl.onload=()=>{
+          if(seq !== _lbLoadSeq) return;
+          imgEl.classList.add('is-loaded');
+          if(lb){
+            lb.classList.remove('lb-loading','lb-error');
+          }
+        };
+        imgEl.onerror=()=>{
+          if(seq !== _lbLoadSeq) return;
+          imgEl.classList.remove('is-loaded');
+          tryUrl(idx+1);
+        };
+        imgEl.src = displayUrl;
+      }).catch(()=>{
+        if(seq !== _lbLoadSeq) return;
+        tryUrl(idx+1);
+      });
+    };
+    tryUrl(0);
   }
-  document.getElementById('lbCounter').textContent = (_lbIndex+1) + ' / ' + imgs.length;
-  // hide arrows if only 1 image
-  const single = imgs.length <= 1;
-  document.getElementById('lbPrev').style.display = single ? 'none' : 'flex';
-  document.getElementById('lbNext').style.display = single ? 'none' : 'flex';
-  const hint=document.getElementById('lbHint');
-	  if(hint){
-	    hint.style.display = single ? 'none' : 'block';
-	    hint.textContent = lang === 'th' ? 'ปัดซ้าย/ขวา หรือกดลูกศรเพื่อดูรูปต่อไป' : 'Swipe left/right or tap arrows for more photos';
-	  }
-  if(!single){
-    const next=imageUrl(imgs[(_lbIndex+1)%imgs.length], isSmallScreen ? 'medium' : 'url');
-    const prev=imageUrl(imgs[(_lbIndex-1+imgs.length)%imgs.length], isSmallScreen ? 'medium' : 'url');
+  updateLightboxControls(imgs.length);
+  if(imgs.length > 1){
+    const next=lightboxUrlCandidates(imgs[(_lbIndex+1)%imgs.length])[0];
+    const prev=lightboxUrlCandidates(imgs[(_lbIndex-1+imgs.length)%imgs.length])[0];
     preloadImages([next,prev].filter(Boolean),2);
   }
 }
@@ -4961,6 +5164,8 @@ function lbNext(e){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
   _lbIndex = (_lbIndex + 1) % imgs.length;
+  _lbSourceIndex = -1;
+  _lbSourceUrl = '';
   showLightboxImage();
 }
 function lbPrev(e){
@@ -4968,11 +5173,25 @@ function lbPrev(e){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
   _lbIndex = (_lbIndex - 1 + imgs.length) % imgs.length;
+  _lbSourceIndex = -1;
+  _lbSourceUrl = '';
   showLightboxImage();
 }
 function closeLightbox(e){
   if(e && e.target.id !== 'lightbox' && e.target.id !== 'lbClose' && e.target.id !== 'lbImgWrap') return;
-  document.getElementById('lightbox').classList.remove('open');
+  _lbLoadSeq++;
+  const lb=document.getElementById('lightbox');
+  const img=getLightboxImg();
+  if(lb) lb.classList.remove('open','lb-loading','lb-error');
+  revokeLightboxObjectUrl();
+  _lbSourceIndex = -1;
+  _lbSourceUrl = '';
+  if(img){
+    img.onload=null;
+    img.onerror=null;
+    img.classList.remove('is-loaded');
+    img.removeAttribute('src');
+  }
   document.removeEventListener('keydown', _lbKeyHandler);
 }
 function _lbKeyHandler(e){
@@ -5773,11 +5992,15 @@ async function bootIndex(){
   while(!window.FB && tries < 100){ await new Promise(r => setTimeout(r, 50)); tries++; }
   if(!window.FB){
     // Even if Firebase failed to load, drop the splash so the page is usable
+    loadState.homeFeed='error';
+    loadState.casing='error';
     document.documentElement.classList.add('fb-ready');
     setTimeout(() => {
       const s = document.getElementById('fbSplash');
       if(s) s.remove();
     }, 400);
+    applySettings();
+    goPageFromUrl().catch(() => renderSocialHomeFeed());
     return;
   }
   // Wait only for the lightweight first DB load, then show the page.
