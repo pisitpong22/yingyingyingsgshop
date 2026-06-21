@@ -3971,7 +3971,7 @@ function scheduleSocialHomeFeedLoad(){
   renderSocialHomeSkeleton();
   if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
   _socialHomeFeedLoading=true;
-  const loader=window.FB.ensureDBKeys(['settings','feedPosts','amulets','projects','reviews','casingTypes']);
+  const loader=window.FB.ensureDBKeys(['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories']);
   loader.catch(err=>{
     loadState.homeFeed='error';
     console.warn('[home feed] partial load failed:', err);
@@ -4321,7 +4321,7 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
     case 'history-stories': return ['historyStories'];
     case 'home': return [];
     default: return [];
@@ -5857,12 +5857,14 @@ function renderHistoryStories(){
             </div>`).join('')}
         </div>`;
       safeWatchImages(gw);
-    } else {
+    } else if(!featured){
       gw.innerHTML = `<div class="hs-empty">
         <div class="hs-empty-icon">📖</div>
         <p>No articles yet${_hsCat!=='all'?' in this category':''}.${_hsQ?' Try a different search.':''}
         ${_hsCat!=='all'?` <a href="#" onclick="event.preventDefault();_hsCat='all';_hsQ='';renderHistoryStories()" style="color:var(--gold-dark)">View all</a>`:''}</p>
       </div>`;
+    } else {
+      gw.innerHTML = '';
     }
   }
 }
@@ -5872,7 +5874,11 @@ function hsOnSearch(val){
   renderHistoryStories();
 }
 
-function openHsArticle(id){
+async function openHsArticle(id){
+  // Ensure historyStories is loaded (may not be if clicking from home feed)
+  if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
+    await window.FB.ensureDBKeys(['historyStories']);
+  }
   const db = getDB();
   const a  = (db.historyStories||[]).find(x=>String(x.id)===String(id));
   if(!a) return;
@@ -5938,7 +5944,8 @@ function buildFeedPosts(db){
   const projects=buildProjectFeedPosts(db);
   const reviews=buildReviewFeedPosts(db);
   // Merge: manual first, then auto-generated (de-dup by key not needed — different types)
-  const auto=[...casing,...amulets,...projects,...reviews];
+  const hs=buildHistoryStoriesFeedPosts(db);
+  const auto=[...casing,...amulets,...projects,...reviews,...hs];
   return [...manual,...auto].sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if((b.ts||0) !== (a.ts||0)) return (b.ts||0) - (a.ts||0);
@@ -6003,6 +6010,26 @@ function buildReviewFeedPosts(db){
       pinned:false,
       ts:Number(r.createdAt||0)||0,
       score:(r.imgs||[]).length + (r.rating||0),
+    }));
+}
+
+function buildHistoryStoriesFeedPosts(db){
+  return (db.historyStories||[])
+    .filter(a=>a && a.status!=='draft' && a.coverImage)
+    .slice(0,4)
+    .map(a=>({
+      type:'article',
+      badge:'📖 '+hsCatLabel(a.category||'guides-articles'),
+      badgeCls:'feed-badge-article',
+      kicker:'History & Stories',
+      title:a.title||'Article',
+      text:a.excerpt||'Read more about this article.',
+      imgs:feedImages([a.coverImage,...(a.gallery||[])]),
+      action:`openHsArticle(${a.id})`,
+      cta:'Read Article',
+      pinned:false,
+      ts:Number(a.updatedAt||a.createdAt||0)||0,
+      score:a.featured?10:5,
     }));
 }
 
