@@ -1406,6 +1406,31 @@
     flex-direction:column;
     overflow:hidden;
   }
+  .modal.variant-modal .modal-close{
+    position:fixed;
+    right:24px;
+    top:24px;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:rgba(18,16,10,.82);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:var(--gold-light);
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(201,168,76,.35);
+    box-shadow:0 4px 16px rgba(0,0,0,.28);
+    z-index:650;
+    line-height:1;
+    transition:background .2s;
+  }
+  .modal.variant-modal .modal-close:hover{
+    background:rgba(40,28,8,.92);
+    color:var(--gold);
+  }
 	  .modal.variant-modal .modal-head{
 	    position:sticky;
 	    top:0;
@@ -4570,7 +4595,6 @@ function renderCasingTypes(){
 	      <div class="ftype-body">
 	        <div class="ftype-name">${ty.name}</div>
 	        <div class="ftype-desc">${ty.desc || ''}</div>
-	        ${casingTimeframeHtml(ty.desc,'ftype-timeframe')}
 	        <div class="ftype-cta">
 	          ${ty.priceRange?`<div class="ftype-from">Price<br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from">Price<br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
 	          <div class="ftype-arrow">${cta}</div>
