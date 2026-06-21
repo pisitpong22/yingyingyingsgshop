@@ -3854,6 +3854,15 @@ function renderFeedPostList(posts){
         <div class="rep-fields">
           <input type="hidden" data-fp-id="${i}" value="${escapeAttr(p.id || '')}">
           <input type="hidden" data-fp-created="${i}" value="${escapeAttr(p.createdAt || '')}">
+          <div class="fg"><label class="fl" data-en="Post Type" data-th="ประเภทโพสต์">Post Type</label><select class="fi" data-fp-type="${i}">
+            <option value="default" ${(p.type||'default')==='default'?'selected':''}>🏪 Shop Update</option>
+            <option value="casing" ${p.type==='casing'?'selected':''}>🪬 Casing Style</option>
+            <option value="amulet" ${p.type==='amulet'?'selected':''}>📿 New Arrival</option>
+            <option value="project" ${p.type==='project'?'selected':''}>🚀 Project Update</option>
+            <option value="review" ${p.type==='review'?'selected':''}>⭐ Customer Review</option>
+            <option value="article" ${p.type==='article'?'selected':''}>📖 Article</option>
+            <option value="announcement" ${p.type==='announcement'?'selected':''}>📢 Announcement</option>
+          </select></div>
           <div class="fg"><label class="fl" data-en="Title" data-th="หัวข้อ">Title</label><input class="fi" data-fp-title="${i}" value="${escapeAttr(p.title || '')}" placeholder="New casing update"></div>
           <div class="fg"><label class="fl" data-en="Button Text" data-th="ข้อความปุ่ม">Button Text</label><input class="fi" data-fp-btn="${i}" value="${escapeAttr(p.buttonLabel || 'View')}" placeholder="View"></div>
           <div class="fg"><label class="fl" data-en="Button Link" data-th="ลิงก์ปุ่ม">Button Link</label><select class="fi" data-fp-target="${i}">${feedPostTargetOptions(p.buttonTarget)}</select></div>
@@ -3894,6 +3903,7 @@ function captureFeedPosts(){
     arr.push({
       id:Number(document.querySelector(`[data-fp-id="${i}"]`)?.value)||Date.now()+Number(i||0),
       createdAt:Number(document.querySelector(`[data-fp-created="${i}"]`)?.value)||Date.now(),
+      type:document.querySelector(`[data-fp-type="${i}"]`)?.value || 'default',
       title:el.value.trim(),
       text:document.querySelector(`[data-fp-text="${i}"]`)?.value || '',
       buttonLabel:document.querySelector(`[data-fp-btn="${i}"]`)?.value.trim() || 'View',
@@ -3911,6 +3921,7 @@ function addFeedPost(){
   cur.unshift({
     id:Date.now(),
     createdAt:Date.now(),
+    type:'default',
     title:'New update',
     text:'',
     buttonLabel:'View',
