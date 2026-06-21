@@ -2857,6 +2857,7 @@ function applyDbMigrations(d){
   if(!d.amulets)d.amulets=[];
   if(!d.accessories)d.accessories=[];
   if(!d.projects)d.projects=[];
+  if(!d.historyStories)d.historyStories=[];
   return rewriteImageUrls(d);
 }
 
@@ -2900,6 +2901,10 @@ function rewriteImageUrls(d){
   (d.projects    || []).forEach(it => { it.imgs = arrRw(it.imgs); });
   (d.reviews     || []).forEach(it => { it.imgs = arrRw(it.imgs); });
   (d.feedPosts   || []).forEach(it => { it.imgs = arrRw(it.imgs); });
+  (d.historyStories || []).forEach(it => {
+    if(it.coverImage) it.coverImage = rwImg(it.coverImage);
+    if(Array.isArray(it.gallery)) it.gallery = arrRw(it.gallery);
+  });
 
   (d.casingTypes || []).forEach(ty => {
     ty.bannerImg = rwImg(ty.bannerImg);
@@ -5066,8 +5071,14 @@ const HS_CAT_LABELS = {
 
 let _hsEditId = null;
 
-function loadHsPanel(){
+async function loadHsPanel(){
   cancelEditHs();
+  // historyStories is a split key — ensure it's loaded before rendering
+  try {
+    if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
+      await window.FB.ensureDBKeys(['historyStories']);
+    }
+  } catch(e){ console.warn('[HS] ensureDBKeys failed:', e); }
   renderHsList();
 }
 
