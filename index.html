@@ -5798,6 +5798,8 @@ function buildCasingUpdatePosts(db){
   const byKey=new Map();
   (db.casingTypes||[]).forEach(ty=>{
     const typeName=ty.name || 'Casing Service';
+
+    // ── Variant-level posts (style + variant images) ──
     const variants=(ty.variants||[]).filter(v=>v);
     variants.forEach(v=>{
       const imgs=feedImages(v.imgs);
@@ -5811,7 +5813,7 @@ function buildCasingUpdatePosts(db){
         badgeCls:'feed-badge-casing',
         kicker:'Available Now',
         title,
-        text:[`${imgs.length} real sample photo${imgs.length===1?'':'s'} available now`, price].filter(Boolean).join(' · '),
+        text:[`${imgs.length} sample photo${imgs.length===1?'':'s'}`, price].filter(Boolean).join(' · '),
         imgs,
         action:`openFeedCasingType(${JSON.stringify(ty.id)},${JSON.stringify(v.id)})`,
         cta:'See this style',
@@ -5821,9 +5823,36 @@ function buildCasingUpdatePosts(db){
       const prev=byKey.get(key);
       if(!prev || (post.ts||0) > (prev.ts||0) || post.score > prev.score) byKey.set(key, post);
     });
+
+    // ── Type-level post (sampleImgs / bannerImg, no variants needed) ──
+    // Show the casing type itself as a feed post using its own sample images
+    const typeImgs = feedImages([
+      ...(ty.sampleImgs||[]),
+      ...(ty.bannerImg ? [ty.bannerImg] : []),
+    ]);
+    if(typeImgs.length){
+      const key = feedPostKey(typeName, '__type__');
+      const priceText = ty.priceRange ? `From S$${ty.priceRange}`
+        : ty.price ? `S$${Number(ty.price).toLocaleString()}` : '';
+      const post={
+        type:'casing',
+        badge:'🪬 New Casing',
+        badgeCls:'feed-badge-casing',
+        kicker:'New Casing Available',
+        title: typeName,
+        text:[`${typeImgs.length} sample photo${typeImgs.length===1?'':'s'}`, priceText].filter(Boolean).join(' · '),
+        imgs: typeImgs,
+        action:`openFeedCasingType(${JSON.stringify(ty.id)},null)`,
+        cta:'View Casing',
+        ts:Number(ty.updatedAt || 0) || 0,
+        score: typeImgs.length
+      };
+      const prev=byKey.get(key);
+      if(!prev || (post.ts||0) > (prev.ts||0) || post.score > prev.score) byKey.set(key, post);
+    }
   });
   const posts=[...byKey.values()];
-  return posts.sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,28);
+  return posts.sort((a,b)=>(b.ts||0)-(a.ts||0)||(b.score||0)-(a.score||0)).slice(0,30);
 }
 
 function feedPostKey(typeName, styleName){
@@ -5898,9 +5927,12 @@ async function openFeedCasingType(typeId, variantId){
   await ensurePageData('casing');
   await goPage('casing');
   renderCasingTypes();
-  openCasingType(typeId);
   if(variantId!==undefined && variantId!==null){
+    openCasingType(typeId);
     setTimeout(()=>openVariant(typeId, variantId), 80);
+  } else {
+    // Type-level: just open the casing type page
+    openCasingType(typeId);
   }
 }
 
