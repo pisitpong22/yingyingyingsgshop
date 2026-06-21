@@ -4890,6 +4890,23 @@ function casingPlainText(html){
     .trim();
 }
 
+function casingDescWithoutTimeframe(html){
+  // Strip out sentences/paragraphs that contain timeframe keywords,
+  // since they're shown separately in the yellow badge.
+  if(!html) return '';
+  const TIMEFRAME_RE = /(week|weeks|month|months|day|days|สัปดาห์|อาทิตย์|เดือน|วัน|timeframe|waiting|ready|custom casing|takes\s+approx)/i;
+  // Work on the HTML: remove <p> or <li> elements that match
+  let result = html
+    // Remove matching <p>…</p>
+    .replace(/<p[^>]*>([^<]*)<\/p>/gi, (m, inner) => TIMEFRAME_RE.test(inner) ? '' : m)
+    // Remove matching <li>…</li>
+    .replace(/<li[^>]*>([^<]*)<\/li>/gi, (m, inner) => TIMEFRAME_RE.test(inner) ? '' : m)
+    // For plain text sentences (no tags), remove the matching sentence
+    .replace(/[^.!?\n]*(?:takes approximately|takes about|approximately \d|\d[–-]\d\s*(?:week|month|day))[^.!?]*[.!?]?/gi, '')
+    .trim();
+  return result || html;
+}
+
 function casingTimeframeText(desc){
   const text=casingPlainText(desc);
   if(!text) return '';
@@ -5147,7 +5164,7 @@ function renderVariants(typeId){
 	    <span class="crumb-cur">${ty.name}</span>`;
 	  const typePriceText=casingTypePriceText(ty);
 	  document.getElementById('vTitle').textContent=typePriceText ? `${ty.name} - ${typePriceText}` : ty.name;
-	  document.getElementById('vDesc').innerHTML = ty.desc || '';
+	  document.getElementById('vDesc').innerHTML = casingDescWithoutTimeframe(ty.desc || '');
 	  const sideEl = document.getElementById('vSide');
 	  if(sideEl){
 	    sideEl.innerHTML = '';
