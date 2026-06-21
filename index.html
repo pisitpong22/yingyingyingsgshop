@@ -6023,7 +6023,7 @@ function buildHistoryStoriesFeedPosts(db){
     'guides-articles':'Guides & Articles',
   };
   return (db.historyStories||[])
-    .filter(a=>a && a.status!=='draft' && a.coverImage)
+    .filter(a=>a && a.status!=='draft')
     .slice(0,4)
     .map(a=>({
       type:'article',
@@ -6032,7 +6032,7 @@ function buildHistoryStoriesFeedPosts(db){
       kicker:'History & Stories',
       title:a.title||'Article',
       text:a.excerpt||'Read more about this article.',
-      imgs:feedImages([a.coverImage,...(a.gallery||[])]),
+      imgs:feedImages([...(a.coverImage?[a.coverImage]:[]),...(a.gallery||[])]),
       action:`(async()=>{if(window.FB)await window.FB.ensureDBKeys(['historyStories']);openHsArticle(${a.id})})()`,
       cta:'Read Article',
       pinned:false,
