@@ -147,15 +147,15 @@ function requestedPageFromUrl(){
 
 function keysForStorePage(page){
   switch(page){
-    case 'amulets':
-    case 'accessories':
-    case 'casing':
-    case 'projects':
+    case 'amulets':      return ['amulets'];
+    case 'accessories':  return ['accessories'];
+    case 'casing':       return ['casingTypes'];
+    case 'projects':     return ['projects'];
+    case 'reviews':      return ['reviews'];
     case 'history-stories': return ['historyStories'];
-    case 'reviews':
-    case 'feed': return ['settings'];
-    case 'home': return ['settings'];
-    default: return ['settings'];
+    case 'feed':         return ['feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
+    case 'home':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
+    default:             return ['settings'];
   }
 }
 
