@@ -3379,7 +3379,10 @@ function applyDbMigrations(d){
   d.settings.customPages = (d.settings.customPages||[]).filter(p=>p.id!=='history-stories');
   // Ensure history-stories nav item exists (module is now standalone)
   if(!d.settings.nav.find(n=>n.id==='history-stories')){
-    d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:false});
+    d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:true});
+  } else {
+    const hsNav = d.settings.nav.find(n=>n.id==='history-stories');
+    if(hsNav) hsNav.builtin = true;
   }
   // Seed default articles if historyStories is empty
   if(!d.historyStories.length){
@@ -4105,9 +4108,7 @@ function renderCustomPages(){
     const layout = p.layout || 'article';
     const items  = (p.items || []).filter(it => it && it.status !== 'draft');
     let body;
-    if(layout === 'knowledge'){
-      body = buildKnowledgeBody(p, items);
-    } else if(layout === 'article' || !items.length){
+    if(layout === 'article' || !items.length){
       body = `<div class="custom-page-content">
         ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet.</p>'}
       </div>`;

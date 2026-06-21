@@ -2293,14 +2293,7 @@
               <div class="layout-opt-desc" data-en="Vertical list with image + text. News, events, timeline." data-th="รายการแนวตั้งพร้อมรูป+ข้อความ เหมาะกับ ข่าวสาร, อีเวนต์, ไทม์ไลน์">Vertical list. For news, events, timeline.</div>
             </div>
           </label>
-          <label class="layout-opt">
-            <input type="radio" name="cp_layout" value="knowledge" onchange="onCpLayoutChange()">
-            <div class="layout-opt-body">
-              <div class="layout-opt-icon">📖</div>
-              <div class="layout-opt-name">Knowledge Center</div>
-              <div class="layout-opt-desc">Articles with categories, search, featured post. For History & Stories, guides.</div>
-            </div>
-          </label>
+
         </div>
       </div>
 
@@ -2846,6 +2839,14 @@ function applyDbMigrations(d){
       const revIdx=d.settings.nav.findIndex(n=>n.id==='reviews');
       const insertAt=revIdx>=0?revIdx+1:d.settings.nav.length;
       d.settings.nav.splice(insertAt,0,{id:'payment',label:'Payment',visible:true,enabled:true,builtin:true});
+    }
+    // History & Stories — dedicated module, treat as builtin so it shows in nav
+    if(!d.settings.nav.find(n=>n.id==='history-stories')){
+      d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:true});
+    } else {
+      // Upgrade existing entry to builtin so admin nav doesn't show "Edit Page Content"
+      const hsNav = d.settings.nav.find(n=>n.id==='history-stories');
+      if(hsNav) hsNav.builtin = true;
     }
   }
   ['amulets','accessories'].forEach(k=>{
