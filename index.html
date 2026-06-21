@@ -18,10 +18,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="YYYSG">
 <link rel="manifest" href="/favicon/site.webmanifest">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=Cinzel:wght@400;600;700&family=Marcellus&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
-<!-- Three.js for 3D phra somdej model -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
 <!-- Firebase shared module — provides window.FB API -->
 <script type="module" src="firebase-shared.js"></script>
 <script>
@@ -3633,6 +3630,7 @@ function applySettings(){
 }
 
 let _socialHomeFeedLoading=false;
+let _socialHomeCasingQueued=false;
 
 function renderSocialHomeBase(){
   const db=getDB();
@@ -3727,15 +3725,34 @@ function scheduleSocialHomeFeedLoad(){
   renderSocialHomeSkeleton();
   _socialHomeFeedLoading=true;
   const loader=(window.FB && typeof window.FB.ensureDBKeys === 'function')
-    ? window.FB.ensureDBKeys(['settings','feedPosts','casingTypes'])
+    ? window.FB.ensureDBKeys(['settings','feedPosts'])
     : Promise.resolve();
   loader.catch(err=>{
     console.warn('[home feed] partial load failed:', err);
   }).then(()=>{
     renderSocialHomeFeed();
+    scheduleSocialCasingPreviewLoad();
   }).finally(()=>{
     _socialHomeFeedLoading=false;
   });
+}
+
+function scheduleSocialCasingPreviewLoad(){
+  if(_socialHomeCasingQueued || !window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
+  const db=getDB();
+  if(Array.isArray(db.casingTypes) && db.casingTypes.length) return;
+  _socialHomeCasingQueued=true;
+  const run=()=>{
+    window.FB.ensureDBKeys(['casingTypes']).then(()=>{
+      if(document.getElementById('page-home')?.classList.contains('active')) renderSocialHomeFeed();
+    }).catch(err=>{
+      console.warn('[home feed] casing preview skipped:', err);
+    }).finally(()=>{
+      _socialHomeCasingQueued=false;
+    });
+  };
+  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:3000});
+  else setTimeout(run,1800);
 }
 
 function renderSocialHomeFeed(){
@@ -3946,7 +3963,7 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['feedPosts','casingTypes'];
+    case 'feed': return ['feedPosts'];
     case 'home': return [];
     default: return [];
   }
@@ -4013,12 +4030,16 @@ async function goPageFromUrl(){
 async function warmHomeData(){
   if(pageFromUrl()) return;
   if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
-  try {
-    await window.FB.ensureDBKeys(['settings','amulets','accessories','reviews','projects']);
-    applySettings();
-  } catch(err) {
-    console.warn('[home] background data load failed:', err);
-  }
+  const run=async()=>{
+    try {
+      await window.FB.ensureDBKeys(['settings','amulets','accessories','reviews','projects']);
+      if(document.getElementById('page-home')?.classList.contains('active')) applySettings();
+    } catch(err) {
+      console.warn('[home] background data load failed:', err);
+    }
+  };
+  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:3500});
+  else setTimeout(run,1800);
 }
 
 // ── CONTACT CLICK ── opens URL if set, otherwise shows toast
@@ -4453,6 +4474,8 @@ function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(
 // ── CASING ──
 let _casingStyleQuery = '';
 let _casingStyleMode = 'all';
+let _variantRenderToken = 0;
+let _modalGalleryToken = 0;
 
 function renderCasingLoading(){
   const typesWrap=document.getElementById('casingTypes');
@@ -4519,7 +4542,7 @@ function renderCasingTypes(){
   }).join('');
 }
 
-function openCasingType(typeId){curCasingType=typeId;renderVariants(typeId);window.scrollTo({top:0,behavior:'smooth'});}
+function openCasingType(typeId){curCasingType=typeId;_variantRenderToken++;renderVariants(typeId);window.scrollTo({top:0,behavior:'smooth'});}
 
 function casingPlainText(html){
   return String(html||'')
@@ -4672,7 +4695,19 @@ function selectCasingStyleChip(styleId){
     document.querySelector('.casing-results-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
-  const card=cards.find(el=>el.dataset.styleId === String(styleId));
+  let card=cards.find(el=>el.dataset.styleId === String(styleId));
+  if(!card && curCasingType){
+    const ty=(getDB().casingTypes||[]).find(x=>x.id===curCasingType);
+    const grid=document.getElementById('vGrid');
+    const vars=ty && Array.isArray(ty.variants) ? ty.variants : [];
+    if(ty && grid && vars.length){
+      _variantRenderToken++;
+      grid.innerHTML=vars.map((v,i)=>variantCardHtml(ty,v,i)).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
+      safeWatchImages(grid);
+      applyCasingStyleFilter();
+      card=[...document.querySelectorAll('#vGrid .var-card')].find(el=>el.dataset.styleId === String(styleId));
+    }
+  }
   if(!card) return;
   const input=document.getElementById('casingStyleSearch');
   if(input) input.value='';
@@ -4731,6 +4766,40 @@ function applyCasingStyleFilter(){
   }
 }
 
+function variantCardHtml(ty, v, i){
+  return `
+    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
+      <div class="var-img">
+        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(v.imgs[0],i<4?'medium':'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
+        ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
+        ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
+      </div>
+      <div class="var-body">
+        <div class="var-name">${v.name}</div>
+        <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
+      </div>
+    </div>`;
+}
+
+function appendVariantCardsProgressively(grid, ty, vars, start, token){
+  const chunkSize = window.matchMedia && window.matchMedia('(max-width: 700px)').matches ? 12 : 24;
+  const run=()=>{
+    if(token !== _variantRenderToken || curCasingType !== ty.id || !document.body.contains(grid)) return;
+    const end=Math.min(start + chunkSize, vars.length);
+    const html=vars.slice(start,end).map((v,idx)=>variantCardHtml(ty,v,start+idx)).join('');
+    const empty=document.getElementById('casingStyleEmpty');
+    if(empty) empty.insertAdjacentHTML('beforebegin', html);
+    else grid.insertAdjacentHTML('beforeend', html);
+    safeWatchImages(grid);
+    applyCasingStyleFilter();
+    if(end < vars.length){
+      appendVariantCardsProgressively(grid, ty, vars, end, token);
+    }
+  };
+  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:800});
+  else setTimeout(run,50);
+}
+
 function renderVariants(typeId){
   const db=getDB();
   const ty=(db.casingTypes||[]).find(x=>x.id===typeId);
@@ -4775,22 +4844,33 @@ function renderVariants(typeId){
     return;
   }
   setupCasingStyleTools(vars);
-  // Direct URLs — see note in renderCasingTypes about why no resize.
-  const thumbify = (url) => imageUrl(url,'thumb');
-  grid.innerHTML=vars.map((v,i)=>`
-    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
-      <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(v.imgs[0],i<4?'medium':'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
-        ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
-        ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
-      </div>
-      <div class="var-body">
-        <div class="var-name">${v.name}</div>
-        <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
-      </div>
-    </div>`).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
-  preloadImages(vars.map(v=>v.imgs&&v.imgs[0]).filter(Boolean).map(img=>imageUrl(img,'thumb')), 6);
+  const token=++_variantRenderToken;
+  const initialCount = window.matchMedia && window.matchMedia('(max-width: 700px)').matches ? 24 : 36;
+  const initial=vars.slice(0, initialCount);
+  grid.innerHTML=initial.map((v,i)=>variantCardHtml(ty,v,i)).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
+  safeWatchImages(grid);
+  preloadImages(initial.map(v=>v.imgs&&v.imgs[0]).filter(Boolean).map(img=>imageUrl(img,'thumb')), 6);
+  if(vars.length > initial.length){
+    appendVariantCardsProgressively(grid, ty, vars, initial.length, token);
+  }
   applyCasingStyleFilter();
+}
+
+function variantPhotoHtml(img, i){
+  return `<button type="button" class="variant-photo" onclick="openLightbox(${i})" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<6?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></button>`;
+}
+
+function appendVariantPhotosProgressively(gallery, imgs, start, token){
+  const chunkSize = window.matchMedia && window.matchMedia('(max-width: 700px)').matches ? 8 : 12;
+  const run=()=>{
+    if(token !== _modalGalleryToken || !document.body.contains(gallery)) return;
+    const end=Math.min(start + chunkSize, imgs.length);
+    gallery.insertAdjacentHTML('beforeend', imgs.slice(start,end).map((img,idx)=>variantPhotoHtml(img,start+idx)).join(''));
+    safeWatchImages(gallery);
+    if(end < imgs.length) appendVariantPhotosProgressively(gallery, imgs, end, token);
+  };
+  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:900});
+  else setTimeout(run,60);
 }
 
 function openVariant(typeId,varId){
@@ -4814,10 +4894,16 @@ function openVariant(typeId,varId){
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    <div class="variant-gallery">
-      ${imgs.length?imgs.map((img,i)=>`<button type="button" class="variant-photo" onclick="openLightbox(${i})" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></button>`).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+    <div class="variant-gallery" id="variantGallery">
+      ${imgs.length?imgs.slice(0,12).map((img,i)=>variantPhotoHtml(img,i)).join(''):'<div class="variant-photo" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
     </div>`;
-  preloadImages(imgs.map(img=>imageUrl(img,'thumb')), 8);
+  const token=++_modalGalleryToken;
+  const gallery=document.getElementById('variantGallery');
+  if(gallery){
+    safeWatchImages(gallery);
+    if(imgs.length > 12) appendVariantPhotosProgressively(gallery, imgs, 12, token);
+  }
+  preloadImages(imgs.slice(0,12).map(img=>imageUrl(img,'thumb')), 6);
   openModal('variant');
 }
 
@@ -4838,8 +4924,10 @@ function showLightboxImage(){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
   _lbIndex = ((_lbIndex % imgs.length) + imgs.length) % imgs.length;
-  // Direct Firebase Storage URL — already optimised at upload time.
-  const url = imageUrl(imgs[_lbIndex],'url') || imageUrl(imgs[_lbIndex],'medium') || imageUrl(imgs[_lbIndex],'thumb');
+  const isSmallScreen = window.matchMedia && window.matchMedia('(max-width: 700px)').matches;
+  const url = isSmallScreen
+    ? (imageUrl(imgs[_lbIndex],'medium') || imageUrl(imgs[_lbIndex],'url') || imageUrl(imgs[_lbIndex],'thumb'))
+    : (imageUrl(imgs[_lbIndex],'url') || imageUrl(imgs[_lbIndex],'medium') || imageUrl(imgs[_lbIndex],'thumb'));
   const imgEl=document.getElementById('lbImg');
   if(imgEl){
     imgEl.loading='eager';
@@ -4863,8 +4951,8 @@ function showLightboxImage(){
 	    hint.textContent = lang === 'th' ? 'ปัดซ้าย/ขวา หรือกดลูกศรเพื่อดูรูปต่อไป' : 'Swipe left/right or tap arrows for more photos';
 	  }
   if(!single){
-    const next=imageUrl(imgs[(_lbIndex+1)%imgs.length],'url');
-    const prev=imageUrl(imgs[(_lbIndex-1+imgs.length)%imgs.length],'url');
+    const next=imageUrl(imgs[(_lbIndex+1)%imgs.length], isSmallScreen ? 'medium' : 'url');
+    const prev=imageUrl(imgs[(_lbIndex-1+imgs.length)%imgs.length], isSmallScreen ? 'medium' : 'url');
     preloadImages([next,prev].filter(Boolean),2);
   }
 }
@@ -5531,7 +5619,7 @@ const _imgObserver = ('IntersectionObserver' in window)
         }
         obs.unobserve(img);
       });
-    }, { rootMargin: '1200px 0px', threshold: 0.01 })
+    }, { rootMargin: (window.matchMedia && window.matchMedia('(max-width: 700px)').matches) ? '450px 0px' : '900px 0px', threshold: 0.01 })
   : null;
 
 const _preloadedImages = new Set();
@@ -5707,16 +5795,30 @@ async function bootIndex(){
   // Subscribe to live updates — if admin changes something, the visible
   // site updates without a refresh.
   window.FB.onDBChange(() => {
-    try { applySettings(); goPageFromUrl(); } catch(e){ console.error(e); }
+    clearTimeout(window._yyyDbRefreshTimer);
+    window._yyyDbRefreshTimer = setTimeout(() => {
+      try {
+        applySettings();
+        const active=document.querySelector('.page.active');
+        const page=active ? active.id.replace(/^page-/,'') : pageFromUrl() || 'home';
+        if(page==='casing'){
+          if(curCasingType) renderVariants(curCasingType);
+          else renderCasingTypes();
+        } else if(page==='home'){
+          renderSocialHomeFeed();
+        } else if(page==='amulets') renderA(curAcat||'all');
+        else if(page==='accessories') renderAc(curAccat||'all');
+        else if(page==='projects') renderP();
+        else if(page==='reviews') renderReviews();
+      } catch(e){ console.error(e); }
+    }, 120);
   });
 }
 bootIndex();
 
 // ─── SERVICE WORKER ────────────────────────────────────────────────────────
-// Registers /sw.js which caches Firebase Storage images. After the first
-// page load, every image becomes effectively instant on repeat visits.
-// We register late (after main content paints) so it never blocks initial
-// rendering — registration is non-critical.
+// Registers the single real /sw.js after first paint. Firebase Storage images
+// rely on browser HTTP cache + Storage cache-control metadata, not an inline SW.
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(err => {
@@ -5791,36 +5893,6 @@ window.addEventListener('appinstalled',()=>{
   }catch(e){console.warn('manifest setup failed',e);}
 })();
 
-// Register service worker (inline blob) for offline shell + install eligibility
-(function setupSW(){
-  if(!('serviceWorker' in navigator))return;
-  // Service workers cannot run on file:// — skip to avoid security errors
-  if(location.protocol === 'file:') return;
-  const swCode=`
-    const CACHE='yyy-v1';
-    self.addEventListener('install',e=>{self.skipWaiting();});
-    self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
-    self.addEventListener('fetch',e=>{
-      if(e.request.method!=='GET')return;
-      e.respondWith(
-        caches.open(CACHE).then(cache=>
-          cache.match(e.request).then(hit=>{
-            const fetchPromise=fetch(e.request).then(resp=>{
-              if(resp&&resp.status===200&&resp.type==='basic')cache.put(e.request,resp.clone());
-              return resp;
-            }).catch(()=>hit);
-            return hit||fetchPromise;
-          })
-        )
-      );
-    });
-  `;
-  try{
-    const blob=new Blob([swCode],{type:'application/javascript'});
-    const url=URL.createObjectURL(blob);
-    navigator.serviceWorker.register(url).catch(()=>{});
-  }catch(e){}
-})();
 </script>
 
 
@@ -5838,10 +5910,47 @@ window.addEventListener('appinstalled',()=>{
   // ──────────────────────────────────────────────────────────────────────
 
   let initialised = false;
+  let phraLibsPromise = null;
   let currentMode = '';                          // 'glb' | 'tablet' | ''
   let scene, camera, renderer, phraGroup, halo, clock, canvas;
   let frontTex = null, backTex = null;
   let loadedGlbUrl = '';                         // remember what we loaded so we can detect changes
+
+  function loadScriptOnce(src, test){
+    if(test && test()) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-src="${src}"]`);
+      if(existing){
+        existing.addEventListener('load', resolve, {once:true});
+        existing.addEventListener('error', reject, {once:true});
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.dataset.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  function loadPhra3DLibs(){
+    if(window.THREE && window.THREE.GLTFLoader) return Promise.resolve();
+    if(phraLibsPromise) return phraLibsPromise;
+    phraLibsPromise = loadScriptOnce(
+      'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+      () => !!window.THREE
+    ).then(() => loadScriptOnce(
+      'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',
+      () => !!(window.THREE && window.THREE.GLTFLoader)
+    )).catch(err => {
+      console.warn('[phra3d] failed to lazy-load 3D libraries:', err);
+      phraLibsPromise = null;
+      throw err;
+    });
+    return phraLibsPromise;
+  }
 
   // Public: refresh textures or model when settings change.
   // The main applySettings() function calls initPhra3D() which handles both
@@ -5852,9 +5961,9 @@ window.addEventListener('appinstalled',()=>{
   };
 
   // Public entry point. Idempotent — safe to call on every settings change.
-  window.initPhra3D = function(){
+  window.initPhra3D = async function(){
     canvas = canvas || document.getElementById('phra3d');
-    if(!canvas || !window.THREE) return;
+    if(!canvas) return;
 
     // Wake the render loop in case we paused it on a previous page
     // (IntersectionObserver may still think the canvas is off-screen).
@@ -5866,6 +5975,10 @@ window.addEventListener('appinstalled',()=>{
     const wantTablet = !wantGlb && !!(window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG);
     const newMode    = wantGlb ? 'glb' : (wantTablet ? 'tablet' : '');
     if(!newMode){ return; }   // nothing to render — applySettings hid the block
+    if(!window.THREE || !window.THREE.GLTFLoader){
+      await loadPhra3DLibs();
+      if(!window.THREE) return;
+    }
 
     // If the mode changed, or the glb URL changed, tear down the existing scene.
     const glbChanged = wantGlb && loadedGlbUrl !== window.PHRA_GLB;
