@@ -5104,7 +5104,11 @@ async function loadHsPanel(){
 }
 
 function renderHsList(){
-  const db = getDB();
+  // Use FB.getDB() directly to get raw data including historyStories split key
+  // applyDbMigrations in getDB() doesn't affect historyStories but we want
+  // to ensure we see the latest data from the Firestore snapshot
+  const rawDb = (window.FB && window.FB.getDB) ? window.FB.getDB() : null;
+  const db = rawDb && Object.keys(rawDb).length ? rawDb : getDB();
   const articles = db.historyStories || [];
   const c = document.getElementById('hs_list');
   if(!c) return;
