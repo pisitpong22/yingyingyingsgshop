@@ -653,6 +653,27 @@
   .ftype-desc strong{font-weight:700;color:var(--text)}
   .ftype-desc em{font-style:italic}
   .ftype-desc br{line-height:1.7}
+  .ftype-timeframe,
+  .casing-timeframe{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    width:max-content;
+    max-width:100%;
+    margin:0 0 14px;
+    padding:8px 12px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#ffe48a 0%,#f0c84d 100%);
+    color:#2b1b04;
+    border:1px solid rgba(134,92,9,.22);
+    box-shadow:0 8px 20px rgba(201,168,76,.22);
+    font-size:12.5px;
+    font-weight:900;
+    line-height:1.35;
+  }
+  .casing-timeframe{margin:0 0 14px;font-size:13px}
+  .ftype-timeframe:empty,
+  .casing-timeframe:empty{display:none}
   .ftype-cta{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border)}
   .ftype-from{color:var(--text-muted);font-size:12px}
   .ftype-from strong{color:var(--gold-dark);font-size:18px;font-family:var(--font-display)}
@@ -1069,6 +1090,12 @@
   }
   .casing-finder-panel .casing-detail-desc strong,
   .casing-finder-panel .casing-detail-desc b{color:#f0dd9b}
+  .casing-finder-panel .casing-timeframe{
+    background:linear-gradient(135deg,#ffe37b 0%,#d6ad33 100%);
+    color:#1d1304;
+    border-color:rgba(255,239,174,.42);
+    box-shadow:0 10px 24px rgba(214,173,51,.22);
+  }
   .finder-kicker{
     font-size:11px;
     letter-spacing:1.8px;
@@ -1077,14 +1104,26 @@
     font-weight:800;
     margin:4px 0 10px;
   }
-  .casing-finder-panel .casing-style-tools{
-    margin:18px 0 0;
-    padding:0;
-    background:transparent;
-    border:0;
-    box-shadow:none;
-    backdrop-filter:none;
-    -webkit-backdrop-filter:none;
+	  .casing-finder-panel .casing-style-tools{
+	    margin:18px 0 0;
+	    padding:0;
+	    background:transparent;
+	    border:0;
+	    box-shadow:none;
+	    backdrop-filter:none;
+	    -webkit-backdrop-filter:none;
+	  }
+  .casing-quick-heading{
+    margin:0 0 10px;
+    font-size:12px;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    font-weight:900;
+    color:#8d6f18;
+  }
+  .casing-style-chip[data-style-chip="popular"]{
+    background:linear-gradient(135deg,rgba(255,227,123,.18),rgba(214,173,51,.12));
+    border-color:rgba(232,201,106,.55);
   }
   .casing-finder-panel .search-input{
     background:rgba(255,249,238,.08);
@@ -1160,14 +1199,23 @@
       border-radius:16px;
       margin-bottom:18px;
     }
-    .casing-detail-head{margin-bottom:24px}
-    .casing-detail-title{font-size:24px}
-    .casing-finder-panel .casing-detail-title{font-size:26px}
-    .casing-detail-price-badge{padding:5px 12px}
-    .cd-price-chip-value{font-size:15px}
-    .cd-price-chip-label{font-size:9.5px;letter-spacing:1px}
-    .casing-detail-desc{font-size:14px;padding:16px 18px}
-    .cd-side-card{padding:16px 20px}
+	    .casing-detail-head{margin-bottom:24px}
+	    .casing-detail-title{font-size:24px}
+	    .casing-finder-panel .casing-detail-title{font-size:26px}
+	    .casing-detail-price-badge{padding:5px 12px}
+	    .cd-price-chip-value{font-size:15px}
+	    .cd-price-chip-label{font-size:9.5px;letter-spacing:1px}
+	    .casing-detail-desc{font-size:14px;padding:16px 18px}
+	    .casing-finder-panel .casing-detail-desc{display:none}
+	    .casing-timeframe{
+	      width:100%;
+	      justify-content:center;
+	      margin:4px 0 12px;
+	      padding:10px 12px;
+	      font-size:12.5px;
+	      text-align:center;
+	    }
+	    .cd-side-card{padding:16px 20px}
     .cd-side-value{font-size:24px}
     .var-grid-title{font-size:17px}
     .casing-style-tools{
@@ -1355,8 +1403,27 @@
   .detail-list li{font-size:13px;color:var(--text-muted);padding:5px 0;display:flex;gap:8px}
   .detail-list li::before{content:'✦';color:var(--gold);font-size:10px;flex-shrink:0;margin-top:3px}
 
-  /* VARIANT GALLERY — masonry style, original aspect ratios, many at once */
-  .variant-gallery{column-count:5;column-gap:10px}
+	  /* VARIANT GALLERY — masonry style, original aspect ratios, many at once */
+  .modal.variant-modal{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+	  .modal.variant-modal .modal-head{
+	    position:sticky;
+	    top:0;
+	    z-index:5;
+	    background:linear-gradient(180deg,#fff8e8 0%,rgba(255,248,232,.96) 100%);
+	    backdrop-filter:blur(14px);
+	    -webkit-backdrop-filter:blur(14px);
+	  }
+  .modal.variant-modal .variant-gallery{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+	  .variant-gallery{column-count:5;column-gap:10px}
   .variant-photo{
     display:block;width:100%;padding:0;border:0;text-align:inherit;
     break-inside:avoid;margin-bottom:10px;
@@ -2792,11 +2859,12 @@
       <div class="casing-finder-layout">
         <aside class="casing-finder-panel">
           <div class="crumb" id="vCrumb"></div>
-          <div class="casing-detail-title-row">
-            <h3 class="casing-detail-title" id="vTitle"></h3>
-            <div class="casing-detail-price-badge" id="vSide"></div>
-          </div>
-          <div class="casing-detail-desc" id="vDesc"></div>
+	          <div class="casing-detail-title-row">
+	            <h3 class="casing-detail-title" id="vTitle"></h3>
+	            <div class="casing-detail-price-badge" id="vSide"></div>
+	          </div>
+	          <div class="casing-timeframe" id="vTimeframe"></div>
+	          <div class="casing-detail-desc" id="vDesc"></div>
           <div class="casing-style-tools" id="casingStyleTools" style="display:none">
             <div class="finder-kicker" data-en="Find your casing style" data-th="ค้นหาแบบกรอบ">Find your casing style</div>
             <div class="search-input-wrap casing-search-wrap">
@@ -2806,9 +2874,10 @@
             <div class="casing-style-strip" id="casingStyleStrip"></div>
             <div class="result-count casing-style-count" id="casingStyleCount"></div>
           </div>
-        </aside>
-        <section class="casing-results-panel">
-          <div class="casing-quick-strip" id="casingQuickStrip"></div>
+	        </aside>
+	        <section class="casing-results-panel">
+	          <div class="casing-quick-heading" id="casingQuickHeading">Popular Choices</div>
+	          <div class="casing-quick-strip" id="casingQuickStrip"></div>
           <div class="var-grid-head">
             <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
             <div class="var-grid-line"></div>
@@ -2926,7 +2995,7 @@
   <button id="lbClose" onclick="closeLightbox(event)" aria-label="Close">✕</button>
   <button id="lbPrev" onclick="lbPrev(event)" aria-label="Previous">‹</button>
   <div id="lbHint"></div>
-  <div id="lbImgWrap"><img loading="lazy" decoding="async" id="lbImg" src="" alt=""></div>
+  <div id="lbImgWrap"><img loading="eager" decoding="async" fetchpriority="high" id="lbImg" src="" alt=""></div>
   <button id="lbNext" onclick="lbNext(event)" aria-label="Next">›</button>
   <div id="lbCounter"></div>
 </div>
@@ -4437,12 +4506,13 @@ function renderCasingTypes(){
         ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(ty.bannerImg,'medium','(max-width: 700px) 100vw, 420px')}>`:`<span class="ftype-icon-bg">🪬</span>`}
         <div class="ftype-count">${badge}</div>
       </div>
-      <div class="ftype-body">
-        <div class="ftype-name">${ty.name}</div>
-        <div class="ftype-desc">${ty.desc || ''}</div>
-        <div class="ftype-cta">
-          ${ty.priceRange?`<div class="ftype-from">Price<br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from">Price<br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
-          <div class="ftype-arrow">${cta}</div>
+	      <div class="ftype-body">
+	        <div class="ftype-name">${ty.name}</div>
+	        <div class="ftype-desc">${ty.desc || ''}</div>
+	        ${casingTimeframeHtml(ty.desc,'ftype-timeframe')}
+	        <div class="ftype-cta">
+	          ${ty.priceRange?`<div class="ftype-from">Price<br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from">Price<br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
+	          <div class="ftype-arrow">${cta}</div>
         </div>
       </div>
     </div>`;
@@ -4450,6 +4520,37 @@ function renderCasingTypes(){
 }
 
 function openCasingType(typeId){curCasingType=typeId;renderVariants(typeId);window.scrollTo({top:0,behavior:'smooth'});}
+
+function casingPlainText(html){
+  return String(html||'')
+    .replace(/<br\s*\/?>/gi,' ')
+    .replace(/<\/(p|div|li|h[1-6])>/gi,' ')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/&nbsp;/g,' ')
+    .replace(/&amp;/g,'&')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function casingTimeframeText(desc){
+  const text=casingPlainText(desc);
+  if(!text) return '';
+  const sentence=text.split(/[.!?]\s+/).find(part=>/(week|weeks|month|months|day|days|สัปดาห์|อาทิตย์|เดือน|วัน|timeframe|waiting|ready|custom casing|takes)/i.test(part));
+  const match=(sentence||text).match(/[^.!?]*(?:week|weeks|month|months|day|days|สัปดาห์|อาทิตย์|เดือน|วัน)[^.!?]*/i);
+  return (match ? match[0] : sentence || '').trim();
+}
+
+function casingTimeframeHtml(desc, cls='casing-timeframe'){
+  const text=casingTimeframeText(desc);
+  return text ? `<div class="${cls}">⏱ ${escapeHtml(text)}</div>` : '';
+}
+
+function casingTypePriceText(ty){
+  if(!ty) return '';
+  if(ty.priceRange) return `S$${ty.priceRange}`;
+  if(ty.price) return `S$${Number(ty.price).toLocaleString()}`;
+  return '';
+}
 
 function casingVariantSearchText(v){
   return [
@@ -4482,7 +4583,7 @@ function uniqueCasingVariants(vars){
 }
 
 function popularCasingVariants(vars){
-  return uniqueCasingVariants(vars).sort((a,b) => {
+  return uniqueCasingVariants(vars).filter(v=>casingPhotoCount(v)>0).sort((a,b) => {
     const d = casingPhotoCount(b) - casingPhotoCount(a);
     if(d) return d;
     return String(a.name || '').localeCompare(String(b.name || ''));
@@ -4491,27 +4592,33 @@ function popularCasingVariants(vars){
 
 function setupCasingStyleTools(vars){
   const tools=document.getElementById('casingStyleTools');
-  const strip=document.getElementById('casingStyleStrip');
-  const input=document.getElementById('casingStyleSearch');
-  const quick=document.getElementById('casingQuickStrip');
+	  const strip=document.getElementById('casingStyleStrip');
+	  const input=document.getElementById('casingStyleSearch');
+	  const quick=document.getElementById('casingQuickStrip');
+	  const quickHeading=document.getElementById('casingQuickHeading');
   if(!tools || !strip || !input) return;
   _casingStyleQuery='';
   _casingStyleMode='all';
   input.value='';
   document.getElementById('casingStyleSearchClear')?.classList.remove('show');
   if(!vars || !vars.length){
-    tools.style.display='none';
-    strip.innerHTML='';
-    if(quick) quick.innerHTML='';
-    return;
-  }
+	    tools.style.display='none';
+	    strip.innerHTML='';
+	    if(quick) quick.innerHTML='';
+	    if(quickHeading) quickHeading.style.display='none';
+	    return;
+	  }
   tools.style.display='';
   input.placeholder = lang==='th' ? 'ค้นหาชื่อแบบ สี หรือราคา...' : 'Search style, color, price...';
-  const displayVars=uniqueCasingVariants(vars);
-  const popular=popularCasingVariants(displayVars);
-  strip.innerHTML=[
-    `<button type="button" class="casing-style-chip active" data-style-chip="all" onclick="selectCasingStyleChip('all')"><span class="chip-label">${lang==='th'?'ทั้งหมด':'All'}</span></button>`,
-    `<button type="button" class="casing-style-chip" data-style-chip="popular" onclick="selectCasingStyleChip('popular')"><span class="chip-label">${lang==='th'?'ยอดนิยม':'Popular'}</span><span class="chip-price">${lang==='th'?'รูปเยอะ':'most photos'}</span></button>`,
+	  const displayVars=uniqueCasingVariants(vars);
+	  const popular=popularCasingVariants(displayVars);
+	  if(quickHeading){
+	    quickHeading.textContent = lang==='th' ? 'แบบยอดนิยม' : 'Popular Choices';
+	    quickHeading.style.display = popular.length ? '' : 'none';
+	  }
+	  strip.innerHTML=[
+	    `<button type="button" class="casing-style-chip active" data-style-chip="all" onclick="selectCasingStyleChip('all')"><span class="chip-label">${lang==='th'?'ทั้งหมด':'All'}</span></button>`,
+	    `<button type="button" class="casing-style-chip" data-style-chip="popular" onclick="selectCasingStyleChip('popular')"><span class="chip-label">${lang==='th'?'ยอดนิยม':'Popular Choices'}</span><span class="chip-price">${lang==='th'?'เรียงตามรูป':'most photos'}</span></button>`,
     ...displayVars.map(v=>`
       <button type="button" class="casing-style-chip" data-style-chip="${escapeHtml(v.id)}" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
         <span class="chip-label">${escapeHtml(v.name || '')}</span>
@@ -4631,22 +4738,23 @@ function renderVariants(typeId){
   document.getElementById('casingTypes').style.display='none';
   document.getElementById('casingVariants').style.display='block';
   document.getElementById('vCrumb').innerHTML=`
-    <a onclick="curCasingType=null;renderCasingTypes()">All Casing Types</a>
-    <span class="crumb-sep">▸</span>
-    <span class="crumb-cur">${ty.name}</span>`;
-  document.getElementById('vTitle').textContent=ty.name;
-  document.getElementById('vDesc').innerHTML = ty.desc || '';
-  // Price badge — small chip next to the title (e.g. "Waterproof Casing  S$15-25")
-  const sideEl = document.getElementById('vSide');
-  if(ty.priceRange){
-    sideEl.innerHTML = `<span class="cd-price-chip-label">${lang==='th'?'ราคา':'Price'}</span> <span class="cd-price-chip-value">S$${ty.priceRange}</span>`;
-    sideEl.style.display = '';
-  } else if(ty.price){
-    sideEl.innerHTML = `<span class="cd-price-chip-label">${lang==='th'?'ราคาเริ่มต้น':'From'}</span> <span class="cd-price-chip-value">S$${Number(ty.price).toLocaleString()}</span>`;
-    sideEl.style.display = '';
-  } else {
-    sideEl.style.display = 'none';
-  }
+	    <a onclick="curCasingType=null;renderCasingTypes()">All Casing Types</a>
+	    <span class="crumb-sep">▸</span>
+	    <span class="crumb-cur">${ty.name}</span>`;
+	  const typePriceText=casingTypePriceText(ty);
+	  document.getElementById('vTitle').textContent=typePriceText ? `${ty.name} - ${typePriceText}` : ty.name;
+	  document.getElementById('vDesc').innerHTML = ty.desc || '';
+	  const sideEl = document.getElementById('vSide');
+	  if(sideEl){
+	    sideEl.innerHTML = '';
+	    sideEl.style.display = 'none';
+	  }
+	  const timeEl=document.getElementById('vTimeframe');
+	  if(timeEl){
+	    const timeframe=casingTimeframeText(ty.desc);
+	    timeEl.textContent = timeframe ? `⏱ ${timeframe}` : '';
+	    timeEl.style.display = timeframe ? 'inline-flex' : 'none';
+	  }
   const vars=ty.variants||[];
   const grid=document.getElementById('vGrid');
   if(!vars.length){
@@ -4716,7 +4824,10 @@ function openVariant(typeId,varId){
 // LIGHTBOX
 let _lbIndex = 0;
 function openLightbox(idx){
-  _lbIndex = idx;
+  const imgs = window._lbImages || [];
+  if(!imgs.length) return;
+  const nextIndex = Number(idx);
+  _lbIndex = Math.max(0, Math.min(Number.isFinite(nextIndex) ? nextIndex : 0, imgs.length - 1));
   const lb = document.getElementById('lightbox');
   if(!lb) return;
   showLightboxImage();
@@ -4726,29 +4837,48 @@ function openLightbox(idx){
 function showLightboxImage(){
   const imgs = window._lbImages || [];
   if(!imgs.length) return;
+  _lbIndex = ((_lbIndex % imgs.length) + imgs.length) % imgs.length;
   // Direct Firebase Storage URL — already optimised at upload time.
-  const url = imageUrl(imgs[_lbIndex]);
-  document.getElementById('lbImg').src = url;
+  const url = imageUrl(imgs[_lbIndex],'url') || imageUrl(imgs[_lbIndex],'medium') || imageUrl(imgs[_lbIndex],'thumb');
+  const imgEl=document.getElementById('lbImg');
+  if(imgEl){
+    imgEl.loading='eager';
+    imgEl.decoding='async';
+    imgEl.removeAttribute('srcset');
+    imgEl.removeAttribute('sizes');
+    imgEl.alt='';
+    imgEl.removeAttribute('src');
+    imgEl.onload=()=>imgEl.classList.add('is-loaded');
+    imgEl.onerror=()=>imgEl.classList.remove('is-loaded');
+    requestAnimationFrame(()=>{ imgEl.src = url; });
+  }
   document.getElementById('lbCounter').textContent = (_lbIndex+1) + ' / ' + imgs.length;
   // hide arrows if only 1 image
   const single = imgs.length <= 1;
   document.getElementById('lbPrev').style.display = single ? 'none' : 'flex';
   document.getElementById('lbNext').style.display = single ? 'none' : 'flex';
   const hint=document.getElementById('lbHint');
-  if(hint){
-    hint.style.display = single ? 'none' : 'block';
-    hint.textContent = lang === 'th' ? 'ปัดซ้าย/ขวา หรือกดลูกศรเพื่อดูรูปต่อไป' : 'Swipe left/right or tap arrows for more photos';
+	  if(hint){
+	    hint.style.display = single ? 'none' : 'block';
+	    hint.textContent = lang === 'th' ? 'ปัดซ้าย/ขวา หรือกดลูกศรเพื่อดูรูปต่อไป' : 'Swipe left/right or tap arrows for more photos';
+	  }
+  if(!single){
+    const next=imageUrl(imgs[(_lbIndex+1)%imgs.length],'url');
+    const prev=imageUrl(imgs[(_lbIndex-1+imgs.length)%imgs.length],'url');
+    preloadImages([next,prev].filter(Boolean),2);
   }
 }
 function lbNext(e){
   if(e) e.stopPropagation();
   const imgs = window._lbImages || [];
+  if(!imgs.length) return;
   _lbIndex = (_lbIndex + 1) % imgs.length;
   showLightboxImage();
 }
 function lbPrev(e){
   if(e) e.stopPropagation();
   const imgs = window._lbImages || [];
+  if(!imgs.length) return;
   _lbIndex = (_lbIndex - 1 + imgs.length) % imgs.length;
   showLightboxImage();
 }
