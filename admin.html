@@ -542,20 +542,22 @@
     pointer-events:auto;
     z-index:2;
   }
-  .pi-move{
-    background:rgba(18,16,10,.85);color:var(--gold-light);
-    border:1px solid rgba(201,168,76,.4);
+  .pi-drag-handle{
+    position:absolute;top:5px;left:5px;
     width:26px;height:26px;
-    border-radius:6px;font-size:11px;font-weight:700;
-    cursor:pointer;
+    background:rgba(18,16,10,.80);
+    border:1px solid rgba(201,168,76,.38);
+    border-radius:6px;
     display:flex;align-items:center;justify-content:center;
-    transition:all .15s;
-    box-shadow:0 2px 6px rgba(0,0,0,.3);
+    font-size:13px;line-height:1;color:var(--gold-light);
+    cursor:grab;z-index:3;
+    box-shadow:0 2px 6px rgba(0,0,0,.28);
+    transition:background .15s;
+    user-select:none;
   }
-  .pi-move:hover:not(:disabled){
-    background:var(--gold);color:var(--deep);transform:scale(1.05);
-  }
-  .pi-move:disabled{opacity:.35;cursor:not-allowed}
+  .pi-drag-handle:active{cursor:grabbing;background:rgba(40,28,8,.92)}
+  .prev-item.dragging{opacity:.4;outline:2px dashed var(--gold);outline-offset:2px}
+  .prev-item.drag-over{outline:2px solid var(--gold);outline-offset:3px;box-shadow:0 0 0 4px rgba(201,168,76,.22)}
 
   /* Remove button — always visible, big and obvious */
   .pi-rm{
@@ -5328,16 +5330,16 @@ function renderPrev(key){
     const url = e.url;
     const safeUrl = safePreviewUrl(url);
     return `
-      <div class="prev-item is-done${isPrimary ? ' is-primary' : ''}" data-pkey="${key}" data-pidx="${i}">
+      <div class="prev-item is-done${isPrimary ? ' is-primary' : ''}"
+           data-pkey="${key}" data-pidx="${i}"
+           draggable="true">
         <div class="pi-thumb">${safeUrl ? `<img src="${escapeAttr(safeUrl)}" alt="">` : '🖼️'}</div>
         ${isPrimary ? `<div class="pi-badge">${lang==='th'?'หลัก':'Cover'}</div>` : ''}
-        <div class="pi-reorder">
-          <button class="pi-move" onclick="moveImg('${key}',${i},-1)" ${canMoveLeft ? '' : 'disabled'} title="${lang==='th'?'เลื่อนซ้าย':'Move left'}">◀</button>
-          <button class="pi-move" onclick="moveImg('${key}',${i},1)" ${canMoveRight ? '' : 'disabled'} title="${lang==='th'?'เลื่อนขวา':'Move right'}">▶</button>
-        </div>
+        <div class="pi-drag-handle" title="${lang==='th'?'ลากเพื่อเปลี่ยนลำดับ':'Drag to reorder'}">⠿</div>
         <button class="pi-rm" onclick="rmImg('${key}',${i})" title="${lang==='th'?'ลบ':'Remove'}">✕</button>
       </div>`;
   }).join('');
+  initPrevGridDrag(key);
 }
 
 function escapeAttr(s){
@@ -5369,6 +5371,45 @@ function moveImg(key, idx, dir){
   arr[idx] = arr[target];
   arr[target] = tmp;
   renderPrev(key);
+}
+
+function initPrevGridDrag(key){
+  const el = document.getElementById(key + '_p');
+  if(!el) return;
+  let dragSrcIdx = null;
+  el.querySelectorAll('.prev-item.is-done').forEach((item) => {
+    item.addEventListener('dragstart', (e) => {
+      dragSrcIdx = parseInt(item.dataset.pidx, 10);
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragSrcIdx);
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      el.querySelectorAll('.prev-item').forEach(i => i.classList.remove('drag-over'));
+      dragSrcIdx = null;
+    });
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      el.querySelectorAll('.prev-item').forEach(i => i.classList.remove('drag-over'));
+      item.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      const dropIdx = parseInt(item.dataset.pidx, 10);
+      if(dragSrcIdx === null || dragSrcIdx === dropIdx) return;
+      const arr = tempImgs[key];
+      if(!Array.isArray(arr)) return;
+      const moved = arr.splice(dragSrcIdx, 1)[0];
+      arr.splice(dropIdx, 0, moved);
+      renderPrev(key);
+    });
+  });
 }
 
 function rmImg(key, idx){
