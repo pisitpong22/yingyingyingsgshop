@@ -5078,12 +5078,23 @@ async function delItem(type,id){
 function captureImgs(key){
   const arr = tempImgs[key] || [];
   return arr
-    .map(e => (typeof e === 'string' || isImageSet(e) ? e : (e && e.status === 'done' ? e.url : null)))
+    .map(e => {
+      // Plain string or already-normalised image-set object → use as-is
+      if(typeof e === 'string' || isImageSet(e)) return e;
+      // Upload entry object: { status, url, … } — url may itself be a
+      // string (uploadFile) or an image-set object (uploadImageSet)
+      if(e && e.status === 'done') return e.url;
+      return null;
+    })
     .filter(isUsableStoredImage);
 }
 
 function isImageSet(img){
-  return !!(img && typeof img === 'object' && (img.url || img.thumb || img.medium));
+  // Must be a plain image-set object (has url/thumb/medium as strings),
+  // NOT an upload-entry object (which has a `status` field).
+  if(!img || typeof img !== 'object') return false;
+  if(img.status !== undefined) return false; // upload entry — not an image set
+  return !!(img.url || img.thumb || img.medium);
 }
 
 function imageUrl(img, preferred='url'){
