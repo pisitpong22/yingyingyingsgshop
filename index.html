@@ -913,8 +913,9 @@
   .hs-empty-icon{font-size:52px;margin-bottom:16px;opacity:.5}
 
   @media(max-width:780px){
-    .hs-featured{grid-template-columns:1fr;gap:0}
-    .hs-featured-img{aspect-ratio:16/9;max-height:200px}
+    .hs-featured{grid-template-columns:1fr;gap:0;border-radius:16px}
+    .hs-featured-img{aspect-ratio:4/3;max-height:280px;border-radius:0}
+    .hs-featured-img img{width:100%;height:100%;object-fit:cover;display:block}
     .hs-featured-body{padding:18px}
     .hs-featured-title{font-size:19px}
     .hs-grid{grid-template-columns:1fr 1fr;gap:12px}
@@ -2568,7 +2569,7 @@
 
   @media(max-width:768px){
     body{
-      padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));
+      padding-bottom:calc(68px + env(safe-area-inset-bottom,0px));
       background:linear-gradient(180deg,#090704 0,#151006 310px,#fff4dc 620px,#fff8e9 100%);
     }
     .topbar{display:none}
@@ -2689,21 +2690,21 @@
     .trust-icon{font-size:28px;margin-bottom:8px}
     .trust-title{font-size:14px}
     .trust-desc{font-size:12px;line-height:1.45}
-    .cf-wrap{bottom:calc(96px + env(safe-area-inset-bottom,0px));right:12px}
-    .install-fab{bottom:calc(96px + env(safe-area-inset-bottom,0px));left:12px}
+    .cf-wrap{bottom:calc(72px + env(safe-area-inset-bottom,0px));right:12px}
+    .install-fab{bottom:calc(72px + env(safe-area-inset-bottom,0px));left:12px}
     .mobile-tabbar{
       position:fixed;
-      left:10px;
-      right:10px;
-      bottom:calc(10px + env(safe-area-inset-bottom,0px));
+      left:8px;
+      right:8px;
+      bottom:calc(8px + env(safe-area-inset-bottom,0px));
       z-index:300;
       display:flex;
-      gap:6px;
-      padding:8px;
-      border-radius:28px;
-      background:rgba(255,248,226,.66);
+      gap:3px;
+      padding:5px;
+      border-radius:22px;
+      background:rgba(255,248,226,.78);
       border:1px solid rgba(255,255,255,.46);
-      box-shadow:0 18px 48px rgba(37,24,6,.26), inset 0 1px 0 rgba(255,255,255,.65);
+      box-shadow:0 8px 28px rgba(37,24,6,.2), inset 0 1px 0 rgba(255,255,255,.65);
       backdrop-filter:blur(22px) saturate(170%);
       -webkit-backdrop-filter:blur(22px) saturate(170%);
       overflow-x:auto;
@@ -2715,28 +2716,28 @@
       border:none;
       background:transparent;
       color:#6e5420;
-      min-width:64px;
-      flex:1 0 64px;
-      height:56px;
-      border-radius:22px;
+      min-width:52px;
+      flex:1 0 52px;
+      height:44px;
+      border-radius:17px;
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      gap:2px;
+      gap:1px;
       font-family:inherit;
-      font-weight:800;
-      font-size:10.5px;
+      font-weight:700;
+      font-size:9.5px;
       cursor:pointer;
       transition:background .2s, color .2s, transform .2s;
     }
-    .mobile-tab-icon{font-size:20px;line-height:1}
+    .mobile-tab-icon{font-size:17px;line-height:1}
     .mobile-tab.active{
       background:linear-gradient(135deg,rgba(232,201,106,.95),rgba(201,168,76,.92));
       color:#140d04;
-      box-shadow:0 10px 24px rgba(139,105,20,.22);
+      box-shadow:0 4px 14px rgba(139,105,20,.18);
     }
-    .feed-page{padding:0 0 calc(96px + env(safe-area-inset-bottom,0px))}
+    .feed-page{padding:0 0 calc(74px + env(safe-area-inset-bottom,0px))}
     .feed-shell{max-width:none}
     .feed-main{gap:10px}
     .feed-top-card{padding:12px;border-radius:0;border-left:none;border-right:none}
@@ -6014,18 +6015,25 @@ function buildReviewFeedPosts(db){
 }
 
 function buildHistoryStoriesFeedPosts(db){
+  const CAT_LABELS = {
+    'monk-biographies':'Monk Biographies',
+    'amulet-history':'Amulet History',
+    'meanings-beliefs':'Meanings & Beliefs',
+    'katha-collection':'Katha Collection',
+    'guides-articles':'Guides & Articles',
+  };
   return (db.historyStories||[])
     .filter(a=>a && a.status!=='draft' && a.coverImage)
     .slice(0,4)
     .map(a=>({
       type:'article',
-      badge:'📖 '+hsCatLabel(a.category||'guides-articles'),
+      badge:'📖 '+(CAT_LABELS[a.category]||'History & Stories'),
       badgeCls:'feed-badge-article',
       kicker:'History & Stories',
       title:a.title||'Article',
       text:a.excerpt||'Read more about this article.',
       imgs:feedImages([a.coverImage,...(a.gallery||[])]),
-      action:`openHsArticle(${a.id})`,
+      action:`(async()=>{if(window.FB)await window.FB.ensureDBKeys(['historyStories']);openHsArticle(${a.id})})()`,
       cta:'Read Article',
       pinned:false,
       ts:Number(a.updatedAt||a.createdAt||0)||0,
