@@ -3064,6 +3064,29 @@
   </div>
 </div>
 
+<!-- HISTORY & STORIES -->
+<div id="page-history-stories" class="page">
+  <div class="sec-head">
+    <h2 id="hsPageTitle">📖 History & Stories</h2>
+    <div class="gline"></div>
+    <p id="hsPageDesc">Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.</p>
+  </div>
+  <div class="content">
+    <div class="hs-wrap" id="hsPageWrap">
+      <!-- Search + filter -->
+      <div class="hs-search-wrap">
+        <input class="hs-search" id="hsSearchInput" placeholder="Search articles…" oninput="hsOnSearch(this.value)">
+        <span class="hs-search-icon">🔍</span>
+      </div>
+      <div class="hs-cats" id="hsCatChips"></div>
+      <!-- Featured -->
+      <div id="hsFeaturedWrap"></div>
+      <!-- Articles grid -->
+      <div id="hsGridWrap"></div>
+    </div>
+  </div>
+</div>
+
 <!-- PROJECTS -->
 <div id="page-projects" class="page">
   <div class="sec-head"><h2 id="projTitle"></h2><div class="gline"></div><p id="projDesc"></p></div>
@@ -3330,25 +3353,42 @@ function applyDbMigrations(d){
   if(!d.casingTypes)d.casingTypes=[];
   if(!d.settings)d.settings=defaultSettings();
   if(!d.settings.customPages)d.settings.customPages=[];
-  // Seed History & Stories page if not present
-  if(!d.settings.customPages.find(p=>p.id==='history-stories')){
-    d.settings.customPages.push({
-      id:'history-stories',
-      label:'History & Stories',
-      title:'📖 History & Stories',
-      desc:'Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.',
-      layout:'knowledge',
-      content:'',
-      items:[
-        {id:'lp-thuad',title:'Luang Pu Thuad Biography',subtitle:'Wat Chang Hai · Revered monk of southern Thailand',category:'monk-biographies',excerpt:'According to Thai Buddhist belief, Luang Pu Thuad is one of the most revered monks in southern Thailand, known for miracles and extraordinary compassion.',img:'',content:'<h3>About Luang Pu Thuad</h3><p>According to Thai Buddhist belief, Luang Pu Thuad (1582–1682) was a highly revered monk from Songkhla province in southern Thailand. He is widely respected for his profound meditation practice and, according to tradition, miraculous deeds.</p><p>His amulets are among the most sought-after in Thailand and are believed by devotees to provide protection and good fortune. Please note that these are traditional beliefs and we make no guarantee of any supernatural outcome.</p>',featured:true,status:'published',createdAt:Date.now()},
-        {id:'jatukam',title:'Jatukam Ramathep History',subtitle:'Sacred amulet from Nakhon Si Thammarat',category:'amulet-history',excerpt:'Jatukam Ramathep amulets originate from Nakhon Si Thammarat and are among the most well-known modern Thai amulets, according to local belief.',img:'',content:'<h3>Origin</h3><p>Jatukam Ramathep amulets originate from Nakhon Si Thammarat province. According to local belief, they are associated with two ancient guardian spirits of the city.</p><p>The modern amulets became widely popular in the 2000s. Collectors and devotees value them for their craftsmanship and the beliefs associated with them. These are traditional beliefs; please consider them in their cultural context.</p>',featured:false,status:'published',createdAt:Date.now()-86400000},
-        {id:'phra-pidta',title:'Phra Pidta — Meaning & Symbolism',subtitle:'The closed-eyes Buddha amulet',category:'meanings-beliefs',excerpt:'Phra Pidta, meaning "closed eyes", represents a meditating monk shielding himself from worldly distractions. Devotees believe it brings protection.',img:'',content:'<h3>What is Phra Pidta?</h3><p>Phra Pidta (พระปิดตา) literally means "closed eyes" in Thai. The amulet depicts a monk in deep meditation with hands covering the face.</p><p>According to Thai Buddhist tradition, this posture symbolises detachment from worldly matters and deep inner peace. Devotees believe wearing Phra Pidta offers protection and helps block out negativity. These are traditional beliefs held by many Thais.</p>',featured:false,status:'published',createdAt:Date.now()-172800000},
-        {id:'how-to-choose',title:'How to Choose a Thai Amulet',subtitle:'A beginner\u2019s guide for collectors',category:'guides-articles',excerpt:'New to Thai amulets? This guide explains what to look for, how to verify authenticity, and how to respect the sacred traditions around amulets.',img:'',content:'<h3>Getting Started</h3><p>Choosing a Thai amulet can feel overwhelming for beginners. Here are some practical tips to help you start your collection respectfully.</p><h3>What to Look For</h3><ul><li><strong>Source:</strong> Buy from reputable shops with clear provenance.</li><li><strong>Material:</strong> Common materials include sacred powder, metal, ivory substitute, and wood.</li><li><strong>Temple:</strong> Many collectors focus on specific temples or monks.</li></ul><h3>Respecting Traditions</h3><p>Thai amulets are sacred objects. Treat them with respect — do not place them below the waist level or in bathrooms. These guidelines come from traditional Thai Buddhist beliefs.</p>',featured:false,status:'published',createdAt:Date.now()-259200000},
-      ]
-    });
-    if(!d.settings.nav.find(n=>n.id==='history-stories')){
-      d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:false});
-    }
+  // historyStories: dedicated module (migrated from customPages if needed)
+  if(!d.historyStories) d.historyStories = [];
+  // Migration: if old history-stories custom page exists, migrate items
+  const oldHsPage = d.settings.customPages.find(p=>p.id==='history-stories');
+  if(oldHsPage && (oldHsPage.items||[]).length && !d.historyStories.length){
+    let nextId = 1;
+    d.historyStories = (oldHsPage.items||[]).map(it=>({
+      id: nextId++,
+      title: it.title||'',
+      slug: (it.title||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),
+      category: it.category||'guides-articles',
+      excerpt: it.excerpt||'',
+      content: it.content||'',
+      coverImage: it.img||'',
+      gallery: [],
+      featured: !!it.featured,
+      status: it.status||'published',
+      seoTitle:'',seoDescription:'',
+      createdAt: it.createdAt||Date.now(),
+      updatedAt: Date.now(),
+    }));
+  }
+  // Remove history-stories from customPages (it's now a dedicated module)
+  d.settings.customPages = (d.settings.customPages||[]).filter(p=>p.id!=='history-stories');
+  // Ensure history-stories nav item exists (module is now standalone)
+  if(!d.settings.nav.find(n=>n.id==='history-stories')){
+    d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:false});
+  }
+  // Seed default articles if historyStories is empty
+  if(!d.historyStories.length){
+    d.historyStories=[
+      {id:1,title:'Luang Pu Thuad Biography',slug:'luang-pu-thuad',category:'monk-biographies',excerpt:'According to Thai Buddhist belief, Luang Pu Thuad is one of the most revered monks in southern Thailand, known for miracles and extraordinary compassion.',content:'<h3>About Luang Pu Thuad</h3><p>According to Thai Buddhist belief, Luang Pu Thuad (1582\u20131682) was a highly revered monk from Songkhla province in southern Thailand. He is widely respected for his profound meditation practice and, according to tradition, miraculous deeds.</p><p>His amulets are among the most sought-after in Thailand and are believed by devotees to provide protection and good fortune. Please note that these are traditional beliefs and we make no guarantee of any supernatural outcome.</p>',coverImage:'',gallery:[],featured:true,status:'published',seoTitle:'',seoDescription:'',createdAt:Date.now(),updatedAt:Date.now()},
+      {id:2,title:'Jatukam Ramathep History',slug:'jatukam-ramathep',category:'amulet-history',excerpt:'Jatukam Ramathep amulets originate from Nakhon Si Thammarat and are among the most well-known modern Thai amulets, according to local belief.',content:'<h3>Origin</h3><p>Jatukam Ramathep amulets originate from Nakhon Si Thammarat province. According to local belief, they are associated with two ancient guardian spirits of the city.</p><p>The modern amulets became widely popular in the 2000s. These are traditional beliefs; please consider them in their cultural context.</p>',coverImage:'',gallery:[],featured:false,status:'published',seoTitle:'',seoDescription:'',createdAt:Date.now()-86400000,updatedAt:Date.now()},
+      {id:3,title:'Phra Pidta \u2014 Meaning & Symbolism',slug:'phra-pidta-meaning',category:'meanings-beliefs',excerpt:'Phra Pidta represents a meditating monk shielding himself from worldly distractions. Devotees believe it brings protection, according to Thai Buddhist tradition.',content:'<h3>What is Phra Pidta?</h3><p>Phra Pidta (\u0e1e\u0e23\u0e30\u0e1b\u0e34\u0e14\u0e15\u0e32) literally means \"closed eyes\" in Thai. The amulet depicts a monk in deep meditation with hands covering the face.</p><p>According to Thai Buddhist tradition, this posture symbolises detachment from worldly matters. These are traditional beliefs held by many Thais.</p>',coverImage:'',gallery:[],featured:false,status:'published',seoTitle:'',seoDescription:'',createdAt:Date.now()-172800000,updatedAt:Date.now()},
+      {id:4,title:'How to Choose a Thai Amulet',slug:'how-to-choose-amulet',category:'guides-articles',excerpt:'New to Thai amulets? This guide explains what to look for, how to verify authenticity, and how to respect the sacred traditions around amulets.',content:'<h3>Getting Started</h3><p>Choosing a Thai amulet can feel overwhelming for beginners. Here are some practical tips to help you start your collection respectfully.</p><h3>What to Look For</h3><ul><li><strong>Source:</strong> Buy from reputable shops with clear provenance.</li><li><strong>Material:</strong> Common materials include sacred powder, metal, ivory substitute, and wood.</li></ul><h3>Respecting Traditions</h3><p>Thai amulets are sacred objects. Treat them with respect \u2014 do not place them below the waist level or in bathrooms.</p>',coverImage:'',gallery:[],featured:false,status:'published',seoTitle:'',seoDescription:'',createdAt:Date.now()-259200000,updatedAt:Date.now()},
+    ];
   }
   // Backfill layout + items on legacy custom pages
   d.settings.customPages.forEach(p => {
@@ -4223,7 +4263,7 @@ function openCpItem(pageId, itemId){
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
 
-const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','contact','projects','reviews','payment','about']);
+const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','contact','projects','reviews','payment','about','history-stories']);
 
 function navIcon(id){
   return ({
@@ -4281,6 +4321,7 @@ function dataKeysForPage(name){
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
     case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'history-stories': return ['historyStories'];
     case 'home': return [];
     default: return [];
   }
@@ -4331,6 +4372,7 @@ async function goPage(name, opts={}){
   }
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
+  if(name==='history-stories') renderHistoryStories();
   if(name==='payment')renderPayment();
   if(name==='contact')renderContactPage();
   if(opts.updateUrl !== false) updatePageUrl(name);
@@ -5717,6 +5759,158 @@ const FEED_TYPE_META = {
 };
 function feedTypeMeta(type){return FEED_TYPE_META[type]||FEED_TYPE_META.default;}
 
+// ═══════════════════════════════════════════════════════════════
+// HISTORY & STORIES — dedicated frontend module
+// ═══════════════════════════════════════════════════════════════
+const HS_CATEGORIES = [
+  {id:'all',           label:'All',               icon:'📖'},
+  {id:'monk-biographies', label:'Monk Biographies',  icon:'🙏'},
+  {id:'amulet-history',   label:'Amulet History',    icon:'📿'},
+  {id:'meanings-beliefs', label:'Meanings & Beliefs',icon:'✨'},
+  {id:'katha-collection', label:'Katha Collection',  icon:'🕉️'},
+  {id:'guides-articles',  label:'Guides & Articles', icon:'📚'},
+];
+
+let _hsCat = 'all';
+let _hsQ   = '';
+
+function hsCatLabel(id){ const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.label:(id||'Article'); }
+function hsCatIcon(id){  const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.icon:'📄'; }
+
+function renderHistoryStories(){
+  const db = getDB();
+  const s  = db.settings||{};
+  const el = document.getElementById('hsPageTitle');
+  const de = document.getElementById('hsPageDesc');
+  if(el) el.textContent = s.sections?.hsTitle || '📖 History & Stories';
+  if(de) de.textContent = s.sections?.hsDesc  || 'Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.';
+
+  const all = (db.historyStories||[]).filter(a=>a && a.status !== 'draft');
+
+  // Category chips
+  const chips = document.getElementById('hsCatChips');
+  if(chips){
+    const counts = {};
+    all.forEach(a=>{ const c=a.category||'guides-articles'; counts[c]=(counts[c]||0)+1; });
+    chips.innerHTML = HS_CATEGORIES.map(c=>`
+      <button class="hs-cat${_hsCat===c.id?' active':''}"
+        onclick="_hsCat='${c.id}';_hsQ='';document.getElementById('hsSearchInput').value='';renderHistoryStories()">
+        ${c.icon} ${c.label}${c.id!=='all'&&counts[c.id]?` <span class="hs-cat-count">(${counts[c.id]})</span>`:''}
+      </button>`).join('');
+  }
+
+  // Filter
+  let items = all;
+  if(_hsCat && _hsCat !== 'all') items = items.filter(a=>(a.category||'guides-articles')===_hsCat);
+  if(_hsQ){
+    const q=_hsQ.toLowerCase();
+    items = items.filter(a=>(a.title+' '+(a.excerpt||'')+' '+(a.category||'')).toLowerCase().includes(q));
+  }
+
+  const featured = items.find(a=>a.featured);
+  const rest     = items.filter(a=>a!==featured);
+
+  // Featured
+  const fw = document.getElementById('hsFeaturedWrap');
+  if(fw){
+    fw.innerHTML = featured ? `
+      <div class="hs-featured" onclick="openHsArticle(${featured.id})">
+        <div class="hs-featured-img">
+          ${featured.coverImage
+            ? `<img loading="eager" fetchpriority="high" decoding="async" ${imgAttrs(featured.coverImage,'medium','(max-width:700px) 100vw, 50vw')} alt="">`
+            : hsCatIcon(featured.category)}
+        </div>
+        <div class="hs-featured-body">
+          <div class="hs-badge">${hsCatIcon(featured.category)} ${hsCatLabel(featured.category)}</div>
+          <h3 class="hs-featured-title">${escapeHtml(featured.title||'')}</h3>
+          ${featured.excerpt?`<p class="hs-featured-excerpt">${escapeHtml(featured.excerpt)}</p>`:''}
+          <div class="hs-featured-cta">Read Article →</div>
+        </div>
+      </div>` : '';
+    safeWatchImages(fw);
+  }
+
+  // Grid
+  const gw = document.getElementById('hsGridWrap');
+  if(gw){
+    if(rest.length){
+      gw.innerHTML = `
+        <div class="hs-section-head">
+          <span class="hs-section-title">${featured?'More Articles':'All Articles'}</span>
+          <div class="hs-section-line"></div>
+        </div>
+        <div class="hs-grid">
+          ${rest.map(a=>`
+            <div class="hs-card" onclick="openHsArticle(${a.id})">
+              <div class="hs-card-img">
+                ${a.coverImage
+                  ? `<img loading="lazy" decoding="async" ${imgAttrs(a.coverImage,'thumb','(max-width:700px) 50vw, 280px')} alt="">`
+                  : hsCatIcon(a.category)}
+              </div>
+              <div class="hs-card-body">
+                <div class="hs-card-cat">${hsCatIcon(a.category)} ${hsCatLabel(a.category)}</div>
+                <h3 class="hs-card-title">${escapeHtml(a.title||'')}</h3>
+                ${a.excerpt?`<p class="hs-card-excerpt">${escapeHtml(a.excerpt)}</p>`:''}
+                <div class="hs-card-more">Read more →</div>
+              </div>
+            </div>`).join('')}
+        </div>`;
+      safeWatchImages(gw);
+    } else {
+      gw.innerHTML = `<div class="hs-empty">
+        <div class="hs-empty-icon">📖</div>
+        <p>No articles yet${_hsCat!=='all'?' in this category':''}.${_hsQ?' Try a different search.':''}
+        ${_hsCat!=='all'?` <a href="#" onclick="event.preventDefault();_hsCat='all';_hsQ='';renderHistoryStories()" style="color:var(--gold-dark)">View all</a>`:''}</p>
+      </div>`;
+    }
+  }
+}
+
+function hsOnSearch(val){
+  _hsQ = val;
+  renderHistoryStories();
+}
+
+function openHsArticle(id){
+  const db = getDB();
+  const a  = (db.historyStories||[]).find(x=>String(x.id)===String(id));
+  if(!a) return;
+  // Related articles (same category, excluding current)
+  const related = (db.historyStories||[])
+    .filter(x=>x.id!==a.id && x.status!=='draft' && x.category===a.category)
+    .slice(0,3);
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
+      <div class="modal-title-wrap">
+        <div class="hs-badge" style="margin-bottom:10px">${hsCatIcon(a.category)} ${hsCatLabel(a.category)}</div>
+        <div class="modal-title" style="font-size:22px;line-height:1.25">${escapeHtml(a.title||'')}</div>
+        ${a.excerpt?`<p style="font-size:14px;color:var(--text-muted);margin:8px 0 0;font-style:italic">${escapeHtml(a.excerpt)}</p>`:''}
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    ${a.coverImage?`<div style="margin-bottom:22px"><img ${imgAttrs(a.coverImage,'medium','min(100vw,700px)')} alt="" style="width:100%;max-height:400px;object-fit:cover;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12)"></div>`:''}
+    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">
+      ${a.content||'<p style="color:var(--text-muted);font-style:italic">No content yet.</p>'}
+    </div>
+    ${related.length?`
+      <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:14px">Related Articles</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${related.map(r=>`
+            <div onclick="closeModal();setTimeout(()=>openHsArticle(${r.id}),80)"
+              style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid rgba(201,168,76,.2);background:rgba(255,249,238,.5);cursor:pointer">
+              <div style="font-size:22px;flex-shrink:0">${hsCatIcon(r.category)}</div>
+              <div>
+                <div style="font-weight:600;font-size:14px;color:var(--text)">${escapeHtml(r.title||'')}</div>
+                ${r.excerpt?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${escapeHtml(r.excerpt.slice(0,80))}…</div>`:''}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+  `;
+  openModal('article');
+}
+
 function buildFeedPosts(db){
   const manual=(db.feedPosts||[])
     .filter(p=>p && p.enabled !== false && !p.system)
@@ -6466,6 +6660,7 @@ async function bootIndex(){
         else if(page==='accessories') renderAc(curAccat||'all');
         else if(page==='projects') renderP();
         else if(page==='reviews') renderReviews();
+        else if(page==='history-stories') renderHistoryStories();
       } catch(e){ console.error(e); }
     }, 120);
   });

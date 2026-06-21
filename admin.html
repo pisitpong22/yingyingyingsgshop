@@ -1257,6 +1257,7 @@
       <div class="side-item" onclick="showPanel('amulets',this)" data-en="📿 Amulets" data-th="📿 พระเครื่อง">📿 Amulets</div>
       <div class="side-item" onclick="showPanel('accessories',this)" data-en="⛓️ Accessories" data-th="⛓️ อุปกรณ์เสริม">⛓️ Accessories</div>
       <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
+      <div class="side-item" onclick="showPanel('history-stories',this)" data-en="📖 History &amp; Stories" data-th="📖 ประวัติ &amp; เรื่องราว">📖 History &amp; Stories</div>
       <div class="side-item" onclick="showPanel('projects',this)" data-en="🎯 Projects" data-th="🎯 โปรเจกต์">🎯 Projects</div>
       <div class="side-item" onclick="showPanel('reviews',this)" data-en="🙏 Reviews" data-th="🙏 รีวิว">🙏 Reviews</div>
 
@@ -1769,6 +1770,94 @@
           </div>
           <div id="variantsList"></div>
         </div>
+      </div>
+
+      <!-- HISTORY & STORIES -->
+      <div class="panel" id="panel-history-stories">
+        <div class="panel-title">📖 History &amp; Stories</div>
+        <div class="panel-sub" data-en="Manage articles about monk biographies, amulet history, beliefs, katha, and guides." data-th="จัดการบทความเกี่ยวกับประวัติพระเกจิ ประวัติพระเครื่อง ความเชื่อ คาถา และคู่มือ">
+          Manage articles about monk biographies, amulet history, beliefs, katha, and guides.
+        </div>
+
+        <!-- Article Editor -->
+        <div class="form-card" id="hs-editor-card">
+          <div class="form-section-title" id="hs_form_title">➕ Add New Article</div>
+          <div class="form-grid">
+            <div class="fg full"><label class="fl">Title *</label><input class="fi" id="hs_title" placeholder="e.g. Luang Pu Thuad Biography" oninput="hsAutoSlug()"></div>
+            <div class="fg"><label class="fl">Category</label>
+              <select class="fi" id="hs_category">
+                <option value="monk-biographies">🙏 Monk Biographies</option>
+                <option value="amulet-history">📿 Amulet History</option>
+                <option value="meanings-beliefs">✨ Meanings &amp; Beliefs</option>
+                <option value="katha-collection">🕉️ Katha Collection</option>
+                <option value="guides-articles">📚 Guides &amp; Articles</option>
+              </select>
+            </div>
+            <div class="fg"><label class="fl">Slug (URL)</label><input class="fi" id="hs_slug" placeholder="auto-generated from title"></div>
+            <div class="fg" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+              <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer">
+                <input type="checkbox" id="hs_featured" style="width:auto"> <span>⭐ Featured</span>
+              </label>
+              <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0;cursor:pointer">
+                <input type="checkbox" id="hs_published" checked style="width:auto"> <span>✅ Published</span>
+              </label>
+            </div>
+            <div class="fg full"><label class="fl">Excerpt</label><textarea class="fta" id="hs_excerpt" rows="2" style="min-height:64px" placeholder="Short description shown on article cards…"></textarea></div>
+            <div class="fg full">
+              <label class="fl">Cover Image</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'hs_cover',true)">
+                <input type="file" accept="image/*" onchange="handleSingleImg(event,'hs_cover')">
+                <div class="u-icon">🖼️</div><div class="u-text">Click or drag cover image</div>
+              </div>
+              <div class="prev-grid" id="hs_cover_p"></div>
+            </div>
+            <div class="fg full">
+              <label class="fl">Gallery Images (optional)</label>
+              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'hs_gallery')">
+                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'hs_gallery')">
+                <div class="u-icon">📷</div><div class="u-text">Click or drag images</div>
+              </div>
+              <div class="prev-grid" id="hs_gallery_p"></div>
+            </div>
+            <div class="fg full">
+              <label class="fl">Content</label>
+              <div class="rte-wrap">
+                <div class="rte-toolbar">
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','bold')"><b>B</b></button>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','italic')"><i>I</i></button>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','underline')"><u>U</u></button>
+                  <span class="rte-sep"></span>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','formatBlock','<h2>')">H2</button>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','formatBlock','<h3>')">H3</button>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','formatBlock','<p>')">¶</button>
+                  <span class="rte-sep"></span>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','insertUnorderedList')">• ≡</button>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','insertOrderedList')">1. ≡</button>
+                  <span class="rte-sep"></span>
+                  <button type="button" class="rte-btn" onclick="rteLink('hs_content')">🔗</button>
+                  <button type="button" class="rte-btn" onclick="rteExec('hs_content','removeFormat')">⌫</button>
+                </div>
+                <div class="rte-editor" id="hs_content" contenteditable="true" data-placeholder="Write article content here…" style="min-height:240px"></div>
+              </div>
+            </div>
+            <div class="fg full" style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+              <div class="form-section-title" style="font-size:13px;margin-bottom:10px">🔍 SEO (optional)</div>
+              <div class="form-grid" style="margin:0">
+                <div class="fg full"><label class="fl">SEO Title</label><input class="fi" id="hs_seo_title" placeholder="Defaults to article title"></div>
+                <div class="fg full"><label class="fl">SEO Description</label><textarea class="fta" id="hs_seo_desc" rows="2" style="min-height:56px" placeholder="Short description for search engines…"></textarea></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn-gold" onclick="saveHsArticle()">✅ Save Article</button>
+            <button class="btn-ol" id="hs_cancel_btn" onclick="cancelEditHs()" style="display:none">✕ Cancel Edit</button>
+            <button class="btn-ol" onclick="cancelEditHs()">🔄 Clear</button>
+          </div>
+        </div>
+
+        <!-- Article List -->
+        <div class="sub-title" style="margin-top:28px">All Articles</div>
+        <div id="hs_list"></div>
       </div>
 
       <!-- PROJECTS -->
@@ -2514,6 +2603,7 @@ function setLang(l){
 function refreshDynamic(){
   const active=document.querySelector('.panel.active');if(!active)return;
   if(active.id==='panel-amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
+  if(active.id==='panel-history-stories') loadHsPanel();
   else if(active.id==='panel-accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
   else if(active.id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(active.id==='panel-casing'){
@@ -2825,7 +2915,7 @@ function rewriteImageUrls(d){
 function getDB(){
   let d = FB.getDB();
   if(!d || !Object.keys(d).length){
-    return {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[],feedPosts:[]};
+    return {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[],feedPosts:[],historyStories:[]};
   }
   return applyDbMigrations(d);
 }
@@ -4961,6 +5051,161 @@ async function delVariant(varId){
 
 let tempImgs={};
 let editingItemId={amulets:null,accessories:null,projects:null};
+
+// ═══════════════════════════════════════════════════════════════════
+// HISTORY & STORIES — admin panel JS
+// ═══════════════════════════════════════════════════════════════════
+const HS_CAT_LABELS = {
+  'monk-biographies':'🙏 Monk Biographies',
+  'amulet-history':  '📿 Amulet History',
+  'meanings-beliefs':'✨ Meanings & Beliefs',
+  'katha-collection':'🕉️ Katha Collection',
+  'guides-articles': '📚 Guides & Articles',
+};
+
+let _hsEditId = null;
+
+function loadHsPanel(){
+  cancelEditHs();
+  renderHsList();
+}
+
+function renderHsList(){
+  const db = getDB();
+  const articles = db.historyStories || [];
+  const c = document.getElementById('hs_list');
+  if(!c) return;
+  if(!articles.length){
+    c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:12px">No articles yet. Add your first article above.</div>`;
+    return;
+  }
+  c.innerHTML = `<table class="dtable">
+    <thead><tr>
+      <th>Cover</th><th>Title</th><th>Category</th><th>Status</th><th>Featured</th><th>Updated</th><th>Actions</th>
+    </tr></thead>
+    <tbody>${articles.map(a=>`
+      <tr>
+        <td>${a.coverImage?`<img class="thumb" src="${imageUrl(a.coverImage,'thumb')}" alt="">`:`<div class="no-img">📖</div>`}</td>
+        <td><strong>${escapeHtml(a.title||'')}</strong><br><small style="color:var(--text-muted)">${escapeHtml(a.slug||'')}</small></td>
+        <td><span class="tag">${HS_CAT_LABELS[a.category]||a.category||'-'}</span></td>
+        <td>${a.status==='draft'?'<span class="tag" style="background:#f5e8c8;color:#7a5c00">📝 Draft</span>':'<span class="tag" style="background:#e2f5e8;color:#176b37">✅ Published</span>'}</td>
+        <td style="text-align:center">${a.featured?'⭐':'-'}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${a.updatedAt?new Date(a.updatedAt).toLocaleDateString('en-SG',{day:'2-digit',month:'short',year:'numeric'}):'-'}</td>
+        <td><div class="row-actions">
+          <button class="btn-edit" onclick="editHsArticle(${a.id})">Edit</button>
+          <button class="btn-edit" onclick="dupHsArticle(${a.id})" title="Duplicate">⎘</button>
+          <button class="btn-del" onclick="delHsArticle(${a.id})">Delete</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function editHsArticle(id){
+  const db = getDB();
+  const a  = (db.historyStories||[]).find(x=>String(x.id)===String(id));
+  if(!a) return;
+  _hsEditId = a.id;
+  document.getElementById('hs_form_title').textContent = '✏️ Edit Article';
+  document.getElementById('hs_title').value     = a.title||'';
+  document.getElementById('hs_slug').value      = a.slug||'';
+  document.getElementById('hs_category').value  = a.category||'guides-articles';
+  document.getElementById('hs_excerpt').value   = a.excerpt||'';
+  document.getElementById('hs_featured').checked = !!a.featured;
+  document.getElementById('hs_published').checked = a.status!=='draft';
+  document.getElementById('hs_seo_title').value  = a.seoTitle||'';
+  document.getElementById('hs_seo_desc').value   = a.seoDescription||'';
+  rteSetHtml('hs_content', a.content||'');
+  tempImgs['hs_cover']   = a.coverImage ? [a.coverImage] : [];
+  tempImgs['hs_gallery'] = Array.isArray(a.gallery) ? [...a.gallery] : [];
+  renderPrev('hs_cover');
+  renderPrev('hs_gallery');
+  document.getElementById('hs_cancel_btn').style.display = '';
+  document.getElementById('hs-editor-card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cancelEditHs(){
+  _hsEditId = null;
+  document.getElementById('hs_form_title').textContent = '➕ Add New Article';
+  document.getElementById('hs_title').value    = '';
+  document.getElementById('hs_slug').value     = '';
+  document.getElementById('hs_category').value = 'monk-biographies';
+  document.getElementById('hs_excerpt').value  = '';
+  document.getElementById('hs_featured').checked  = false;
+  document.getElementById('hs_published').checked = true;
+  document.getElementById('hs_seo_title').value = '';
+  document.getElementById('hs_seo_desc').value  = '';
+  rteSetHtml('hs_content', '');
+  tempImgs['hs_cover']   = [];
+  tempImgs['hs_gallery'] = [];
+  renderPrev('hs_cover');
+  renderPrev('hs_gallery');
+  document.getElementById('hs_cancel_btn').style.display = 'none';
+}
+
+function hsAutoSlug(){
+  const t = document.getElementById('hs_title').value.trim();
+  if(!_hsEditId && t){
+    document.getElementById('hs_slug').value = t.toLowerCase()
+      .replace(/[àáâãäå]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
+      .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u')
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+  }
+}
+
+async function saveHsArticle(){
+  if(countPendingUploads()>0){ showToast('Please wait for uploads to finish'); return; }
+  const title = document.getElementById('hs_title').value.trim();
+  if(!title){ showToast('Title is required'); return; }
+  const data = {
+    title,
+    slug:        document.getElementById('hs_slug').value.trim() || title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60),
+    category:    document.getElementById('hs_category').value,
+    excerpt:     document.getElementById('hs_excerpt').value.trim(),
+    content:     rteGetHtml('hs_content'),
+    coverImage:  captureImgs('hs_cover')[0] || '',
+    gallery:     captureImgs('hs_gallery'),
+    featured:    document.getElementById('hs_featured').checked,
+    status:      document.getElementById('hs_published').checked ? 'published' : 'draft',
+    seoTitle:    document.getElementById('hs_seo_title').value.trim(),
+    seoDescription: document.getElementById('hs_seo_desc').value.trim(),
+  };
+  const db = getDB();
+  if(!db.historyStories) db.historyStories = [];
+  if(_hsEditId){
+    const idx = db.historyStories.findIndex(x=>String(x.id)===String(_hsEditId));
+    if(idx>=0) db.historyStories[idx] = {...db.historyStories[idx],...data,updatedAt:Date.now()};
+  } else {
+    const id = db.historyStories.length ? Math.max(...db.historyStories.map(x=>Number(x.id)||0))+1 : 1;
+    db.historyStories.push({id,createdAt:Date.now(),updatedAt:Date.now(),...data});
+  }
+  const ok = await persistDB(db, _hsEditId?'✅ Article updated':'✅ Article saved');
+  if(ok){ cancelEditHs(); renderHsList(); }
+}
+
+async function delHsArticle(id){
+  if(!confirm('Delete this article?')) return;
+  const db = getDB();
+  db.historyStories = (db.historyStories||[]).filter(x=>String(x.id)!==String(id));
+  const ok = await persistDB(db,'✅ Article deleted');
+  if(ok) renderHsList();
+}
+
+async function dupHsArticle(id){
+  const db = getDB();
+  const a  = (db.historyStories||[]).find(x=>String(x.id)===String(id));
+  if(!a) return;
+  if(!db.historyStories) db.historyStories=[];
+  const newId = db.historyStories.length ? Math.max(...db.historyStories.map(x=>Number(x.id)||0))+1 : 1;
+  db.historyStories.push({
+    ...a, id:newId,
+    title:'Copy of '+a.title,
+    slug:(a.slug||'article')+'-copy',
+    featured:false, status:'draft',
+    createdAt:Date.now(), updatedAt:Date.now(),
+  });
+  const ok = await persistDB(db,'✅ Article duplicated');
+  if(ok) renderHsList();
+}
 
 async function saveAmulet(){
   if(!ensureUploadsDone()) return;

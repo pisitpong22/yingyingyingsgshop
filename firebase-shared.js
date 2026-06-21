@@ -108,7 +108,7 @@ let _isReady = false;
 
 const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
-const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews', 'feedPosts'];
+const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews', 'feedPosts', 'historyStories'];
 // Keep every large collection chunked. A single casing type can grow past
 // Firestore's 1 MiB document limit when it contains many style/photo URLs.
 const DB_ITEM_KEYS = new Set([]);
@@ -151,6 +151,7 @@ function keysForStorePage(page){
     case 'accessories':
     case 'casing':
     case 'projects':
+    case 'history-stories': return ['historyStories'];
     case 'reviews':
     case 'feed': return ['settings'];
     case 'home': return ['settings'];
@@ -1082,6 +1083,75 @@ async function deleteReviewSubmission(id){
 }
 
 // ─── EXPOSE GLOBALLY ───────────────────────────────────────────────────────
+// ─── HISTORY & STORIES CRUD ────────────────────────────────────────────────
+// historyStories is stored as db.historyStories[] — same pattern as reviews/amulets.
+// Each article: { id, title, slug, category, excerpt, content, coverImage,
+//   gallery:[], featured, status:'published'|'draft', seoTitle, seoDescription,
+//   createdAt, updatedAt }
+
+function hsGenId(arr){
+  const ids = (Array.isArray(arr) ? arr : []).map(x => Number(x.id)||0);
+  return ids.length ? Math.max(...ids) + 1 : 1;
+}
+
+function hsGetAll(){
+  return (window.FB.getDB().historyStories || []);
+}
+
+async function hsSaveAll(articles){
+  const db = window.FB.getDB();
+  db.historyStories = articles;
+  await window.FB.saveDB(db);
+}
+
+async function hsAddArticle(data){
+  const db = window.FB.getDB();
+  if(!db.historyStories) db.historyStories = [];
+  const id = hsGenId(db.historyStories);
+  const article = {
+    id,
+    title: data.title || '',
+    slug:  data.slug  || '',
+    category: data.category || 'guides-articles',
+    excerpt: data.excerpt || '',
+    content: data.content || '',
+    coverImage: data.coverImage || '',
+    gallery: Array.isArray(data.gallery) ? data.gallery : [],
+    featured: !!data.featured,
+    status: data.status || 'published',
+    seoTitle: data.seoTitle || '',
+    seoDescription: data.seoDescription || '',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  db.historyStories.push(article);
+  await window.FB.saveDB(db);
+  return article;
+}
+
+async function hsUpdateArticle(id, data){
+  const db = window.FB.getDB();
+  if(!db.historyStories) db.historyStories = [];
+  const idx = db.historyStories.findIndex(x => String(x.id) === String(id));
+  if(idx < 0) throw new Error('Article not found: ' + id);
+  db.historyStories[idx] = {
+    ...db.historyStories[idx],
+    ...data,
+    id: db.historyStories[idx].id,
+    createdAt: db.historyStories[idx].createdAt,
+    updatedAt: Date.now(),
+  };
+  await window.FB.saveDB(db);
+  return db.historyStories[idx];
+}
+
+async function hsDeleteArticle(id){
+  const db = window.FB.getDB();
+  if(!db.historyStories) return;
+  db.historyStories = db.historyStories.filter(x => String(x.id) !== String(id));
+  await window.FB.saveDB(db);
+}
+
 window.FB = {
   getDB, saveDB, onDBChange, ready,
   ensureDBKeys,
@@ -1100,6 +1170,12 @@ window.FB = {
   setAdminRecord,
   deleteAdminRecord,
   ensureFirstSuperAdmin,
+  // History & Stories
+  hsGetAll,
+  hsAddArticle,
+  hsUpdateArticle,
+  hsDeleteArticle,
+  hsSaveAll,
 };
 
 // Optional debug helper
