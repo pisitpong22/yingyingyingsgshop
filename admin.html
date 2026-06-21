@@ -2204,6 +2204,14 @@
               <div class="layout-opt-desc" data-en="Vertical list with image + text. News, events, timeline." data-th="รายการแนวตั้งพร้อมรูป+ข้อความ เหมาะกับ ข่าวสาร, อีเวนต์, ไทม์ไลน์">Vertical list. For news, events, timeline.</div>
             </div>
           </label>
+          <label class="layout-opt">
+            <input type="radio" name="cp_layout" value="knowledge" onchange="onCpLayoutChange()">
+            <div class="layout-opt-body">
+              <div class="layout-opt-icon">📖</div>
+              <div class="layout-opt-name">Knowledge Center</div>
+              <div class="layout-opt-desc">Articles with categories, search, featured post. For History & Stories, guides.</div>
+            </div>
+          </label>
         </div>
       </div>
 
@@ -2247,6 +2255,9 @@
         <div class="form-section-desc" data-en="Add items below. Each item shows as a card on the page. After saving the page, you can edit/reorder/delete items from the Custom Pages list." data-th="เพิ่มรายการด้านล่าง แต่ละรายการจะแสดงเป็นการ์ดในหน้านี้ หลังบันทึกหน้านี้แล้ว สามารถแก้/เรียง/ลบ items ได้จากรายการ Custom Pages">Add items below. Each item shows as a card.</div>
         <div id="cp_items_list" style="margin-top:12px"></div>
         <button class="btn-ol" type="button" onclick="addCpItem()" data-en="➕ Add Item" data-th="➕ เพิ่มรายการ" style="margin-top:12px">➕ Add Item</button>
+        <div id="cp_knowledge_hint" style="display:none;margin-top:10px;font-size:12.5px;color:var(--text-muted);background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:10px 14px;line-height:1.6">
+          📖 <strong>Knowledge Center mode:</strong> Each item is an article. Set <em>Category</em>, <em>Excerpt</em>, and mark one as <em>Featured</em> to highlight it at the top.
+        </div>
       </div>
     </div>
     <div class="modal-actions">
@@ -2268,9 +2279,34 @@
         <label class="fl" data-en="Title *" data-th="ชื่อ *">Title *</label>
         <input class="fi" id="cpItemTitle" placeholder="e.g. หลวงพ่อโต">
       </div>
+      <div class="fg">
+        <label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label>
+        <select class="fi" id="cpItemCategory">
+          <option value="">— General —</option>
+          <option value="monk-biographies">🙏 Monk Biographies</option>
+          <option value="amulet-history">📿 Amulet History</option>
+          <option value="meanings-beliefs">✨ Meanings & Beliefs</option>
+          <option value="katha-collection">🕉️ Katha Collection</option>
+          <option value="guides-articles">📚 Guides & Articles</option>
+        </select>
+      </div>
+      <div class="fg" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0">
+          <input type="checkbox" id="cpItemFeatured" style="width:auto">
+          <span data-en="Featured article" data-th="บทความเด่น">Featured article</span>
+        </label>
+        <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0">
+          <input type="checkbox" id="cpItemPublished" checked style="width:auto">
+          <span data-en="Published" data-th="เผยแพร่">Published</span>
+        </label>
+      </div>
       <div class="fg full">
         <label class="fl" data-en="Subtitle (optional)" data-th="คำโปรย (ไม่บังคับ)">Subtitle (optional)</label>
         <input class="fi" id="cpItemSubtitle" placeholder="e.g. วัดพระเชตุพน · พระเกจิสมัยรัชกาลที่ 5">
+      </div>
+      <div class="fg full">
+        <label class="fl" data-en="Excerpt / Short Description" data-th="ข้อความสรุป">Excerpt / Short Description</label>
+        <textarea class="fta" id="cpItemExcerpt" rows="2" style="min-height:64px" placeholder="Short summary shown on article card…"></textarea>
       </div>
       <div class="fg full">
         <label class="fl" data-en="Image (optional)" data-th="รูป (ไม่บังคับ)">Image (optional)</label>
@@ -3248,7 +3284,10 @@ function editCustomPage(id){
 function onCpLayoutChange(){
   const layout = (document.querySelector('input[name="cp_layout"]:checked') || {}).value || 'article';
   document.getElementById('cp_article_section').style.display = (layout === 'article') ? '' : 'none';
-  document.getElementById('cp_items_section').style.display = (layout === 'article') ? 'none' : '';
+  document.getElementById('cp_items_section').style.display = (layout !== 'article') ? '' : 'none';
+  // Show category/featured/excerpt fields only for knowledge layout
+  const knowledgeHint = document.getElementById('cp_knowledge_hint');
+  if(knowledgeHint) knowledgeHint.style.display = (layout === 'knowledge') ? '' : 'none';
 }
 
 // Render the list of items currently being edited
@@ -3259,6 +3298,7 @@ function renderCpItems(){
     c.innerHTML = `<div style="text-align:center;padding:18px;color:var(--text-muted);font-size:13px;background:rgba(201,168,76,.05);border-radius:8px;border:1px dashed var(--border)">${lang==='th'?'ยังไม่มีรายการ — คลิก "เพิ่มรายการ" ด้านล่าง':'No items yet — click "Add Item" below'}</div>`;
     return;
   }
+  const catLabels={'monk-biographies':'🙏 Monk Biographies','amulet-history':'📿 Amulet History','meanings-beliefs':'✨ Meanings & Beliefs','katha-collection':'🕉️ Katha Collection','guides-articles':'📚 Guides & Articles'};
   c.innerHTML = _cpItems.map((it, idx) => `
     <div class="cp-item-row">
       <div style="display:flex;flex-direction:column;gap:2px">
@@ -3268,7 +3308,7 @@ function renderCpItems(){
       <div class="cp-item-thumb">${it.img?`<img src="${it.img}">`:'📄'}</div>
       <div class="cp-item-info">
         <div class="cp-item-name">${it.title || (lang==='th'?'(ยังไม่ตั้งชื่อ)':'(untitled)')}</div>
-        <div class="cp-item-meta">${it.subtitle || ''}</div>
+        <div class="cp-item-meta">${it.category?catLabels[it.category]+'  ':''} ${it.featured?'⭐ ':''} ${it.status==='draft'?'📝 Draft · ':''} ${it.subtitle||''}</div>
       </div>
       <div class="cp-item-actions">
         <button type="button" class="btn-edit" onclick="editCpItem(${idx})">${tr('edit')}</button>
@@ -3279,7 +3319,7 @@ function renderCpItems(){
 }
 
 function addCpItem(){
-  _cpItems.push({id:Date.now(),title:'',subtitle:'',img:'',content:''});
+  _cpItems.push({id:Date.now(),title:'',subtitle:'',excerpt:'',category:'',img:'',content:'',featured:false,status:'published'});
   renderCpItems();
   // Open the edit modal for the new item
   editCpItem(_cpItems.length - 1);
@@ -3306,6 +3346,13 @@ function editCpItem(idx){
   if(!it) return;
   document.getElementById('cpItemTitle').value = it.title || '';
   document.getElementById('cpItemSubtitle').value = it.subtitle || '';
+  document.getElementById('cpItemExcerpt').value = it.excerpt || '';
+  const catEl = document.getElementById('cpItemCategory');
+  if(catEl) catEl.value = it.category || '';
+  const featEl = document.getElementById('cpItemFeatured');
+  if(featEl) featEl.checked = !!it.featured;
+  const pubEl = document.getElementById('cpItemPublished');
+  if(pubEl) pubEl.checked = it.status !== 'draft';
   rteSetHtml('cpItemContent', it.content || '');
   // Reset image upload state
   tempImgs['cpItemImg'] = it.img ? [it.img] : [];
@@ -3321,10 +3368,15 @@ function saveCpItem(){
     showToast(lang==='th'?'กรุณารอให้รูปอัปโหลดเสร็จก่อน':'Please wait for images to finish uploading');
     return;
   }
-  _cpItems[idx].title    = document.getElementById('cpItemTitle').value;
-  _cpItems[idx].subtitle = document.getElementById('cpItemSubtitle').value;
+  _cpItems[idx].title    = document.getElementById('cpItemTitle').value.trim();
+  _cpItems[idx].subtitle = document.getElementById('cpItemSubtitle').value.trim();
+  _cpItems[idx].excerpt  = (document.getElementById('cpItemExcerpt')?.value||'').trim();
+  _cpItems[idx].category = document.getElementById('cpItemCategory')?.value || '';
+  _cpItems[idx].featured = !!(document.getElementById('cpItemFeatured')?.checked);
+  _cpItems[idx].status   = document.getElementById('cpItemPublished')?.checked ? 'published' : 'draft';
   _cpItems[idx].content  = rteGetHtml('cpItemContent');
   _cpItems[idx].img      = (captureImgs('cpItemImg')[0] || '');
+  _cpItems[idx].updatedAt = Date.now();
   closeModal('cpItemModal');
   renderCpItems();
 }

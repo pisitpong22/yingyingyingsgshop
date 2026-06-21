@@ -824,6 +824,108 @@
     .cp-list-content{font-size:13.5px;margin-bottom:8px}
   }
 
+
+  /* ─── HISTORY & STORIES / KNOWLEDGE CENTER ─────────────────────────────
+     Special layout for custom pages with layout='knowledge'.
+     Shows category chips → featured article → article grid.  */
+  .hs-wrap{max-width:1100px;margin:0 auto}
+
+  /* Category filter chips */
+  .hs-cats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+  .hs-cat{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:7px 16px;border-radius:999px;
+    border:1px solid rgba(201,168,76,.32);
+    background:rgba(255,249,238,.55);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    font-size:13px;font-weight:600;color:var(--text-muted);
+    cursor:pointer;transition:all .2s;white-space:nowrap;
+  }
+  .hs-cat:hover,.hs-cat.active{
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--deep);border-color:var(--gold);
+    box-shadow:0 4px 14px rgba(201,168,76,.28);
+  }
+  .hs-cat-count{font-size:10.5px;opacity:.7}
+
+  /* Search */
+  .hs-search-wrap{position:relative;margin-bottom:24px}
+  .hs-search{
+    width:100%;padding:12px 44px 12px 16px;
+    border:1px solid rgba(201,168,76,.32);border-radius:12px;
+    background:rgba(255,249,238,.7);backdrop-filter:blur(10px);
+    font-size:15px;color:var(--text);font-family:inherit;
+    transition:border-color .2s,box-shadow .2s;box-sizing:border-box;
+  }
+  .hs-search:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.15)}
+  .hs-search-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+
+  /* Featured article */
+  .hs-featured{
+    display:grid;grid-template-columns:1fr 1fr;gap:28px;
+    align-items:center;margin-bottom:36px;
+    background:linear-gradient(135deg,rgba(255,249,238,.7),rgba(253,242,212,.6));
+    border:1px solid rgba(201,168,76,.28);border-radius:20px;
+    overflow:hidden;cursor:pointer;
+    box-shadow:0 8px 32px rgba(139,105,20,.1),inset 0 1px 0 rgba(255,255,255,.6);
+    transition:transform .25s,box-shadow .25s;
+  }
+  .hs-featured:hover{transform:translateY(-3px);box-shadow:0 16px 48px rgba(139,105,20,.18),inset 0 1px 0 rgba(255,255,255,.6)}
+  .hs-featured-img{aspect-ratio:4/3;overflow:hidden;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:72px}
+  .hs-featured-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .hs-featured-body{padding:28px}
+  .hs-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+    padding:3px 10px;border-radius:999px;margin-bottom:12px;
+    background:rgba(201,168,76,.15);color:var(--gold-dark);
+    border:1px solid rgba(201,168,76,.3);
+  }
+  .hs-featured-title{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--text);margin:0 0 10px;line-height:1.25}
+  .hs-featured-excerpt{color:var(--text-muted);font-size:14px;line-height:1.7;margin-bottom:16px}
+  .hs-featured-cta{color:var(--gold-dark);font-size:13px;font-weight:700;letter-spacing:.3px}
+
+  /* Articles grid */
+  .hs-section-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .hs-section-title{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text)}
+  .hs-section-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.4),transparent)}
+  .hs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-bottom:32px}
+  .hs-card{
+    background:rgba(255,249,238,.65);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(201,168,76,.22);border-radius:16px;
+    overflow:hidden;cursor:pointer;
+    transition:transform .25s,box-shadow .25s,border-color .25s;
+    box-shadow:0 4px 16px rgba(139,105,20,.07),inset 0 1px 0 rgba(255,255,255,.5);
+    display:flex;flex-direction:column;
+  }
+  .hs-card:hover{transform:translateY(-4px);border-color:rgba(201,168,76,.5);box-shadow:0 12px 40px rgba(139,105,20,.16),inset 0 1px 0 rgba(255,255,255,.5)}
+  .hs-card-img{aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:40px}
+  .hs-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .hs-card-body{padding:16px 18px 20px;flex:1;display:flex;flex-direction:column}
+  .hs-card-cat{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:8px}
+  .hs-card-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin:0 0 8px;line-height:1.3;flex:1}
+  .hs-card-excerpt{color:var(--text-muted);font-size:13px;line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .hs-card-more{color:var(--gold-dark);font-size:12px;font-weight:700;letter-spacing:.3px;margin-top:auto}
+
+  /* Empty state */
+  .hs-empty{text-align:center;padding:60px 24px;color:var(--text-muted)}
+  .hs-empty-icon{font-size:52px;margin-bottom:16px;opacity:.5}
+
+  @media(max-width:780px){
+    .hs-featured{grid-template-columns:1fr;gap:0}
+    .hs-featured-img{aspect-ratio:16/9;max-height:200px}
+    .hs-featured-body{padding:18px}
+    .hs-featured-title{font-size:19px}
+    .hs-grid{grid-template-columns:1fr 1fr;gap:12px}
+    .hs-card-body{padding:12px 14px 16px}
+    .hs-card-title{font-size:14px}
+    .hs-cat{font-size:12px;padding:6px 12px}
+  }
+  @media(max-width:480px){
+    .hs-grid{grid-template-columns:1fr}
+  }
+
   /* ─── CUSTOM PAGE CONTENT ───
      Style the rich-text content of admin-created custom pages so it looks
      polished by default — no matter what HTML the admin's RTE produces. */
@@ -3228,6 +3330,26 @@ function applyDbMigrations(d){
   if(!d.casingTypes)d.casingTypes=[];
   if(!d.settings)d.settings=defaultSettings();
   if(!d.settings.customPages)d.settings.customPages=[];
+  // Seed History & Stories page if not present
+  if(!d.settings.customPages.find(p=>p.id==='history-stories')){
+    d.settings.customPages.push({
+      id:'history-stories',
+      label:'History & Stories',
+      title:'📖 History & Stories',
+      desc:'Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.',
+      layout:'knowledge',
+      content:'',
+      items:[
+        {id:'lp-thuad',title:'Luang Pu Thuad Biography',subtitle:'Wat Chang Hai · Revered monk of southern Thailand',category:'monk-biographies',excerpt:'According to Thai Buddhist belief, Luang Pu Thuad is one of the most revered monks in southern Thailand, known for miracles and extraordinary compassion.',img:'',content:'<h3>About Luang Pu Thuad</h3><p>According to Thai Buddhist belief, Luang Pu Thuad (1582–1682) was a highly revered monk from Songkhla province in southern Thailand. He is widely respected for his profound meditation practice and, according to tradition, miraculous deeds.</p><p>His amulets are among the most sought-after in Thailand and are believed by devotees to provide protection and good fortune. Please note that these are traditional beliefs and we make no guarantee of any supernatural outcome.</p>',featured:true,status:'published',createdAt:Date.now()},
+        {id:'jatukam',title:'Jatukam Ramathep History',subtitle:'Sacred amulet from Nakhon Si Thammarat',category:'amulet-history',excerpt:'Jatukam Ramathep amulets originate from Nakhon Si Thammarat and are among the most well-known modern Thai amulets, according to local belief.',img:'',content:'<h3>Origin</h3><p>Jatukam Ramathep amulets originate from Nakhon Si Thammarat province. According to local belief, they are associated with two ancient guardian spirits of the city.</p><p>The modern amulets became widely popular in the 2000s. Collectors and devotees value them for their craftsmanship and the beliefs associated with them. These are traditional beliefs; please consider them in their cultural context.</p>',featured:false,status:'published',createdAt:Date.now()-86400000},
+        {id:'phra-pidta',title:'Phra Pidta — Meaning & Symbolism',subtitle:'The closed-eyes Buddha amulet',category:'meanings-beliefs',excerpt:'Phra Pidta, meaning "closed eyes", represents a meditating monk shielding himself from worldly distractions. Devotees believe it brings protection.',img:'',content:'<h3>What is Phra Pidta?</h3><p>Phra Pidta (พระปิดตา) literally means "closed eyes" in Thai. The amulet depicts a monk in deep meditation with hands covering the face.</p><p>According to Thai Buddhist tradition, this posture symbolises detachment from worldly matters and deep inner peace. Devotees believe wearing Phra Pidta offers protection and helps block out negativity. These are traditional beliefs held by many Thais.</p>',featured:false,status:'published',createdAt:Date.now()-172800000},
+        {id:'how-to-choose',title:'How to Choose a Thai Amulet',subtitle:'A beginner's guide for collectors',category:'guides-articles',excerpt:'New to Thai amulets? This guide explains what to look for, how to verify authenticity, and how to respect the sacred traditions around amulets.',img:'',content:'<h3>Getting Started</h3><p>Choosing a Thai amulet can feel overwhelming for beginners. Here are some practical tips to help you start your collection respectfully.</p><h3>What to Look For</h3><ul><li><strong>Source:</strong> Buy from reputable shops with clear provenance.</li><li><strong>Material:</strong> Common materials include sacred powder, metal, ivory substitute, and wood.</li><li><strong>Temple:</strong> Many collectors focus on specific temples or monks.</li></ul><h3>Respecting Traditions</h3><p>Thai amulets are sacred objects. Treat them with respect — do not place them below the waist level or in bathrooms. These guidelines come from traditional Thai Buddhist beliefs.</p>',featured:false,status:'published',createdAt:Date.now()-259200000},
+      ]
+    });
+    if(!d.settings.nav.find(n=>n.id==='history-stories')){
+      d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:false});
+    }
+  }
   // Backfill layout + items on legacy custom pages
   d.settings.customPages.forEach(p => {
     if(!p.layout) p.layout = 'article';
@@ -3924,20 +4046,32 @@ function renderSocialWidgets(posts){
   }
 }
 
+// Categories for History & Stories
+const HS_CATS = [
+  {id:'all',          label:'All',              icon:'📖'},
+  {id:'monk-biographies', label:'Monk Biographies',  icon:'🙏'},
+  {id:'amulet-history',   label:'Amulet History',    icon:'📿'},
+  {id:'meanings-beliefs', label:'Meanings & Beliefs',icon:'✨'},
+  {id:'katha-collection', label:'Katha Collection',  icon:'🕉️'},
+  {id:'guides-articles',  label:'Guides & Articles', icon:'📚'},
+];
+let _hsCatFilter = 'all';
+let _hsSearch = '';
+
 function renderCustomPages(){
   const db=getDB();const cp=db.settings.customPages||[];
   const container=document.getElementById('customPages');
   container.innerHTML=cp.map(p=>{
     const layout = p.layout || 'article';
-    const items  = p.items || [];
+    const items  = (p.items || []).filter(it => it && it.status !== 'draft');
     let body;
-    if(layout === 'article' || !items.length){
-      // Article: single rich-text block
+    if(layout === 'knowledge'){
+      body = buildKnowledgeBody(p, items);
+    } else if(layout === 'article' || !items.length){
       body = `<div class="custom-page-content">
-        ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet. Edit this page in the admin to add content.</p>'}
+        ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet.</p>'}
       </div>`;
     } else if(layout === 'list'){
-      // List: vertical rows of image + text
       body = `<div class="cp-list">${items.map(it => `
         <div class="cp-list-item" onclick="openCpItem('${p.id}','${it.id}')">
           ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','120px')} alt=""></div>`:''}
@@ -3950,7 +4084,6 @@ function renderCustomPages(){
         </div>
       `).join('')}</div>`;
     } else {
-      // Grid: cards in responsive grid
       body = `<div class="cp-grid">${items.map(it => `
         <div class="cp-card" onclick="openCpItem('${p.id}','${it.id}')">
           <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','280px')} alt="">`:'📄'}</div>
@@ -3970,6 +4103,91 @@ function renderCustomPages(){
   }).join('');
 }
 
+function buildKnowledgeBody(p, allItems){
+  const pageId = p.id;
+  const cats = HS_CATS;
+  // Category chips
+  const catCounts = {};
+  allItems.forEach(it=>{ const c=it.category||'guides-articles'; catCounts[c]=(catCounts[c]||0)+1; });
+  const catHtml = cats.map(c=>`
+    <button class="hs-cat${_hsCatFilter===c.id && pageId===window._hsActivePage?' active':''}"
+      onclick="_hsActivePage='${pageId}';_hsCatFilter='${c.id}';_hsSearch='';renderCustomPages()">
+      ${c.icon} ${c.label}${c.id!=='all'&&catCounts[c.id]?` <span class="hs-cat-count">(${catCounts[c.id]})</span>`:''}
+    </button>`).join('');
+
+  // Filter items
+  let items = allItems;
+  if(window._hsActivePage === pageId){
+    if(_hsCatFilter && _hsCatFilter !== 'all') items = items.filter(it=>(it.category||'guides-articles')===_hsCatFilter);
+    if(_hsSearch) items = items.filter(it=>(it.title+' '+(it.excerpt||'')+' '+(it.subtitle||'')).toLowerCase().includes(_hsSearch.toLowerCase()));
+  }
+
+  const featured = items.find(it=>it.featured);
+  const rest = items.filter(it=>it!==featured);
+
+  const featuredHtml = featured ? `
+    <div class="hs-featured" onclick="openCpItem('${pageId}','${featured.id}')">
+      <div class="hs-featured-img">
+        ${featured.img?`<img loading="lazy" decoding="async" ${imgAttrs(featured.img,'medium','(max-width:700px) 100vw, 50vw')} alt="">`:catIcon(featured.category)}
+      </div>
+      <div class="hs-featured-body">
+        <div class="hs-badge">${catIcon(featured.category)} ${catLabel(featured.category)}</div>
+        <h3 class="hs-featured-title">${escapeHtml(featured.title||'Untitled')}</h3>
+        ${featured.excerpt?`<p class="hs-featured-excerpt">${escapeHtml(featured.excerpt)}</p>`:''}
+        <div class="hs-featured-cta">Read Article →</div>
+      </div>
+    </div>` : '';
+
+  const gridHtml = rest.length ? `
+    <div class="hs-section-head">
+      <span class="hs-section-title">${featured?'More Articles':'All Articles'}</span>
+      <div class="hs-section-line"></div>
+    </div>
+    <div class="hs-grid">
+      ${rest.map(it=>`
+        <div class="hs-card" onclick="openCpItem('${pageId}','${it.id}')">
+          <div class="hs-card-img">
+            ${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','(max-width:700px) 50vw, 280px')} alt="">`:catIcon(it.category)}
+          </div>
+          <div class="hs-card-body">
+            <div class="hs-card-cat">${catIcon(it.category)} ${catLabel(it.category)}</div>
+            <h3 class="hs-card-title">${escapeHtml(it.title||'Untitled')}</h3>
+            ${it.excerpt?`<p class="hs-card-excerpt">${escapeHtml(it.excerpt)}</p>`:''}
+            <div class="hs-card-more">Read more →</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  const emptyHtml = (!featured && !rest.length) ? `
+    <div class="hs-empty">
+      <div class="hs-empty-icon">📖</div>
+      <p>No articles yet${_hsCatFilter&&_hsCatFilter!=='all'?' in this category':''}.${_hsSearch?' Try a different search term.':''}
+      ${_hsCatFilter&&_hsCatFilter!=='all'?` <a href="#" onclick="event.preventDefault();_hsCatFilter='all';_hsSearch='';renderCustomPages()" style="color:var(--gold-dark)">View all</a>`:''}</p>
+    </div>` : '';
+
+  return `<div class="hs-wrap">
+    <div class="hs-search-wrap">
+      <input class="hs-search" placeholder="Search articles…"
+        oninput="window._hsActivePage='${pageId}';_hsSearch=this.value;renderCustomPages()"
+        value="${escapeHtml(_hsSearch&&window._hsActivePage===pageId?_hsSearch:'')}"
+        id="hs_search_${pageId}">
+      <span class="hs-search-icon">🔍</span>
+    </div>
+    <div class="hs-cats">${catHtml}</div>
+    ${featuredHtml}${gridHtml}${emptyHtml}
+  </div>`;
+}
+
+function catLabel(catId){
+  const c = HS_CATS.find(x=>x.id===catId);
+  return c ? c.label : (catId||'Article');
+}
+function catIcon(catId){
+  const c = HS_CATS.find(x=>x.id===catId);
+  return c ? c.icon : '📄';
+}
+
 // Strip HTML tags then truncate — used for grid/list card previews
 function truncateHtml(html, maxLen){
   const plain = String(html||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
@@ -3984,18 +4202,23 @@ function openCpItem(pageId, itemId){
   if(!p) return;
   const it = (p.items||[]).find(x => String(x.id) === String(itemId));
   if(!it) return;
+  const isKnowledge = p.layout === 'knowledge';
+  const catBadge = isKnowledge && it.category
+    ? `<div class="hs-badge" style="margin-bottom:12px">${catIcon(it.category)} ${catLabel(it.category)}</div>` : '';
   document.getElementById('modalContent').innerHTML = `
     <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
       <div class="modal-title-wrap">
-        <div class="modal-title" style="font-size:24px">${it.title || ''}</div>
-        ${it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:4px">${it.subtitle}</div>`:''}
+        ${catBadge}
+        <div class="modal-title" style="font-size:22px;line-height:1.25">${escapeHtml(it.title || '')}</div>
+        ${it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:6px">${escapeHtml(it.subtitle)}</div>`:''}
+        ${it.excerpt&&!it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:6px;font-style:italic">${escapeHtml(it.excerpt)}</div>`:''}
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    ${it.img?`<div style="text-align:center;margin-bottom:22px"><img ${imgAttrs(it.img,'medium','min(100vw, 700px)')} alt="" style="max-width:100%;max-height:400px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15)"></div>`:''}
-    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content.</p>'}</div>
+    ${it.img?`<div style="margin-bottom:22px"><img ${imgAttrs(it.img,'medium','min(100vw, 700px)')} alt="" style="width:100%;max-height:420px;object-fit:cover;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12)"></div>`:''}
+    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content yet.</p>'}</div>
   `;
-  document.getElementById('modal').classList.add('open');
+  openModal('article');
 }
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
@@ -4013,7 +4236,8 @@ function navIcon(id){
     projects:'◎',
     reviews:'★',
     payment:'▣',
-    about:'i'
+    about:'i',
+    'history-stories':'📖'
   })[id] || '•';
 }
 
