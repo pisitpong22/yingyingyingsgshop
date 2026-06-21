@@ -2597,6 +2597,7 @@ function refreshDynamic(){
   const active=document.querySelector('.panel.active');if(!active)return;
   if(active.id==='panel-amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
   if(active.id==='panel-history-stories') loadHsPanel();
+  else if(typeof _hsUnsubscribe === 'function'){ try{_hsUnsubscribe();}catch(e){} _hsUnsubscribe=null; }
   else if(active.id==='panel-accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
   else if(active.id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(active.id==='panel-casing'){
@@ -5071,15 +5072,35 @@ const HS_CAT_LABELS = {
 
 let _hsEditId = null;
 
+let _hsUnsubscribe = null;
+
 async function loadHsPanel(){
   cancelEditHs();
-  // historyStories is a split key — ensure it's loaded before rendering
+
+  // Show loading state immediately
+  const c = document.getElementById('hs_list');
+  if(c) c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading articles…</div>`;
+
+  // Unsubscribe previous listener if any
+  if(_hsUnsubscribe){ try{ _hsUnsubscribe(); }catch(e){} _hsUnsubscribe=null; }
+
+  // Ensure historyStories key is loaded from Firestore
   try {
     if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
       await window.FB.ensureDBKeys(['historyStories']);
     }
   } catch(e){ console.warn('[HS] ensureDBKeys failed:', e); }
+
+  // Render immediately after load
   renderHsList();
+
+  // Subscribe to live updates so list refreshes when DB changes
+  if(window.FB && typeof window.FB.onDBChange === 'function'){
+    _hsUnsubscribe = window.FB.onDBChange(() => {
+      const panel = document.getElementById('panel-history-stories');
+      if(panel && panel.classList.contains('active')) renderHsList();
+    });
+  }
 }
 
 function renderHsList(){
