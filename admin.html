@@ -5074,32 +5074,43 @@ let _hsEditId = null;
 
 let _hsUnsubscribe = null;
 
-async function loadHsPanel(){
+function loadHsPanel(){
   cancelEditHs();
 
-  // Show loading state immediately
-  const c = document.getElementById('hs_list');
-  if(c) c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading articles…</div>`;
-
-  // Unsubscribe previous listener if any
+  // Unsubscribe any previous listener
   if(_hsUnsubscribe){ try{ _hsUnsubscribe(); }catch(e){} _hsUnsubscribe=null; }
 
-  // Ensure historyStories key is loaded from Firestore
-  try {
-    if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
-      await window.FB.ensureDBKeys(['historyStories']);
-    }
-  } catch(e){ console.warn('[HS] ensureDBKeys failed:', e); }
-
-  // Render immediately after load
-  renderHsList();
-
-  // Subscribe to live updates so list refreshes when DB changes
+  // Subscribe to DB changes FIRST — this is the primary render trigger.
+  // onDBChange fires every time Firestore delivers a snapshot (including
+  // the very first one after page load), so we will always re-render
+  // whenever the loaded _db object is updated.
   if(window.FB && typeof window.FB.onDBChange === 'function'){
     _hsUnsubscribe = window.FB.onDBChange(() => {
       const panel = document.getElementById('panel-history-stories');
-      if(panel && panel.classList.contains('active')) renderHsList();
+      if(panel && panel.classList.contains('active')){
+        renderHsList();
+      }
     });
+  }
+
+  // If historyStories is NOT yet in the loaded keys, request it now.
+  // ensureDBKeys will call notifyDBReady() after loading, which fires
+  // our onDBChange listener above → renderHsList() will be called then.
+  // If it IS already loaded, render immediately.
+  const rawDb = window.FB ? window.FB.getDB() : {};
+  const alreadyLoaded = Array.isArray(rawDb.historyStories);
+
+  if(alreadyLoaded){
+    // Data is already in memory — render now
+    renderHsList();
+  } else {
+    // Show loading placeholder, then load the split key.
+    // onDBChange will call renderHsList() once data arrives.
+    const c = document.getElementById('hs_list');
+    if(c) c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading articles…</div>`;
+    if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
+      window.FB.ensureDBKeys(['historyStories']).catch(e => console.warn('[HS] load failed:', e));
+    }
   }
 }
 
