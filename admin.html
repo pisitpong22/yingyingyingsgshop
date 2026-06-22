@@ -5082,55 +5082,33 @@ let _hsEditId = null;
 let _hsUnsubscribe = null;
 
 function loadHsPanel(){
-  console.log('[HS VERIFY] Admin page opened');
-  console.log('[HS VERIFY] DB historyStories:', window.FB?.getDB()?.historyStories);
-  console.log('[HS VERIFY] article count:', window.FB?.getDB()?.historyStories?.length);
-  console.log('[HS VERIFY] panel active:', document.getElementById('panel-history-stories')?.classList.contains('active'));
-
   cancelEditHs();
 
   // Unsubscribe any previous listener
   if(_hsUnsubscribe){ try{ _hsUnsubscribe(); }catch(e){} _hsUnsubscribe=null; }
 
-  // Subscribe to DB changes FIRST — fires immediately with cb(_db) if _db exists.
-  // panel already has 'active' class (set by showPanel before calling loadHsPanel)
-  // so the active check in the callback passes on first fire.
+  // Root cause fix: showPanel() adds 'active' class BEFORE calling loadHsPanel(),
+  // so when onDBChange fires immediately (cb(_db) pattern in firebase-shared.js),
+  // the active check passes and renderHsList() runs with real data.
   if(window.FB && typeof window.FB.onDBChange === 'function'){
     _hsUnsubscribe = window.FB.onDBChange(() => {
       const panel = document.getElementById('panel-history-stories');
-      const isActive = panel && panel.classList.contains('active');
-      console.log('[HS VERIFY] onDBChange fired, panel active:', isActive,
-        '| historyStories count:', window.FB?.getDB()?.historyStories?.length);
-      if(isActive) renderHsList();
+      if(panel && panel.classList.contains('active')) renderHsList();
     });
   }
 
-  // alreadyLoaded is always true when rawDb.historyStories is an Array (even [])
-  // The onDBChange above already called renderHsList if _db was ready.
-  // This branch handles the case where _db is not yet set at all.
-  const rawDb = window.FB ? window.FB.getDB() : {};
-  const alreadyLoaded = Array.isArray(rawDb.historyStories);
-
-  console.log('[HS VERIFY] alreadyLoaded (Array.isArray check):', alreadyLoaded,
-    '| raw length:', rawDb.historyStories?.length);
-
-  if(!alreadyLoaded){
+  // If _db not yet initialised, trigger load; onDBChange will re-render on arrival.
+  if(window.FB && !Array.isArray(window.FB.getDB()?.historyStories)){
     const c = document.getElementById('hs_list');
     if(c) c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading articles…</div>`;
-    if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
-      window.FB.ensureDBKeys(['historyStories'])
-        .then(() => console.log('[HS VERIFY] ensureDBKeys resolved, count now:', window.FB?.getDB()?.historyStories?.length))
-        .catch(e => console.warn('[HS] load failed:', e));
-    }
+    window.FB.ensureDBKeys && window.FB.ensureDBKeys(['historyStories']).catch(e => console.warn('[HS]', e));
   }
 }
 
 function renderHsList(){
-  console.log('[HS VERIFY] renderHsList called');
   const rawDb = (window.FB && window.FB.getDB) ? window.FB.getDB() : null;
   const db = rawDb && Object.keys(rawDb).length ? rawDb : getDB();
   const articles = db.historyStories || [];
-  console.log('[HS VERIFY] article count in renderHsList:', articles.length);
   const c = document.getElementById('hs_list');
   if(!c) return;
   if(!articles.length){
