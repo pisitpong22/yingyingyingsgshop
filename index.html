@@ -2168,9 +2168,13 @@
   #homeSections{
     max-width:1180px;
     margin:0 auto;
-    padding:48px 22px 80px;
+    padding:52px 22px 0;
     position:relative;
     z-index:1;
+  }
+  .home-services-section{
+    margin-top:56px;
+    margin-bottom:56px;
   }
   #homeSections .home-section{
     background:rgba(255,251,238,.86) !important;
@@ -2348,8 +2352,8 @@
      Populated by renderTrustStrip() via applySettings. */
   .trust-strip{
     position:relative;z-index:3;
-    max-width:1180px;margin:-48px auto 0;
-    padding:0 18px 28px;
+    max-width:1180px;margin:-52px auto 0;
+    padding:0 18px 0;
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
     gap:14px;
@@ -2396,8 +2400,9 @@
   @media(max-width:1020px){
     .trust-strip{
       grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-      gap:10px;margin:-36px auto 0;padding:0 14px 20px;
+      gap:10px;margin:-40px auto 0;padding:0 14px 0;
     }
+    .home-services-section{margin-top:32px;margin-bottom:32px}
     .trust-strip-card{padding:16px 12px;border-radius:16px}
     .trust-strip-stat{font-size:24px}
     .trust-strip-title{font-size:12px}
@@ -2408,10 +2413,38 @@
     .trust-strip{grid-template-columns:repeat(2,1fr);gap:8px}
   }
 
+  /* ─── FEED WRAP — Latest Updates section ────────────────────
+     Wraps social-shell after homeSections.
+     Includes a section label "Latest Updates". */
+  .social-feed-wrap{
+    background:
+      radial-gradient(ellipse at 30% 0%, rgba(201,168,76,.06) 0%, transparent 50%),
+      linear-gradient(180deg, #fffaf0 0%, #f5ead4 100%);
+    padding-top:12px;
+    padding-bottom:40px;
+    position:relative;
+    z-index:2;
+  }
+  .social-feed-label{
+    max-width:1180px;margin:0 auto 8px;padding:28px 18px 0;
+    display:flex;align-items:center;gap:14px;
+  }
+  .social-feed-label-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.3),transparent)}
+  .social-feed-label-text{
+    font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--gold-dark);white-space:nowrap;
+    background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.22);
+    border-radius:999px;padding:5px 16px;
+  }
+  @media(max-width:1020px){
+    .social-feed-label{padding:20px 14px 0}
+    .social-feed-wrap{padding-bottom:80px}
+  }
+
   .social-shell{
-    max-width:1180px;margin:-72px auto 0;padding:0 18px 32px;
+    max-width:1180px;margin:0 auto;padding:0 18px 32px;
     display:grid;grid-template-columns:220px minmax(0,1fr) 250px;gap:16px;align-items:start;
-    position:relative;z-index:2;
+    position:relative;z-index:1;
   }
   .social-panel,
   .social-post,
@@ -2496,7 +2529,7 @@
 
   @media(max-width:1020px){
     .social-cover{min-height:auto;padding:44px 18px 64px}
-    .social-shell{grid-template-columns:1fr;max-width:720px;margin:-56px auto 0}
+    .social-shell{grid-template-columns:1fr;max-width:720px;margin:0 auto}
     .social-left,.social-right{display:none}
     .social-profile-card{grid-template-columns:1fr}
     .social-brand-block{
@@ -3029,64 +3062,11 @@
 
     <!-- LUXURY TRUST STRIP -->
     <div class="trust-strip" id="trustStrip"></div>
-
-    <div class="social-shell">
-      <aside class="social-panel social-left">
-        <div class="social-menu" id="socialMenu"></div>
-        <div class="social-help">
-          <div class="social-help-title">Need help choosing?</div>
-          <div class="social-help-text">Message us from any page for casing, amulet, payment, or shipping questions.</div>
-          <button class="social-action primary" style="width:100%;padding:10px 12px" onclick="goPage('contact')">Contact</button>
-        </div>
-      </aside>
-
-      <main class="social-main social-main-anchor" id="homeFeed">
-        <div class="social-composer">
-          <div class="social-composer-row">
-            <div class="social-mini-avatar" id="socialMiniAvatar">Y</div>
-            <button class="social-search" onclick="goPage('casing')">What are you looking for today?</button>
-          </div>
-          <div class="social-shortcuts" id="socialShortcuts"></div>
-        </div>
-        <div id="socialFeedList"></div>
-      </main>
-
-      <aside class="social-right">
-        <div class="social-panel">
-          <div class="social-widget-title">Popular Casing</div>
-          <div class="social-widget-list" id="socialPopular"></div>
-        </div>
-        <div class="social-panel">
-          <div class="social-widget-title">Quick Preview</div>
-          <div class="social-widget-list" id="socialPreview"></div>
-        </div>
-        <div class="social-panel">
-          <div class="social-widget-title">Trust</div>
-          <div class="social-widget-list" id="socialTrust"></div>
-        </div>
-      </aside>
-    </div>
   </div>
 
-  <div class="hero-wrap legacy-home">
-  <section class="hero">
-    <div class="hero-bg" id="heroBg"></div>
-    <div class="hero-bg-overlay" id="heroBgOverlay" style="display:none"></div>
-    <div class="hero-inner">
-      <div class="eyebrow" id="heroEyebrow"></div>
-      <h1 class="hero-title" id="heroTitle"></h1>
-      <div class="hero-sub" id="heroSub"></div>
-      <p class="hero-desc" id="heroDesc"></p>
-      <div class="hero-btns" id="heroBtns"></div>
-      <div class="hero-stats" id="heroStats"></div>
-    </div>
-    <div class="hero-3d">
-      <canvas id="phra3dLegacy"></canvas>
-    </div>
-    <div class="scroll-cue">Scroll to explore</div>
-  </section>
-  </div>
-
+  <!-- MAIN CONTENT SECTIONS: services, featured, reviews
+       These appear BEFORE the feed as per homepage order:
+       Hero → Trust → Services → Featured → Reviews → Feed -->
   <div id="homeSections">
   <!-- REVIEWS PREVIEW (homepage) -->
   <section class="home-reviews-section home-section" id="homeReviewsSection" data-home-section="reviews" style="display:none">
@@ -3127,6 +3107,73 @@
     </div>
   </section>
   </div>
+
+  <!-- LATEST UPDATES / FEED — appears after services/featured/reviews -->
+  <div class="social-feed-wrap">
+    <div class="social-feed-label">
+      <span class="social-feed-label-line"></span>
+      <span class="social-feed-label-text">📰 Latest Updates</span>
+      <span class="social-feed-label-line"></span>
+    </div>
+    <div class="social-shell">
+      <aside class="social-panel social-left">
+        <div class="social-menu" id="socialMenu"></div>
+        <div class="social-help">
+          <div class="social-help-title">Need help choosing?</div>
+          <div class="social-help-text">Message us from any page for casing, amulet, payment, or shipping questions.</div>
+          <button class="social-action primary" style="width:100%;padding:10px 12px" onclick="goPage('contact')">Contact</button>
+        </div>
+      </aside>
+
+      <main class="social-main social-main-anchor" id="homeFeed">
+        <div class="social-composer">
+          <div class="social-composer-row">
+            <div class="social-mini-avatar" id="socialMiniAvatar">Y</div>
+            <button class="social-search" onclick="goPage('casing')">What are you looking for today?</button>
+          </div>
+          <div class="social-shortcuts" id="socialShortcuts"></div>
+        </div>
+        <div id="socialFeedList"></div>
+      </main>
+
+      <aside class="social-right">
+        <div class="social-panel">
+          <div class="social-widget-title">Popular Casing</div>
+          <div class="social-widget-list" id="socialPopular"></div>
+        </div>
+        <div class="social-panel">
+          <div class="social-widget-title">Quick Preview</div>
+          <div class="social-widget-list" id="socialPreview"></div>
+        </div>
+        <div class="social-panel">
+          <div class="social-widget-title">Trust</div>
+          <div class="social-widget-list" id="socialTrust"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="social-home" style="display:none"><!-- placeholder to keep social-home close tag valid --></div>
+
+  <div class="hero-wrap legacy-home">
+  <section class="hero">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-bg-overlay" id="heroBgOverlay" style="display:none"></div>
+    <div class="hero-inner">
+      <div class="eyebrow" id="heroEyebrow"></div>
+      <h1 class="hero-title" id="heroTitle"></h1>
+      <div class="hero-sub" id="heroSub"></div>
+      <p class="hero-desc" id="heroDesc"></p>
+      <div class="hero-btns" id="heroBtns"></div>
+      <div class="hero-stats" id="heroStats"></div>
+    </div>
+    <div class="hero-3d">
+      <canvas id="phra3dLegacy"></canvas>
+    </div>
+    <div class="scroll-cue">Scroll to explore</div>
+  </section>
+  </div>
+
 </div>
 
 <!-- FEED -->
