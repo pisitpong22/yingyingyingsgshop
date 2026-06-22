@@ -2276,8 +2276,10 @@
     letter-spacing:-.5px;
   }
   .social-desc{
-    max-width:600px;color:rgba(255,242,186,.82);
-    font-size:15.5px;line-height:1.75;margin-top:16px;
+    max-width:600px;
+    color:rgba(255,242,186,.88);
+    font-size:15.5px;line-height:1.8;margin-top:16px;
+    text-shadow:0 1px 4px rgba(0,0,0,.3);
   }
   /* Premium CTA buttons */
   .social-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
@@ -2332,6 +2334,71 @@
     padding:10px 15px;font:inherit;font-weight:900;cursor:pointer;white-space:nowrap;
   }
   .social-tab.active,.social-tab:hover{background:rgba(232,201,106,.92);color:#160e03}
+  /* ─── LUXURY TRUST STRIP ─────────────────────────────────────
+     Glass stat cards shown between hero and feed.
+     Populated by renderTrustStrip() via applySettings. */
+  .trust-strip{
+    position:relative;z-index:3;
+    max-width:1180px;margin:-28px auto 0;
+    padding:0 18px 32px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:14px;
+  }
+  .trust-strip-card{
+    background:rgba(255,252,240,.82);
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    border:1px solid rgba(201,168,76,.28);
+    border-radius:20px;
+    padding:20px 18px;
+    text-align:center;
+    cursor:pointer;
+    transition:transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s, border-color .28s;
+    box-shadow:
+      0 8px 32px rgba(120,80,20,.12),
+      0 1px 0 rgba(255,255,255,.95) inset,
+      0 -1px 0 rgba(201,168,76,.06) inset;
+    position:relative;overflow:hidden;
+  }
+  .trust-strip-card::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:50%;
+    background:linear-gradient(180deg,rgba(255,255,255,.5),transparent);
+    pointer-events:none;
+  }
+  .trust-strip-card:hover{
+    transform:translateY(-5px) scale(1.02);
+    border-color:rgba(201,168,76,.46);
+    box-shadow:
+      0 18px 48px rgba(120,80,20,.18),
+      0 1px 0 rgba(255,255,255,.95) inset;
+  }
+  .trust-strip-icon{font-size:26px;margin-bottom:8px;display:block;filter:drop-shadow(0 2px 6px rgba(201,168,76,.3))}
+  .trust-strip-stat{
+    font-family:var(--font-display);
+    font-size:30px;font-weight:900;line-height:1;margin-bottom:4px;
+    background:linear-gradient(135deg,#a07828,#c9a84c,#e8c96a);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    filter:drop-shadow(0 1px 2px rgba(201,168,76,.18));
+  }
+  .trust-strip-title{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+  .trust-strip-desc{font-size:11.5px;color:var(--text-muted);line-height:1.4}
+
+  @media(max-width:1020px){
+    .trust-strip{
+      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:10px;margin:-20px auto 0;padding:0 14px 24px;
+    }
+    .trust-strip-card{padding:16px 12px;border-radius:16px}
+    .trust-strip-stat{font-size:24px}
+    .trust-strip-title{font-size:12px}
+    .trust-strip-desc{font-size:11px}
+    .trust-strip-icon{font-size:22px}
+  }
+  @media(max-width:480px){
+    .trust-strip{grid-template-columns:repeat(2,1fr);gap:8px}
+  }
+
   .social-shell{
     max-width:1180px;margin:-72px auto 0;padding:0 18px;
     display:grid;grid-template-columns:220px minmax(0,1fr) 250px;gap:16px;align-items:start;
@@ -2421,13 +2488,16 @@
     .social-left,.social-right{display:none}
     .social-profile-card{grid-template-columns:1fr}
     .social-brand-block{
-      padding:20px;
-      border-radius:26px;
-      background:linear-gradient(135deg,rgba(8,6,3,.72),rgba(38,27,9,.46));
-      border:1px solid rgba(255,238,172,.18);
-      box-shadow:0 18px 60px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.06);
-      backdrop-filter:blur(14px) saturate(120%);
-      -webkit-backdrop-filter:blur(14px) saturate(120%);
+      padding:28px 24px;
+      border-radius:28px;
+      background:linear-gradient(145deg,rgba(12,8,2,.82),rgba(40,28,6,.62));
+      border:1px solid rgba(201,168,76,.26);
+      box-shadow:
+        0 24px 72px rgba(0,0,0,.38),
+        0 0 0 1px rgba(255,215,80,.06),
+        inset 0 1px 0 rgba(255,220,100,.12);
+      backdrop-filter:blur(24px) saturate(140%);
+      -webkit-backdrop-filter:blur(24px) saturate(140%);
     }
     .social-actions{justify-content:flex-start}
     .social-visual{min-height:360px;order:-1}
@@ -2944,6 +3014,9 @@
       </div>
       <div class="social-tabs" id="socialTabs"></div>
     </section>
+
+    <!-- LUXURY TRUST STRIP -->
+    <div class="trust-strip" id="trustStrip"></div>
 
     <div class="social-shell">
       <aside class="social-panel social-left">
@@ -3796,6 +3869,22 @@ function setRich(id, value){
 }
 
 // ── APPLY SETTINGS ──
+function renderTrustStrip(){
+  const db = getDB();
+  const cards = (db.settings && db.settings.trustCards) || [];
+  const el = document.getElementById('trustStrip');
+  if(!el) return;
+  if(!cards.length){ el.style.display='none'; return; }
+  el.style.display='';
+  el.innerHTML = cards.map(c => `
+    <div class="trust-strip-card" onclick="${c.target?`goPage('${c.target}')`:''}" ${c.target?'':'style="cursor:default"'}>
+      <span class="trust-strip-icon">${c.icon||'✦'}</span>
+      ${c.stat ? `<div class="trust-strip-stat">${escapeHtml(c.stat)}</div>` : ''}
+      <div class="trust-strip-title">${escapeHtml(c.title||'')}</div>
+      <div class="trust-strip-desc">${escapeHtml(c.desc||'')}</div>
+    </div>`).join('');
+}
+
 function applySettings(){
   const db=getDB(); const s=db.settings;
   document.getElementById('pageTitle').textContent=s.pageTitle;
@@ -3955,6 +4044,7 @@ function applySettings(){
   setRich('aboutTitle', s.sections.about.title);
   setRich('aboutDesc', s.sections.about.desc);
 
+  renderTrustStrip();
   document.getElementById('trustGrid').innerHTML=(s.trustCards||[]).map(t=>`
     <div class="trust-card">
       <span class="trust-icon">${t.icon}</span>
