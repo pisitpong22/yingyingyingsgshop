@@ -3093,6 +3093,7 @@ function showPanel(name, el){
   if(name==='accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
   if(name==='casing'){exitTypeView();loadPanelPageIntro('casing');loadCasingTypes();}
   if(name==='projects'){loadPanelPageIntro('projects');loadList('projects');}
+  if(name==='history-stories') loadHsPanel();
   if(name==='reviews')loadReviewsPanel();
   // Composite panels — load all their sub-screens once when entered
   if(name==='home'){
