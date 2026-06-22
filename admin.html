@@ -2733,7 +2733,13 @@ function refreshDynamic(){
   else if(active.id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(active.id==='panel-casing'){
     loadPanelPageIntro('casing');
-    if(curEditTypeId)loadVariants();else loadCasingTypes();
+    if(curEditTypeId){
+      // Only auto-reload from onDBChange if we're not mid-save
+      // (saveVariant handles reload itself with force:true)
+      if(!window._casingMidSave) loadVariants();
+    } else {
+      loadCasingTypes();
+    }
   }
   else if(active.id==='panel-content-nav'){loadNav();loadCustomPagesList();}
   else if(active.id==='panel-content-hero'){
@@ -5050,20 +5056,24 @@ function exitTypeView(){
 }
 
 async function loadVariants(){
-  // Show loading state immediately
   const c=document.getElementById('variantsList');
   if(c) c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">Loading styles…</div>`;
 
-  // Ensure variants are loaded from Firestore (deferred by Phase 1 optimization)
+  // Ensure variants are loaded from Firestore
   if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
-    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){ console.warn('[admin casing]', e); }
+    try { await window.FB.ensureCasingVariants(curEditTypeId); }
+    catch(e){ console.warn('[admin casing]', e); }
   }
 
-  // Re-read from DB after ensure (variants are now attached to the type)
+  // Re-read from DB after load
   const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
   if(!c)return;
   const vars=ty.variants||[];
-  if(!vars.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;return;}
+  // Only show "No styles yet" if load is complete AND truly empty
+  if(!vars.length){
+    c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
+    return;
+  }
   const last = vars.length - 1;
   c.innerHTML=`<table class="dtable">
     <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
@@ -5237,42 +5247,61 @@ async function saveVariant(){
   const price=document.getElementById('fv_price').value;
   if(!name){showToast(tr('needName'));return;}
 
-  // CRITICAL: ensure all variants are loaded before modifying.
-  // If user opens Add Style while loadVariants() is still fetching,
-  // ty.variants would be [] and saving would wipe all existing styles.
-  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
-    showToast(lang==='th'?'กำลังโหลดข้อมูล…':'Loading styles…');
-    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){ console.warn('[admin]', e); }
-  }
+  window._casingMidSave = true; // block onDBChange from calling loadVariants
+  try {
+    // Force-reload variants before modifying — ensures ty.variants has ALL existing styles
+    if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+      try { await window.FB.ensureCasingVariants(curEditTypeId, {force:true}); }
+      catch(e){ console.warn('[admin saveVariant] ensure failed:', e); }
+    }
 
-  const db=getDB();
-  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
-  if(!ty.variants)ty.variants=[];
-  const updatedAt=Date.now();
-  const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs'),updatedAt};
-  if(curEditVariantId){
-    const v=ty.variants.find(x=>String(x.id)===String(curEditVariantId));
-    if(v)Object.assign(v,data);
-  } else {
-    ty.variants.push({id:genId(ty.variants),...data});
+    const db=getDB();
+    const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+    if(!ty){ window._casingMidSave=false; return; }
+    if(!ty.variants)ty.variants=[];
+    const updatedAt=Date.now();
+    const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs'),updatedAt};
+    if(curEditVariantId){
+      const v=ty.variants.find(x=>String(x.id)===String(curEditVariantId));
+      if(v)Object.assign(v,data);
+    } else {
+      ty.variants.push({id:genId(ty.variants),...data});
+    }
+    ty.updatedAt=updatedAt;
+    if(!(await persistDB(db,tr('saved')))){ window._casingMidSave=false; return; }
+
+    tempImgs={};
+    closeModal('variantModal');
+
+    // Force-reload after save to get the definitive Firestore state
+    if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+      try { await window.FB.ensureCasingVariants(curEditTypeId, {force:true}); }
+      catch(e){}
+    }
+  } finally {
+    window._casingMidSave = false;
   }
-  ty.updatedAt=updatedAt;
-  if(!(await persistDB(db,tr('saved')))) return;
-  tempImgs={};closeModal('variantModal');loadVariants();
+  loadVariants();
 }
 
 async function delVariant(varId){
   if(!tConfirm('confirmDeleteStyle'))return;
-  // Ensure variants loaded before modifying
-  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
-    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){}
-  }
-  const db=getDB();const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
-  const prev=[...(ty.variants||[])];
-  ty.variants=ty.variants.filter(v=>String(v.id)!==String(varId));
-  loadVariants();
-  if(!(await persistDB(db,tr('deleted')))){
-    ty.variants=prev;
+  window._casingMidSave = true;
+  try {
+    if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+      try { await window.FB.ensureCasingVariants(curEditTypeId, {force:true}); } catch(e){}
+    }
+    const db=getDB();
+    const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty){ window._casingMidSave=false; return; }
+    const prev=[...(ty.variants||[])];
+    ty.variants=ty.variants.filter(v=>String(v.id)!==String(varId));
+    loadVariants();
+    if(!(await persistDB(db,tr('deleted')))){
+      ty.variants=prev;
+      loadVariants();
+    }
+  } finally {
+    window._casingMidSave = false;
     loadVariants();
   }
 }

@@ -576,8 +576,9 @@ async function loadCasingTypesV2(meta){
 }
 
 // Phase 2: load variants for a specific casing type on-demand
-async function ensureCasingVariants(typeId){
+async function ensureCasingVariants(typeId, opts={}){
   const key = String(typeId);
+  if(opts.force) _casingVariantsLoaded.delete(key); // force reload
   if(_casingVariantsLoaded.has(key)) return;
 
   const db = getDB();
