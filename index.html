@@ -2168,9 +2168,9 @@
   #homeSections{
     max-width:1180px;
     margin:0 auto;
-    padding:42px 22px 70px;
+    padding:48px 22px 80px;
     position:relative;
-    z-index:3;
+    z-index:1;
   }
   #homeSections .home-section{
     background:rgba(255,251,238,.86) !important;
@@ -2178,8 +2178,17 @@
     border-radius:26px;
     box-shadow:0 18px 55px rgba(97,65,14,.1);
     padding:34px !important;
-    margin:0 0 22px;
+    margin:0 0 24px;
     overflow:hidden;
+  }
+  #homeSections .featured-section,
+  #homeSections .home-reviews-section{
+    border:none !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    padding:0 !important;
+    margin:0 !important;
+    border-radius:0 !important;
   }
   .featured-section,
   .home-reviews-section{border-top:none;border-bottom:none}
@@ -2400,7 +2409,7 @@
   }
 
   .social-shell{
-    max-width:1180px;margin:-72px auto 0;padding:0 18px;
+    max-width:1180px;margin:-72px auto 0;padding:0 18px 32px;
     display:grid;grid-template-columns:220px minmax(0,1fr) 250px;gap:16px;align-items:start;
     position:relative;z-index:2;
   }
@@ -2480,7 +2489,10 @@
   }
   .social-skel-line{height:12px;border-radius:999px;margin:8px 0}
   .social-skel-media{height:280px;border-radius:0}
-  #page-home #homeSections{display:none}
+  /* homeSections: container is visible; individual sections control
+     their own display via JS (applyHomeOrder / renderFeatured / renderHomeReviews).
+     Services section is always shown if it has cards. */
+  #page-home #homeSections{display:block}
 
   @media(max-width:1020px){
     .social-cover{min-height:auto;padding:44px 18px 64px}
@@ -2758,7 +2770,7 @@
       grid-template-columns:1fr;
     }
     .hero-inner{padding:28px;border-radius:24px}
-    #homeSections{margin:18px auto 0;padding:0 16px 88px}
+    #homeSections{display:block;margin:18px auto 0;padding:0 16px 88px}
     #homeSections .home-section{border-radius:22px;padding:24px !important}
     .feed-shell{grid-template-columns:1fr;max-width:680px}
     .feed-sidebar,.feed-right{display:none}
@@ -4025,6 +4037,11 @@ function applySettings(){
   }).join('');
 
   document.getElementById('svcTitle').textContent=s.homeServices.title;
+  // Always show services section if it has cards and is not disabled by homeOrder
+  const _svcEl = document.getElementById('homeServicesSection');
+  if(_svcEl && !_svcEl.dataset.disabledByOrder && (s.homeServices.cards||[]).length){
+    _svcEl.style.display = '';
+  }
   document.getElementById('svcCards').innerHTML=(s.homeServices.cards||[]).map(c=>`
     <div class="trust-card" onclick="goPage('${c.target}')" style="cursor:pointer">
       <span class="trust-icon">${c.icon}</span>
