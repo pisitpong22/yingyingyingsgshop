@@ -5400,16 +5400,36 @@ function renderCasingTypes(){
 }
 
 async function openCasingType(typeId){
+  console.log('[CASING DETAIL] clicked item:', typeId);
   curCasingType=typeId;
   _variantRenderToken++;
   window.scrollTo({top:0,behavior:'smooth'});
   const db=getDB();
   const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
-  const hasVariants = ty && Array.isArray(ty.variants) && ty.variants.length>0;
-  if(!hasVariants && window.FB && window.FB.ensureCasingVariants){
-    // Show skeleton while loading variants
+
+  console.log('[CASING DETAIL] basic item:', ty?.name);
+  console.log('[CASING DETAIL] variants before load:', ty?.variants?.length, '| _variantIds:', ty?._variantIds?.length);
+
+  // hasVariants = true only if variants array is populated with actual data
+  // ty.variants=[] means deferred (not yet loaded) when _variantIds suggests they exist
+  const knownVariantCount = (ty?._variantIds?.length) || 0;
+  const loadedVariantCount = (ty?.variants?.length) || 0;
+  const needsLoad = knownVariantCount > 0 && loadedVariantCount === 0;
+
+  if(needsLoad && window.FB && window.FB.ensureCasingVariants){
+    console.log('[CASING DETAIL] loading full detail...');
     renderVariantsLoading(typeId);
-    await window.FB.ensureCasingVariants(typeId);
+    try {
+      await window.FB.ensureCasingVariants(typeId);
+      const dbAfter=getDB();
+      const tyAfter=(dbAfter.casingTypes||[]).find(t=>String(t.id)===String(typeId));
+      console.log('[CASING DETAIL] full detail loaded:', tyAfter?.name,
+        '| styles count:', tyAfter?.variants?.length);
+    } catch(err){
+      console.warn('[CASING DETAIL] variant load failed:', err);
+    }
+  } else {
+    console.log('[CASING DETAIL] variants already loaded or no variants expected');
   }
   renderVariants(typeId);
 }
@@ -5754,6 +5774,17 @@ function renderVariants(typeId){
   const initial=vars.slice(0, initialCount);
   grid.innerHTML=initial.map((v,i)=>variantCardHtml(ty,v,i)).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
   safeWatchImages(grid);
+  // Force-check IntersectionObserver for images now visible inside variant panel
+  // (observer may have been initialized before panel was shown)
+  setTimeout(()=>{
+    grid.querySelectorAll('img[data-src]').forEach(img=>{
+      if(_imgObserver) _imgObserver.unobserve(img);
+      const r=img.getBoundingClientRect();
+      if(r.top < window.innerHeight + 800){
+        if(img.dataset.src){ img.src=img.dataset.src; img.removeAttribute('data-src'); }
+      } else if(_imgObserver){ _imgObserver.observe(img); }
+    });
+  }, 50);
   preloadImages(initial.map(v=>v.imgs&&v.imgs[0]).filter(Boolean).map(img=>imageUrl(img,'thumb')), 6);
   if(vars.length > initial.length){
     appendVariantCardsProgressively(grid, ty, vars, initial.length, token);

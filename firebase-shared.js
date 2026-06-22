@@ -564,14 +564,46 @@ async function loadCasingTypesV2(meta){
 
 // Phase 2: load variants for a specific casing type on-demand
 async function ensureCasingVariants(typeId){
-  if(_casingVariantsLoaded.has(String(typeId))) return;
-  const db = getDB();
-  const ty = (db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
-  if(!ty) return;
+  const key = String(typeId);
+  if(_casingVariantsLoaded.has(key)) return;
 
+  const db = getDB();
+  // Match by string comparison to avoid number/string ID mismatch
+  const ty = (db.casingTypes||[]).find(t=>String(t.id)===key);
+  if(!ty) {
+    console.warn('[CASING] type not found for id:', typeId);
+    return;
+  }
+
+  // Source variantIds from multiple places in order of reliability:
+  // 1. Module-level _casingVariantIds (set after loadSplitDB completes)
+  // 2. _dbMeta._casingVariantIds (raw Firestore doc — key may be number or string)
+  // 3. ty._variantIds (set during Phase 1 of loadCasingTypesV2)
   const meta = _dbMeta || {};
-  const variantIds = (meta._casingVariantIds || {})[typeId] || ty._variantIds || [];
-  if(!variantIds.length){ _casingVariantsLoaded.add(String(typeId)); return; }
+  const metaVariantIds = meta._casingVariantIds || {};
+  // Try both string and number key for the type ID
+  const variantIds =
+    _casingVariantIds[key] ||
+    _casingVariantIds[typeId] ||
+    metaVariantIds[key] ||
+    metaVariantIds[typeId] ||
+    ty._variantIds ||
+    [];
+
+  console.log('[CASING DETAIL] ensureCasingVariants typeId:', typeId,
+    '| variantIds from _casingVariantIds:', _casingVariantIds[key],
+    '| from meta:', metaVariantIds[key],
+    '| from ty._variantIds:', ty._variantIds,
+    '| resolved:', variantIds.length, 'ids');
+
+  if(!variantIds.length){
+    // Type genuinely has no variants — mark done and return
+    console.log('[CASING DETAIL] no variantIds found → treating as no-variant type');
+    _casingVariantsLoaded.add(key);
+    return;
+  }
+
+  console.log('[CASING DETAIL] loading', variantIds.length, 'variants for type', typeId);
 
   const variants = await Promise.all(variantIds.map(async variantId => {
     return JSON.parse(await readJsonRecord(
@@ -582,7 +614,8 @@ async function ensureCasingVariants(typeId){
   }));
 
   ty.variants = variants;
-  _casingVariantsLoaded.add(String(typeId));
+  _casingVariantsLoaded.add(key);
+  console.log('[CASING DETAIL] variants loaded:', variants.length, 'for type', typeId);
   notifyDBReady();
 }
 
@@ -643,6 +676,8 @@ onSnapshot(DB_DOC, async (snap) => {
       const data = snap.data();
       _dbMeta = data && data._splitVersion ? data : null;
       _loadedKeys = new Set();
+      // Reset variant cache on DB reload so stale "not found" entries don't persist
+      _casingVariantsLoaded.clear();
       if(data && data._splitVersion){
         const keys = initialLoadKeys();
         _db = await loadSplitDB(data, keys);
