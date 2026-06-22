@@ -5186,6 +5186,10 @@ async function reorderVariantByDrag(dragId, targetId, before){
     showToast(lang==='th'?'กำลังบันทึกลำดับ รอสักครู่':'Saving order, please wait');
     return;
   }
+  // Ensure variants loaded before reordering
+  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){}
+  }
   const db=getDB();
   const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
   if(!ty || !Array.isArray(ty.variants)) return;
@@ -5232,7 +5236,17 @@ async function saveVariant(){
   const name=document.getElementById('fv_name').value.trim();
   const price=document.getElementById('fv_price').value;
   if(!name){showToast(tr('needName'));return;}
-  const db=getDB();const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
+
+  // CRITICAL: ensure all variants are loaded before modifying.
+  // If user opens Add Style while loadVariants() is still fetching,
+  // ty.variants would be [] and saving would wipe all existing styles.
+  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+    showToast(lang==='th'?'กำลังโหลดข้อมูล…':'Loading styles…');
+    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){ console.warn('[admin]', e); }
+  }
+
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
   if(!ty.variants)ty.variants=[];
   const updatedAt=Date.now();
   const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs'),updatedAt};
@@ -5249,6 +5263,10 @@ async function saveVariant(){
 
 async function delVariant(varId){
   if(!tConfirm('confirmDeleteStyle'))return;
+  // Ensure variants loaded before modifying
+  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){}
+  }
   const db=getDB();const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
   const prev=[...(ty.variants||[])];
   ty.variants=ty.variants.filter(v=>String(v.id)!==String(varId));
