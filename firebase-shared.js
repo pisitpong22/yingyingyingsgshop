@@ -1365,6 +1365,8 @@ window.FB = {
   ensureFirstSuperAdmin,
   // Casing variants lazy loader
   ensureCasingVariants,
+  // Expose variant ID cache so admin can show counts without loading all variants
+  get _casingVariantIds(){ return _casingVariantIds; },
   // History & Stories
   hsGetAll,
   hsAddArticle,

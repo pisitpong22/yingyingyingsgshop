@@ -4898,10 +4898,45 @@ let _variantOrderSaving=false;
 let _variantHighlightId=null;
 let _variantDragId=null;
 
+// Return true variant count — uses _casingVariantIds cache (from firebase-shared)
+// because ty.variants may be [] (Phase 1 deferred) before styles are opened.
+function getTypeStyleCount(ty){
+  if(!ty) return 0;
+  // If variants already loaded, use actual array length
+  if(Array.isArray(ty.variants) && ty.variants.length > 0) return ty.variants.length;
+  // Otherwise read from FB cache (populated during loadSplitDB)
+  const key = String(ty.id);
+  const ids = window.FB && window.FB._casingVariantIds
+    ? (window.FB._casingVariantIds[key] || ty._variantIds || [])
+    : (ty._variantIds || ty.variants || []);
+  return Array.isArray(ids) ? ids.length : 0;
+}
+
 function loadCasingTypes(){
   const types=getDB().casingTypes||[];
   const c=document.getElementById('typesList');
   if(!types.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noTypes')}</div>`;return;}
+  // Load variant counts in background then refresh display
+  // Only load if counts are missing (Phase 1 deferred)
+  const typesNeedingCount = types.filter(ty =>
+    !(Array.isArray(ty.variants) && ty.variants.length > 0) &&
+    getTypeStyleCount(ty) === 0
+  );
+  if(typesNeedingCount.length && window.FB && window.FB.ensureCasingVariants){
+    Promise.all(
+      typesNeedingCount.map(ty =>
+        window.FB.ensureCasingVariants(ty.id).catch(()=>{})
+      )
+    ).then(() => {
+      // Re-render type list with correct counts (no full reload needed)
+      document.querySelectorAll('.type-tile-meta').forEach((el, idx) => {
+        if(types[idx]) el.textContent =
+          getTypeStyleCount(types[idx]) + ' ' + tr('styles') + ' · ' +
+          (types[idx].priceRange ? 'S$'+types[idx].priceRange :
+           types[idx].price ? 'S$'+Number(types[idx].price).toLocaleString() : tr('noPriceSet'));
+      });
+    });
+  }
   const last = types.length - 1;
   // Strip HTML tags before showing description in admin tile preview.
   // Stored desc may now contain rich-text HTML (from the RTE) — we just
@@ -4920,7 +4955,7 @@ function loadCasingTypes(){
       <div class="type-tile-info">
         <div class="type-tile-name">${ty.name}</div>
         <div class="type-tile-desc">${descShort}</div>
-        <div class="type-tile-meta">${(ty.variants||[]).length} ${tr('styles')} · ${ty.priceRange?`S$${ty.priceRange}`:(ty.price?`S$${Number(ty.price).toLocaleString()}`:tr('noPriceSet'))}</div>
+        <div class="type-tile-meta">${getTypeStyleCount(ty)} ${tr('styles')} · ${ty.priceRange?`S$${ty.priceRange}`:(ty.price?`S$${Number(ty.price).toLocaleString()}`:tr('noPriceSet'))}</div>
       </div>
       <div class="type-tile-actions">
         <button class="btn-sm" onclick="enterTypeView(${ty.id})">${tr('manageStyles')}</button>
@@ -4968,7 +5003,7 @@ async function saveType(){
   const db=getDB();if(!db.casingTypes)db.casingTypes=[];
   const updatedAt=Date.now();
   if(curEditTypeId){
-    const ty=db.casingTypes.find(t=>t.id===curEditTypeId);
+    const ty=db.casingTypes.find(t=>String(t.id)===String(curEditTypeId));
     if(ty){
       // IMPORTANT: If variants not yet loaded (Phase 1 deferred), load them first
       // to prevent queueCasingTypeWrites from wiping the variant index in Firestore
@@ -5000,12 +5035,12 @@ async function delType(typeId){
 
 function enterTypeView(typeId){
   curEditTypeId=typeId;
-  const ty=(getDB().casingTypes||[]).find(t=>t.id===typeId);if(!ty)return;
+  const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(typeId));if(!ty)return;
   document.getElementById('casingTypesView').style.display='none';
   document.getElementById('casingVariantsView').style.display='block';
   document.getElementById('vCrumbName').textContent=ty.name;
   document.getElementById('vTypeName').textContent=ty.name;
-  loadVariants();
+  loadVariants(); // async — shows "Loading styles…" then renders
 }
 
 function exitTypeView(){
@@ -5071,7 +5106,7 @@ async function moveVariant(variantId, dir){
     return;
   }
   const db = getDB();
-  const ty = (db.casingTypes || []).find(t => t.id === curEditTypeId);
+  const ty = (db.casingTypes || []).find(t => String(t.id) === String(curEditTypeId));
   if(!ty || !Array.isArray(ty.variants)) return;
   const idx = ty.variants.findIndex(v => String(v.id) === String(variantId));
   if(idx < 0) return;
@@ -5152,7 +5187,7 @@ async function reorderVariantByDrag(dragId, targetId, before){
     return;
   }
   const db=getDB();
-  const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);
+  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
   if(!ty || !Array.isArray(ty.variants)) return;
   const prev=[...ty.variants];
   const from=ty.variants.findIndex(v=>String(v.id)===String(dragId));
@@ -5182,7 +5217,7 @@ async function reorderVariantByDrag(dragId, targetId, before){
 
 function openVariantForm(varId){
   curEditVariantId=varId||null;
-  const ty=(getDB().casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
   const v=varId?(ty.variants||[]).find(x=>String(x.id)===String(varId)):null;
   document.getElementById('variantModalTitle').textContent=lang==='th'?(varId?'แก้ไขแบบ':'เพิ่มแบบ'):(varId?'Edit Style':'Add Style');
   document.getElementById('fv_name').value=v?v.name:'';
@@ -5197,7 +5232,7 @@ async function saveVariant(){
   const name=document.getElementById('fv_name').value.trim();
   const price=document.getElementById('fv_price').value;
   if(!name){showToast(tr('needName'));return;}
-  const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  const db=getDB();const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
   if(!ty.variants)ty.variants=[];
   const updatedAt=Date.now();
   const data={name,price:price===''?'':Number(price),imgs:captureImgs('fv_imgs'),updatedAt};
@@ -5214,7 +5249,7 @@ async function saveVariant(){
 
 async function delVariant(varId){
   if(!tConfirm('confirmDeleteStyle'))return;
-  const db=getDB();const ty=(db.casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+  const db=getDB();const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
   const prev=[...(ty.variants||[])];
   ty.variants=ty.variants.filter(v=>String(v.id)!==String(varId));
   loadVariants();
