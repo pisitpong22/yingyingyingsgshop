@@ -581,36 +581,85 @@ async function ensureCasingVariants(typeId){
   if(_casingVariantsLoaded.has(key)) return;
 
   const db = getDB();
-  // Match by string comparison to avoid number/string ID mismatch
   const ty = (db.casingTypes||[]).find(t=>String(t.id)===key);
-  if(!ty) {
-    console.warn('[CASING] type not found for id:', typeId);
-    return;
-  }
+  if(!ty) return;
 
-  // Source variantIds from multiple places in order of reliability:
-  // 1. Module-level _casingVariantIds (set after loadSplitDB completes)
-  // 2. _dbMeta._casingVariantIds (raw Firestore doc — key may be number or string)
-  // 3. ty._variantIds (set during Phase 1 of loadCasingTypesV2)
+  // ── Try cached variant ID lists (multiple sources, string/number key) ──────
   const meta = _dbMeta || {};
   const metaVariantIds = meta._casingVariantIds || {};
-  // Try multiple sources in priority order to handle ID type mismatches
-  // and cases where variants were loaded before _casingVariantIds was populated
-  const variantIds =
-    (_casingVariantIds[key] && _casingVariantIds[key].length ? _casingVariantIds[key] : null) ||
-    (_casingVariantIds[typeId] && _casingVariantIds[typeId].length ? _casingVariantIds[typeId] : null) ||
-    (metaVariantIds[key] && metaVariantIds[key].length ? metaVariantIds[key] : null) ||
-    (metaVariantIds[typeId] && metaVariantIds[typeId].length ? metaVariantIds[typeId] : null) ||
-    (ty._variantIds && ty._variantIds.length ? ty._variantIds : null) ||
-    [];
+  let variantIds =
+    (_casingVariantIds[key]?.length    ? _casingVariantIds[key]    : null) ||
+    (_casingVariantIds[typeId]?.length ? _casingVariantIds[typeId] : null) ||
+    (metaVariantIds[key]?.length       ? metaVariantIds[key]       : null) ||
+    (metaVariantIds[typeId]?.length    ? metaVariantIds[typeId]    : null) ||
+    (ty._variantIds?.length            ? ty._variantIds            : null) ||
+    null;
 
-  console.log('[casing] loading variants for type', typeId, '| found', variantIds.length, 'ids');
+  // ── RECOVERY: if index is empty, scan Firestore for variant docs ───────────
+  // This happens when _casingVariantIds was wiped by a saveType call that ran
+  // before variants were loaded (the pre-fix bug). Each variant doc stores:
+  //   { key:'casingTypes', typeId, variantId, json }
+  // We query by key+typeId to rediscover the variant IDs.
+  // ─────────────────────────────────────────────────────────────────────────────
+  if(!variantIds){
+    console.log('[casing] index empty — querying Firestore for type', typeId, 'variants');
+    try {
+      const colRef = collection(fs, 'app');
+      // Try string typeId first, then number (schema may vary)
+      let snap = await getDocs(
+        query(colRef, where('key','==','casingTypes'), where('typeId','==',key))
+      );
+      if(!snap.size){
+        snap = await getDocs(
+          query(colRef, where('key','==','casingTypes'), where('typeId','==',Number(typeId)))
+        );
+      }
 
-  if(!variantIds.length){
+      // Collect main variant docs (skip chunk docs which have _chunkIdx field)
+      const recoveredMap = new Map(); // variantId → docData
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if(data.variantId != null && !('_chunkIdx' in data)){
+          recoveredMap.set(String(data.variantId), data);
+        }
+      });
+
+      if(recoveredMap.size > 0){
+        console.log('[casing] recovery: found', recoveredMap.size, 'variants for type', typeId);
+        const recVariants = [];
+        for(const [varId, data] of recoveredMap){
+          try {
+            let parsed;
+            if(data._chunked){
+              parsed = JSON.parse(await readJsonRecord(
+                casingVariantDoc(typeId, varId),
+                idx => casingVariantChunkDoc(typeId, varId, idx),
+                `casing style (recovery): ${typeId}/${varId}`
+              ));
+            } else if(data.json){
+              parsed = JSON.parse(data.json);
+            }
+            if(parsed) recVariants.push(parsed);
+          } catch(e){ console.warn('[casing] recovery parse failed', varId, e); }
+        }
+        ty.variants = recVariants;
+        variantIds = [...recoveredMap.keys()];
+        _casingVariantIds[key] = variantIds; // update cache
+        _casingVariantsLoaded.add(key);
+        console.log('[casing] recovery complete:', recVariants.length, 'variants loaded');
+        notifyDBReady();
+        return;
+      }
+    } catch(qErr){
+      console.warn('[casing] Firestore recovery query failed:', qErr);
+    }
+    // Truly no variants for this type
     _casingVariantsLoaded.add(key);
     return;
   }
 
+  // ── Normal path: load variants by known IDs ────────────────────────────────
+  console.log('[casing] loading', variantIds.length, 'variants for type', typeId);
   const variants = await Promise.all(variantIds.map(async variantId => {
     return JSON.parse(await readJsonRecord(
       casingVariantDoc(typeId, variantId),
@@ -620,6 +669,7 @@ async function ensureCasingVariants(typeId){
   }));
 
   ty.variants = variants;
+  _casingVariantIds[key] = variantIds; // keep cache fresh
   _casingVariantsLoaded.add(key);
   notifyDBReady();
 }
