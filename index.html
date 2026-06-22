@@ -844,6 +844,122 @@
   }
 
 
+  /* ─── SOCIAL CHANNELS SECTION ─────────────────────────────────────────── */
+  .social-channels-section{
+    padding:60px 24px 64px;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(201,168,76,.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 30%, rgba(201,168,76,.05) 0%, transparent 45%),
+      linear-gradient(180deg,#f8edd0 0%,#fffaf0 100%);
+    position:relative;
+  }
+  .social-channels-inner{max-width:1100px;margin:0 auto}
+  .social-channels-head{text-align:center;margin-bottom:40px}
+  .social-channels-head h2{
+    font-family:var(--font-display);font-size:30px;font-weight:800;
+    color:var(--text);margin:0 0 12px;letter-spacing:-.3px;
+  }
+  .social-channels-head p{
+    font-size:15px;color:var(--text-muted);line-height:1.7;
+    max-width:600px;margin:0 auto;
+  }
+
+  .social-channels-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:16px;
+  }
+
+  .sc-card{
+    background:rgba(255,252,240,.72);
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid rgba(201,168,76,.24);
+    border-radius:22px;
+    padding:28px 18px 22px;
+    text-align:center;
+    cursor:pointer;
+    text-decoration:none;
+    display:flex;flex-direction:column;align-items:center;
+    position:relative;overflow:hidden;
+    transition:transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s, border-color .28s;
+    box-shadow:
+      0 8px 32px rgba(120,80,20,.1),
+      0 1px 0 rgba(255,255,255,.92) inset;
+  }
+  /* top accent bar */
+  .sc-card::before{
+    content:'';
+    position:absolute;top:0;left:0;right:0;height:3px;
+    background:var(--sc-accent);
+    opacity:.7;
+    border-radius:22px 22px 0 0;
+    transition:opacity .25s;
+  }
+  /* glass sheen */
+  .sc-card::after{
+    content:'';position:absolute;top:0;left:0;right:0;height:45%;
+    background:linear-gradient(180deg,rgba(255,255,255,.38),transparent);
+    pointer-events:none;border-radius:22px 22px 0 0;
+  }
+  .sc-card:hover{
+    transform:translateY(-6px) scale(1.02);
+    border-color:rgba(201,168,76,.4);
+    box-shadow:
+      0 20px 56px var(--sc-glow),
+      0 1px 0 rgba(255,255,255,.92) inset;
+  }
+  .sc-card:hover::before{opacity:1}
+
+  .sc-icon{
+    width:56px;height:56px;border-radius:16px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:14px;
+    background:rgba(255,255,255,.7);
+    border:1px solid rgba(201,168,76,.18);
+    position:relative;z-index:1;
+    transition:transform .25s;
+  }
+  .sc-card:hover .sc-icon{transform:scale(1.08)}
+  .sc-icon svg{width:28px;height:28px}
+
+  .sc-name{
+    font-family:var(--font-display);font-size:14px;font-weight:700;
+    color:var(--text);margin-bottom:4px;
+    position:relative;z-index:1;
+  }
+  .sc-handle{
+    font-size:12px;color:var(--text-muted);margin-bottom:16px;
+    position:relative;z-index:1;
+  }
+  .sc-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12px;font-weight:700;
+    padding:8px 16px;border-radius:999px;
+    background:var(--sc-accent);color:#fff;
+    border:none;cursor:pointer;
+    transition:opacity .2s,transform .2s;
+    position:relative;z-index:1;
+    text-decoration:none;
+    box-shadow:0 4px 14px rgba(0,0,0,.12);
+  }
+  .sc-btn:hover{opacity:.88;transform:translateY(-1px)}
+
+  @media(max-width:900px){
+    .social-channels-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+    .social-channels-section{padding:44px 18px 48px}
+  }
+  @media(max-width:600px){
+    .social-channels-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .sc-card{padding:20px 12px 18px;border-radius:18px}
+    .sc-icon{width:48px;height:48px;border-radius:13px;margin-bottom:10px}
+    .sc-icon svg{width:24px;height:24px}
+    .sc-name{font-size:13px}
+    .sc-btn{font-size:11px;padding:7px 13px}
+    .social-channels-head h2{font-size:24px}
+    .social-channels-section{padding:36px 14px 40px}
+  }
+
   /* ─── HISTORY & STORIES / KNOWLEDGE CENTER ─────────────────────────────
      Special layout for custom pages with layout='knowledge'.
      Shows category chips → featured article → article grid.  */
@@ -3108,6 +3224,18 @@
   </section>
   </div>
 
+  <!-- SOCIAL CHANNELS SECTION -->
+  <section class="social-channels-section" id="socialChannelsSection" style="display:none">
+    <div class="social-channels-inner">
+      <div class="social-channels-head">
+        <h2 id="scTitle">Follow Us Everywhere</h2>
+        <div class="gline"></div>
+        <p id="scSubtitle"></p>
+      </div>
+      <div class="social-channels-grid" id="scGrid"></div>
+    </div>
+  </section>
+
   <!-- LATEST UPDATES / FEED — appears after services/featured/reviews -->
   <div class="social-feed-wrap">
     <div class="social-feed-label">
@@ -3581,6 +3709,18 @@ function defaultSettings(){
       qrImage:'',
     },
     featured:{enabled:true,title:'✨ Featured Pieces',sub:'Hand-picked highlights from our collection',ids:[]},
+    socialChannels:{
+      enabled:true,
+      title:'Follow Us Everywhere',
+      subtitle:'Stay connected with YingyingyingSG through our official social channels for new arrivals, live updates, videos, reviews, and special releases.',
+      channels:[
+        {id:'facebook',  name:'Facebook',   handle:'YingyingyingSG',              url:'https://m.me/yingyingyingsg', enabled:true},
+        {id:'instagram', name:'Instagram',  handle:'@yingyingyingsg',             url:'', enabled:false},
+        {id:'tiktok',    name:'TikTok',     handle:'@yingyingyingsg',             url:'', enabled:false},
+        {id:'youtube',   name:'YouTube',    handle:'YingyingyingSG',              url:'', enabled:false},
+        {id:'shopee',    name:'Shopee',     handle:'YingyingyingSG Shop',         url:'', enabled:false},
+      ],
+    },
     reviews:{
       enabled:true,
       title:'🙏 What Our Customers Say',
@@ -3647,6 +3787,12 @@ function applyDbMigrations(d){
     if(hsNav) hsNav.builtin = true;
   }
   // Default articles are added via admin panel
+  // Ensure socialChannels settings exist
+  if(!d.settings.socialChannels){
+    d.settings.socialChannels = defaultSettings().socialChannels;
+  } else if(!Array.isArray(d.settings.socialChannels.channels)){
+    d.settings.socialChannels.channels = defaultSettings().socialChannels.channels;
+  }
   // Backfill layout + items on legacy custom pages
   d.settings.customPages.forEach(p => {
     if(!p.layout) p.layout = 'article';
@@ -4127,6 +4273,7 @@ function applySettings(){
   setRich('aboutDesc', s.sections.about.desc);
 
   renderTrustStrip();
+  renderSocialChannels();
   document.getElementById('trustGrid').innerHTML=(s.trustCards||[]).map(t=>`
     <div class="trust-card">
       <span class="trust-icon">${t.icon}</span>
@@ -6294,6 +6441,64 @@ async function openHsArticle(id){
       </div>` : ''}
   `;
   openModal('article');
+}
+
+// ─── SOCIAL CHANNELS ────────────────────────────────────────────────────────
+const SC_PLATFORM_CONFIG = {
+  facebook:  { accent:'#1877F2', glow:'rgba(24,119,242,.22)',   btnLabel:'Visit Facebook',      svgPath:'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' },
+  instagram: { accent:'#E4405F', glow:'rgba(228,64,95,.2)',     btnLabel:'Visit Instagram',     svgPath:'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z' },
+  tiktok:    { accent:'#00F2EA', accent2:'#FF0050', glow:'rgba(0,242,234,.18)', btnLabel:'Visit TikTok',  svgPath:'M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.22 8.22 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z' },
+  youtube:   { accent:'#FF0000', glow:'rgba(255,0,0,.18)',       btnLabel:'Watch on YouTube',    svgPath:'M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z' },
+  shopee:    { accent:'#EE4D2D', glow:'rgba(238,77,45,.18)',     btnLabel:'Visit Shopee Store',  svgPath:'M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.5c1.933 0 3.5 1.567 3.5 3.5S13.933 11.5 12 11.5 8.5 9.933 8.5 8 10.067 4.5 12 4.5zM6 17.5c0-2.761 2.686-5 6-5s6 2.239 6 5H6z' },
+};
+
+function renderSocialChannels(){
+  const db = getDB();
+  const sc = db.settings.socialChannels;
+  const el = document.getElementById('socialChannelsSection');
+  if(!el) return;
+
+  if(!sc || !sc.enabled){
+    el.style.display = 'none';
+    return;
+  }
+
+  const channels = (sc.channels||[]).filter(c => c.enabled && c.url && c.url.trim());
+  if(!channels.length){
+    el.style.display = 'none';
+    return;
+  }
+
+  el.style.display = '';
+
+  // Title + subtitle
+  const titleEl = document.getElementById('scTitle');
+  const subEl   = document.getElementById('scSubtitle');
+  if(titleEl) titleEl.textContent = sc.title || 'Follow Us Everywhere';
+  if(subEl)   subEl.textContent   = sc.subtitle || '';
+
+  // Cards
+  const grid = document.getElementById('scGrid');
+  if(!grid) return;
+  grid.innerHTML = channels.map(ch => {
+    const cfg = SC_PLATFORM_CONFIG[ch.id] || {accent:'#c9a84c',glow:'rgba(201,168,76,.2)',btnLabel:'Visit'};
+    const accentRgb = cfg.accent;
+    const glowColor = cfg.glow;
+    const label     = cfg.btnLabel;
+    const handle    = escapeHtml(ch.handle || ch.name || '');
+
+    // Build SVG icon
+    const svgIcon = cfg.svgPath ? `<svg viewBox="0 0 24 24" fill="${accentRgb}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>` : `<span style="font-size:24px;color:${accentRgb}">${ch.name[0]}</span>`;
+
+    return `
+    <a class="sc-card" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer"
+      style="--sc-accent:${accentRgb};--sc-glow:${glowColor}">
+      <div class="sc-icon">${svgIcon}</div>
+      <div class="sc-name">${escapeHtml(ch.name)}</div>
+      ${handle ? `<div class="sc-handle">${handle}</div>` : ''}
+      <span class="sc-btn" style="background:${accentRgb}">${label}</span>
+    </a>`;
+  }).join('');
 }
 
 function buildFeedPosts(db){

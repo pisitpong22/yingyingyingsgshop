@@ -1554,6 +1554,38 @@
         <div class="save-bar"><button class="btn-gold" onclick="saveServices()" data-en="💾 Save Service Cards" data-th="💾 บันทึก">💾 Save Service Cards</button></div>
       </div>
 
+      <!-- SOCIAL CHANNELS -->
+      <div class="tab-content" data-tab-content="social" data-parent="home">
+        <h3 class="subsection-title">📲 Social Channels</h3>
+        <div class="subsection-sub">Display your social media channels on the homepage. Only channels with a URL will be shown. Leave URL blank to hide a channel.</div>
+
+        <div class="form-card">
+          <div class="form-section-title">Section Settings</div>
+          <div class="form-grid">
+            <div class="fg full" style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" id="sc_enabled" style="width:auto">
+              <label style="font-weight:600;cursor:pointer">Show Social Channels section on homepage</label>
+            </div>
+            <div class="fg full"><label class="fl">Section Title</label>
+              <input class="fi" id="sc_title" placeholder="Follow Us Everywhere">
+            </div>
+            <div class="fg full"><label class="fl">Subtitle</label>
+              <textarea class="fta" id="sc_subtitle" rows="2" style="min-height:64px" placeholder="Stay connected with us…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title">Platform Links</div>
+          <div class="form-section-desc">Enable platforms and paste their URLs. Leave blank to hide.</div>
+          <div id="sc_channels_list"></div>
+        </div>
+
+        <div style="margin-top:20px">
+          <button class="btn-gold" onclick="saveSocialChannels()">💾 Save Social Channels</button>
+        </div>
+      </div>
+
       <!-- FEED POSTS -->
       <div class="tab-content" data-tab-content="feed" data-parent="home">
         <h3 class="subsection-title">📰 Feed Posts / Latest Updates</h3>
@@ -2713,6 +2745,8 @@ function refreshDynamic(){
   else if(active.id==='panel-content-contact'){loadContact();}
   else if(active.id==='panel-content-payment'){loadPayment();}
   else if(active.id==='panel-content-featured'){loadFeatured();}
+  else if(active.getAttribute('data-tab-content')==='social' && active.getAttribute('data-parent')==='home'){loadSocialChannels();}
+  else if(active.getAttribute('data-tab-content')==='seo' && active.getAttribute('data-parent')==='settings'){loadSeoPanel();}
   else if(active.id==='panel-reviews'){loadReviewsPanel();}
 }
 
@@ -5402,6 +5436,68 @@ async function dupHsArticle(id){
 }
 
 // ─── SEO & SOCIAL SETTINGS ────────────────────────────────────────────
+// ─── SOCIAL CHANNELS ADMIN ───────────────────────────────────────────────────
+const SC_ADMIN_PLATFORMS = [
+  {id:'facebook',  name:'Facebook',        icon:'📘', placeholder:'https://facebook.com/yourpage'},
+  {id:'instagram', name:'Instagram',       icon:'📸', placeholder:'https://instagram.com/yourhandle'},
+  {id:'tiktok',    name:'TikTok',          icon:'🎵', placeholder:'https://tiktok.com/@yourhandle'},
+  {id:'youtube',   name:'YouTube',         icon:'▶️',  placeholder:'https://youtube.com/@yourchannel'},
+  {id:'shopee',    name:'Shopee',          icon:'🛒', placeholder:'https://shopee.sg/yourshop'},
+];
+
+function loadSocialChannels(){
+  const db  = getDB();
+  const sc  = db.settings.socialChannels || {};
+  const channels = sc.channels || [];
+
+  document.getElementById('sc_enabled').checked   = sc.enabled !== false;
+  document.getElementById('sc_title').value        = sc.title    || 'Follow Us Everywhere';
+  document.getElementById('sc_subtitle').value     = sc.subtitle || '';
+
+  const list = document.getElementById('sc_channels_list');
+  if(!list) return;
+  list.innerHTML = SC_ADMIN_PLATFORMS.map(p => {
+    const ch = channels.find(c=>c.id===p.id) || {id:p.id,enabled:false,name:p.name,handle:'',url:''};
+    return `
+    <div style="
+      display:grid;grid-template-columns:auto 1fr 1fr;gap:12px;align-items:start;
+      padding:14px 0;border-bottom:1px solid var(--border)
+    ">
+      <label style="display:flex;align-items:center;gap:8px;padding-top:6px;cursor:pointer;font-weight:600;min-width:140px">
+        <input type="checkbox" id="sc_${p.id}_on" ${ch.enabled?'checked':''} style="width:auto">
+        <span>${p.icon} ${p.name}</span>
+      </label>
+      <div>
+        <label class="fl" style="font-size:12px;margin-bottom:4px">Display Name</label>
+        <input class="fi" id="sc_${p.id}_name" value="${escapeHtml(ch.name||p.name)}" placeholder="${p.name}" style="font-size:13px;padding:8px 12px">
+      </div>
+      <div>
+        <label class="fl" style="font-size:12px;margin-bottom:4px">URL</label>
+        <input class="fi" id="sc_${p.id}_url" value="${escapeHtml(ch.url||'')}" placeholder="${p.placeholder}" style="font-size:13px;padding:8px 12px">
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function saveSocialChannels(){
+  const db = getDB();
+  if(!db.settings.socialChannels) db.settings.socialChannels = {};
+  const sc = db.settings.socialChannels;
+
+  sc.enabled  = document.getElementById('sc_enabled').checked;
+  sc.title    = document.getElementById('sc_title').value.trim();
+  sc.subtitle = document.getElementById('sc_subtitle').value.trim();
+  sc.channels = SC_ADMIN_PLATFORMS.map(p => ({
+    id:      p.id,
+    name:    (document.getElementById('sc_'+p.id+'_name')?.value||'').trim() || p.name,
+    handle:  '',
+    url:     (document.getElementById('sc_'+p.id+'_url')?.value||'').trim(),
+    enabled: !!(document.getElementById('sc_'+p.id+'_on')?.checked),
+  }));
+
+  await persistDB(db, '✅ Social Channels saved');
+}
+
 function loadSeoPanel(){
   const db = getDB();
   const seo = db.settings.seo || {};
@@ -6268,6 +6364,7 @@ function buildCompositePanels(){
       {tab:'trust',    en:'🏆 Trust & Stats',     th:'🏆 ความน่าเชื่อถือ'},
       {tab:'services', en:'🎯 Services',          th:'🎯 บริการ'},
       {tab:'featured', en:'✨ Featured',          th:'✨ แนะนำ'},
+      {tab:'social',   en:'📲 Social Channels',  th:'📲 โซเชียลมีเดีย'},
       {tab:'layout',   en:'📐 Layout & Sections', th:'📐 จัดเลย์เอาท์'},
       {tab:'feed',     en:'📰 Feed Posts',        th:'📰 โพสต์ Feed'},
     ],
