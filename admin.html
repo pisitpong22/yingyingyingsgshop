@@ -5082,52 +5082,55 @@ let _hsEditId = null;
 let _hsUnsubscribe = null;
 
 function loadHsPanel(){
+  console.log('[HS VERIFY] Admin page opened');
+  console.log('[HS VERIFY] DB historyStories:', window.FB?.getDB()?.historyStories);
+  console.log('[HS VERIFY] article count:', window.FB?.getDB()?.historyStories?.length);
+  console.log('[HS VERIFY] panel active:', document.getElementById('panel-history-stories')?.classList.contains('active'));
+
   cancelEditHs();
 
   // Unsubscribe any previous listener
   if(_hsUnsubscribe){ try{ _hsUnsubscribe(); }catch(e){} _hsUnsubscribe=null; }
 
-  // Subscribe to DB changes FIRST — this is the primary render trigger.
-  // onDBChange fires every time Firestore delivers a snapshot (including
-  // the very first one after page load), so we will always re-render
-  // whenever the loaded _db object is updated.
+  // Subscribe to DB changes FIRST — fires immediately with cb(_db) if _db exists.
+  // panel already has 'active' class (set by showPanel before calling loadHsPanel)
+  // so the active check in the callback passes on first fire.
   if(window.FB && typeof window.FB.onDBChange === 'function'){
     _hsUnsubscribe = window.FB.onDBChange(() => {
       const panel = document.getElementById('panel-history-stories');
-      if(panel && panel.classList.contains('active')){
-        renderHsList();
-      }
+      const isActive = panel && panel.classList.contains('active');
+      console.log('[HS VERIFY] onDBChange fired, panel active:', isActive,
+        '| historyStories count:', window.FB?.getDB()?.historyStories?.length);
+      if(isActive) renderHsList();
     });
   }
 
-  // If historyStories is NOT yet in the loaded keys, request it now.
-  // ensureDBKeys will call notifyDBReady() after loading, which fires
-  // our onDBChange listener above → renderHsList() will be called then.
-  // If it IS already loaded, render immediately.
+  // alreadyLoaded is always true when rawDb.historyStories is an Array (even [])
+  // The onDBChange above already called renderHsList if _db was ready.
+  // This branch handles the case where _db is not yet set at all.
   const rawDb = window.FB ? window.FB.getDB() : {};
   const alreadyLoaded = Array.isArray(rawDb.historyStories);
 
-  if(alreadyLoaded){
-    // Data is already in memory — render now
-    renderHsList();
-  } else {
-    // Show loading placeholder, then load the split key.
-    // onDBChange will call renderHsList() once data arrives.
+  console.log('[HS VERIFY] alreadyLoaded (Array.isArray check):', alreadyLoaded,
+    '| raw length:', rawDb.historyStories?.length);
+
+  if(!alreadyLoaded){
     const c = document.getElementById('hs_list');
     if(c) c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading articles…</div>`;
     if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
-      window.FB.ensureDBKeys(['historyStories']).catch(e => console.warn('[HS] load failed:', e));
+      window.FB.ensureDBKeys(['historyStories'])
+        .then(() => console.log('[HS VERIFY] ensureDBKeys resolved, count now:', window.FB?.getDB()?.historyStories?.length))
+        .catch(e => console.warn('[HS] load failed:', e));
     }
   }
 }
 
 function renderHsList(){
-  // Use FB.getDB() directly to get raw data including historyStories split key
-  // applyDbMigrations in getDB() doesn't affect historyStories but we want
-  // to ensure we see the latest data from the Firestore snapshot
+  console.log('[HS VERIFY] renderHsList called');
   const rawDb = (window.FB && window.FB.getDB) ? window.FB.getDB() : null;
   const db = rawDb && Object.keys(rawDb).length ? rawDb : getDB();
   const articles = db.historyStories || [];
+  console.log('[HS VERIFY] article count in renderHsList:', articles.length);
   const c = document.getElementById('hs_list');
   if(!c) return;
   if(!articles.length){
