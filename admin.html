@@ -5071,24 +5071,24 @@ async function loadVariants(){
       <tr class="variant-row" data-variant-id="${escapeHtml(v.id)}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}
           ondragover="variantDragOver(event)"
           ondragleave="variantDragLeave(event)"
-          ondrop="variantDrop(event,${JSON.stringify(v.id)})">
+          ondrop="variantDrop(event,'${escapeHtml(String(v.id))}')">
         <td>
           <div class="variant-drag-cell">
             <span class="variant-drag-handle ${_variantOrderSaving?'disabled':''}"
                   ${_variantOrderSaving?'':'draggable="true"'}
                   title="${lang==='th'?'ลากเพื่อจัดลำดับ':'Drag to reorder'}"
-                  ondragstart="variantDragStart(event,${JSON.stringify(v.id)})"
+                  ondragstart="variantDragStart(event,'${escapeHtml(String(v.id))}')"
                   ondragend="variantDragEnd(event)">⋮⋮</span>
             <span class="variant-order-num">${idx + 1}</span>
           </div>
         </td>
         <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="no-img">🪬</div>`}</td>
-        <td><strong>${v.name}</strong></td>
+        <td><strong>${escapeHtml(String(v.name||''))}</strong></td>
         <td>${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
         <td><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
         <td><div class="row-actions">
-          <button class="btn-edit" onclick="openVariantForm(${JSON.stringify(v.id)})">✏️</button>
-          <button class="btn-del" onclick="delVariant(${JSON.stringify(v.id)})">🗑</button>
+          <button class="btn-edit" onclick="openVariantForm('${escapeHtml(String(v.id))}')">✏️</button>
+          <button class="btn-del" onclick="delVariant('${escapeHtml(String(v.id))}')">🗑</button>
         </div></td>
       </tr>`).join('')}
     </tbody></table>`;
