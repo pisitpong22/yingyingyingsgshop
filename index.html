@@ -5399,41 +5399,30 @@ function renderCasingTypes(){
   }).join('');
 }
 
-async function openCasingType(typeId) {
-  // 1. ดึงข้อมูล Type ปัจจุบัน
-  const ty = window.FB.getDB().casingTypes.find(t => String(t.id) === String(typeId));
-  if (!ty) {
-    console.error('[CASING DETAIL] Type not found:', typeId);
-    return;
-  }
+async function openCasingType(typeId){
+  curCasingType=typeId;
+  _variantRenderToken++;
+  window.scrollTo({top:0,behavior:'smooth'});
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
 
-  // 2. เช็คเฉพาะว่า variants โหลดมาหรือยัง (ไม่สน _variantIds)
+  // Determine if variants need loading.
+  // ty.variants=[] is set in Phase 1 and means "deferred", not "no variants".
+  // We need to check if there are known variant IDs (in ty._variantIds or
+  // firebase-shared's _casingVariantIds cache) that haven't been loaded yet.
   const loadedVariantCount = (ty?.variants?.length) || 0;
-  const needsLoad = loadedVariantCount === 0;
+  // needsLoad: there's at least one variant ID we haven't fetched yet
+  const needsLoad = loadedVariantCount === 0 && window.FB && window.FB.ensureCasingVariants;
 
-  // 3. ถ้ายังไม่ได้โหลด ให้บังคับโหลดทันที
-  if (needsLoad && window.FB && window.FB.ensureCasingVariants) {
-    console.log('[CASING DETAIL] forcing variant load because variants empty');
-    
-    // แสดงสถานะกำลังโหลด (ถ้ามีฟังก์ชันนี้ในไฟล์ของคุณ)
-    if (typeof renderVariantsLoading === 'function') {
-      renderVariantsLoading(typeId);
+  if(needsLoad){
+    renderVariantsLoading(typeId);
+    try {
+      await window.FB.ensureCasingVariants(typeId);
+    } catch(err){
+      console.warn('[casing] variant load failed:', err);
     }
-    
-    // เรียก Firebase ให้ดึง variants จาก Firestore
-    await window.FB.ensureCasingVariants(typeId);
   }
-
-  // 4. อ่านข้อมูล Type ใหม่จาก DB หลังจาก variants ถูก inject เข้าไปแล้ว
-  const tyAfter = window.FB.getDB().casingTypes.find(t => String(t.id) === String(typeId));
-  console.log('[CASING DETAIL] variants after load:', tyAfter?.variants?.length);
-
-  // 5. Render UI
-  if (typeof renderVariants === 'function') {
-    renderVariants(typeId);
-  } else if (typeof renderCasingDetail === 'function') {
-    renderCasingDetail(typeId);
-  }
+  renderVariants(typeId);
 }
 
 function casingPlainText(html){

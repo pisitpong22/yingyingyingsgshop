@@ -4969,7 +4969,21 @@ async function saveType(){
   const updatedAt=Date.now();
   if(curEditTypeId){
     const ty=db.casingTypes.find(t=>t.id===curEditTypeId);
-    if(ty){ty.name=name;ty.priceRange=price;ty.desc=rteGetHtml('ft_desc');ty.bannerImg=(captureImgs('ft_banner')[0]||'');ty.sampleImgs=captureImgs('ft_samples');ty.updatedAt=updatedAt;delete ty.price;}
+    if(ty){
+      // IMPORTANT: If variants not yet loaded (Phase 1 deferred), load them first
+      // to prevent queueCasingTypeWrites from wiping the variant index in Firestore
+      const hasVariantsLoaded = Array.isArray(ty.variants) && ty.variants.length > 0;
+      const knowsVariantsExist = (ty._variantIds && ty._variantIds.length > 0);
+      if(!hasVariantsLoaded && knowsVariantsExist && window.FB && window.FB.ensureCasingVariants){
+        showToast('Loading style data…');
+        await window.FB.ensureCasingVariants(curEditTypeId);
+      }
+      ty.name=name;ty.priceRange=price;ty.desc=rteGetHtml('ft_desc');
+      ty.bannerImg=(captureImgs('ft_banner')[0]||'');
+      ty.sampleImgs=captureImgs('ft_samples');
+      ty.updatedAt=updatedAt;
+      delete ty.price;
+    }
   } else {
     db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[],updatedAt});
   }
