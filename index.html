@@ -161,17 +161,24 @@
     border:1px solid rgba(201,168,76,0.25);
   }
 
-  .topbar{background:var(--deep);color:var(--gold-light);text-align:center;padding:8px 16px;font-size:13px;letter-spacing:1px}
+  .topbar{display:none}
 
   nav{
-    position:sticky;top:0;z-index:100;
-    background:rgba(18,16,10,0.92);
-    backdrop-filter:blur(16px) saturate(160%);
-    -webkit-backdrop-filter:blur(16px) saturate(160%);
-    border-bottom:1px solid rgba(201,168,76,0.28);
-    box-shadow:0 4px 24px rgba(0,0,0,.25);
+    position:fixed;top:16px;left:50%;transform:translateX(-50%);
+    z-index:200;
+    width:calc(100% - 48px);
+    max-width:1100px;
+    background:rgba(20,15,6,0.55);
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border:1px solid rgba(201,168,76,0.22);
+    border-radius:999px;
+    box-shadow:
+      0 8px 32px rgba(0,0,0,.28),
+      0 1px 0 rgba(255,248,210,.07) inset,
+      0 -1px 0 rgba(0,0,0,.18) inset;
   }
-  .nav-inner{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:66px;gap:12px}
+  .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 18px;height:58px;gap:12px}
   .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
   .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
   .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
@@ -183,7 +190,8 @@
   .nav-links a:hover,.nav-links a.active{color:var(--gold-light);background:rgba(201,168,76,0.13)}
 
   .page{display:none;animation:fadeUp .4s ease}
-  .page.active{display:block}
+  .page.active{display:block;padding-top:80px}
+  #page-home.page.active{padding-top:0}
   @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
   /* ───── INITIAL LOAD SPLASH ─────
@@ -816,6 +824,109 @@
     .cp-list-content{font-size:13.5px;margin-bottom:8px}
   }
 
+
+  /* ─── HISTORY & STORIES / KNOWLEDGE CENTER ─────────────────────────────
+     Special layout for custom pages with layout='knowledge'.
+     Shows category chips → featured article → article grid.  */
+  .hs-wrap{max-width:1100px;margin:0 auto}
+
+  /* Category filter chips */
+  .hs-cats{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+  .hs-cat{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:7px 16px;border-radius:999px;
+    border:1px solid rgba(201,168,76,.32);
+    background:rgba(255,249,238,.55);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    font-size:13px;font-weight:600;color:var(--text-muted);
+    cursor:pointer;transition:all .2s;white-space:nowrap;
+  }
+  .hs-cat:hover,.hs-cat.active{
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--deep);border-color:var(--gold);
+    box-shadow:0 4px 14px rgba(201,168,76,.28);
+  }
+  .hs-cat-count{font-size:10.5px;opacity:.7}
+
+  /* Search */
+  .hs-search-wrap{position:relative;margin-bottom:24px}
+  .hs-search{
+    width:100%;padding:12px 44px 12px 16px;
+    border:1px solid rgba(201,168,76,.32);border-radius:12px;
+    background:rgba(255,249,238,.7);backdrop-filter:blur(10px);
+    font-size:15px;color:var(--text);font-family:inherit;
+    transition:border-color .2s,box-shadow .2s;box-sizing:border-box;
+  }
+  .hs-search:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.15)}
+  .hs-search-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+
+  /* Featured article */
+  .hs-featured{
+    display:grid;grid-template-columns:1fr 1fr;gap:28px;
+    align-items:center;margin-bottom:36px;
+    background:linear-gradient(135deg,rgba(255,249,238,.7),rgba(253,242,212,.6));
+    border:1px solid rgba(201,168,76,.28);border-radius:20px;
+    overflow:hidden;cursor:pointer;
+    box-shadow:0 8px 32px rgba(139,105,20,.1),inset 0 1px 0 rgba(255,255,255,.6);
+    transition:transform .25s,box-shadow .25s;
+  }
+  .hs-featured:hover{transform:translateY(-3px);box-shadow:0 16px 48px rgba(139,105,20,.18),inset 0 1px 0 rgba(255,255,255,.6)}
+  .hs-featured-img{aspect-ratio:4/3;overflow:hidden;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:72px}
+  .hs-featured-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .hs-featured-body{padding:28px}
+  .hs-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+    padding:3px 10px;border-radius:999px;margin-bottom:12px;
+    background:rgba(201,168,76,.15);color:var(--gold-dark);
+    border:1px solid rgba(201,168,76,.3);
+  }
+  .hs-featured-title{font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--text);margin:0 0 10px;line-height:1.25}
+  .hs-featured-excerpt{color:var(--text-muted);font-size:14px;line-height:1.7;margin-bottom:16px}
+  .hs-featured-cta{color:var(--gold-dark);font-size:13px;font-weight:700;letter-spacing:.3px}
+
+  /* Articles grid */
+  .hs-section-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .hs-section-title{font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text)}
+  .hs-section-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.4),transparent)}
+  .hs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px;margin-bottom:32px}
+  .hs-card{
+    background:rgba(255,249,238,.65);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(201,168,76,.22);border-radius:16px;
+    overflow:hidden;cursor:pointer;
+    transition:transform .25s,box-shadow .25s,border-color .25s;
+    box-shadow:0 4px 16px rgba(139,105,20,.07),inset 0 1px 0 rgba(255,255,255,.5);
+    display:flex;flex-direction:column;
+  }
+  .hs-card:hover{transform:translateY(-4px);border-color:rgba(201,168,76,.5);box-shadow:0 12px 40px rgba(139,105,20,.16),inset 0 1px 0 rgba(255,255,255,.5)}
+  .hs-card-img{aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:40px}
+  .hs-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+  .hs-card-body{padding:16px 18px 20px;flex:1;display:flex;flex-direction:column}
+  .hs-card-cat{font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:8px}
+  .hs-card-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin:0 0 8px;line-height:1.3;flex:1}
+  .hs-card-excerpt{color:var(--text-muted);font-size:13px;line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .hs-card-more{color:var(--gold-dark);font-size:12px;font-weight:700;letter-spacing:.3px;margin-top:auto}
+
+  /* Empty state */
+  .hs-empty{text-align:center;padding:60px 24px;color:var(--text-muted)}
+  .hs-empty-icon{font-size:52px;margin-bottom:16px;opacity:.5}
+
+  @media(max-width:780px){
+    .hs-featured{grid-template-columns:1fr;gap:0;border-radius:16px}
+    .hs-featured-img{aspect-ratio:4/3;max-height:280px;border-radius:0}
+    .hs-featured-img img{width:100%;height:100%;object-fit:cover;display:block}
+    .hs-featured-body{padding:18px}
+    .hs-featured-title{font-size:19px}
+    .hs-grid{grid-template-columns:1fr 1fr;gap:12px}
+    .hs-card-body{padding:12px 14px 16px}
+    .hs-card-title{font-size:14px}
+    .hs-cat{font-size:12px;padding:6px 12px}
+  }
+  @media(max-width:480px){
+    .hs-grid{grid-template-columns:1fr}
+  }
+
   /* ─── CUSTOM PAGE CONTENT ───
      Style the rich-text content of admin-created custom pages so it looks
      polished by default — no matter what HTML the admin's RTE produces. */
@@ -1311,7 +1422,7 @@
   .trust-title{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin-bottom:7px}
   .trust-desc{color:var(--text-muted);font-size:13px;line-height:1.7}
 
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;align-items:center;justify-content:center;padding:20px}
   .modal-overlay.open{display:flex}
   /* Review submission form */
   /* Make the review modal a solid, warm, premium card instead of the
@@ -1367,7 +1478,7 @@
   @keyframes rtPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes rtBounce{0%{transform:scale(0) rotate(-15deg)}60%{transform:scale(1.2) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
   @media(max-width:520px){.rt-card{padding:36px 24px}.rt-msg{font-size:18px}.rt-icon{font-size:54px}}
-  .modal{background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);-webkit-backdrop-filter:blur(var(--glass-blur-strong)) saturate(180%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid var(--glass-border);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.18),var(--glass-shadow-inner)}
+  .modal{background:linear-gradient(160deg,#fffef9 0%,#fdf6e3 55%,#f8ecd0 100%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid rgba(201,168,76,.35);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.9)}
   @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
   .modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);gap:16px}
   .modal-title-wrap{flex:1}
@@ -1405,6 +1516,31 @@
     display:flex;
     flex-direction:column;
     overflow:hidden;
+  }
+  .modal.variant-modal .modal-close{
+    position:fixed;
+    right:24px;
+    top:24px;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:rgba(18,16,10,.82);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:var(--gold-light);
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid rgba(201,168,76,.35);
+    box-shadow:0 4px 16px rgba(0,0,0,.28);
+    z-index:650;
+    line-height:1;
+    transition:background .2s;
+  }
+  .modal.variant-modal .modal-close:hover{
+    background:rgba(40,28,8,.92);
+    color:var(--gold);
   }
 	  .modal.variant-modal .modal-head{
 	    position:sticky;
@@ -1506,8 +1642,10 @@
   /* MOBILE */
   @media(max-width:768px){
     body{font-size:14px}
+    .page.active{padding-top:0}
+    #page-home.page.active{padding-top:0}
     .topbar{font-size:11px;padding:6px 12px;letter-spacing:.5px}
-    .nav-inner{height:56px;gap:8px}
+    .nav-inner{height:52px;gap:8px}
     .logo-icon{width:34px;height:34px;font-size:17px}
     .logo-text{font-size:13px}
     .menu-btn{display:flex}
@@ -1516,7 +1654,7 @@
       background:var(--deep);
       flex-direction:column;
       padding:60px 0 24px;gap:0;list-style:none;
-      transition:right .3s ease;z-index:100;
+      transition:right .3s ease;z-index:300;
       box-shadow:-8px 0 30px rgba(0,0,0,.4);
       overflow-y:auto;
     }
@@ -1871,20 +2009,21 @@
     border-bottom:1px solid rgba(232,201,106,.18);
   }
   nav{
-    background:linear-gradient(180deg,rgba(18,13,6,.9),rgba(10,8,5,.82));
-    border-bottom:1px solid rgba(232,201,106,.2);
-    box-shadow:0 12px 32px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,248,226,.04);
+    top:16px;
+    background:rgba(14,10,4,.52);
+    border:1px solid rgba(232,201,106,.2);
+    box-shadow:0 8px 32px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,248,210,.06);
   }
-  .nav-inner{height:72px}
+  .nav-inner{height:58px}
   .nav-links{
-    background:linear-gradient(135deg,rgba(255,248,226,.14),rgba(255,248,226,.045));
-    border:1px solid rgba(232,201,106,.28);
+    background:transparent;
+    border:none;
     border-radius:999px;
-    padding:5px;
-    gap:6px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 12px 34px rgba(0,0,0,.22);
-    backdrop-filter:blur(18px) saturate(140%);
-    -webkit-backdrop-filter:blur(18px) saturate(140%);
+    padding:4px;
+    gap:4px;
+    box-shadow:none;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
   }
   .nav-links a{
     border-radius:999px;
@@ -1990,7 +2129,7 @@
   .social-cover{
     position:relative;
     min-height:calc(100vh - 110px);
-    padding:70px 22px 96px;
+    padding:90px 22px 96px;
     overflow:hidden;
     color:#fff8df;
     border-bottom:1px solid rgba(201,168,76,.22);
@@ -2134,7 +2273,7 @@
   .social-post-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 12px 10px;border-top:1px solid rgba(201,168,76,.14)}
   .social-post-actions button{border:none;background:transparent;border-radius:12px;padding:10px 6px;font:inherit;font-weight:900;color:#765b27;cursor:pointer}
   .social-post-actions button:hover{background:rgba(201,168,76,.12)}
-  .social-right{display:grid;gap:12px}
+  .social-right{display:grid;gap:12px;position:sticky;top:92px;align-self:start}
   .social-widget-title{font-family:var(--font-display);font-size:20px;font-weight:800;color:#2b1a05;margin-bottom:10px}
   .social-widget-list{display:grid;gap:9px}
   .social-widget-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:900;color:#2e1d08}
@@ -2287,6 +2426,28 @@
     box-shadow:0 0 0 9px rgba(217,185,78,.35);
   }
   .feed-card{overflow:hidden;border-radius:18px}
+  .feed-type-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;
+    padding:3px 10px;border-radius:999px;margin:10px 16px 0;
+  }
+  .feed-badge-casing{background:rgba(139,0,139,.12);color:#8b008b;border:1px solid rgba(139,0,139,.2)}
+  .feed-badge-amulet{background:rgba(184,134,11,.12);color:#8b6914;border:1px solid rgba(184,134,11,.25)}
+  .feed-badge-project{background:rgba(0,100,180,.1);color:#005a9e;border:1px solid rgba(0,100,180,.18)}
+  .feed-badge-review{background:rgba(20,140,60,.1);color:#0d7a3a;border:1px solid rgba(20,140,60,.2)}
+  .feed-badge-article{background:rgba(100,60,0,.1);color:#6b3a00;border:1px solid rgba(100,60,0,.2)}
+  .feed-badge-announcement{background:rgba(180,0,0,.1);color:#9a0000;border:1px solid rgba(180,0,0,.2)}
+  .feed-badge-default{background:rgba(201,168,76,.12);color:#8b6914;border:1px solid rgba(201,168,76,.25)}
+  .feed-cta-bar{padding:10px 16px 14px;display:flex;gap:8px;flex-wrap:wrap}
+  .feed-cta-btn{
+    flex:1;min-width:80px;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--deep);border:none;padding:9px 14px;
+    border-radius:999px;font-size:12.5px;font-weight:800;cursor:pointer;
+    font-family:inherit;transition:box-shadow .2s;
+  }
+  .feed-cta-btn:hover{box-shadow:0 4px 16px rgba(201,168,76,.4)}
+  .feed-cta-btn.sec{background:transparent;color:var(--text);border:1px solid rgba(201,168,76,.35)}
   .feed-card-head{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
   .feed-card-menu{margin-left:auto;color:#8b743d;font-weight:900}
   .feed-post-name{font-weight:900;color:var(--text)}
@@ -2303,6 +2464,8 @@
   .feed-media.two{grid-template-columns:1fr 1fr}
   .feed-media.three{grid-template-columns:1.2fr .8fr}
   .feed-media.three img:first-child{grid-row:span 2}
+  .feed-media.four{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+  .feed-media.four img{min-height:160px !important}
   .feed-media img{width:100%;height:100%;min-height:320px;object-fit:cover;display:block}
   .feed-media.two img,.feed-media.three img{min-height:230px}
   .feed-actions{
@@ -2406,15 +2569,27 @@
 
   @media(max-width:768px){
     body{
-      padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));
+      padding-bottom:calc(68px + env(safe-area-inset-bottom,0px));
       background:linear-gradient(180deg,#090704 0,#151006 310px,#fff4dc 620px,#fff8e9 100%);
     }
     .topbar{display:none}
     nav{
       position:sticky;
       top:0;
-      background:rgba(9,7,4,.58);
-      border-bottom:1px solid rgba(232,201,106,.12);
+      left:0;
+      transform:none;
+      width:100%;
+      max-width:100%;
+      border-radius:0;
+      border-left:none;
+      border-right:none;
+      border-top:none;
+      background:rgba(9,7,4,.72);
+      backdrop-filter:blur(20px) saturate(160%);
+      -webkit-backdrop-filter:blur(20px) saturate(160%);
+      border-bottom:1px solid rgba(232,201,106,.14);
+      box-shadow:0 2px 16px rgba(0,0,0,.22);
+      z-index:200;
     }
     .nav-inner{
       height:58px;
@@ -2515,21 +2690,21 @@
     .trust-icon{font-size:28px;margin-bottom:8px}
     .trust-title{font-size:14px}
     .trust-desc{font-size:12px;line-height:1.45}
-    .cf-wrap{bottom:calc(96px + env(safe-area-inset-bottom,0px));right:12px}
-    .install-fab{bottom:calc(96px + env(safe-area-inset-bottom,0px));left:12px}
+    .cf-wrap{bottom:calc(72px + env(safe-area-inset-bottom,0px));right:12px}
+    .install-fab{bottom:calc(72px + env(safe-area-inset-bottom,0px));left:12px}
     .mobile-tabbar{
       position:fixed;
-      left:10px;
-      right:10px;
-      bottom:calc(10px + env(safe-area-inset-bottom,0px));
+      left:8px;
+      right:8px;
+      bottom:calc(8px + env(safe-area-inset-bottom,0px));
       z-index:300;
       display:flex;
-      gap:6px;
-      padding:8px;
-      border-radius:28px;
-      background:rgba(255,248,226,.66);
+      gap:3px;
+      padding:5px;
+      border-radius:22px;
+      background:rgba(255,248,226,.78);
       border:1px solid rgba(255,255,255,.46);
-      box-shadow:0 18px 48px rgba(37,24,6,.26), inset 0 1px 0 rgba(255,255,255,.65);
+      box-shadow:0 8px 28px rgba(37,24,6,.2), inset 0 1px 0 rgba(255,255,255,.65);
       backdrop-filter:blur(22px) saturate(170%);
       -webkit-backdrop-filter:blur(22px) saturate(170%);
       overflow-x:auto;
@@ -2541,28 +2716,28 @@
       border:none;
       background:transparent;
       color:#6e5420;
-      min-width:64px;
-      flex:1 0 64px;
-      height:56px;
-      border-radius:22px;
+      min-width:52px;
+      flex:1 0 52px;
+      height:44px;
+      border-radius:17px;
       display:flex;
       flex-direction:column;
       align-items:center;
       justify-content:center;
-      gap:2px;
+      gap:1px;
       font-family:inherit;
-      font-weight:800;
-      font-size:10.5px;
+      font-weight:700;
+      font-size:9.5px;
       cursor:pointer;
       transition:background .2s, color .2s, transform .2s;
     }
-    .mobile-tab-icon{font-size:20px;line-height:1}
+    .mobile-tab-icon{font-size:17px;line-height:1}
     .mobile-tab.active{
       background:linear-gradient(135deg,rgba(232,201,106,.95),rgba(201,168,76,.92));
       color:#140d04;
-      box-shadow:0 10px 24px rgba(139,105,20,.22);
+      box-shadow:0 4px 14px rgba(139,105,20,.18);
     }
-    .feed-page{padding:0 0 calc(96px + env(safe-area-inset-bottom,0px))}
+    .feed-page{padding:0 0 calc(74px + env(safe-area-inset-bottom,0px))}
     .feed-shell{max-width:none}
     .feed-main{gap:10px}
     .feed-top-card{padding:12px;border-radius:0;border-left:none;border-right:none}
@@ -2890,6 +3065,29 @@
   </div>
 </div>
 
+<!-- HISTORY & STORIES -->
+<div id="page-history-stories" class="page">
+  <div class="sec-head">
+    <h2 id="hsPageTitle">📖 History & Stories</h2>
+    <div class="gline"></div>
+    <p id="hsPageDesc">Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.</p>
+  </div>
+  <div class="content">
+    <div class="hs-wrap" id="hsPageWrap">
+      <!-- Search + filter -->
+      <div class="hs-search-wrap">
+        <input class="hs-search" id="hsSearchInput" placeholder="Search articles…" oninput="hsOnSearch(this.value)">
+        <span class="hs-search-icon">🔍</span>
+      </div>
+      <div class="hs-cats" id="hsCatChips"></div>
+      <!-- Featured -->
+      <div id="hsFeaturedWrap"></div>
+      <!-- Articles grid -->
+      <div id="hsGridWrap"></div>
+    </div>
+  </div>
+</div>
+
 <!-- PROJECTS -->
 <div id="page-projects" class="page">
   <div class="sec-head"><h2 id="projTitle"></h2><div class="gline"></div><p id="projDesc"></p></div>
@@ -3156,6 +3354,38 @@ function applyDbMigrations(d){
   if(!d.casingTypes)d.casingTypes=[];
   if(!d.settings)d.settings=defaultSettings();
   if(!d.settings.customPages)d.settings.customPages=[];
+  // historyStories: dedicated module (migrated from customPages if needed)
+  if(!d.historyStories) d.historyStories = [];
+  // Migration: if old history-stories custom page exists, migrate items
+  const oldHsPage = d.settings.customPages.find(p=>p.id==='history-stories');
+  if(oldHsPage && (oldHsPage.items||[]).length && !d.historyStories.length){
+    let nextId = 1;
+    d.historyStories = (oldHsPage.items||[]).map(it=>({
+      id: nextId++,
+      title: it.title||'',
+      slug: (it.title||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),
+      category: it.category||'guides-articles',
+      excerpt: it.excerpt||'',
+      content: it.content||'',
+      coverImage: it.img||'',
+      gallery: [],
+      featured: !!it.featured,
+      status: it.status||'published',
+      seoTitle:'',seoDescription:'',
+      createdAt: it.createdAt||Date.now(),
+      updatedAt: Date.now(),
+    }));
+  }
+  // Remove history-stories from customPages (it's now a dedicated module)
+  d.settings.customPages = (d.settings.customPages||[]).filter(p=>p.id!=='history-stories');
+  // Ensure history-stories nav item exists (module is now standalone)
+  if(!d.settings.nav.find(n=>n.id==='history-stories')){
+    d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:true});
+  } else {
+    const hsNav = d.settings.nav.find(n=>n.id==='history-stories');
+    if(hsNav) hsNav.builtin = true;
+  }
+  // Default articles are added via admin panel
   // Backfill layout + items on legacy custom pages
   d.settings.customPages.forEach(p => {
     if(!p.layout) p.layout = 'article';
@@ -3731,20 +3961,30 @@ function renderSocialHomeSkeleton(){
 
 function scheduleSocialHomeFeedLoad(){
   if(_socialHomeFeedLoading) return;
+  _socialHomeFeedLoading = true;
   renderSocialHomeSkeleton();
-  if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
-  _socialHomeFeedLoading=true;
-  const loader=window.FB.ensureDBKeys(['settings','feedPosts']);
-  loader.catch(err=>{
-    loadState.homeFeed='error';
-    console.warn('[home feed] partial load failed:', err);
-  }).then(()=>{
-    if(loadState.homeFeed !== 'error') loadState.homeFeed='loaded';
-    renderSocialHomeFeed();
-    scheduleSocialCasingPreviewLoad();
-  }).finally(()=>{
-    _socialHomeFeedLoading=false;
-  });
+  if(!window.FB || typeof window.FB.ensureDBKeys !== 'function'){
+    _socialHomeFeedLoading = false;
+    return;
+  }
+  // ensureDBKeys loads data into _db, then calls notifyDBReady which fires
+  // onDBChange. Our onDBChange handler (below) calls renderSocialHomeFeed.
+  // So we don't call renderSocialHomeFeed() here directly — we let the
+  // event-driven onDBChange do it once data is actually in _db.
+  window.FB.ensureDBKeys(['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories'])
+    .then(() => {
+      loadState.homeFeed = 'loaded';
+      // Render once immediately after keys are confirmed loaded
+      renderSocialHomeFeed();
+      scheduleSocialCasingPreviewLoad();
+    })
+    .catch(err => {
+      loadState.homeFeed = 'error';
+      console.warn('[home feed] load failed:', err);
+    })
+    .finally(() => {
+      _socialHomeFeedLoading = false;
+    });
 }
 
 function scheduleSocialCasingPreviewLoad(){
@@ -3791,13 +4031,16 @@ function renderSocialPost(p){
   const imgs=feedImages(p.imgs).slice(0,3);
   const mediaClass=imgs.length===1?'one':imgs.length===2?'two':'three';
   const logo=imageUrl(getDB().settings.logoIcon) || '/favicon/apple-touch-icon.png';
+  const badge=p.badge||(feedTypeMeta(p.type||'default').badge);
+  const badgeCls=p.badgeCls||(feedTypeMeta(p.type||'default').cls);
   return `
     <article class="social-post">
+      <div class="feed-type-badge ${badgeCls}" style="margin:10px 14px 0">${badge}</div>
       <div class="social-post-head">
         <div class="social-mini-avatar"><img src="${escapeHtml(logo)}" alt=""></div>
         <div>
           <div class="social-post-name">YingyingyingSG</div>
-          <div class="social-post-meta">${escapeHtml(p.kicker || 'Shop update')} · ${escapeHtml(feedTimeLabel(p.ts))}</div>
+          <div class="social-post-meta">${escapeHtml(feedTimeLabel(p.ts))}</div>
         </div>
       </div>
       <div class="social-post-body">
@@ -3805,14 +4048,13 @@ function renderSocialPost(p){
         ${p.text?`<p class="social-post-text">${escapeHtml(p.text)}</p>`:''}
       </div>
       ${imgs.length?`
-        <div class="social-post-media ${mediaClass}" onclick="${p.action}">
+        <div class="social-post-media ${mediaClass}" onclick="${p.action}" style="cursor:pointer">
           ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 680px')} alt="">`).join('')}
         </div>
       `:''}
       <div class="social-post-actions">
-        <button onclick="${p.action}">👍 Like</button>
-        <button onclick="${p.action}">💬 ${escapeHtml(p.cta || 'Ask')}</button>
-        <button onclick="copyFeedLink('${escapeHtml(p.type)}')">↗ Share</button>
+        <button class="feed-cta-btn" style="flex:1;border-radius:999px;padding:9px 14px;font-size:13px" onclick="${p.action}">${escapeHtml(p.cta||'View')} →</button>
+        <button class="feed-cta-btn sec" style="flex:1;border-radius:999px;padding:9px 14px;font-size:13px" onclick="copyFeedLink('${escapeHtml(p.type||'')}')" >↗ Share</button>
       </div>
     </article>
   `;
@@ -3850,20 +4092,30 @@ function renderSocialWidgets(posts){
   }
 }
 
+// Categories for History & Stories
+const HS_CATS = [
+  {id:'all',          label:'All',              icon:'📖'},
+  {id:'monk-biographies', label:'Monk Biographies',  icon:'🙏'},
+  {id:'amulet-history',   label:'Amulet History',    icon:'📿'},
+  {id:'meanings-beliefs', label:'Meanings & Beliefs',icon:'✨'},
+  {id:'katha-collection', label:'Katha Collection',  icon:'🕉️'},
+  {id:'guides-articles',  label:'Guides & Articles', icon:'📚'},
+];
+let _hsCatFilter = 'all';
+let _hsSearch = '';
+
 function renderCustomPages(){
   const db=getDB();const cp=db.settings.customPages||[];
   const container=document.getElementById('customPages');
   container.innerHTML=cp.map(p=>{
     const layout = p.layout || 'article';
-    const items  = p.items || [];
+    const items  = (p.items || []).filter(it => it && it.status !== 'draft');
     let body;
     if(layout === 'article' || !items.length){
-      // Article: single rich-text block
       body = `<div class="custom-page-content">
-        ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet. Edit this page in the admin to add content.</p>'}
+        ${p.content||'<p style="text-align:center;color:var(--text-muted);font-style:italic">No content yet.</p>'}
       </div>`;
     } else if(layout === 'list'){
-      // List: vertical rows of image + text
       body = `<div class="cp-list">${items.map(it => `
         <div class="cp-list-item" onclick="openCpItem('${p.id}','${it.id}')">
           ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','120px')} alt=""></div>`:''}
@@ -3876,7 +4128,6 @@ function renderCustomPages(){
         </div>
       `).join('')}</div>`;
     } else {
-      // Grid: cards in responsive grid
       body = `<div class="cp-grid">${items.map(it => `
         <div class="cp-card" onclick="openCpItem('${p.id}','${it.id}')">
           <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','280px')} alt="">`:'📄'}</div>
@@ -3896,6 +4147,91 @@ function renderCustomPages(){
   }).join('');
 }
 
+function buildKnowledgeBody(p, allItems){
+  const pageId = p.id;
+  const cats = HS_CATS;
+  // Category chips
+  const catCounts = {};
+  allItems.forEach(it=>{ const c=it.category||'guides-articles'; catCounts[c]=(catCounts[c]||0)+1; });
+  const catHtml = cats.map(c=>`
+    <button class="hs-cat${_hsCatFilter===c.id && pageId===window._hsActivePage?' active':''}"
+      onclick="_hsActivePage='${pageId}';_hsCatFilter='${c.id}';_hsSearch='';renderCustomPages()">
+      ${c.icon} ${c.label}${c.id!=='all'&&catCounts[c.id]?` <span class="hs-cat-count">(${catCounts[c.id]})</span>`:''}
+    </button>`).join('');
+
+  // Filter items
+  let items = allItems;
+  if(window._hsActivePage === pageId){
+    if(_hsCatFilter && _hsCatFilter !== 'all') items = items.filter(it=>(it.category||'guides-articles')===_hsCatFilter);
+    if(_hsSearch) items = items.filter(it=>(it.title+' '+(it.excerpt||'')+' '+(it.subtitle||'')).toLowerCase().includes(_hsSearch.toLowerCase()));
+  }
+
+  const featured = items.find(it=>it.featured);
+  const rest = items.filter(it=>it!==featured);
+
+  const featuredHtml = featured ? `
+    <div class="hs-featured" onclick="openCpItem('${pageId}','${featured.id}')">
+      <div class="hs-featured-img">
+        ${featured.img?`<img loading="lazy" decoding="async" ${imgAttrs(featured.img,'medium','(max-width:700px) 100vw, 50vw')} alt="">`:catIcon(featured.category)}
+      </div>
+      <div class="hs-featured-body">
+        <div class="hs-badge">${catIcon(featured.category)} ${catLabel(featured.category)}</div>
+        <h3 class="hs-featured-title">${escapeHtml(featured.title||'Untitled')}</h3>
+        ${featured.excerpt?`<p class="hs-featured-excerpt">${escapeHtml(featured.excerpt)}</p>`:''}
+        <div class="hs-featured-cta">Read Article →</div>
+      </div>
+    </div>` : '';
+
+  const gridHtml = rest.length ? `
+    <div class="hs-section-head">
+      <span class="hs-section-title">${featured?'More Articles':'All Articles'}</span>
+      <div class="hs-section-line"></div>
+    </div>
+    <div class="hs-grid">
+      ${rest.map(it=>`
+        <div class="hs-card" onclick="openCpItem('${pageId}','${it.id}')">
+          <div class="hs-card-img">
+            ${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','(max-width:700px) 50vw, 280px')} alt="">`:catIcon(it.category)}
+          </div>
+          <div class="hs-card-body">
+            <div class="hs-card-cat">${catIcon(it.category)} ${catLabel(it.category)}</div>
+            <h3 class="hs-card-title">${escapeHtml(it.title||'Untitled')}</h3>
+            ${it.excerpt?`<p class="hs-card-excerpt">${escapeHtml(it.excerpt)}</p>`:''}
+            <div class="hs-card-more">Read more →</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>` : '';
+
+  const emptyHtml = (!featured && !rest.length) ? `
+    <div class="hs-empty">
+      <div class="hs-empty-icon">📖</div>
+      <p>No articles yet${_hsCatFilter&&_hsCatFilter!=='all'?' in this category':''}.${_hsSearch?' Try a different search term.':''}
+      ${_hsCatFilter&&_hsCatFilter!=='all'?` <a href="#" onclick="event.preventDefault();_hsCatFilter='all';_hsSearch='';renderCustomPages()" style="color:var(--gold-dark)">View all</a>`:''}</p>
+    </div>` : '';
+
+  return `<div class="hs-wrap">
+    <div class="hs-search-wrap">
+      <input class="hs-search" placeholder="Search articles…"
+        oninput="window._hsActivePage='${pageId}';_hsSearch=this.value;renderCustomPages()"
+        value="${escapeHtml(_hsSearch&&window._hsActivePage===pageId?_hsSearch:'')}"
+        id="hs_search_${pageId}">
+      <span class="hs-search-icon">🔍</span>
+    </div>
+    <div class="hs-cats">${catHtml}</div>
+    ${featuredHtml}${gridHtml}${emptyHtml}
+  </div>`;
+}
+
+function catLabel(catId){
+  const c = HS_CATS.find(x=>x.id===catId);
+  return c ? c.label : (catId||'Article');
+}
+function catIcon(catId){
+  const c = HS_CATS.find(x=>x.id===catId);
+  return c ? c.icon : '📄';
+}
+
 // Strip HTML tags then truncate — used for grid/list card previews
 function truncateHtml(html, maxLen){
   const plain = String(html||'').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
@@ -3910,23 +4246,28 @@ function openCpItem(pageId, itemId){
   if(!p) return;
   const it = (p.items||[]).find(x => String(x.id) === String(itemId));
   if(!it) return;
+  const isKnowledge = p.layout === 'knowledge';
+  const catBadge = isKnowledge && it.category
+    ? `<div class="hs-badge" style="margin-bottom:12px">${catIcon(it.category)} ${catLabel(it.category)}</div>` : '';
   document.getElementById('modalContent').innerHTML = `
     <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
       <div class="modal-title-wrap">
-        <div class="modal-title" style="font-size:24px">${it.title || ''}</div>
-        ${it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:4px">${it.subtitle}</div>`:''}
+        ${catBadge}
+        <div class="modal-title" style="font-size:22px;line-height:1.25">${escapeHtml(it.title || '')}</div>
+        ${it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:6px">${escapeHtml(it.subtitle)}</div>`:''}
+        ${it.excerpt&&!it.subtitle?`<div style="font-size:14px;color:var(--text-muted);margin-top:6px;font-style:italic">${escapeHtml(it.excerpt)}</div>`:''}
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    ${it.img?`<div style="text-align:center;margin-bottom:22px"><img ${imgAttrs(it.img,'medium','min(100vw, 700px)')} alt="" style="max-width:100%;max-height:400px;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.15)"></div>`:''}
-    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content.</p>'}</div>
+    ${it.img?`<div style="margin-bottom:22px"><img ${imgAttrs(it.img,'medium','min(100vw, 700px)')} alt="" style="width:100%;max-height:420px;object-fit:cover;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12)"></div>`:''}
+    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content yet.</p>'}</div>
   `;
-  document.getElementById('modal').classList.add('open');
+  openModal('article');
 }
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
 
-const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','contact','projects','reviews','payment','about']);
+const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','contact','projects','reviews','payment','about','history-stories']);
 
 function navIcon(id){
   return ({
@@ -3939,7 +4280,8 @@ function navIcon(id){
     projects:'◎',
     reviews:'★',
     payment:'▣',
-    about:'i'
+    about:'i',
+    'history-stories':'📖'
   })[id] || '•';
 }
 
@@ -3982,7 +4324,8 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['feedPosts'];
+    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
+    case 'history-stories': return ['historyStories'];
     case 'home': return [];
     default: return [];
   }
@@ -4020,18 +4363,20 @@ async function goPage(name, opts={}){
 	    curCasingType=null;
 	    loadState.casing='loading';
 	    renderCasingLoading();
-	    ensurePageData(name).then(()=>{
+	    try {
+	      await ensurePageData(name);
 	      loadState.casing='loaded';
 	      if(document.getElementById('page-casing')?.classList.contains('active')) renderCasingTypes();
-	    }).catch(err=>{
+	    } catch(err){
 	      loadState.casing='error';
 	      console.warn('[casing] load failed:', err);
 	      const grid=document.getElementById('cTypeGrid');
 	      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load casing data. Please refresh.'}</div>`;
-    });
+    }
   }
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
+  if(name==='history-stories') renderHistoryStories();
   if(name==='payment')renderPayment();
   if(name==='contact')renderContactPage();
   if(opts.updateUrl !== false) updatePageUrl(name);
@@ -4569,7 +4914,6 @@ function renderCasingTypes(){
 	      <div class="ftype-body">
 	        <div class="ftype-name">${ty.name}</div>
 	        <div class="ftype-desc">${ty.desc || ''}</div>
-	        ${casingTimeframeHtml(ty.desc,'ftype-timeframe')}
 	        <div class="ftype-cta">
 	          ${ty.priceRange?`<div class="ftype-from">Price<br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from">Price<br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
 	          <div class="ftype-arrow">${cta}</div>
@@ -4590,6 +4934,23 @@ function casingPlainText(html){
     .replace(/&amp;/g,'&')
     .replace(/\s+/g,' ')
     .trim();
+}
+
+function casingDescWithoutTimeframe(html){
+  // Strip out sentences/paragraphs that contain timeframe keywords,
+  // since they're shown separately in the yellow badge.
+  if(!html) return '';
+  const TIMEFRAME_RE = /(week|weeks|month|months|day|days|สัปดาห์|อาทิตย์|เดือน|วัน|timeframe|waiting|ready|custom casing|takes\s+approx)/i;
+  // Work on the HTML: remove <p> or <li> elements that match
+  let result = html
+    // Remove matching <p>…</p>
+    .replace(/<p[^>]*>([^<]*)<\/p>/gi, (m, inner) => TIMEFRAME_RE.test(inner) ? '' : m)
+    // Remove matching <li>…</li>
+    .replace(/<li[^>]*>([^<]*)<\/li>/gi, (m, inner) => TIMEFRAME_RE.test(inner) ? '' : m)
+    // For plain text sentences (no tags), remove the matching sentence
+    .replace(/[^.!?\n]*(?:takes approximately|takes about|approximately \d|\d[–-]\d\s*(?:week|month|day))[^.!?]*[.!?]?/gi, '')
+    .trim();
+  return result || html;
 }
 
 function casingTimeframeText(desc){
@@ -4849,7 +5210,7 @@ function renderVariants(typeId){
 	    <span class="crumb-cur">${ty.name}</span>`;
 	  const typePriceText=casingTypePriceText(ty);
 	  document.getElementById('vTitle').textContent=typePriceText ? `${ty.name} - ${typePriceText}` : ty.name;
-	  document.getElementById('vDesc').innerHTML = ty.desc || '';
+	  document.getElementById('vDesc').innerHTML = casingDescWithoutTimeframe(ty.desc || '');
 	  const sideEl = document.getElementById('vSide');
 	  if(sideEl){
 	    sideEl.innerHTML = '';
@@ -5391,33 +5752,303 @@ function renderFeedStory(st){
   `;
 }
 
+const FEED_TYPE_META = {
+  casing:       {badge:'🪬 Casing Style',   cls:'feed-badge-casing',       kicker:'New Casing Available'},
+  amulet:       {badge:'📿 New Arrival',    cls:'feed-badge-amulet',       kicker:'New Amulet In Stock'},
+  project:      {badge:'🚀 Project Update', cls:'feed-badge-project',      kicker:'Project Update'},
+  review:       {badge:'⭐ Customer Review', cls:'feed-badge-review',       kicker:'Customer Review'},
+  article:      {badge:'📖 Article',        cls:'feed-badge-article',      kicker:'Read This'},
+  announcement: {badge:'📢 Announcement',   cls:'feed-badge-announcement', kicker:'Announcement'},
+  default:      {badge:'🏪 Shop Update',    cls:'feed-badge-default',      kicker:'Shop Update'},
+};
+function feedTypeMeta(type){return FEED_TYPE_META[type]||FEED_TYPE_META.default;}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORY & STORIES — dedicated frontend module
+// ═══════════════════════════════════════════════════════════════
+const HS_CATEGORIES = [
+  {id:'all',           label:'All',               icon:'📖'},
+  {id:'monk-biographies', label:'Monk Biographies',  icon:'🙏'},
+  {id:'amulet-history',   label:'Amulet History',    icon:'📿'},
+  {id:'meanings-beliefs', label:'Meanings & Beliefs',icon:'✨'},
+  {id:'katha-collection', label:'Katha Collection',  icon:'🕉️'},
+  {id:'guides-articles',  label:'Guides & Articles', icon:'📚'},
+];
+
+let _hsCat = 'all';
+let _hsQ   = '';
+
+function hsCatLabel(id){ const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.label:(id||'Article'); }
+function hsCatIcon(id){  const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.icon:'📄'; }
+
+function renderHistoryStories(){
+  const db = getDB();
+  const s  = db.settings||{};
+  const el = document.getElementById('hsPageTitle');
+  const de = document.getElementById('hsPageDesc');
+  if(el) el.textContent = s.sections?.hsTitle || '📖 History & Stories';
+  if(de) de.textContent = s.sections?.hsDesc  || 'Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.';
+
+  const all = (db.historyStories||[]).filter(a=>a && a.status !== 'draft');
+
+  // Category chips
+  const chips = document.getElementById('hsCatChips');
+  if(chips){
+    const counts = {};
+    all.forEach(a=>{ const c=a.category||'guides-articles'; counts[c]=(counts[c]||0)+1; });
+    chips.innerHTML = HS_CATEGORIES.map(c=>`
+      <button class="hs-cat${_hsCat===c.id?' active':''}"
+        onclick="_hsCat='${c.id}';_hsQ='';document.getElementById('hsSearchInput').value='';renderHistoryStories()">
+        ${c.icon} ${c.label}${c.id!=='all'&&counts[c.id]?` <span class="hs-cat-count">(${counts[c.id]})</span>`:''}
+      </button>`).join('');
+  }
+
+  // Filter
+  let items = all;
+  if(_hsCat && _hsCat !== 'all') items = items.filter(a=>(a.category||'guides-articles')===_hsCat);
+  if(_hsQ){
+    const q=_hsQ.toLowerCase();
+    items = items.filter(a=>(a.title+' '+(a.excerpt||'')+' '+(a.category||'')).toLowerCase().includes(q));
+  }
+
+  const featured = items.find(a=>a.featured);
+  const rest     = items.filter(a=>a!==featured);
+
+  // Featured
+  const fw = document.getElementById('hsFeaturedWrap');
+  if(fw){
+    fw.innerHTML = featured ? `
+      <div class="hs-featured" onclick="openHsArticle(${featured.id})">
+        <div class="hs-featured-img">
+          ${featured.coverImage
+            ? `<img loading="eager" fetchpriority="high" decoding="async" ${imgAttrs(featured.coverImage,'medium','(max-width:700px) 100vw, 50vw')} alt="">`
+            : hsCatIcon(featured.category)}
+        </div>
+        <div class="hs-featured-body">
+          <div class="hs-badge">${hsCatIcon(featured.category)} ${hsCatLabel(featured.category)}</div>
+          <h3 class="hs-featured-title">${escapeHtml(featured.title||'')}</h3>
+          ${featured.excerpt?`<p class="hs-featured-excerpt">${escapeHtml(featured.excerpt)}</p>`:''}
+          <div class="hs-featured-cta">Read Article →</div>
+        </div>
+      </div>` : '';
+    safeWatchImages(fw);
+  }
+
+  // Grid
+  const gw = document.getElementById('hsGridWrap');
+  if(gw){
+    if(rest.length){
+      gw.innerHTML = `
+        <div class="hs-section-head">
+          <span class="hs-section-title">${featured?'More Articles':'All Articles'}</span>
+          <div class="hs-section-line"></div>
+        </div>
+        <div class="hs-grid">
+          ${rest.map(a=>`
+            <div class="hs-card" onclick="openHsArticle(${a.id})">
+              <div class="hs-card-img">
+                ${a.coverImage
+                  ? `<img loading="lazy" decoding="async" ${imgAttrs(a.coverImage,'thumb','(max-width:700px) 50vw, 280px')} alt="">`
+                  : hsCatIcon(a.category)}
+              </div>
+              <div class="hs-card-body">
+                <div class="hs-card-cat">${hsCatIcon(a.category)} ${hsCatLabel(a.category)}</div>
+                <h3 class="hs-card-title">${escapeHtml(a.title||'')}</h3>
+                ${a.excerpt?`<p class="hs-card-excerpt">${escapeHtml(a.excerpt)}</p>`:''}
+                <div class="hs-card-more">Read more →</div>
+              </div>
+            </div>`).join('')}
+        </div>`;
+      safeWatchImages(gw);
+    } else if(!featured){
+      gw.innerHTML = `<div class="hs-empty">
+        <div class="hs-empty-icon">📖</div>
+        <p>No articles yet${_hsCat!=='all'?' in this category':''}.${_hsQ?' Try a different search.':''}
+        ${_hsCat!=='all'?` <a href="#" onclick="event.preventDefault();_hsCat='all';_hsQ='';renderHistoryStories()" style="color:var(--gold-dark)">View all</a>`:''}</p>
+      </div>`;
+    } else {
+      gw.innerHTML = '';
+    }
+  }
+}
+
+function hsOnSearch(val){
+  _hsQ = val;
+  renderHistoryStories();
+}
+
+async function openHsArticle(id){
+  // Ensure historyStories is loaded (may not be if clicking from home feed)
+  if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
+    await window.FB.ensureDBKeys(['historyStories']);
+  }
+  const db = getDB();
+  const a  = (db.historyStories||[]).find(x=>String(x.id)===String(id));
+  if(!a) return;
+  // Related articles (same category, excluding current)
+  const related = (db.historyStories||[])
+    .filter(x=>x.id!==a.id && x.status!=='draft' && x.category===a.category)
+    .slice(0,3);
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
+      <div class="modal-title-wrap">
+        <div class="hs-badge" style="margin-bottom:10px">${hsCatIcon(a.category)} ${hsCatLabel(a.category)}</div>
+        <div class="modal-title" style="font-size:22px;line-height:1.25">${escapeHtml(a.title||'')}</div>
+        ${a.excerpt?`<p style="font-size:14px;color:var(--text-muted);margin:8px 0 0;font-style:italic">${escapeHtml(a.excerpt)}</p>`:''}
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    ${a.coverImage?`<div style="margin-bottom:22px"><img ${imgAttrs(a.coverImage,'medium','min(100vw,700px)')} alt="" style="width:100%;max-height:400px;object-fit:cover;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12)"></div>`:''}
+    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">
+      ${a.content||'<p style="color:var(--text-muted);font-style:italic">No content yet.</p>'}
+    </div>
+    ${related.length?`
+      <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:14px">Related Articles</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${related.map(r=>`
+            <div onclick="closeModal();setTimeout(()=>openHsArticle(${r.id}),80)"
+              style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid rgba(201,168,76,.2);background:rgba(255,249,238,.5);cursor:pointer">
+              <div style="font-size:22px;flex-shrink:0">${hsCatIcon(r.category)}</div>
+              <div>
+                <div style="font-weight:600;font-size:14px;color:var(--text)">${escapeHtml(r.title||'')}</div>
+                ${r.excerpt?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${escapeHtml(r.excerpt.slice(0,80))}…</div>`:''}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+  `;
+  openModal('article');
+}
+
 function buildFeedPosts(db){
   const manual=(db.feedPosts||[])
-    .filter(p=>p && p.enabled !== false)
-    .map((p,i)=>({
-      type:p.system ? 'system' : 'manual',
-      kicker:p.pinned ? 'Pinned update' : (p.system ? 'Website update' : 'Shop update'),
-      title:p.title || 'Shop update',
-      text:p.text || '',
-      imgs:feedImages(p.imgs),
-      action:feedPostAction(p),
-      cta:p.buttonLabel || 'View',
-      pinned:!!p.pinned,
-      ts:Number(p.createdAt || 0) || 0,
-      score:1000 - i
-    }));
+    .filter(p=>p && p.enabled !== false && !p.system)
+    .map((p,i)=>{
+      const type = p.type || (p.system ? 'system' : 'default');
+      const meta = feedTypeMeta(type);
+      return {
+        type,
+        badge: p.badgeOverride || meta.badge,
+        badgeCls: meta.cls,
+        kicker: p.pinned ? 'Pinned' : meta.kicker,
+        title: p.title || 'Shop update',
+        text: p.text || '',
+        imgs: feedImages(p.imgs),
+        action: feedPostAction(p),
+        cta: p.buttonLabel || 'View',
+        pinned: !!p.pinned,
+        ts: Number(p.createdAt || 0) || 0,
+        score: 1000 - i,
+      };
+    });
   const casing=buildCasingUpdatePosts(db);
-  return [...manual,...casing].sort((a,b)=>{
+  const amulets=buildAmuletFeedPosts(db);
+  const projects=buildProjectFeedPosts(db);
+  const reviews=buildReviewFeedPosts(db);
+  // Merge: manual first, then auto-generated (de-dup by key not needed — different types)
+  const hs=buildHistoryStoriesFeedPosts(db);
+  const auto=[...casing,...amulets,...projects,...reviews,...hs];
+  return [...manual,...auto].sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if((b.ts||0) !== (a.ts||0)) return (b.ts||0) - (a.ts||0);
     return (b.score||0) - (a.score||0);
   });
 }
 
+function buildAmuletFeedPosts(db){
+  return (db.amulets||[])
+    .filter(a=>a && (a.imgs&&a.imgs.length) && a.status!=='sold')
+    .slice(0,8)
+    .map(a=>({
+      type:'amulet',
+      badge:'📿 New Arrival',
+      badgeCls:'feed-badge-amulet',
+      kicker:'New Amulet In Stock',
+      title:a.name || 'New Amulet',
+      text:[a.desc||'', a.price?`S$${Number(a.price).toLocaleString()}`:''].filter(Boolean).join(' · '),
+      imgs:feedImages(a.imgs),
+      action:`openProd('amulets',${a.id})`,
+      cta:'View Amulet',
+      pinned:false,
+      ts:Number(a.updatedAt||a.createdAt||0)||0,
+      score:(a.imgs||[]).length,
+    }));
+}
+
+function buildProjectFeedPosts(db){
+  return (db.projects||[])
+    .filter(p=>p && (p.imgs&&p.imgs.length))
+    .slice(0,6)
+    .map(p=>({
+      type:'project',
+      badge:'🚀 Project Update',
+      badgeCls:'feed-badge-project',
+      kicker:'Project Update',
+      title:p.name || 'New Project',
+      text:p.desc ? String(p.desc).replace(/<[^>]+>/g,' ').trim().slice(0,160) : '',
+      imgs:feedImages(p.imgs),
+      action:`openProject(${p.id})`,
+      cta:'View Project',
+      pinned:false,
+      ts:Number(p.updatedAt||p.createdAt||0)||0,
+      score:(p.imgs||[]).length,
+    }));
+}
+
+function buildReviewFeedPosts(db){
+  return (db.reviews||[])
+    .filter(r=>r && !r.anonymous && (r.imgs&&r.imgs.length))
+    .slice(0,4)
+    .map(r=>({
+      type:'review',
+      badge:'⭐ Customer Review',
+      badgeCls:'feed-badge-review',
+      kicker:'Customer Review',
+      title:(r.rating?'★'.repeat(Math.min(5,Math.max(0,r.rating)))+' ':'')+( r.name || 'Happy Customer'),
+      text:r.text ? String(r.text).slice(0,200) : '',
+      imgs:feedImages(r.imgs),
+      action:`goPage('reviews')`,
+      cta:'Read Reviews',
+      pinned:false,
+      ts:Number(r.createdAt||0)||0,
+      score:(r.imgs||[]).length + (r.rating||0),
+    }));
+}
+
+function buildHistoryStoriesFeedPosts(db){
+  const CAT_LABELS = {
+    'monk-biographies':'Monk Biographies',
+    'amulet-history':'Amulet History',
+    'meanings-beliefs':'Meanings & Beliefs',
+    'katha-collection':'Katha Collection',
+    'guides-articles':'Guides & Articles',
+  };
+  return (db.historyStories||[])
+    .filter(a=>a && a.status!=='draft')
+    .slice(0,4)
+    .map(a=>({
+      type:'article',
+      badge:'📖 '+(CAT_LABELS[a.category]||'History & Stories'),
+      badgeCls:'feed-badge-article',
+      kicker:'History & Stories',
+      title:a.title||'Article',
+      text:a.excerpt||'Read more about this article.',
+      imgs:feedImages([...(a.coverImage?[a.coverImage]:[]),...(a.gallery||[])]),
+      action:`(async()=>{if(window.FB)await window.FB.ensureDBKeys(['historyStories']);openHsArticle(${a.id})})()`,
+      cta:'Read Article',
+      pinned:false,
+      ts:Number(a.updatedAt||a.createdAt||0)||0,
+      score:a.featured?10:5,
+    }));
+}
+
 function buildCasingUpdatePosts(db){
   const byKey=new Map();
   (db.casingTypes||[]).forEach(ty=>{
     const typeName=ty.name || 'Casing Service';
+
+    // ── Variant-level posts (style + variant images) ──
     const variants=(ty.variants||[]).filter(v=>v);
     variants.forEach(v=>{
       const imgs=feedImages(v.imgs);
@@ -5427,9 +6058,11 @@ function buildCasingUpdatePosts(db){
       const key=feedPostKey(typeName, v.name || 'Style');
       const post={
         type:'casing',
-        kicker:'Live casing update',
+        badge:'🪬 Casing Style',
+        badgeCls:'feed-badge-casing',
+        kicker:'Available Now',
         title,
-        text:[`${imgs.length} real sample photo${imgs.length===1?'':'s'} available now`, price].filter(Boolean).join(' · '),
+        text:[`${imgs.length} sample photo${imgs.length===1?'':'s'}`, price].filter(Boolean).join(' · '),
         imgs,
         action:`openFeedCasingType(${JSON.stringify(ty.id)},${JSON.stringify(v.id)})`,
         cta:'See this style',
@@ -5439,9 +6072,36 @@ function buildCasingUpdatePosts(db){
       const prev=byKey.get(key);
       if(!prev || (post.ts||0) > (prev.ts||0) || post.score > prev.score) byKey.set(key, post);
     });
+
+    // ── Type-level post (sampleImgs / bannerImg, no variants needed) ──
+    // Show the casing type itself as a feed post using its own sample images
+    const typeImgs = feedImages([
+      ...(ty.sampleImgs||[]),
+      ...(ty.bannerImg ? [ty.bannerImg] : []),
+    ]);
+    if(typeImgs.length){
+      const key = feedPostKey(typeName, '__type__');
+      const priceText = ty.priceRange ? `From S$${ty.priceRange}`
+        : ty.price ? `S$${Number(ty.price).toLocaleString()}` : '';
+      const post={
+        type:'casing',
+        badge:'🪬 New Casing',
+        badgeCls:'feed-badge-casing',
+        kicker:'New Casing Available',
+        title: typeName,
+        text:[`${typeImgs.length} sample photo${typeImgs.length===1?'':'s'}`, priceText].filter(Boolean).join(' · '),
+        imgs: typeImgs,
+        action:`openFeedCasingType(${JSON.stringify(ty.id)},null)`,
+        cta:'View Casing',
+        ts:Number(ty.updatedAt || 0) || 0,
+        score: typeImgs.length
+      };
+      const prev=byKey.get(key);
+      if(!prev || (post.ts||0) > (prev.ts||0) || post.score > prev.score) byKey.set(key, post);
+    }
   });
   const posts=[...byKey.values()];
-  return posts.sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,28);
+  return posts.sort((a,b)=>(b.ts||0)-(a.ts||0)||(b.score||0)-(a.score||0)).slice(0,30);
 }
 
 function feedPostKey(typeName, styleName){
@@ -5472,31 +6132,33 @@ function feedPostAction(p){
 }
 
 function renderFeedPost(p){
-  const imgs=feedImages(p.imgs).slice(0,3);
-  const mediaClass=imgs.length===1?'one':imgs.length===2?'two':'three';
+  const imgs=feedImages(p.imgs).slice(0,4);
+  const mediaClass=imgs.length===1?'one':imgs.length===2?'two':imgs.length===3?'three':'four';
+  const badge=p.badge||(feedTypeMeta(p.type||'default').badge);
+  const badgeCls=p.badgeCls||(feedTypeMeta(p.type||'default').cls);
+  const hasMedia=imgs.length>0;
   return `
     <article class="feed-card">
+      <div class="feed-type-badge ${badgeCls}">${badge}</div>
       <div class="feed-card-head">
         <div class="feed-avatar"><img src="/favicon/apple-touch-icon.png" alt=""></div>
-        <div>
+        <div style="min-width:0;flex:1">
           <div class="feed-post-name">Yingyingying Amulet</div>
-          <div class="feed-post-meta">${escapeHtml(p.kicker)} · ${escapeHtml(feedTimeLabel(p.ts))}</div>
+          <div class="feed-post-meta">${escapeHtml(feedTimeLabel(p.ts))}</div>
         </div>
-        <div class="feed-card-menu">•••</div>
       </div>
       <div class="feed-card-body">
         <h3 class="feed-post-title">${escapeHtml(p.title)}</h3>
         ${p.text?`<p class="feed-post-text">${escapeHtml(p.text)}</p>`:''}
       </div>
-      ${imgs.length?`
-        <div class="feed-media ${mediaClass}" onclick="${p.action}">
+      ${hasMedia?`
+        <div class="feed-media ${mediaClass}" onclick="${p.action}" style="cursor:pointer">
           ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 640px')} alt="">`).join('')}
         </div>
       `:''}
-      <div class="feed-actions">
-        <button class="feed-action" onclick="${p.action}">👍 Like</button>
-        <button class="feed-action" onclick="${p.action}">💬 ${escapeHtml(p.cta||'View')}</button>
-        <button class="feed-action" onclick="copyFeedLink('${escapeHtml(p.type)}')">↗ Share</button>
+      <div class="feed-cta-bar">
+        <button class="feed-cta-btn" onclick="${p.action}">${escapeHtml(p.cta||'View Details')} →</button>
+        <button class="feed-cta-btn sec" onclick="copyFeedLink('${escapeHtml(p.type||'')}')" title="Share">↗ Share</button>
       </div>
     </article>
   `;
@@ -5514,9 +6176,12 @@ async function openFeedCasingType(typeId, variantId){
   await ensurePageData('casing');
   await goPage('casing');
   renderCasingTypes();
-  openCasingType(typeId);
   if(variantId!==undefined && variantId!==null){
+    openCasingType(typeId);
     setTimeout(()=>openVariant(typeId, variantId), 80);
+  } else {
+    // Type-level: just open the casing type page
+    openCasingType(typeId);
   }
 }
 
@@ -6028,11 +6693,15 @@ async function bootIndex(){
           if(curCasingType) renderVariants(curCasingType);
           else renderCasingTypes();
         } else if(page==='home'){
-          renderSocialHomeFeed();
+          // Reset flag so a full reload can happen if DB changed
+          // (e.g. historyStories was just loaded for the first time)
+          _socialHomeFeedLoading = false;
+          scheduleSocialHomeFeedLoad();
         } else if(page==='amulets') renderA(curAcat||'all');
         else if(page==='accessories') renderAc(curAccat||'all');
         else if(page==='projects') renderP();
         else if(page==='reviews') renderReviews();
+        else if(page==='history-stories') renderHistoryStories();
       } catch(e){ console.error(e); }
     }, 120);
   });
