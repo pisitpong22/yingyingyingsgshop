@@ -5014,9 +5014,19 @@ function exitTypeView(){
   document.getElementById('casingVariantsView').style.display='none';
 }
 
-function loadVariants(){
-  const ty=(getDB().casingTypes||[]).find(t=>t.id===curEditTypeId);if(!ty)return;
+async function loadVariants(){
+  // Show loading state immediately
   const c=document.getElementById('variantsList');
+  if(c) c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">Loading styles…</div>`;
+
+  // Ensure variants are loaded from Firestore (deferred by Phase 1 optimization)
+  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){ console.warn('[admin casing]', e); }
+  }
+
+  // Re-read from DB after ensure (variants are now attached to the type)
+  const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
+  if(!c)return;
   const vars=ty.variants||[];
   if(!vars.length){c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;return;}
   const last = vars.length - 1;

@@ -627,26 +627,81 @@ async function ensureCasingVariants(typeId){
       if(recoveredMap.size > 0){
         console.log('[casing] recovery: found', recoveredMap.size, 'variants for type', typeId);
         const recVariants = [];
+        let fallbackCount = 0;
+
         for(const [varId, data] of recoveredMap){
           try {
-            let parsed;
+            let rawJson = null;
+
             if(data._chunked){
-              parsed = JSON.parse(await readJsonRecord(
+              rawJson = await readJsonRecord(
                 casingVariantDoc(typeId, varId),
                 idx => casingVariantChunkDoc(typeId, varId, idx),
                 `casing style (recovery): ${typeId}/${varId}`
-              ));
+              );
             } else if(data.json){
-              parsed = JSON.parse(data.json);
+              rawJson = data.json;
             }
-            if(parsed) recVariants.push(parsed);
-          } catch(e){ console.warn('[casing] recovery parse failed', varId, e); }
+
+            // ── Parse rawJson tolerantly ──────────────────────────────────
+            let parsed = null;
+            if(rawJson){
+              try {
+                parsed = JSON.parse(rawJson);
+              } catch(jsonErr){
+                // rawJson is not valid JSON — may be a raw URL or plain string
+                const trimmed = typeof rawJson === 'string' ? rawJson.trim() : '';
+                if(trimmed){
+                  parsed = {
+                    id: varId,
+                    name: data.name || data.title || ('Style ' + varId),
+                    price: data.price || data.priceRange || '',
+                    imgs: trimmed.startsWith('http') ? [trimmed] : [],
+                  };
+                  fallbackCount++;
+                }
+              }
+            }
+
+            if(!parsed) continue;
+
+            // ── Normalize variant shape ────────────────────────────────────
+            const rawImgs =
+              parsed.imgs       || parsed.images    ||
+              parsed.sampleImgs || parsed.gallery   ||
+              (parsed.url   ? [parsed.url]   : null) ||
+              (parsed.image ? [parsed.image] : null) ||
+              (parsed.img   ? [parsed.img]   : null) ||
+              (data.url     ? [data.url]     : null) ||
+              (data.image   ? [data.image]   : null) ||
+              (data.img     ? [data.img]     : null) ||
+              [];
+
+            recVariants.push({
+              id:    parsed.id    || varId,
+              name:  parsed.name  || parsed.title  || parsed.label || ('Style ' + varId),
+              price: parsed.price || parsed.priceRange || '',
+              desc:  parsed.desc  || parsed.description || '',
+              imgs:  Array.isArray(rawImgs) ? rawImgs : (rawImgs ? [rawImgs] : []),
+            });
+          } catch(e){
+            console.warn('[casing] recovery parse failed', varId, e.message);
+          }
         }
+
+        // ── Natural sort by name then id ─────────────────────────────────
+        recVariants.sort((a, b) =>
+          String(a.name || a.id).localeCompare(String(b.name || b.id), undefined, {
+            numeric: true, sensitivity: 'base'
+          })
+        );
+
         ty.variants = recVariants;
         variantIds = [...recoveredMap.keys()];
-        _casingVariantIds[key] = variantIds; // update cache
+        _casingVariantIds[key] = variantIds;
         _casingVariantsLoaded.add(key);
-        console.log('[casing] recovery complete:', recVariants.length, 'variants loaded');
+        console.log('[casing] recovery complete:', recVariants.length, 'variants loaded',
+          fallbackCount > 0 ? `(${fallbackCount} fallback)` : '');
         notifyDBReady();
         return;
       }
@@ -668,8 +723,13 @@ async function ensureCasingVariants(typeId){
     ));
   }));
 
+  variants.sort((a, b) =>
+    String(a.name || a.id).localeCompare(String(b.name || b.id), undefined, {
+      numeric: true, sensitivity: 'base'
+    })
+  );
   ty.variants = variants;
-  _casingVariantIds[key] = variantIds; // keep cache fresh
+  _casingVariantIds[key] = variantIds;
   _casingVariantsLoaded.add(key);
   notifyDBReady();
 }
