@@ -1267,6 +1267,7 @@
       <div class="side-item" onclick="showPanel('store',this)" data-en="🏷️ Store Identity" data-th="🏷️ ข้อมูลร้าน">🏷️ Store Identity</div>
       <div class="side-item" onclick="showPanel('navigation',this)" data-en="🧭 Navigation &amp; Pages" data-th="🧭 เมนู &amp; หน้า">🧭 Navigation &amp; Pages</div>
       <div class="side-item" onclick="showPanel('checkout',this)" data-en="💳 Payment &amp; Contact" data-th="💳 ชำระเงิน &amp; ติดต่อ">💳 Payment &amp; Contact</div>
+      <div class="side-item" onclick="showPanel('settings',this);showTab('settings','seo')" data-en="🔍 SEO &amp; Social" data-th="🔍 SEO &amp; โซเชียล">🔍 SEO &amp; Social</div>
 
       <div class="side-div"></div>
 
@@ -1679,7 +1680,8 @@
       </div>
 
       <div class="panel" id="panel-amulets">
-        <div class="panel-title" data-en="📿 Manage Amulets" data-th="📿 จัดการพระเครื่อง">📿 Manage Amulets</div>
+        <div class="panel-title">📿 Amulets</div>
+        <div class="panel-sub">Add, edit, and delete amulet listings. Each item appears on the Amulets page with photos, price, and category filter.</div>
         <div id="pageHeader-amulets"></div>
         <div class="form-card">
           <div class="form-section-title" id="a_form_title" data-en="➕ Add New Amulet" data-th="➕ เพิ่มพระเครื่องใหม่">➕ Add New Amulet</div>
@@ -1717,13 +1719,14 @@
             <button class="btn-ol" onclick="cancelEditAmulet()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
           </div>
         </div>
-        <div class="sub-title" data-en="All Amulets" data-th="พระเครื่องทั้งหมด">All Amulets</div>
+        <div class="sub-title" style="display:flex;align-items:center;justify-content:space-between">All Amulets</div>
         <div id="a_list"></div>
       </div>
 
       <!-- ACCESSORIES -->
       <div class="panel" id="panel-accessories">
-        <div class="panel-title" data-en="⛓️ Manage Accessories" data-th="⛓️ จัดการอุปกรณ์เสริม">⛓️ Manage Accessories</div>
+        <div class="panel-title">⛓️ Accessories</div>
+        <div class="panel-sub">Manage accessories such as chains, pendants, and amulet cases. Appears on the Accessories page.</div>
         <div id="pageHeader-accessories"></div>
         <div class="form-card">
           <div class="form-section-title" id="ac_form_title" data-en="➕ Add New Accessory" data-th="➕ เพิ่มอุปกรณ์ใหม่">➕ Add New Accessory</div>
@@ -1881,7 +1884,8 @@
 
       <!-- PROJECTS -->
       <div class="panel" id="panel-projects">
-        <div class="panel-title" data-en="🎯 Manage Projects" data-th="🎯 จัดการโปรเจกต์">🎯 Manage Projects</div>
+        <div class="panel-title">🎯 Projects</div>
+        <div class="panel-sub">Community projects, event commissions, and special group amulets. Appears on the Projects page.</div>
         <div id="pageHeader-projects"></div>
         <div class="form-card">
           <div class="form-section-title" id="p_form_title" data-en="➕ Add New Project" data-th="➕ เพิ่มโปรเจกต์ใหม่">➕ Add New Project</div>
@@ -2137,27 +2141,103 @@
 
       <!-- SETTINGS -->
       <div class="panel" id="panel-settings">
-        <div class="panel-title" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
+        <div class="panel-title">⚙️ Settings</div>
+        <div class="panel-sub">Account security, data management, and advanced options.</div>
 
-        <div class="form-card">
-          <div class="form-section-title" data-en="🔐 Change Password" data-th="🔐 เปลี่ยนรหัสผ่าน">🔐 Change Password</div>
-          <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Current" data-th="รหัสปัจจุบัน">Current</label><input class="fi" id="pw_old" type="password"></div>
-            <div class="fg"></div>
-            <div class="fg"><label class="fl" data-en="New (min 6 chars)" data-th="รหัสใหม่ (อย่างน้อย 6 ตัว)">New (min 6 chars)</label><input class="fi" id="pw_new" type="password"></div>
-            <div class="fg"><label class="fl" data-en="Confirm New" data-th="ยืนยันรหัสใหม่">Confirm New</label><input class="fi" id="pw_cf" type="password"></div>
-          </div>
-          <div style="margin-top:20px"><button class="btn-gold" onclick="changePw()" data-en="🔒 Change Password" data-th="🔒 เปลี่ยนรหัสผ่าน">🔒 Change Password</button></div>
+        <div class="tab-bar" style="margin-bottom:24px">
+          <button class="tab-btn active" data-tab="account" data-parent="settings" onclick="showTab('settings','account')">🔐 Account</button>
+          <button class="tab-btn" data-tab="data" data-parent="settings" onclick="showTab('settings','data')">🗄️ Data Management</button>
+          <button class="tab-btn" data-tab="seo" data-parent="settings" onclick="showTab('settings','seo')">🔍 SEO &amp; Social</button>
+          <button class="tab-btn" data-tab="advanced" data-parent="settings" onclick="showTab('settings','advanced')">⚠️ Advanced</button>
         </div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="🗄️ Data Management" data-th="🗄️ จัดการข้อมูล">🗄️ Data Management</div>
-          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
-            <button class="btn-gold" onclick="exportDB()" data-en="📤 Export Data" data-th="📤 ส่งออกข้อมูล">📤 Export Data</button>
-            <button class="btn-ol" onclick="document.getElementById('importFile').click()" data-en="📥 Import Data" data-th="📥 นำเข้าข้อมูล">📥 Import Data</button>
-            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDB(event)">
+
+        <!-- Account tab -->
+        <div class="tab-content active" data-tab-content="account" data-parent="settings">
+          <div class="form-card">
+            <div class="form-section-title">🔐 Change Password</div>
+            <div class="form-section-desc">Update your admin account password. Minimum 6 characters.</div>
+            <div class="form-grid">
+              <div class="fg"><label class="fl">Current Password</label><input class="fi" id="pw_old" type="password" autocomplete="current-password"></div>
+              <div class="fg"></div>
+              <div class="fg"><label class="fl">New Password (min 6)</label><input class="fi" id="pw_new" type="password" autocomplete="new-password"></div>
+              <div class="fg"><label class="fl">Confirm New Password</label><input class="fi" id="pw_cf" type="password" autocomplete="new-password"></div>
+            </div>
+            <div style="margin-top:20px"><button class="btn-gold" onclick="changePw()">🔒 Change Password</button></div>
           </div>
-          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-            <button class="btn-del" onclick="confirmReset()" data-en="⚠️ Reset All Data" data-th="⚠️ รีเซ็ตข้อมูลทั้งหมด">⚠️ Reset All Data</button>
+        </div>
+
+        <!-- Data Management tab -->
+        <div class="tab-content" data-tab-content="data" data-parent="settings">
+          <div class="form-card">
+            <div class="form-section-title">📤 Export Data</div>
+            <div class="form-section-desc">Download a full JSON backup of all your store data — products, settings, reviews, and articles.</div>
+            <div style="margin-top:16px">
+              <button class="btn-gold" onclick="exportDB()">📤 Export Data (JSON)</button>
+            </div>
+          </div>
+          <div class="form-card">
+            <div class="form-section-title">📥 Import Data</div>
+            <div class="form-section-desc">Restore from a previously exported JSON file. This will <strong>replace all current data</strong>.</div>
+            <div style="margin-top:16px">
+              <button class="btn-ol" onclick="document.getElementById('importFile').click()">📥 Import from JSON File</button>
+              <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDB(event)">
+            </div>
+          </div>
+        </div>
+
+        <!-- SEO & Social tab -->
+        <div class="tab-content" data-tab-content="seo" data-parent="settings">
+          <div class="form-card">
+            <div class="form-section-title">🔍 Default SEO Settings</div>
+            <div class="form-section-desc">These values appear in Google search results and social sharing previews when no page-specific SEO is set.</div>
+            <div class="form-grid">
+              <div class="fg full"><label class="fl">SEO Title <small style="color:var(--text-muted)">— shown in browser tab &amp; Google</small></label>
+                <input class="fi" id="seo_title" placeholder="e.g. Yingyingying Amulet | Authentic Thai Amulets SG">
+              </div>
+              <div class="fg full"><label class="fl">SEO Description <small style="color:var(--text-muted)">— shown under title in Google (max 160 chars)</small></label>
+                <textarea class="fta" id="seo_desc" rows="2" style="min-height:72px" placeholder="Short description of your store for search engines…"></textarea>
+                <div id="seo_desc_count" style="font-size:11px;color:var(--text-muted);text-align:right;margin-top:4px">0 / 160</div>
+              </div>
+              <div class="fg full"><label class="fl">Open Graph Image URL <small style="color:var(--text-muted)">— preview image on Facebook, Line, WhatsApp sharing</small></label>
+                <input class="fi" id="seo_og_image" placeholder="https://…">
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Recommended size: 1200 × 630 px. Use a clear product or brand image.</div>
+              </div>
+              <div class="fg"><label class="fl">Keywords <small style="color:var(--text-muted)">— comma separated</small></label>
+                <input class="fi" id="seo_keywords" placeholder="Thai amulet, Singapore, พระเครื่อง">
+              </div>
+              <div class="fg"><label class="fl">Canonical URL <small style="color:var(--text-muted)">— your website address</small></label>
+                <input class="fi" id="seo_canonical" placeholder="https://yingyingyingamulet.com">
+              </div>
+            </div>
+            <div style="margin-top:20px"><button class="btn-gold" onclick="saveSeo()">💾 Save SEO Settings</button></div>
+          </div>
+          <div class="form-card">
+            <div class="form-section-title">📱 Social Sharing</div>
+            <div class="form-section-desc">Controls how your site looks when shared on social media platforms.</div>
+            <div class="form-grid">
+              <div class="fg full"><label class="fl">Facebook / OG Site Name</label>
+                <input class="fi" id="seo_site_name" placeholder="Yingyingying Amulet">
+              </div>
+              <div class="fg full"><label class="fl">Twitter / X Card Type</label>
+                <select class="fi" id="seo_twitter_card">
+                  <option value="summary_large_image">Summary with Large Image (recommended)</option>
+                  <option value="summary">Summary (small image)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced tab -->
+        <div class="tab-content" data-tab-content="advanced" data-parent="settings">
+          <div class="form-card" style="border-color:rgba(200,50,50,.2)">
+            <div class="form-section-title" style="color:#c0392b">⚠️ Danger Zone</div>
+            <div class="form-section-desc">These actions cannot be undone. Please export your data first before performing any reset.</div>
+            <div style="margin-top:20px;padding:16px;background:rgba(200,50,50,.06);border:1px solid rgba(200,50,50,.15);border-radius:12px">
+              <div style="font-weight:700;color:#c0392b;margin-bottom:6px">Reset All Data</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Permanently deletes all products, settings, reviews, and articles. Your Firebase account and login will remain intact.</div>
+              <button class="btn-del" onclick="confirmReset()">⚠️ Reset All Data</button>
+            </div>
           </div>
         </div>
       </div>
@@ -3137,6 +3217,8 @@ function showPanel(name, el){
     loadTeamList();
   }
   if(name==='settings'){
+    // Load SEO panel data
+    setTimeout(()=>{ if(typeof loadSeoPanel==='function') loadSeoPanel(); },80);
     if(!hasPerm('viewSettings')){
       showToast(lang==='th' ? 'คุณไม่มีสิทธิ์ในส่วนนี้' : 'You do not have access to this section');
       showPanel('dashboard');
@@ -5317,6 +5399,45 @@ async function dupHsArticle(id){
   });
   const ok = await persistDB(db,'✅ Article duplicated');
   if(ok) renderHsList();
+}
+
+// ─── SEO & SOCIAL SETTINGS ────────────────────────────────────────────
+function loadSeoPanel(){
+  const db = getDB();
+  const seo = db.settings.seo || {};
+  document.getElementById('seo_title').value       = seo.title       || db.settings.pageTitle || '';
+  document.getElementById('seo_desc').value        = seo.description || '';
+  document.getElementById('seo_og_image').value    = seo.ogImage     || '';
+  document.getElementById('seo_keywords').value    = seo.keywords    || '';
+  document.getElementById('seo_canonical').value   = seo.canonical   || '';
+  document.getElementById('seo_site_name').value   = seo.siteName    || db.settings.logoText || '';
+  const tc = document.getElementById('seo_twitter_card');
+  if(tc) tc.value = seo.twitterCard || 'summary_large_image';
+  // Count desc chars
+  const descEl = document.getElementById('seo_desc');
+  const countEl = document.getElementById('seo_desc_count');
+  if(descEl && countEl){
+    const update = () => {
+      const len = descEl.value.length;
+      countEl.textContent = `${len} / 160`;
+      countEl.style.color = len > 160 ? '#c0392b' : 'var(--text-muted)';
+    };
+    update();
+    descEl.oninput = update;
+  }
+}
+
+async function saveSeo(){
+  const db = getDB();
+  if(!db.settings.seo) db.settings.seo = {};
+  db.settings.seo.title        = document.getElementById('seo_title').value.trim();
+  db.settings.seo.description  = document.getElementById('seo_desc').value.trim();
+  db.settings.seo.ogImage      = document.getElementById('seo_og_image').value.trim();
+  db.settings.seo.keywords     = document.getElementById('seo_keywords').value.trim();
+  db.settings.seo.canonical    = document.getElementById('seo_canonical').value.trim();
+  db.settings.seo.siteName     = document.getElementById('seo_site_name').value.trim();
+  db.settings.seo.twitterCard  = document.getElementById('seo_twitter_card').value;
+  await persistDB(db, '✅ SEO settings saved');
 }
 
 async function saveAmulet(){

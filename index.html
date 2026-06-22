@@ -3946,7 +3946,25 @@ function renderTrustStrip(){
 
 function applySettings(){
   const db=getDB(); const s=db.settings;
-  document.getElementById('pageTitle').textContent=s.pageTitle;
+  document.getElementById('pageTitle').textContent=(s.seo&&s.seo.title)||s.pageTitle||'Yingyingying Amulet';
+  // Apply SEO meta tags from admin settings
+  const _seo=s.seo||{};
+  const _setMeta=(name,val,prop='name')=>{
+    if(!val)return;
+    let el=document.querySelector(`meta[${prop}="${name}"]`);
+    if(!el){el=document.createElement('meta');el.setAttribute(prop,name);document.head.appendChild(el);}
+    el.setAttribute('content',val);
+  };
+  _setMeta('description',_seo.description||'');
+  _setMeta('keywords',_seo.keywords||'');
+  _setMeta('og:title',(_seo.title||s.pageTitle||''),'property');
+  _setMeta('og:description',(_seo.description||''),'property');
+  _setMeta('og:image',(_seo.ogImage||''),'property');
+  _setMeta('og:site_name',(_seo.siteName||s.logoText||''),'property');
+  _setMeta('twitter:card',_seo.twitterCard||'summary_large_image');
+  _setMeta('twitter:title',_seo.title||s.pageTitle||'');
+  _setMeta('twitter:description',_seo.description||'');
+  if(_seo.canonical){let cn=document.querySelector('link[rel="canonical"]');if(!cn){cn=document.createElement('link');cn.rel='canonical';document.head.appendChild(cn);}cn.href=_seo.canonical;}
   document.getElementById('topbar').textContent=s.topbar;
   // logoIcon supports either emoji (📿) or a URL/path (/favicon/...) — auto-detect
   const logoEl = document.getElementById('logoIcon');
