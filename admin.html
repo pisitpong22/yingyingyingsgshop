@@ -4345,8 +4345,9 @@ function renderTrustList(cards){
     <div class="rep-row">
       <div class="rep-fields">
         <div class="fg"><label class="fl">${tr('icon')}</label><input class="fi" data-tc-icon="${i}" value="${c.icon||''}" maxlength="4"></div>
+        <div class="fg"><label class="fl">Stat / Number <small style="color:var(--text-muted)">(e.g. 10+, 1000+)</small></label><input class="fi" data-tc-stat="${i}" value="${c.stat||''}" placeholder="10+, 1000+, 5★ …" maxlength="12"></div>
         <div class="fg"><label class="fl">${tr('title')}</label><input class="fi" data-tc-title="${i}" value="${c.title||''}"></div>
-        <div class="fg" style="grid-column:span 2"><label class="fl">${tr('desc')}</label><input class="fi" data-tc-desc="${i}" value="${c.desc||''}"></div>
+        <div class="fg"><label class="fl">${tr('desc')}</label><input class="fi" data-tc-desc="${i}" value="${c.desc||''}"></div>
       </div>
       <button class="rep-rm" onclick="rmTrust(${i})">✕</button>
     </div>
@@ -4355,11 +4356,16 @@ function renderTrustList(cards){
 function captureTrust(){
   const arr=[];document.querySelectorAll('[data-tc-icon]').forEach(el=>{
     const i=el.dataset.tcIcon;
-    arr.push({icon:el.value,title:document.querySelector(`[data-tc-title="${i}"]`).value,desc:document.querySelector(`[data-tc-desc="${i}"]`).value});
+    arr.push({
+      icon:el.value,
+      stat:(document.querySelector(`[data-tc-stat="${i}"]`)||{}).value||'',
+      title:document.querySelector(`[data-tc-title="${i}"]`).value,
+      desc:document.querySelector(`[data-tc-desc="${i}"]`).value,
+    });
   });
   return arr;
 }
-function addTrustCard(){const cur=captureTrust();cur.push({icon:'⭐',title:'New Feature',desc:'Description'});renderTrustList(cur);}
+function addTrustCard(){const cur=captureTrust();cur.push({icon:'⭐',stat:'',title:'New Feature',desc:'Description'});renderTrustList(cur);}
 function rmTrust(i){const cur=captureTrust();cur.splice(i,1);renderTrustList(cur);}
 async function saveTrust(){const db=getDB();db.settings.trustCards=captureTrust();await persistDB(db,tr('trustSaved'));}
 
