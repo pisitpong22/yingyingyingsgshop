@@ -103,7 +103,7 @@ let _casingTypeHashes = {};
 let _casingVariantIds = {};
 let _casingVariantHashes = {};
 
-const IS_ADMIN_PAGE = /(^|/)admin[^/]*.html$/i.test(location.pathname);
+const IS_ADMIN_PAGE = /(^|\/)admin[^/]*\.html$/i.test(location.pathname);
 
 function getDB(){ return _db || {}; }
 
