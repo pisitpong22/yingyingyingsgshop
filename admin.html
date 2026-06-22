@@ -1243,31 +1243,30 @@
 
       <div class="side-div"></div>
 
-      <!-- ─── HOMEPAGE — single panel with tabs for everything that
-      shows on the home page (hero, services, layout, trust,
-                 featured products) ─── -->
-      <div class="sidebar-label" data-en="Homepage" data-th="หน้าแรก">Homepage</div>
+      <!-- ─── WEBSITE CONTENT ─── -->
+      <div class="sidebar-label" data-en="Website Content" data-th="เนื้อหาเว็บ">Website Content</div>
       <div class="side-item" onclick="showPanel('home',this)" data-en="🏠 Homepage Editor" data-th="🏠 แก้ไขหน้าแรก">🏠 Homepage Editor</div>
-      <div class="side-item" onclick="showPanel('home',this);showTab('home','feed')" data-en="📰 Feed Posts" data-th="📰 โพสต์ Feed">📰 Feed Posts</div>
+      <div class="side-item" onclick="showPanel('store-pages',this)" data-en="📄 Store Pages" data-th="📄 หน้าร้าน">📄 Store Pages</div>
+      <div class="side-item" onclick="showPanel('history-stories',this)" data-en="📖 History &amp; Stories" data-th="📖 ประวัติ &amp; เรื่องราว">📖 History &amp; Stories</div>
+      <div class="side-item" onclick="showPanel('home',this);showTab('home','feed')" data-en="📰 Feed / Latest Updates" data-th="📰 ฟีด / อัปเดตล่าสุด">📰 Feed / Latest Updates</div>
 
       <div class="side-div"></div>
 
-      <!-- ─── CATALOG ─── -->
-      <div class="sidebar-label" data-en="Store Pages" data-th="หน้าร้าน">Store Pages</div>
+      <!-- ─── STORE MANAGEMENT ─── -->
+      <div class="sidebar-label" data-en="Store Management" data-th="จัดการสินค้า">Store Management</div>
       <div class="side-item" onclick="showPanel('amulets',this)" data-en="📿 Amulets" data-th="📿 พระเครื่อง">📿 Amulets</div>
       <div class="side-item" onclick="showPanel('accessories',this)" data-en="⛓️ Accessories" data-th="⛓️ อุปกรณ์เสริม">⛓️ Accessories</div>
       <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
-      <div class="side-item" onclick="showPanel('history-stories',this)" data-en="📖 History &amp; Stories" data-th="📖 ประวัติ &amp; เรื่องราว">📖 History &amp; Stories</div>
       <div class="side-item" onclick="showPanel('projects',this)" data-en="🎯 Projects" data-th="🎯 โปรเจกต์">🎯 Projects</div>
       <div class="side-item" onclick="showPanel('reviews',this)" data-en="🙏 Reviews" data-th="🙏 รีวิว">🙏 Reviews</div>
 
       <div class="side-div"></div>
 
-      <!-- ─── STORE SETUP — branding, nav, contact, payment ─── -->
+      <!-- ─── STORE SETUP ─── -->
       <div class="sidebar-label" data-en="Store Setup" data-th="ตั้งค่าร้าน">Store Setup</div>
       <div class="side-item" onclick="showPanel('store',this)" data-en="🏷️ Store Identity" data-th="🏷️ ข้อมูลร้าน">🏷️ Store Identity</div>
-      <div class="side-item" onclick="showPanel('navigation',this)" data-en="🧭 Navigation & Pages" data-th="🧭 เมนู & หน้า">🧭 Navigation & Pages</div>
-      <div class="side-item" onclick="showPanel('checkout',this)" data-en="💳 Payment & Contact" data-th="💳 ชำระเงิน & ติดต่อ">💳 Payment & Contact</div>
+      <div class="side-item" onclick="showPanel('navigation',this)" data-en="🧭 Navigation &amp; Pages" data-th="🧭 เมนู &amp; หน้า">🧭 Navigation &amp; Pages</div>
+      <div class="side-item" onclick="showPanel('checkout',this)" data-en="💳 Payment &amp; Contact" data-th="💳 ชำระเงิน &amp; ติดต่อ">💳 Payment &amp; Contact</div>
 
       <div class="side-div"></div>
 
@@ -1287,15 +1286,18 @@
           <div class="dash-card"><div class="dash-icon">⛓️</div><div class="dash-num" id="dAc">0</div><div class="dash-label" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</div><span class="dash-link" onclick="showPanel('accessories',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
           <div class="dash-card"><div class="dash-icon">🪬</div><div class="dash-num" id="dF">0</div><div class="dash-label" data-en="Casing Types" data-th="ประเภทกรอบ">Casing Types</div><span class="dash-link" onclick="showPanel('casing',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
           <div class="dash-card"><div class="dash-icon">🎯</div><div class="dash-num" id="dP">0</div><div class="dash-label" data-en="Projects" data-th="โปรเจกต์">Projects</div><span class="dash-link" onclick="showPanel('projects',null)" data-en="Manage →" data-th="จัดการ →">Manage →</span></div>
+          <div class="dash-card"><div class="dash-icon">📖</div><div class="dash-num" id="dHS">0</div><div class="dash-label">H&amp;S Articles</div><span class="dash-link" onclick="showPanel('history-stories',null)">Manage →</span></div>
         </div>
         <div class="form-card">
           <div class="form-section-title" data-en="⚡ Common Edits" data-th="⚡ แก้บ่อย">⚡ Common Edits</div>
           <div class="form-section-desc" data-en="Jump straight to the page you want to change. Each page now has its own title and description editor at the top." data-th="กดไปหน้าที่ต้องการแก้ได้ทันที แต่ละหน้ามีช่องแก้หัวข้อและคำบรรยายอยู่ด้านบนแล้ว">Jump straight to the page you want to change.</div>
           <div class="quick-edit-grid">
-            <button class="quick-edit-card" onclick="showPanel('amulets',null)"><span class="quick-edit-icon">📿</span><span class="quick-edit-title" data-en="Amulets page" data-th="หน้าพระเครื่อง">Amulets page</span><span class="quick-edit-sub" data-en="Intro text, products, prices, photos" data-th="คำโปรย สินค้า ราคา รูป">Intro text, products, prices, photos</span></button>
-            <button class="quick-edit-card" onclick="showPanel('casing',null)"><span class="quick-edit-icon">🪬</span><span class="quick-edit-title" data-en="Casing page" data-th="หน้าบริการกรอบพระ">Casing page</span><span class="quick-edit-sub" data-en="Page description, casing types, styles" data-th="คำอธิบาย ประเภทกรอบ แบบกรอบ">Page description, casing types, styles</span></button>
-            <button class="quick-edit-card" onclick="showPanel('reviews',null)"><span class="quick-edit-icon">🙏</span><span class="quick-edit-title" data-en="Reviews page" data-th="หน้ารีวิว">Reviews page</span><span class="quick-edit-sub" data-en="Review page text and approvals" data-th="ข้อความหน้ารีวิวและอนุมัติรีวิว">Review page text and approvals</span></button>
-            <button class="quick-edit-card" onclick="showPanel('checkout',null);showTab('checkout','payment')"><span class="quick-edit-icon">💳</span><span class="quick-edit-title" data-en="Payment & contact" data-th="ชำระเงินและติดต่อ">Payment & contact</span><span class="quick-edit-sub" data-en="PayNow, shipping, buttons" data-th="PayNow ค่าส่ง ปุ่มติดต่อ">PayNow, shipping, buttons</span></button>
+            <button class="quick-edit-card" onclick="showPanel('home',null)"><span class="quick-edit-icon">🏠</span><span class="quick-edit-title">Homepage</span><span class="quick-edit-sub">Hero, trust, services, featured, feed</span></button>
+            <button class="quick-edit-card" onclick="showPanel('amulets',null)"><span class="quick-edit-icon">📿</span><span class="quick-edit-title">Amulets</span><span class="quick-edit-sub">Products, prices, photos</span></button>
+            <button class="quick-edit-card" onclick="showPanel('casing',null)"><span class="quick-edit-icon">🪬</span><span class="quick-edit-title">Casing Service</span><span class="quick-edit-sub">Types, styles, sample photos</span></button>
+            <button class="quick-edit-card" onclick="showPanel('history-stories',null)"><span class="quick-edit-icon">📖</span><span class="quick-edit-title">History & Stories</span><span class="quick-edit-sub">Articles, monk bios, guides</span></button>
+            <button class="quick-edit-card" onclick="showPanel('reviews',null)"><span class="quick-edit-icon">🙏</span><span class="quick-edit-title">Reviews</span><span class="quick-edit-sub">Customer reviews &amp; approvals</span></button>
+            <button class="quick-edit-card" onclick="showPanel('checkout',null)"><span class="quick-edit-icon">💳</span><span class="quick-edit-title">Payment &amp; Contact</span><span class="quick-edit-sub">PayNow, bank, WhatsApp</span></button>
           </div>
         </div>
       </div>
@@ -1357,7 +1359,7 @@
       <!-- HERO -->
       <div class="tab-content" data-tab-content="hero" data-parent="home">
         <h3 class="subsection-title" data-en="⭐ Hero Section" data-th="⭐ ส่วน Hero">⭐ Hero Section</h3>
-        <div class="subsection-sub" data-en="The big banner on the homepage." data-th="แบนเนอร์ใหญ่บนหน้าแรก">The big banner on the homepage.</div>
+        <div class="subsection-sub">The large hero section at the top of your homepage — background image, shop title, description, and call-to-action buttons.</div>
 
         <div class="form-card">
           <div class="form-section-title" data-en="🖼️ Background Image (optional)" data-th="🖼️ รูปพื้นหลัง (ไม่บังคับ)">🖼️ Background Image (optional)</div>
@@ -1521,6 +1523,8 @@
 
       <!-- HOMEPAGE LAYOUT (section order) -->
       <div class="tab-content" data-tab-content="layout" data-parent="home">
+        <h3 class="subsection-title">📐 Layout & Sections</h3>
+        <div class="subsection-sub">Control which sections appear on the homepage and in what order. Toggle off to hide a section (you can still edit its content here).</div>
         <h3 class="subsection-title" data-en="🏠 Homepage Layout" data-th="🏠 จัดเลย์เอาท์หน้าแรก">🏠 Homepage Layout</h3>
         <div class="subsection-sub" data-en-html="Drag the sections below to reorder how they appear on the homepage, or use the arrow buttons. Toggle a section off to hide it from the homepage (you can still edit its content from its own panel)." data-th-html="ลากส่วนต่างๆ ด้านล่างเพื่อจัดลำดับใหม่ในหน้าแรก หรือใช้ปุ่มลูกศร ปิดสวิตช์เพื่อซ่อนส่วนนั้นจากหน้าแรก (ยังแก้ไขเนื้อหาได้จาก panel ของส่วนนั้นๆ)">Drag sections to reorder. Toggle off to hide a section from the homepage.</div>
         <div class="form-card">
@@ -1537,6 +1541,8 @@
 
       <!-- SERVICES -->
       <div class="tab-content" data-tab-content="services" data-parent="home">
+        <h3 class="subsection-title">🎯 Service Cards</h3>
+        <div class="subsection-sub">Cards shown on the homepage below the trust section. Each card links to a page. Click a card on the website to navigate.</div>
         <h3 class="subsection-title" data-en="🎯 Homepage Service Cards" data-th="🎯 การ์ดบริการหน้าแรก">🎯 Homepage Service Cards</h3>
         <div class="subsection-sub" data-en="The cards on the homepage that link to each section." data-th="การ์ดในหน้าแรกที่ลิงก์ไปแต่ละส่วน">The cards on the homepage that link to each section.</div>
         <div class="form-card">
@@ -1549,6 +1555,8 @@
 
       <!-- FEED POSTS -->
       <div class="tab-content" data-tab-content="feed" data-parent="home">
+        <h3 class="subsection-title">📰 Feed Posts / Latest Updates</h3>
+        <div class="subsection-sub">The feed shows on the homepage as "Latest Updates". Amulets, casing, and reviews are added automatically. Here you can add manual announcements or custom posts.</div>
         <h3 class="subsection-title" data-en="📰 Feed Posts" data-th="📰 โพสต์ Feed">📰 Feed Posts</h3>
         <div class="subsection-sub"
              data-en="Add pinned announcements or any shop update to the Facebook-style Feed page. Casing style updates are generated automatically from real casing photos."
@@ -1578,6 +1586,8 @@
 
       <!-- TRUST -->
       <div class="tab-content" data-tab-content="trust" data-parent="home">
+        <h3 class="subsection-title">🏆 Trust & Experience</h3>
+        <div class="subsection-sub">These cards appear below the hero on the homepage as the trust strip. Add a <strong>Stat</strong> (e.g. "100%", "10+") to show a large number on each card.</div>
         <h3 class="subsection-title" data-en="🏆 Trust Cards" data-th="🏆 การ์ดน่าเชื่อถือ">🏆 Trust Cards</h3>
         <div class="subsection-sub" data-en="Highlight features shown on the About page." data-th="ฟีเจอร์ที่แสดงบนหน้าเกี่ยวกับ">Highlight features shown on the About page.</div>
         <div class="form-card">
@@ -1639,6 +1649,8 @@
 
       <!-- FEATURED -->
       <div class="tab-content" data-tab-content="featured" data-parent="home">
+        <h3 class="subsection-title">✨ Featured Products</h3>
+        <div class="subsection-sub">Highlighted amulets or products shown on the homepage. Items marked as Featured in Amulets or Casing appear here automatically if enabled.</div>
         <h3 class="subsection-title" data-en="✨ Featured on Home" data-th="✨ แนะนำหน้าแรก">✨ Featured on Home</h3>
         <div class="subsection-sub" data-en="Showcase highlighted pieces in a special section on the home page. Mark items as Featured in their detail page below." data-th="โชว์สินค้าแนะนำในส่วนพิเศษบนหน้าแรก เลือก ‘แสดง Featured’ ที่หน้าแก้ไขสินค้า">Showcase highlighted pieces on the home page.</div>
         <div class="form-card">
@@ -1659,6 +1671,13 @@
       </div>
 
       <!-- AMULETS -->
+      <!-- STORE PAGES HUB -->
+      <div class="panel" id="panel-store-pages">
+        <div class="panel-title">📄 Store Pages</div>
+        <div class="panel-sub">Overview of all pages on your website. Click a page to manage its content.</div>
+        <div id="store-pages-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:8px"></div>
+      </div>
+
       <div class="panel" id="panel-amulets">
         <div class="panel-title" data-en="📿 Manage Amulets" data-th="📿 จัดการพระเครื่อง">📿 Manage Amulets</div>
         <div id="pageHeader-amulets"></div>
@@ -3093,6 +3112,7 @@ function showPanel(name, el){
   if(name==='accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
   if(name==='casing'){exitTypeView();loadPanelPageIntro('casing');loadCasingTypes();}
   if(name==='projects'){loadPanelPageIntro('projects');loadList('projects');}
+  if(name==='store-pages') loadStorePages();
   if(name==='history-stories') loadHsPanel();
   if(name==='reviews')loadReviewsPanel();
   // Composite panels — load all their sub-screens once when entered
@@ -3190,6 +3210,7 @@ function loadDash(){
   document.getElementById('dAc').textContent=db.accessories.length;
   document.getElementById('dF').textContent=(db.casingTypes||[]).length;
   document.getElementById('dP').textContent=db.projects.length;
+  const _elDhs=document.getElementById('dHS'); if(_elDhs) _elDhs.textContent=(db.historyStories||[]).length;
 }
 
 // BRANDING
@@ -5079,6 +5100,61 @@ const HS_CAT_LABELS = {
 
 let _hsEditId = null;
 
+// ─── STORE PAGES HUB ─────────────────────────────────────────────────
+function loadStorePages(){
+  const db = getDB();
+  const nav = db.settings.nav || [];
+  const pages = [
+    {id:'home',      icon:'🏠', title:'Homepage',       desc:'Hero, trust badges, service cards, featured items',  panel:'home',            builtin:true},
+    {id:'amulets',   icon:'📿', title:'Amulets',         desc:'Amulet products, prices, and photos',                panel:'amulets',         builtin:true},
+    {id:'accessories',icon:'⛓️',title:'Accessories',     desc:'Accessories, cords, chains, and accessories',        panel:'accessories',      builtin:true},
+    {id:'casing',    icon:'🪬', title:'Casing Service',  desc:'Casing types, styles, and sample photos',            panel:'casing',          builtin:true},
+    {id:'history-stories',icon:'📖',title:'History & Stories',desc:'Articles about monks, amulet history, beliefs, guides',panel:'history-stories',builtin:true},
+    {id:'projects',  icon:'🎯', title:'Projects',         desc:'Community projects, events, and group activities',   panel:'projects',        builtin:true},
+    {id:'reviews',   icon:'🙏', title:'Reviews',          desc:'Customer reviews and testimonials',                  panel:'reviews',         builtin:true},
+    {id:'payment',   icon:'💳', title:'Payment & Contact',desc:'Payment info, bank details, contact channels',       panel:'checkout',        builtin:true},
+    {id:'about',     icon:'ℹ️', title:'About',            desc:'About the shop — mission, values, story',            panel:'navigation',      builtin:true},
+    {id:'contact',   icon:'☎️', title:'Contact',          desc:'Contact channels and WhatsApp buttons',              panel:'checkout',        builtin:true},
+  ];
+
+  const grid = document.getElementById('store-pages-grid');
+  if(!grid) return;
+
+  grid.innerHTML = pages.map(p => {
+    const navItem = nav.find(n => n.id === p.id);
+    const isVisible = !navItem || navItem.visible !== false;
+    return `<div style="
+        background:var(--surface);border:1px solid var(--border);
+        border-radius:16px;padding:20px;cursor:pointer;
+        transition:border-color .2s,box-shadow .2s;
+        box-shadow:0 2px 8px rgba(0,0,0,.04)
+      " onmouseenter="this.style.borderColor='var(--gold)';this.style.boxShadow='0 4px 18px rgba(201,168,76,.14)'"
+         onmouseleave="this.style.borderColor='var(--border)';this.style.boxShadow='0 2px 8px rgba(0,0,0,.04)'"
+         onclick="showPanel('${p.panel}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:26px">${p.icon}</span>
+          <strong style="font-size:15px;color:var(--text)">${p.title}</strong>
+        </div>
+        <span style="
+          font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+          padding:3px 10px;border-radius:999px;
+          ${isVisible
+            ? 'background:rgba(20,140,60,.1);color:#0d7a3a;border:1px solid rgba(20,140,60,.2)'
+            : 'background:rgba(120,120,120,.1);color:#888;border:1px solid rgba(0,0,0,.1)'}
+        ">${isVisible ? '✓ Visible' : '○ Hidden'}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:14px">${p.desc}</div>
+      <div style="
+        display:inline-flex;align-items:center;gap:6px;
+        font-size:12.5px;font-weight:700;color:var(--gold-dark);
+        border:1px solid rgba(201,168,76,.3);border-radius:8px;
+        padding:6px 14px;transition:background .2s
+      ">Edit →</div>
+    </div>`;
+  }).join('');
+}
+
 let _hsUnsubscribe = null;
 
 function loadHsPanel(){
@@ -6067,12 +6143,12 @@ function buildCompositePanels(){
   // ─── Tab definitions: order + label per (parent, tabKey) ───
   const TAB_DEFS = {
     home: [
-      {tab:'hero',     en:'⭐ Hero',         th:'⭐ ส่วน Hero'},
-      {tab:'layout',   en:'🏠 Layout',       th:'🏠 จัดเลย์เอาท์'},
-      {tab:'services', en:'🎯 Services',     th:'🎯 บริการ'},
-      {tab:'feed',     en:'📰 Feed Posts',   th:'📰 โพสต์ Feed'},
-      {tab:'featured', en:'✨ Featured',     th:'✨ แนะนำ'},
-      {tab:'trust',    en:'🏆 Trust',        th:'🏆 น่าเชื่อถือ'},
+      {tab:'hero',     en:'⭐ Hero',              th:'⭐ ส่วน Hero'},
+      {tab:'trust',    en:'🏆 Trust & Stats',     th:'🏆 ความน่าเชื่อถือ'},
+      {tab:'services', en:'🎯 Services',          th:'🎯 บริการ'},
+      {tab:'featured', en:'✨ Featured',          th:'✨ แนะนำ'},
+      {tab:'layout',   en:'📐 Layout & Sections', th:'📐 จัดเลย์เอาท์'},
+      {tab:'feed',     en:'📰 Feed Posts',        th:'📰 โพสต์ Feed'},
     ],
     store: [
       {tab:'branding', en:'🏷️ Branding & Logo', th:'🏷️ แบรนด์ & โลโก้'},
@@ -6088,10 +6164,29 @@ function buildCompositePanels(){
   };
 
   const PANEL_HEADERS = {
-    home:       {en:'🏠 Homepage Editor',     th:'🏠 แก้ไขหน้าแรก',     sub: {en:'Everything that shows on the home page — hero, layout, services, featured products, and trust badges.', th:'ทุกอย่างที่แสดงบนหน้าแรก — Hero, Layout, บริการ, สินค้าแนะนำ และจุดเด่น'}},
-    store:      {en:'🏷️ Store Identity',      th:'🏷️ ข้อมูลร้าน',       sub: {en:'Your shop name, logo, and topbar banner.', th:'ชื่อร้าน โลโก้ และแบนเนอร์ด้านบน'}},
-    navigation: {en:'🧭 Navigation & Pages',  th:'🧭 เมนู & หน้า',       sub: {en:'Menu items in the top navigation, custom pages, and section headers shown on each page.', th:'รายการเมนูด้านบน หน้าที่สร้างเอง และหัวข้อหน้าแต่ละหน้า'}},
-    checkout:   {en:'💳 Payment & Contact',   th:'💳 ชำระเงิน & ติดต่อ', sub: {en:'How customers pay you and reach you.', th:'วิธีให้ลูกค้าชำระเงินและติดต่อ'}},
+    home: {
+      en:'🏠 Homepage Editor',
+      th:'🏠 แก้ไขหน้าแรก',
+      sub:{
+        en:'Edit every section that appears on the homepage — hero banner, trust stats, service cards, featured items, layout, and feed posts.',
+        th:'แก้ไขทุกส่วนในหน้าแรก — แบนเนอร์ Hero, สถิติความน่าเชื่อถือ, การ์ดบริการ, สินค้าแนะนำ, เลย์เอาท์ และโพสต์ฟีด'
+      }
+    },
+    store: {
+      en:'🏷️ Store Identity',
+      th:'🏷️ ข้อมูลร้าน',
+      sub:{en:'Shop name, logo, font, and top banner.', th:'ชื่อร้าน โลโก้ ฟอนต์ และแบนเนอร์ด้านบน'}
+    },
+    navigation: {
+      en:'🧭 Navigation & Pages',
+      th:'🧭 เมนู & หน้า',
+      sub:{en:'Menu labels, order, show/hide pages, and custom static pages.', th:'ชื่อเมนู ลำดับ แสดง/ซ่อนหน้า และหน้าที่สร้างเอง'}
+    },
+    checkout: {
+      en:'💳 Payment & Contact',
+      th:'💳 ชำระเงิน & ติดต่อ',
+      sub:{en:'Payment methods, bank details, and contact channels (WhatsApp, Facebook, Line).', th:'วิธีชำระเงิน ธนาคาร และช่องทางติดต่อ'}
+    },
   };
 
   const main = document.querySelector('.main');
