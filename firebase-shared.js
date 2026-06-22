@@ -536,21 +536,54 @@ async function loadSplitDB(meta, wantedKeys){
   return out;
 }
 
+// Track which types have had variants fully loaded
+const _casingVariantsLoaded = new Set();
+
 async function loadCasingTypesV2(meta){
   const typeIds = Array.isArray(meta._casingTypeIds) ? meta._casingTypeIds : [];
   const variantIds = meta._casingVariantIds || {};
 
+  // Phase 1: load ALL type metadata in parallel (no variants yet)
+  // This is fast — just one Firestore doc per type
   const types = await Promise.all(typeIds.map(async typeId => {
-    const type = JSON.parse(await readJsonRecord(casingTypeDoc(typeId), idx => casingTypeChunkDoc(typeId, idx), `casing type: ${typeId}`));
+    const type = JSON.parse(await readJsonRecord(
+      casingTypeDoc(typeId),
+      idx => casingTypeChunkDoc(typeId, idx),
+      `casing type: ${typeId}`
+    ));
+    // Attach variant ID list so UI knows how many styles exist
     const ids = Array.isArray(variantIds[typeId]) ? variantIds[typeId] : [];
-    const variants = await Promise.all(ids.map(async variantId => {
-      return JSON.parse(await readJsonRecord(casingVariantDoc(typeId, variantId), idx => casingVariantChunkDoc(typeId, variantId, idx), `casing style: ${typeId}/${variantId}`));
-    }));
-    type.variants = variants;
+    type._variantIds = ids;
+    // Set empty variants array — will be populated lazily when type is opened
+    if(!Array.isArray(type.variants)) type.variants = [];
     return type;
   }));
 
   return types;
+}
+
+// Phase 2: load variants for a specific casing type on-demand
+async function ensureCasingVariants(typeId){
+  if(_casingVariantsLoaded.has(String(typeId))) return;
+  const db = getDB();
+  const ty = (db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
+  if(!ty) return;
+
+  const meta = _dbMeta || {};
+  const variantIds = (meta._casingVariantIds || {})[typeId] || ty._variantIds || [];
+  if(!variantIds.length){ _casingVariantsLoaded.add(String(typeId)); return; }
+
+  const variants = await Promise.all(variantIds.map(async variantId => {
+    return JSON.parse(await readJsonRecord(
+      casingVariantDoc(typeId, variantId),
+      idx => casingVariantChunkDoc(typeId, variantId, idx),
+      `casing style: ${typeId}/${variantId}`
+    ));
+  }));
+
+  ty.variants = variants;
+  _casingVariantsLoaded.add(String(typeId));
+  notifyDBReady();
 }
 
 async function readJsonRecord(ref, chunkRefForIndex, label){
@@ -1170,6 +1203,8 @@ window.FB = {
   setAdminRecord,
   deleteAdminRecord,
   ensureFirstSuperAdmin,
+  // Casing variants lazy loader
+  ensureCasingVariants,
   // History & Stories
   hsGetAll,
   hsAddArticle,

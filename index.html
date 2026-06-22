@@ -4634,30 +4634,40 @@ async function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
-  if(name!=='casing') await ensurePageData(name);
+  // Show the page immediately with skeleton placeholders.
+  // Data loads in background — render fires once data arrives.
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
   setActiveNav(name);
   window.scrollTo(0,0);
-  // close mobile menu
   document.getElementById('navLinks').classList.remove('open');
   document.getElementById('mobileOverlay').classList.remove('open');
+
+  // Show skeletons immediately for pages that have them
+  if(name==='amulets')  showGridSkeleton('aGrid',12);
+  if(name==='accessories') showGridSkeleton('acGrid',12);
+  if(name==='projects') showGridSkeleton('pGrid',8);
+  if(name==='reviews')  showGridSkeleton('revGrid',6);
+
+  if(name!=='casing'){
+    await ensurePageData(name);
+  }
   if(name==='amulets'){curAcat='all';renderA('all');}
   if(name==='accessories'){curAccat='all';renderAc('all');}
-	  if(name==='casing'){
-	    curCasingType=null;
-	    loadState.casing='loading';
-	    renderCasingLoading();
-	    try {
-	      await ensurePageData(name);
-	      loadState.casing='loaded';
-	      if(document.getElementById('page-casing')?.classList.contains('active')) renderCasingTypes();
-	    } catch(err){
-	      loadState.casing='error';
-	      console.warn('[casing] load failed:', err);
-	      const grid=document.getElementById('cTypeGrid');
-	      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load casing data. Please refresh.'}</div>`;
-    }
+  if(name==='casing'){
+    curCasingType=null;
+    loadState.casing='loading';
+    renderCasingLoading(); // show skeleton immediately
+    // Load in background — don't block UI
+    ensurePageData(name).then(()=>{
+      loadState.casing='loaded';
+      if(document.getElementById('page-casing')?.classList.contains('active')) renderCasingTypes();
+    }).catch(err=>{
+      loadState.casing='error';
+      console.warn('[casing] load failed:', err);
+      const grid=document.getElementById('cTypeGrid');
+      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ':'Could not load casing data. Please refresh.'}</div>`;
+    });
   }
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
@@ -5131,6 +5141,22 @@ let _casingStyleMode = 'all';
 let _variantRenderToken = 0;
 let _modalGalleryToken = 0;
 
+// ─── SKELETON HELPERS ────────────────────────────────────────────────
+// Show shimmer placeholder cards in any grid while data loads.
+// count: how many cards to show. Clears the grid on next real render.
+function showGridSkeleton(gridId, count=8){
+  const el = document.getElementById(gridId);
+  if(!el || el.dataset._hasData) return;
+  el.innerHTML = Array.from({length:count}, () => `
+    <div class="card skeleton-card" aria-hidden="true" style="pointer-events:none;cursor:default">
+      <div class="card-img" style="background:linear-gradient(90deg,#f3ead0 0%,#fff8df 50%,#f3ead0 100%);background-size:200% 100%;animation:imgShimmer 1.3s ease-in-out infinite;aspect-ratio:1;border-radius:inherit"></div>
+      <div class="card-body" style="padding:14px">
+        <div style="height:16px;width:72%;border-radius:8px;background:#efe2bd;margin-bottom:10px;animation:imgShimmer 1.3s ease-in-out infinite;background-size:200% 100%"></div>
+        <div style="height:12px;width:48%;border-radius:8px;background:#f4e8c8;animation:imgShimmer 1.3s ease-in-out infinite;background-size:200% 100%"></div>
+      </div>
+    </div>`).join('');
+}
+
 function renderCasingLoading(){
   loadState.casing = loadState.casing === 'loaded' ? 'loaded' : 'loading';
   const typesWrap=document.getElementById('casingTypes');
@@ -5208,7 +5234,20 @@ function renderCasingTypes(){
   }).join('');
 }
 
-function openCasingType(typeId){curCasingType=typeId;_variantRenderToken++;renderVariants(typeId);window.scrollTo({top:0,behavior:'smooth'});}
+async function openCasingType(typeId){
+  curCasingType=typeId;
+  _variantRenderToken++;
+  window.scrollTo({top:0,behavior:'smooth'});
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
+  const hasVariants = ty && Array.isArray(ty.variants) && ty.variants.length>0;
+  if(!hasVariants && window.FB && window.FB.ensureCasingVariants){
+    // Show skeleton while loading variants
+    renderVariantsLoading(typeId);
+    await window.FB.ensureCasingVariants(typeId);
+  }
+  renderVariants(typeId);
+}
 
 function casingPlainText(html){
   return String(html||'')
@@ -5481,6 +5520,24 @@ function appendVariantCardsProgressively(grid, ty, vars, start, token){
   };
   if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:800});
   else setTimeout(run,50);
+}
+
+function renderVariantsLoading(typeId){
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
+  document.getElementById('casingTypes').style.display='none';
+  const vw=document.getElementById('casingVariants');
+  if(vw) vw.style.display='block';
+  const g=document.getElementById('varGrid');
+  if(!g) return;
+  // Show type header immediately
+  if(ty){
+    document.getElementById('vTypeBack').onclick=()=>{renderCasingTypes()};
+    document.getElementById('vTypeName').textContent=ty.name||'';
+    document.getElementById('vTimeframe').innerHTML='';
+    document.getElementById('vDesc').innerHTML='';
+    showGridSkeleton('varGrid',6);
+  }
 }
 
 function renderVariants(typeId){
@@ -6068,6 +6125,21 @@ function hsCatIcon(id){  const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.ic
 
 function renderHistoryStories(){
   const db = getDB();
+  // Show skeleton if historyStories not yet loaded
+  if(!Array.isArray(db.historyStories) || !db.historyStories.length){
+    const fw=document.getElementById('hsFeaturedWrap');
+    const gw=document.getElementById('hsGridWrap');
+    if(fw) fw.innerHTML='';
+    if(gw) gw.innerHTML=`<div class="hs-grid">${Array.from({length:4},()=>`
+      <div class="hs-card skeleton-card" style="pointer-events:none;min-height:220px">
+        <div style="aspect-ratio:16/9;background:linear-gradient(90deg,#f3ead0,#fff8df,#f3ead0);background-size:200% 100%;animation:imgShimmer 1.3s infinite"></div>
+        <div style="padding:14px">
+          <div style="height:12px;width:55%;border-radius:8px;background:#efe2bd;margin-bottom:8px;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
+          <div style="height:15px;width:82%;border-radius:8px;background:#f4e8c8;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
+        </div>
+      </div>`).join('')}</div>`;
+    return;
+  }
   const s  = db.settings||{};
   const el = document.getElementById('hsPageTitle');
   const de = document.getElementById('hsPageDesc');
