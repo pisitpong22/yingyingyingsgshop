@@ -2214,10 +2214,10 @@
   .social-cover{
     position:relative;
     min-height:calc(100vh - 110px);
-    padding:90px 22px 110px;
+    padding:90px 22px 72px;
     overflow:hidden;
     color:#fff8df;
-    border-bottom:1px solid rgba(201,168,76,.18);
+    border-bottom:none;
     display:flex;
     flex-direction:column;
     justify-content:center;
@@ -2233,8 +2233,8 @@
   }
   /* Ambient gold glow at bottom of hero */
   .social-cover::before{
-    content:'';position:absolute;left:0;right:0;bottom:0;height:360px;
-    background:linear-gradient(180deg,transparent 0%,rgba(252,244,220,.6) 60%,rgba(252,244,218,1) 100%);
+    content:'';position:absolute;left:0;right:0;bottom:0;height:280px;
+    background:linear-gradient(180deg,transparent 0%,rgba(252,244,220,.5) 55%,rgba(252,244,218,.96) 100%);
     pointer-events:none;z-index:0;
   }
   .social-cover::after{
@@ -2339,8 +2339,8 @@
      Populated by renderTrustStrip() via applySettings. */
   .trust-strip{
     position:relative;z-index:3;
-    max-width:1180px;margin:-28px auto 0;
-    padding:0 18px 32px;
+    max-width:1180px;margin:-48px auto 0;
+    padding:0 18px 28px;
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
     gap:14px;
@@ -2387,7 +2387,7 @@
   @media(max-width:1020px){
     .trust-strip{
       grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-      gap:10px;margin:-20px auto 0;padding:0 14px 24px;
+      gap:10px;margin:-36px auto 0;padding:0 14px 20px;
     }
     .trust-strip-card{padding:16px 12px;border-radius:16px}
     .trust-strip-stat{font-size:24px}
@@ -2483,7 +2483,7 @@
   #page-home #homeSections{display:none}
 
   @media(max-width:1020px){
-    .social-cover{min-height:auto;padding:44px 18px 96px}
+    .social-cover{min-height:auto;padding:44px 18px 64px}
     .social-shell{grid-template-columns:1fr;max-width:720px;margin:-56px auto 0}
     .social-left,.social-right{display:none}
     .social-profile-card{grid-template-columns:1fr}
@@ -2507,7 +2507,7 @@
 
   @media(max-width:768px){
     .social-home{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
-    .social-cover{min-height:auto;padding:24px 16px 78px}
+    .social-cover{min-height:auto;padding:24px 16px 56px}
     .social-brand-block{align-items:flex-start;gap:14px;padding:18px 16px;border-radius:24px}
     .social-brand-block > div{width:100%;max-width:none}
     .social-avatar{width:76px;height:76px;border-radius:22px}
