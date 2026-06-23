@@ -3792,14 +3792,14 @@ function applyDbMigrations(d){
   if(!d.settings.socialChannels){
     d.settings.socialChannels = defaultSettings().socialChannels;
   } else {
-    // Normalise channel schema — remove legacy name/handle fields
+    // Migrate old one-per-platform schema to multi-entry schema
     d.settings.socialChannels.channels = (d.settings.socialChannels.channels||[]).map(ch=>({
-      id:ch.id, url:ch.url||'', enabled:!!ch.enabled
-    }));
-    // Ensure LINE channel exists
-    if(!d.settings.socialChannels.channels.find(c=>c.id==='line')){
-      d.settings.socialChannels.channels.push({id:'line',url:'',enabled:false});
-    }
+      uid:     ch.uid || ('sc_' + Math.random().toString(36).slice(2,8)),
+      id:      ch.id || '',
+      name:    ch.name || ch.handle || '',
+      url:     ch.url  || '',
+      enabled: ch.enabled !== false,
+    })).filter(ch => ch.id);
   }
   // Backfill layout + items on legacy custom pages
   d.settings.customPages.forEach(p => {
@@ -6365,6 +6365,8 @@ function renderSocialChannels(){
       label: ch.id, accent:'#c9a84c', glow:'rgba(201,168,76,.18)',
       btnLabel:'Visit', svgPath:null
     };
+    // Use custom name if admin set one, otherwise use platform label
+    const displayName = (ch.name && ch.name.trim()) ? ch.name.trim() : cfg.label;
     const svg = cfg.svgPath
       ? `<svg viewBox="0 0 24 24" fill="${cfg.accent}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>`
       : `<span style="font-size:18px">${cfg.label[0]}</span>`;
@@ -6372,7 +6374,7 @@ function renderSocialChannels(){
     return `<a class="sc-card" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer"
       style="--sc-accent:${cfg.accent};--sc-glow:${cfg.glow}">
       <div class="sc-icon">${svg}</div>
-      <div class="sc-name">${escapeHtml(cfg.label)}</div>
+      <div class="sc-name">${escapeHtml(displayName)}</div>
       <span class="sc-btn">${escapeHtml(cfg.btnLabel)}</span>
     </a>`;
   }).join('');

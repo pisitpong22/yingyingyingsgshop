@@ -1557,28 +1557,39 @@
       <!-- SOCIAL CHANNELS -->
       <div class="tab-content" data-tab-content="social" data-parent="home">
         <h3 class="subsection-title">📲 Social Channels</h3>
-        <div class="subsection-sub">Display your social media channels on the homepage. Only channels with a URL will be shown. Leave URL blank to hide a channel.</div>
+        <div class="subsection-sub">Add your social media accounts. You can add multiple accounts per platform (e.g. two Facebook pages). Enabled channels appear on the homepage.</div>
 
         <div class="form-card">
-          <div class="form-section-title">Section Settings</div>
-          <div class="form-grid">
-            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700">
-                <input type="checkbox" id="sc_enabled" style="width:auto;accent-color:var(--gold-dark)">
-                Show Social Channels section on homepage
-              </label>
-              <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px">
-                <label class="fl" style="white-space:nowrap;margin:0">Section label:</label>
-                <input class="fi" id="sc_title" placeholder="Follow Us" style="flex:1">
-              </div>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;flex-shrink:0">
+              <input type="checkbox" id="sc_enabled" style="width:auto;accent-color:var(--gold-dark)">
+              Show Social Channels on homepage
+            </label>
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px">
+              <label class="fl" style="white-space:nowrap;margin:0;flex-shrink:0">Section label:</label>
+              <input class="fi" id="sc_title" placeholder="Follow Us" style="flex:1">
             </div>
           </div>
         </div>
 
         <div class="form-card">
-          <div class="form-section-title">Platform Links</div>
-          <div class="form-section-desc">Enable platforms and paste their URLs. Leave blank to hide.</div>
-          <div id="sc_channels_list"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div class="form-section-title" style="margin:0">Platform Links</div>
+              <div class="form-section-desc" style="margin:4px 0 0">Each row is one social account. Add multiple rows for the same platform.</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+              <select id="sc_add_platform" class="fi" style="padding:7px 10px;font-size:13px;width:auto;min-width:140px">
+                <option value="">Select platform…</option>
+              </select>
+              <button class="btn-sm" onclick="scAddChannel()" style="white-space:nowrap">+ Add</button>
+            </div>
+          </div>
+          <div id="sc_channels_list">
+            <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">
+              Loading channels…
+            </div>
+          </div>
         </div>
 
         <div style="margin-top:20px">
@@ -5612,67 +5623,132 @@ const SC_ADMIN_PLATFORMS = [
   {id:'line',      label:'LINE',       icon:'💬', placeholder:'https://line.me/ti/p/~yourlineid'},
 ];
 
+// ─── SOCIAL CHANNELS ADMIN — multi-entry per platform ────────────────────────
+// In-memory list of channel entries while editing.
+// Each entry: { uid, id (platform), name (optional label), url, enabled }
+let _scEntries = [];
+
+function scGenUid(){
+  return 'sc_' + Math.random().toString(36).slice(2,9);
+}
+
 function loadSocialChannels(){
   try {
     const db = getDB();
     const sc = (db && db.settings && db.settings.socialChannels) ? db.settings.socialChannels : {};
-    const channels = Array.isArray(sc.channels) ? sc.channels : [];
 
-    // Enable toggle
+    // Populate header fields
     const enabledEl = document.getElementById('sc_enabled');
     if(enabledEl) enabledEl.checked = sc.enabled !== false;
-
-    // Title
     const titleEl = document.getElementById('sc_title');
     if(titleEl) titleEl.value = sc.title || 'Follow Us';
 
-    // Platform rows — always render all 6 built-in platforms
-    const list = document.getElementById('sc_channels_list');
-    if(!list){
-      console.warn('[admin] sc_channels_list not found');
-      return;
+    // Populate platform selector
+    const sel = document.getElementById('sc_add_platform');
+    if(sel && sel.options.length <= 1){
+      SC_ADMIN_PLATFORMS.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.icon + ' ' + p.label;
+        sel.appendChild(opt);
+      });
     }
 
-    if(!SC_ADMIN_PLATFORMS || !SC_ADMIN_PLATFORMS.length){
-      list.innerHTML = '<div style="color:var(--text-muted);padding:16px">Platform list not loaded.</div>';
-      return;
-    }
+    // Load entries from DB — support both old (one-per-platform) and new (multi) schemas
+    const raw = Array.isArray(sc.channels) ? sc.channels : [];
+    _scEntries = raw.map(ch => ({
+      uid:     ch.uid || scGenUid(),
+      id:      ch.id || '',
+      name:    ch.name || '',
+      url:     ch.url  || '',
+      enabled: ch.enabled !== false,
+    }));
 
-    list.innerHTML = SC_ADMIN_PLATFORMS.map(p => {
-      // Find saved data for this platform, or use safe defaults
-      const ch = channels.find(c => c && c.id === p.id) || {id:p.id, enabled:false, url:''};
-      const url = (ch.url || '').trim();
-      const checked = ch.enabled ? 'checked' : '';
-
-      return `<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;min-width:126px;flex-shrink:0;font-size:14px">
-          <input type="checkbox" id="sc_${p.id}_on" ${checked} style="width:auto;accent-color:var(--gold-dark)">
-          ${p.icon} ${p.label}
-        </label>
-        <input class="fi" id="sc_${p.id}_url"
-          value="${escapeHtml(url)}"
-          placeholder="${escapeHtml(p.placeholder)}"
-          style="flex:1;font-size:13px;padding:8px 12px">
-      </div>`;
-    }).join('');
-
-  } catch(err) {
-    console.error('[admin] loadSocialChannels failed:', err);
+    scRenderList();
+  } catch(err){
+    console.error('[admin] loadSocialChannels:', err);
     const list = document.getElementById('sc_channels_list');
-    if(list) list.innerHTML = `<div style="color:#c0392b;padding:16px">Error loading social channels: ${escapeHtml(String(err.message||err))}</div>`;
+    if(list) list.innerHTML = `<div style="color:#c0392b;padding:16px">Error: ${escapeHtml(String(err.message||err))}</div>`;
   }
 }
 
+function scRenderList(){
+  const list = document.getElementById('sc_channels_list');
+  if(!list) return;
+
+  if(!_scEntries.length){
+    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;border:1px dashed var(--border);border-radius:10px;margin-top:8px">
+      No channels added yet.<br>Select a platform above and click <strong>+ Add</strong>.
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = _scEntries.map((entry, idx) => {
+    const p = SC_ADMIN_PLATFORMS.find(x => x.id === entry.id) || {icon:'🔗', label:entry.id, placeholder:'https://'};
+    const checked = entry.enabled ? 'checked' : '';
+    return `
+    <div class="rep-row" style="align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;min-width:0">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;font-weight:700;font-size:14px;min-width:36px">
+          <input type="checkbox" data-sc-idx="${idx}" data-sc-field="enabled" ${checked}
+            onchange="scUpdate(${idx},'enabled',this.checked)"
+            style="width:auto;accent-color:var(--gold-dark)">
+        </label>
+        <span style="font-size:18px;flex-shrink:0" title="${escapeHtml(p.label)}">${p.icon}</span>
+        <select class="fi" onchange="scUpdate(${idx},'id',this.value)"
+          style="font-size:13px;padding:7px 10px;width:auto;min-width:120px;flex-shrink:0">
+          ${SC_ADMIN_PLATFORMS.map(pl =>
+            `<option value="${pl.id}" ${pl.id===entry.id?'selected':''}>${pl.icon} ${pl.label}</option>`
+          ).join('')}
+        </select>
+        <input class="fi" placeholder="Display name (optional)" value="${escapeHtml(entry.name)}"
+          oninput="scUpdate(${idx},'name',this.value)"
+          style="font-size:13px;padding:7px 10px;width:140px;flex-shrink:0">
+        <input class="fi" placeholder="${escapeHtml(p.placeholder)}" value="${escapeHtml(entry.url)}"
+          oninput="scUpdate(${idx},'url',this.value)"
+          style="font-size:13px;padding:7px 10px;flex:1;min-width:180px">
+      </div>
+      <button class="btn-del" style="flex-shrink:0;padding:6px 10px;font-size:12px" onclick="scRemove(${idx})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function scUpdate(idx, field, value){
+  if(_scEntries[idx]) _scEntries[idx][field] = value;
+}
+
+function scAddChannel(){
+  const sel = document.getElementById('sc_add_platform');
+  const platformId = sel ? sel.value : '';
+  if(!platformId){ showToast('Please select a platform first'); return; }
+  _scEntries.push({ uid:scGenUid(), id:platformId, name:'', url:'', enabled:true });
+  scRenderList();
+  // Scroll to new entry
+  const list = document.getElementById('sc_channels_list');
+  if(list) list.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  if(sel) sel.value = '';
+}
+
+function scRemove(idx){
+  _scEntries.splice(idx, 1);
+  scRenderList();
+}
+
 async function saveSocialChannels(){
+  // Capture latest field values before saving
+  // (oninput already kept _scEntries in sync, but double-check)
   const db = getDB();
   if(!db.settings.socialChannels) db.settings.socialChannels = {};
   const sc = db.settings.socialChannels;
-  sc.enabled  = document.getElementById('sc_enabled').checked;
-  sc.title    = document.getElementById('sc_title').value.trim() || 'Follow Us';
-  sc.channels = SC_ADMIN_PLATFORMS.map(p => ({
-    id:      p.id,
-    url:     (document.getElementById(`sc_${p.id}_url`)?.value||'').trim(),
-    enabled: !!(document.getElementById(`sc_${p.id}_on`)?.checked),
+  sc.enabled  = !!(document.getElementById('sc_enabled')?.checked);
+  sc.title    = (document.getElementById('sc_title')?.value||'').trim() || 'Follow Us';
+  // Filter out entries with no URL
+  sc.channels = _scEntries.map(e => ({
+    uid:     e.uid,
+    id:      e.id,
+    name:    (e.name||'').trim(),
+    url:     (e.url||'').trim(),
+    enabled: !!e.enabled,
   }));
   await persistDB(db, '✅ Social Channels saved');
 }
