@@ -4597,82 +4597,6 @@ function renderCustomPages(){
   }).join('');
 }
 
-function buildKnowledgeBody(p, allItems){
-  const pageId = p.id;
-  const cats = HS_CATS;
-  // Category chips
-  const catCounts = {};
-  allItems.forEach(it=>{ const c=it.category||'guides-articles'; catCounts[c]=(catCounts[c]||0)+1; });
-  const catHtml = cats.map(c=>`
-    <button class="hs-cat${_hsCatFilter===c.id && pageId===window._hsActivePage?' active':''}"
-      onclick="_hsActivePage='${pageId}';_hsCatFilter='${c.id}';_hsSearch='';renderCustomPages()">
-      ${c.icon} ${c.label}${c.id!=='all'&&catCounts[c.id]?` <span class="hs-cat-count">(${catCounts[c.id]})</span>`:''}
-    </button>`).join('');
-
-  // Filter items
-  let items = allItems;
-  if(window._hsActivePage === pageId){
-    if(_hsCatFilter && _hsCatFilter !== 'all') items = items.filter(it=>(it.category||'guides-articles')===_hsCatFilter);
-    if(_hsSearch) items = items.filter(it=>(it.title+' '+(it.excerpt||'')+' '+(it.subtitle||'')).toLowerCase().includes(_hsSearch.toLowerCase()));
-  }
-
-  const featured = items.find(it=>it.featured);
-  const rest = items.filter(it=>it!==featured);
-
-  const featuredHtml = featured ? `
-    <div class="hs-featured" onclick="openCpItem('${pageId}','${featured.id}')">
-      <div class="hs-featured-img">
-        ${featured.img?`<img loading="lazy" decoding="async" ${imgAttrs(featured.img,'medium','(max-width:700px) 100vw, 50vw')} alt="">`:catIcon(featured.category)}
-      </div>
-      <div class="hs-featured-body">
-        <div class="hs-badge">${catIcon(featured.category)} ${catLabel(featured.category)}</div>
-        <h3 class="hs-featured-title">${escapeHtml(featured.title||'Untitled')}</h3>
-        ${featured.excerpt?`<p class="hs-featured-excerpt">${escapeHtml(featured.excerpt)}</p>`:''}
-        <div class="hs-featured-cta">Read Article →</div>
-      </div>
-    </div>` : '';
-
-  const gridHtml = rest.length ? `
-    <div class="hs-section-head">
-      <span class="hs-section-title">${featured?'More Articles':'All Articles'}</span>
-      <div class="hs-section-line"></div>
-    </div>
-    <div class="hs-grid">
-      ${rest.map(it=>`
-        <div class="hs-card" onclick="openCpItem('${pageId}','${it.id}')">
-          <div class="hs-card-img">
-            ${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','(max-width:700px) 50vw, 280px')} alt="">`:catIcon(it.category)}
-          </div>
-          <div class="hs-card-body">
-            <div class="hs-card-cat">${catIcon(it.category)} ${catLabel(it.category)}</div>
-            <h3 class="hs-card-title">${escapeHtml(it.title||'Untitled')}</h3>
-            ${it.excerpt?`<p class="hs-card-excerpt">${escapeHtml(it.excerpt)}</p>`:''}
-            <div class="hs-card-more">Read more →</div>
-          </div>
-        </div>
-      `).join('')}
-    </div>` : '';
-
-  const emptyHtml = (!featured && !rest.length) ? `
-    <div class="hs-empty">
-      <div class="hs-empty-icon">📖</div>
-      <p>No articles yet${_hsCatFilter&&_hsCatFilter!=='all'?' in this category':''}.${_hsSearch?' Try a different search term.':''}
-      ${_hsCatFilter&&_hsCatFilter!=='all'?` <a href="#" onclick="event.preventDefault();_hsCatFilter='all';_hsSearch='';renderCustomPages()" style="color:var(--gold-dark)">View all</a>`:''}</p>
-    </div>` : '';
-
-  return `<div class="hs-wrap">
-    <div class="hs-search-wrap">
-      <input class="hs-search" placeholder="Search articles…"
-        oninput="window._hsActivePage='${pageId}';_hsSearch=this.value;renderCustomPages()"
-        value="${escapeHtml(_hsSearch&&window._hsActivePage===pageId?_hsSearch:'')}"
-        id="hs_search_${pageId}">
-      <span class="hs-search-icon">🔍</span>
-    </div>
-    <div class="hs-cats">${catHtml}</div>
-    ${featuredHtml}${gridHtml}${emptyHtml}
-  </div>`;
-}
-
 function catLabel(catId){
   const c = HS_CATS.find(x=>x.id===catId);
   return c ? c.label : (catId||'Article');
@@ -4930,42 +4854,6 @@ function openContactWithItem(type,id){
   }
 }
 
-function openContactForCasingStyle(typeName, styleName, price){
-  const db=getDB();
-  const priceText = price ? `S$${Number(price).toLocaleString()}` : '';
-  const msg = lang==='th'
-    ? `สวัสดีค่ะ/ครับ สนใจกรอบพระ ${typeName || ''} แบบ ${styleName || ''}${priceText ? ` (${priceText})` : ''} ขอสอบถามรายละเอียดเพิ่มเติมค่ะ/ครับ 🙏`
-    : `Hi! I'm interested in the casing service: ${typeName || ''} / ${styleName || ''}${priceText ? ` (${priceText})` : ''}. Could you share more details? 🙏`;
-  const contacts=db.settings.contacts||[];
-  if(!contacts.length){showToast(msg);return;}
-  const c=contacts.find(x=>x.url&&x.url.trim());
-  if(c){
-    let url=c.url;
-    if(/wa\.me|api\.whatsapp/i.test(url)){
-      url+= (url.indexOf('?')>=0?'&':'?')+'text='+encodeURIComponent(msg);
-    }
-    try{navigator.clipboard&&navigator.clipboard.writeText(msg);}catch(e){}
-    window.open(url,'_blank','noopener');
-    showToast(lang==='th'?'📋 คัดลอกข้อความแล้ว':'📋 Message copied');
-  } else {
-    showToast(msg);
-  }
-}
-
-// ── SHARE handler ──
-function shareItem(type,id){
-  const db=getDB();const item=(db[type]||[]).find(i=>i.id===id);if(!item)return;
-  const url=window.location.href.split('#')[0]+'#'+type+'-'+id;
-  const text=`${item.name} — Yingyingying Amulet`;
-  if(navigator.share){
-    navigator.share({title:item.name,text:text,url:url}).catch(()=>{});
-  } else {
-    try{
-      navigator.clipboard.writeText(url);
-      showToast('🔗 Link copied to clipboard');
-    }catch(e){showToast('🔗 '+url);}
-  }
-}
 function shareToFB(type,id){
   const url=window.location.href.split('#')[0]+'#'+type+'-'+id;
   window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(url),'_blank','noopener');
@@ -5459,11 +5347,6 @@ function casingTimeframeText(desc){
   const sentence=text.split(/[.!?]\s+/).find(part=>/(week|weeks|month|months|day|days|สัปดาห์|อาทิตย์|เดือน|วัน|timeframe|waiting|ready|custom casing|takes)/i.test(part));
   const match=(sentence||text).match(/[^.!?]*(?:week|weeks|month|months|day|days|สัปดาห์|อาทิตย์|เดือน|วัน)[^.!?]*/i);
   return (match ? match[0] : sentence || '').trim();
-}
-
-function casingTimeframeHtml(desc, cls='casing-timeframe'){
-  const text=casingTimeframeText(desc);
-  return text ? `<div class="${cls}">⏱ ${escapeHtml(text)}</div>` : '';
 }
 
 function casingTypePriceText(ty){
@@ -6104,59 +5987,6 @@ document.getElementById('lightbox')?.addEventListener('touchend', e => {
 
 // ── FEED PAGE ──
 let _feedVisible = 10;
-
-function renderFeedSkeleton(){
-  const stories=document.getElementById('feedStories');
-  if(stories){
-    stories.innerHTML=Array.from({length:5},()=>`<div class="feed-skel-story"></div>`).join('');
-  }
-  const list=document.getElementById('feedList');
-  if(list){
-    list.innerHTML=Array.from({length:3},()=>`
-      <article class="feed-card feed-skeleton-card" aria-label="Loading feed">
-        <div class="feed-skel-head">
-          <div class="feed-skel-avatar"></div>
-          <div style="flex:1">
-            <div class="feed-skel-line short"></div>
-            <div class="feed-skel-line mid"></div>
-          </div>
-        </div>
-        <div class="feed-skel-line mid"></div>
-        <div class="feed-skel-line"></div>
-        <div class="feed-skel-media"></div>
-      </article>
-    `).join('');
-  }
-  const popular=document.getElementById('feedPopular');
-  if(popular){
-    popular.innerHTML=Array.from({length:4},()=>`
-      <div class="feed-mini">
-        <div class="feed-mini-img feed-skel-avatar"></div>
-        <div style="flex:1">
-          <div class="feed-skel-line mid"></div>
-          <div class="feed-skel-line short"></div>
-        </div>
-      </div>
-    `).join('');
-  }
-  const quick=document.getElementById('feedQuickPreview');
-  if(quick){
-    quick.innerHTML=Array.from({length:2},()=>`
-      <div class="feed-mini" style="display:block">
-        <div class="feed-skel-media" style="height:86px;border-radius:12px;margin-bottom:8px"></div>
-        <div class="feed-skel-line mid"></div>
-      </div>
-    `).join('');
-  }
-  const trust=document.getElementById('feedTrust');
-  if(trust){
-    trust.innerHTML=Array.from({length:3},()=>`
-      <div class="feed-mini">
-        <div class="feed-skel-line mid" style="flex:1"></div>
-      </div>
-    `).join('');
-  }
-}
 
 function renderFeed(){
   const db=getDB();
@@ -6909,7 +6739,6 @@ function swImgIndex(el,idx){
   el.classList.add('active');
   document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" ${imgAttrs(img,'medium','min(100vw, 520px)')} style="width:100%;height:100%;object-fit:cover">`;
 }
-function swImg(el,src){document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" src="${src}" style="width:100%;height:100%;object-fit:cover">`;}
 function openModal(kind){
   const modal=document.getElementById('modal');
   const content=document.getElementById('modalContent');
@@ -7198,11 +7027,6 @@ function watchImage(img){
     img.classList.remove('is-loading');
     img.classList.add('is-loaded');
   }
-}
-
-function watchImages(root=document){
-  const scope = root && root.querySelectorAll ? root : document;
-  scope.querySelectorAll('img').forEach(watchImage);
 }
 
 function removeBrokenFeedImage(img){

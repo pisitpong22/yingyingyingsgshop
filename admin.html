@@ -5085,7 +5085,7 @@ async function loadVariants(){
     return;
   }
   vars.sort((a,b)=>String(a.name||a.id||'').localeCompare(String(b.name||b.id||''),undefined,{numeric:true,sensitivity:'base'}));
-  console.log('[STYLE RENDER] loadVariants count:', vars.length, '| typeId:', curEditTypeId);
+
   _renderVariantTable(vars,c);
 }
 
@@ -5111,7 +5111,7 @@ function renderVariantListFromDB(){
 
 // Separated table render so both loadVariants and renderVariantListFromDB can use it
 function _renderVariantTable(vars, c){
-  console.log('[STYLE RENDER] variants count:', vars.length, '| typeId:', curEditTypeId);
+
   const last=vars.length-1;
   c.innerHTML=`<table class="dtable">
     <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
@@ -5225,9 +5225,7 @@ async function saveVariant(){
   }
   ty.updatedAt = updatedAt;
 
-  console.log('[STYLE SAVE] mode:', editId?'edit':'add',
-    '| before:', beforeCount, '| after:', ty.variants.length,
-    '| typeId:', curEditTypeId);
+
 
   if(!(await persistDB(db, tr('saved')))) return;
   tempImgs = {};
@@ -5353,7 +5351,7 @@ async function delVariant(varId){
   ty.variants = ty.variants.filter(v=>String(v.id)!==String(varId));
   ty.updatedAt = Date.now();
 
-  console.log('[STYLE SAVE] mode: delete | before:', prev.length, '| after:', ty.variants.length);
+
 
   if(!(await persistDB(db, tr('deleted')))){
     ty.variants = prev; // rollback on failure
@@ -7064,13 +7062,6 @@ function showLePanelMessage(title, text){
     </div>`;
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-// Restore any previously-moved panel back to its original location.
-// Called BEFORE we move a new panel into the side, so only one panel is
-// ever displaced at a time.
 function restoreMovedPanels(){
   document.querySelectorAll('.panel').forEach(p => {
     if(p._leOriginalParent){
