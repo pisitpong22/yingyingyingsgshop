@@ -837,119 +837,105 @@
 
 
   /* ─── SOCIAL CHANNELS SECTION ─────────────────────────────────────────── */
+  /* ─── SOCIAL CHANNELS — compact liquid-glass strip ────────────────────── */
   .social-channels-section{
-    padding:60px 24px 64px;
-    background:
-      radial-gradient(ellipse at 20% 50%, rgba(201,168,76,.07) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 30%, rgba(201,168,76,.05) 0%, transparent 45%),
-      linear-gradient(180deg,#f8edd0 0%,#fffaf0 100%);
-    position:relative;
+    padding:32px 20px 36px;
+    background:linear-gradient(180deg,#f5e9cc 0%,#fffaf0 100%);
+    border-top:1px solid rgba(201,168,76,.12);
+    border-bottom:1px solid rgba(201,168,76,.1);
   }
-  .social-channels-inner{max-width:1100px;margin:0 auto}
-  .social-channels-head{text-align:center;margin-bottom:40px}
+  .social-channels-inner{max-width:960px;margin:0 auto}
+  .social-channels-head{
+    display:flex;align-items:center;gap:12px;margin-bottom:20px;
+  }
   .social-channels-head h2{
-    font-family:var(--font-display);font-size:30px;font-weight:800;
-    color:var(--text);margin:0 0 12px;letter-spacing:-.3px;
+    font-family:var(--font-display);font-size:17px;font-weight:800;
+    color:var(--text);margin:0;letter-spacing:-.1px;white-space:nowrap;
   }
-  .social-channels-head p{
-    font-size:15px;color:var(--text-muted);line-height:1.7;
-    max-width:600px;margin:0 auto;
+  .social-channels-head-line{
+    flex:1;height:1px;
+    background:linear-gradient(90deg,rgba(201,168,76,.3),transparent);
   }
+  .social-channels-head p{display:none} /* subtitle hidden in compact mode */
 
+  /* auto-grid: fills row, min 130px per card */
   .social-channels-grid{
     display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:16px;
+    grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+    gap:10px;
   }
 
   .sc-card{
-    background:rgba(255,252,240,.72);
-    backdrop-filter:blur(20px) saturate(160%);
-    -webkit-backdrop-filter:blur(20px) saturate(160%);
-    border:1px solid rgba(201,168,76,.24);
-    border-radius:22px;
-    padding:28px 18px 22px;
+    background:rgba(255,252,242,.8);
+    backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    border:1px solid rgba(201,168,76,.22);
+    border-radius:16px;
+    padding:16px 10px 14px;
     text-align:center;
     cursor:pointer;
     text-decoration:none;
-    display:flex;flex-direction:column;align-items:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;
     position:relative;overflow:hidden;
-    transition:transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s, border-color .28s;
-    box-shadow:
-      0 8px 32px rgba(120,80,20,.1),
-      0 1px 0 rgba(255,255,255,.92) inset;
+    transition:transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s, border-color .24s;
+    box-shadow:0 4px 16px rgba(120,80,20,.08), 0 1px 0 rgba(255,255,255,.9) inset;
+    min-height:90px;
   }
-  /* top accent bar */
   .sc-card::before{
-    content:'';
-    position:absolute;top:0;left:0;right:0;height:3px;
-    background:var(--sc-accent);
-    opacity:.7;
-    border-radius:22px 22px 0 0;
-    transition:opacity .25s;
+    content:'';position:absolute;top:0;left:0;right:0;height:2.5px;
+    background:var(--sc-accent);opacity:.75;border-radius:16px 16px 0 0;
+    transition:opacity .2s;
   }
-  /* glass sheen */
   .sc-card::after{
-    content:'';position:absolute;top:0;left:0;right:0;height:45%;
-    background:linear-gradient(180deg,rgba(255,255,255,.38),transparent);
-    pointer-events:none;border-radius:22px 22px 0 0;
+    content:'';position:absolute;top:0;left:0;right:0;height:40%;
+    background:linear-gradient(180deg,rgba(255,255,255,.35),transparent);
+    pointer-events:none;
   }
   .sc-card:hover{
-    transform:translateY(-6px) scale(1.02);
-    border-color:rgba(201,168,76,.4);
-    box-shadow:
-      0 20px 56px var(--sc-glow),
-      0 1px 0 rgba(255,255,255,.92) inset;
+    transform:translateY(-4px);
+    border-color:rgba(201,168,76,.38);
+    box-shadow:0 12px 32px var(--sc-glow), 0 1px 0 rgba(255,255,255,.9) inset;
   }
   .sc-card:hover::before{opacity:1}
 
   .sc-icon{
-    width:56px;height:56px;border-radius:16px;
+    width:40px;height:40px;border-radius:11px;
     display:flex;align-items:center;justify-content:center;
-    margin-bottom:14px;
-    background:rgba(255,255,255,.7);
-    border:1px solid rgba(201,168,76,.18);
-    position:relative;z-index:1;
-    transition:transform .25s;
+    background:rgba(255,255,255,.75);
+    border:1px solid rgba(201,168,76,.14);
+    position:relative;z-index:1;flex-shrink:0;
+    transition:transform .22s;
   }
-  .sc-card:hover .sc-icon{transform:scale(1.08)}
-  .sc-icon svg{width:28px;height:28px}
+  .sc-card:hover .sc-icon{transform:scale(1.1)}
+  .sc-icon svg{width:20px;height:20px}
 
   .sc-name{
-    font-family:var(--font-display);font-size:14px;font-weight:700;
-    color:var(--text);margin-bottom:4px;
-    position:relative;z-index:1;
+    font-family:var(--font-display);font-size:12px;font-weight:700;
+    color:var(--text);position:relative;z-index:1;line-height:1.2;
   }
-  .sc-handle{
-    font-size:12px;color:var(--text-muted);margin-bottom:16px;
-    position:relative;z-index:1;
-  }
+  .sc-handle{display:none} /* hidden in compact mode */
   .sc-btn{
-    display:inline-flex;align-items:center;gap:6px;
-    font-size:12px;font-weight:700;
-    padding:8px 16px;border-radius:999px;
+    display:inline-flex;align-items:center;
+    font-size:10.5px;font-weight:700;
+    padding:5px 12px;border-radius:999px;
     background:var(--sc-accent);color:#fff;
     border:none;cursor:pointer;
-    transition:opacity .2s,transform .2s;
-    position:relative;z-index:1;
-    text-decoration:none;
-    box-shadow:0 4px 14px rgba(0,0,0,.12);
+    transition:opacity .18s,transform .18s;
+    position:relative;z-index:1;text-decoration:none;
+    box-shadow:0 2px 8px rgba(0,0,0,.14);
+    white-space:nowrap;
   }
-  .sc-btn:hover{opacity:.88;transform:translateY(-1px)}
+  .sc-btn:hover{opacity:.85;transform:translateY(-1px)}
 
-  @media(max-width:900px){
-    .social-channels-grid{grid-template-columns:repeat(3,1fr);gap:12px}
-    .social-channels-section{padding:44px 18px 48px}
-  }
   @media(max-width:600px){
-    .social-channels-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-    .sc-card{padding:20px 12px 18px;border-radius:18px}
-    .sc-icon{width:48px;height:48px;border-radius:13px;margin-bottom:10px}
-    .sc-icon svg{width:24px;height:24px}
-    .sc-name{font-size:13px}
-    .sc-btn{font-size:11px;padding:7px 13px}
-    .social-channels-head h2{font-size:24px}
-    .social-channels-section{padding:36px 14px 40px}
+    .social-channels-section{padding:24px 14px 28px}
+    .social-channels-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+    .sc-card{min-height:80px;padding:12px 8px;border-radius:12px}
+    .sc-icon{width:34px;height:34px;border-radius:9px}
+    .sc-icon svg{width:17px;height:17px}
+    .sc-name{font-size:11px}
+    .sc-btn{font-size:9.5px;padding:4px 9px}
   }
 
   /* ─── HISTORY & STORIES / KNOWLEDGE CENTER ─────────────────────────────
@@ -2459,12 +2445,13 @@
   .trust-strip{
     position:relative;
     z-index:3;
-    max-width:1200px;
-    margin:-60px auto 0;           /* overlap hero by 60px only */
-    padding:0 20px 32px;
+    max-width:1180px;
+    margin:-56px auto 0;
+    padding:0 20px 28px;
     display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:14px;
+    /* auto-fit: expands evenly; min 160px ensures 4 cards before wrapping */
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
     align-items:stretch;
   }
 
@@ -3239,13 +3226,12 @@
   </section>
   </div>
 
-  <!-- SOCIAL CHANNELS SECTION -->
+  <!-- SOCIAL CHANNELS SECTION — compact strip -->
   <section class="social-channels-section" id="socialChannelsSection" style="display:none">
     <div class="social-channels-inner">
       <div class="social-channels-head">
-        <h2 id="scTitle">Follow Us Everywhere</h2>
-        <div class="gline"></div>
-        <p id="scSubtitle"></p>
+        <h2 id="scTitle">Follow Us</h2>
+        <div class="social-channels-head-line"></div>
       </div>
       <div class="social-channels-grid" id="scGrid"></div>
     </div>
@@ -3726,14 +3712,14 @@ function defaultSettings(){
     featured:{enabled:true,title:'✨ Featured Pieces',sub:'Hand-picked highlights from our collection',ids:[]},
     socialChannels:{
       enabled:true,
-      title:'Follow Us Everywhere',
-      subtitle:'Stay connected with YingyingyingSG through our official social channels for new arrivals, live updates, videos, reviews, and special releases.',
+      title:'Follow Us',
       channels:[
-        {id:'facebook',  name:'Facebook',   handle:'YingyingyingSG',              url:'https://m.me/yingyingyingsg', enabled:true},
-        {id:'instagram', name:'Instagram',  handle:'@yingyingyingsg',             url:'', enabled:false},
-        {id:'tiktok',    name:'TikTok',     handle:'@yingyingyingsg',             url:'', enabled:false},
-        {id:'youtube',   name:'YouTube',    handle:'YingyingyingSG',              url:'', enabled:false},
-        {id:'shopee',    name:'Shopee',     handle:'YingyingyingSG Shop',         url:'', enabled:false},
+        {id:'facebook',  url:'https://m.me/yingyingyingsg', enabled:true},
+        {id:'instagram', url:'', enabled:false},
+        {id:'tiktok',    url:'', enabled:false},
+        {id:'youtube',   url:'', enabled:false},
+        {id:'shopee',    url:'', enabled:false},
+        {id:'line',      url:'', enabled:false},
       ],
     },
     reviews:{
@@ -3805,8 +3791,15 @@ function applyDbMigrations(d){
   // Ensure socialChannels settings exist
   if(!d.settings.socialChannels){
     d.settings.socialChannels = defaultSettings().socialChannels;
-  } else if(!Array.isArray(d.settings.socialChannels.channels)){
-    d.settings.socialChannels.channels = defaultSettings().socialChannels.channels;
+  } else {
+    // Normalise channel schema — remove legacy name/handle fields
+    d.settings.socialChannels.channels = (d.settings.socialChannels.channels||[]).map(ch=>({
+      id:ch.id, url:ch.url||'', enabled:!!ch.enabled
+    }));
+    // Ensure LINE channel exists
+    if(!d.settings.socialChannels.channels.find(c=>c.id==='line')){
+      d.settings.socialChannels.channels.push({id:'line',url:'',enabled:false});
+    }
   }
   // Backfill layout + items on legacy custom pages
   d.settings.customPages.forEach(p => {
@@ -6311,12 +6304,39 @@ async function openHsArticle(id){
 }
 
 // ─── SOCIAL CHANNELS ────────────────────────────────────────────────────────
+// Platform config — system auto-fills everything; admin only provides URL + enable.
+// Adding a new platform: add entry here + in SC_ADMIN_PLATFORMS (admin.html).
 const SC_PLATFORM_CONFIG = {
-  facebook:  { accent:'#1877F2', glow:'rgba(24,119,242,.22)',   btnLabel:'Visit Facebook',      svgPath:'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' },
-  instagram: { accent:'#E4405F', glow:'rgba(228,64,95,.2)',     btnLabel:'Visit Instagram',     svgPath:'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z' },
-  tiktok:    { accent:'#00F2EA', accent2:'#FF0050', glow:'rgba(0,242,234,.18)', btnLabel:'Visit TikTok',  svgPath:'M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.22 8.22 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z' },
-  youtube:   { accent:'#FF0000', glow:'rgba(255,0,0,.18)',       btnLabel:'Watch on YouTube',    svgPath:'M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z' },
-  shopee:    { accent:'#EE4D2D', glow:'rgba(238,77,45,.18)',     btnLabel:'Visit Shopee Store',  svgPath:'M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.5c1.933 0 3.5 1.567 3.5 3.5S13.933 11.5 12 11.5 8.5 9.933 8.5 8 10.067 4.5 12 4.5zM6 17.5c0-2.761 2.686-5 6-5s6 2.239 6 5H6z' },
+  facebook:  {
+    label:'Facebook', accent:'#1877F2', glow:'rgba(24,119,242,.2)',
+    btnLabel:'Visit Facebook',
+    svgPath:'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z',
+  },
+  instagram: {
+    label:'Instagram', accent:'#C13584', glow:'rgba(193,53,132,.18)',
+    btnLabel:'Instagram',
+    svgPath:'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z',
+  },
+  tiktok: {
+    label:'TikTok', accent:'#010101', glow:'rgba(1,1,1,.15)',
+    btnLabel:'TikTok',
+    svgPath:'M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.22 8.22 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z',
+  },
+  youtube: {
+    label:'YouTube', accent:'#FF0000', glow:'rgba(255,0,0,.16)',
+    btnLabel:'YouTube',
+    svgPath:'M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z',
+  },
+  shopee: {
+    label:'Shopee', accent:'#EE4D2D', glow:'rgba(238,77,45,.16)',
+    btnLabel:'Shopee',
+    svgPath:'M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.5c1.933 0 3.5 1.567 3.5 3.5S13.933 11.5 12 11.5 8.5 9.933 8.5 8 10.067 4.5 12 4.5zM6 17.5c0-2.761 2.686-5 6-5s6 2.239 6 5H6z',
+  },
+  line: {
+    label:'LINE', accent:'#06C755', glow:'rgba(6,199,85,.16)',
+    btnLabel:'LINE',
+    svgPath:'M19.952 11.563c0-4.261-4.268-7.729-9.512-7.729-5.24 0-9.512 3.468-9.512 7.729 0 3.82 3.384 7.019 7.955 7.627.31.067.733.205.839.47.096.24.063.619.031.863l-.136.82c-.041.24-.192.938.819.511 1.01-.427 5.456-3.213 7.444-5.5h-.001c1.374-1.506 2.073-3.036 2.073-4.791z',
+  },
 };
 
 function renderSocialChannels(){
@@ -6325,45 +6345,35 @@ function renderSocialChannels(){
   const el = document.getElementById('socialChannelsSection');
   if(!el) return;
 
-  if(!sc || !sc.enabled){
-    el.style.display = 'none';
-    return;
-  }
+  if(!sc || !sc.enabled){ el.style.display='none'; return; }
 
   const channels = (sc.channels||[]).filter(c => c.enabled && c.url && c.url.trim());
-  if(!channels.length){
-    el.style.display = 'none';
-    return;
-  }
+  if(!channels.length){ el.style.display='none'; return; }
 
   el.style.display = '';
 
-  // Title + subtitle
+  // Update compact section title
   const titleEl = document.getElementById('scTitle');
-  const subEl   = document.getElementById('scSubtitle');
-  if(titleEl) titleEl.textContent = sc.title || 'Follow Us Everywhere';
-  if(subEl)   subEl.textContent   = sc.subtitle || '';
+  if(titleEl) titleEl.textContent = sc.title || 'Follow Us';
 
-  // Cards
+  // Render cards — system auto-fills name, icon, color, button from SC_PLATFORM_CONFIG
   const grid = document.getElementById('scGrid');
   if(!grid) return;
+
   grid.innerHTML = channels.map(ch => {
-    const cfg = SC_PLATFORM_CONFIG[ch.id] || {accent:'#c9a84c',glow:'rgba(201,168,76,.2)',btnLabel:'Visit'};
-    const accentRgb = cfg.accent;
-    const glowColor = cfg.glow;
-    const label     = cfg.btnLabel;
-    const handle    = escapeHtml(ch.handle || ch.name || '');
+    const cfg = SC_PLATFORM_CONFIG[ch.id] || {
+      label: ch.id, accent:'#c9a84c', glow:'rgba(201,168,76,.18)',
+      btnLabel:'Visit', svgPath:null
+    };
+    const svg = cfg.svgPath
+      ? `<svg viewBox="0 0 24 24" fill="${cfg.accent}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>`
+      : `<span style="font-size:18px">${cfg.label[0]}</span>`;
 
-    // Build SVG icon
-    const svgIcon = cfg.svgPath ? `<svg viewBox="0 0 24 24" fill="${accentRgb}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>` : `<span style="font-size:24px;color:${accentRgb}">${ch.name[0]}</span>`;
-
-    return `
-    <a class="sc-card" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer"
-      style="--sc-accent:${accentRgb};--sc-glow:${glowColor}">
-      <div class="sc-icon">${svgIcon}</div>
-      <div class="sc-name">${escapeHtml(ch.name)}</div>
-      ${handle ? `<div class="sc-handle">${handle}</div>` : ''}
-      <span class="sc-btn" style="background:${accentRgb}">${label}</span>
+    return `<a class="sc-card" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer"
+      style="--sc-accent:${cfg.accent};--sc-glow:${cfg.glow}">
+      <div class="sc-icon">${svg}</div>
+      <div class="sc-name">${escapeHtml(cfg.label)}</div>
+      <span class="sc-btn">${escapeHtml(cfg.btnLabel)}</span>
     </a>`;
   }).join('');
 }

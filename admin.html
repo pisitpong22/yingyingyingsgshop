@@ -1562,15 +1562,15 @@
         <div class="form-card">
           <div class="form-section-title">Section Settings</div>
           <div class="form-grid">
-            <div class="fg full" style="display:flex;align-items:center;gap:10px">
-              <input type="checkbox" id="sc_enabled" style="width:auto">
-              <label style="font-weight:600;cursor:pointer">Show Social Channels section on homepage</label>
-            </div>
-            <div class="fg full"><label class="fl">Section Title</label>
-              <input class="fi" id="sc_title" placeholder="Follow Us Everywhere">
-            </div>
-            <div class="fg full"><label class="fl">Subtitle</label>
-              <textarea class="fta" id="sc_subtitle" rows="2" style="min-height:64px" placeholder="Stay connected with us…"></textarea>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700">
+                <input type="checkbox" id="sc_enabled" style="width:auto;accent-color:var(--gold-dark)">
+                Show Social Channels section on homepage
+              </label>
+              <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:200px">
+                <label class="fl" style="white-space:nowrap;margin:0">Section label:</label>
+                <input class="fi" id="sc_title" placeholder="Follow Us" style="flex:1">
+              </div>
             </div>
           </div>
         </div>
@@ -5596,44 +5596,38 @@ async function dupHsArticle(id){
 
 // ─── SEO & SOCIAL SETTINGS ────────────────────────────────────────────
 // ─── SOCIAL CHANNELS ADMIN ───────────────────────────────────────────────────
+// Platform list for admin — system auto-fills icons, colors, labels on frontend.
+// Admin only provides: enable toggle + URL.
 const SC_ADMIN_PLATFORMS = [
-  {id:'facebook',  name:'Facebook',        icon:'📘', placeholder:'https://facebook.com/yourpage'},
-  {id:'instagram', name:'Instagram',       icon:'📸', placeholder:'https://instagram.com/yourhandle'},
-  {id:'tiktok',    name:'TikTok',          icon:'🎵', placeholder:'https://tiktok.com/@yourhandle'},
-  {id:'youtube',   name:'YouTube',         icon:'▶️',  placeholder:'https://youtube.com/@yourchannel'},
-  {id:'shopee',    name:'Shopee',          icon:'🛒', placeholder:'https://shopee.sg/yourshop'},
+  {id:'facebook',  label:'Facebook',   icon:'📘', placeholder:'https://m.me/yourpage or facebook.com/…'},
+  {id:'instagram', label:'Instagram',  icon:'📸', placeholder:'https://instagram.com/yourhandle'},
+  {id:'tiktok',    label:'TikTok',     icon:'🎵', placeholder:'https://tiktok.com/@yourhandle'},
+  {id:'youtube',   label:'YouTube',    icon:'▶️',  placeholder:'https://youtube.com/@yourchannel'},
+  {id:'shopee',    label:'Shopee',     icon:'🛒', placeholder:'https://shopee.sg/yourshop'},
+  {id:'line',      label:'LINE',       icon:'💬', placeholder:'https://line.me/ti/p/~yourlineid'},
 ];
 
 function loadSocialChannels(){
-  const db  = getDB();
-  const sc  = db.settings.socialChannels || {};
+  const sc = (getDB().settings||{}).socialChannels || {};
   const channels = sc.channels || [];
-
-  document.getElementById('sc_enabled').checked   = sc.enabled !== false;
-  document.getElementById('sc_title').value        = sc.title    || 'Follow Us Everywhere';
-  document.getElementById('sc_subtitle').value     = sc.subtitle || '';
+  document.getElementById('sc_enabled').checked = sc.enabled !== false;
+  document.getElementById('sc_title').value     = sc.title || 'Follow Us';
 
   const list = document.getElementById('sc_channels_list');
   if(!list) return;
+
   list.innerHTML = SC_ADMIN_PLATFORMS.map(p => {
-    const ch = channels.find(c=>c.id===p.id) || {id:p.id,enabled:false,name:p.name,handle:'',url:''};
+    const ch = channels.find(c=>c.id===p.id) || {id:p.id, enabled:false, url:''};
     return `
-    <div style="
-      display:grid;grid-template-columns:auto 1fr 1fr;gap:12px;align-items:start;
-      padding:14px 0;border-bottom:1px solid var(--border)
-    ">
-      <label style="display:flex;align-items:center;gap:8px;padding-top:6px;cursor:pointer;font-weight:600;min-width:140px">
-        <input type="checkbox" id="sc_${p.id}_on" ${ch.enabled?'checked':''} style="width:auto">
-        <span>${p.icon} ${p.name}</span>
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;min-width:130px;flex-shrink:0">
+        <input type="checkbox" id="sc_${p.id}_on" ${ch.enabled?'checked':''} style="width:auto;accent-color:var(--gold-dark)">
+        <span>${p.icon} ${p.label}</span>
       </label>
-      <div>
-        <label class="fl" style="font-size:12px;margin-bottom:4px">Display Name</label>
-        <input class="fi" id="sc_${p.id}_name" value="${escapeHtml(ch.name||p.name)}" placeholder="${p.name}" style="font-size:13px;padding:8px 12px">
-      </div>
-      <div>
-        <label class="fl" style="font-size:12px;margin-bottom:4px">URL</label>
-        <input class="fi" id="sc_${p.id}_url" value="${escapeHtml(ch.url||'')}" placeholder="${p.placeholder}" style="font-size:13px;padding:8px 12px">
-      </div>
+      <input class="fi" id="sc_${p.id}_url"
+        value="${escapeHtml(ch.url||'')}"
+        placeholder="${p.placeholder}"
+        style="flex:1;font-size:13px;padding:8px 12px">
     </div>`;
   }).join('');
 }
@@ -5642,18 +5636,13 @@ async function saveSocialChannels(){
   const db = getDB();
   if(!db.settings.socialChannels) db.settings.socialChannels = {};
   const sc = db.settings.socialChannels;
-
   sc.enabled  = document.getElementById('sc_enabled').checked;
-  sc.title    = document.getElementById('sc_title').value.trim();
-  sc.subtitle = document.getElementById('sc_subtitle').value.trim();
+  sc.title    = document.getElementById('sc_title').value.trim() || 'Follow Us';
   sc.channels = SC_ADMIN_PLATFORMS.map(p => ({
     id:      p.id,
-    name:    (document.getElementById('sc_'+p.id+'_name')?.value||'').trim() || p.name,
-    handle:  '',
-    url:     (document.getElementById('sc_'+p.id+'_url')?.value||'').trim(),
-    enabled: !!(document.getElementById('sc_'+p.id+'_on')?.checked),
+    url:     (document.getElementById(`sc_${p.id}_url`)?.value||'').trim(),
+    enabled: !!(document.getElementById(`sc_${p.id}_on`)?.checked),
   }));
-
   await persistDB(db, '✅ Social Channels saved');
 }
 
