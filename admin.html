@@ -5056,14 +5056,36 @@ async function delType(typeId){
   loadCasingTypes();loadDash();
 }
 
-function enterTypeView(typeId){
+async function enterTypeView(typeId){
   curEditTypeId=typeId;
   const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(typeId));if(!ty)return;
   document.getElementById('casingTypesView').style.display='none';
   document.getElementById('casingVariantsView').style.display='block';
   document.getElementById('vCrumbName').textContent=ty.name;
   document.getElementById('vTypeName').textContent=ty.name;
-  loadVariants(); // async — shows "Loading styles…" then renders
+  await loadVariants();
+}
+
+async function loadVariants(){
+  const c=document.getElementById('variantsList');
+  if(!c) return;
+  c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">Loading styles…</div>`;
+
+  try {
+    if(window.FB && window.FB.ensureCasingVariants && curEditTypeId!=null){
+      await window.FB.ensureCasingVariants(curEditTypeId);
+    }
+  } catch(err){ console.warn('[admin casing] loadVariants:', err); }
+
+  const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+  const vars=ty&&Array.isArray(ty.variants)?ty.variants:[];
+
+  if(!vars.length){
+    c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
+    return;
+  }
+  vars.sort((a,b)=>String(a.name||a.id||'').localeCompare(String(b.name||b.id||''),undefined,{numeric:true,sensitivity:'base'}));
+  _renderVariantTable(vars,c);
 }
 
 function exitTypeView(){
