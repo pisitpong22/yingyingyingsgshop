@@ -613,7 +613,20 @@ async function ensureCasingVariants(typeId, opts={}){
     ));
   }));
 
-  ty.variants = variants;
+  // CRITICAL: Re-read ty from current _db after the await.
+  // During Promise.all above, onSnapshot may have fired and replaced
+  // _db.casingTypes with new objects (via loadSplitDB Phase 1).
+  // Writing to the stale `ty` reference would have no effect on the live _db.
+  const currentDb = getDB();
+  const currentTy = (currentDb.casingTypes||[]).find(t=>String(t.id)===key);
+  if(currentTy){
+    currentTy.variants = variants;
+    currentTy._variantIds = variantIds;
+  } else {
+    // _db was replaced but new casingTypes don't have this type yet — write to stale ref as fallback
+    ty.variants = variants;
+    ty._variantIds = variantIds;
+  }
   _casingVariantIds[key] = variantIds;
   _casingVariantsLoaded.add(key);
   notifyDBReady();

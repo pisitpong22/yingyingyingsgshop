@@ -5197,8 +5197,9 @@ async function loadVariants(){
     }
   } catch(err){ console.warn('[admin casing] loadVariants:', err); }
 
+  // Re-read from live _db after ensureCasingVariants
   const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
-  const vars=ty&&Array.isArray(ty.variants)?ty.variants:[];
+  const vars=ty&&Array.isArray(ty.variants)?[...ty.variants]:[];
 
   if(!vars.length){
     c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
@@ -5304,8 +5305,8 @@ async function reloadCurrentCasingStyles(){
     catch(err){ console.warn('[casing reload]', err); }
   }
 
-  // Render directly from DB — avoid calling loadVariants() which would
-  // trigger another ensureCasingVariants (no-force) and possibly get stale data
+  // Re-read ty from live _db AFTER ensureCasingVariants completes.
+  // ensureCasingVariants now writes to currentTy (fresh ref), so getDB() gives correct data.
   const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
   const vars=ty?[...(ty.variants||[])]:[];
 
