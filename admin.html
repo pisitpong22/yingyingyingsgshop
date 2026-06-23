@@ -5085,6 +5085,7 @@ async function loadVariants(){
     return;
   }
   vars.sort((a,b)=>String(a.name||a.id||'').localeCompare(String(b.name||b.id||''),undefined,{numeric:true,sensitivity:'base'}));
+  console.log('[STYLE RENDER] loadVariants count:', vars.length, '| typeId:', curEditTypeId);
   _renderVariantTable(vars,c);
 }
 
@@ -5110,6 +5111,7 @@ function renderVariantListFromDB(){
 
 // Separated table render so both loadVariants and renderVariantListFromDB can use it
 function _renderVariantTable(vars, c){
+  console.log('[STYLE RENDER] variants count:', vars.length, '| typeId:', curEditTypeId);
   const last=vars.length-1;
   c.innerHTML=`<table class="dtable">
     <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
@@ -5168,16 +5170,39 @@ function openVariantForm(varId=null){
   openModal('variantModal');
 }
 
+// ─── SINGLE STABLE RELOAD FOR CASING STYLES ──────────────────────────────────
+// All CRUD operations call this after save. Force-reload from Firestore to ensure
+// ty.variants matches the saved state. Never show "No styles yet" during load.
+async function reloadCurrentCasingStyles(){
+  if(!curEditTypeId) return;
+  const list = document.getElementById('variantsList');
+  if(list){
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading styles…</div>`;
+  }
+  try {
+    if(window.FB && window.FB.ensureCasingVariants){
+      await window.FB.ensureCasingVariants(curEditTypeId, {force:true});
+    }
+  } catch(err){
+    console.warn('[admin casing] reload styles failed:', err);
+  }
+  await loadVariants();
+}
+
+
 async function saveVariant(){
   if(!ensureUploadsDone()) return;
   const name  = document.getElementById('fv_name').value.trim();
   const price = document.getElementById('fv_price').value;
+  const editId = curEditVariantId;
   if(!name){ showToast(tr('needName')); return; }
 
-  // Ensure variants are in memory before modifying
+  // FORCE-load all existing variants before modifying.
+  // Without force, adding a new style to a "fresh" session may start from
+  // an empty ty.variants (Phase 1 deferred) — wiping previously saved styles.
   if(window.FB && window.FB.ensureCasingVariants && curEditTypeId!=null){
-    try { await window.FB.ensureCasingVariants(curEditTypeId); }
-    catch(e){ console.warn('[saveVariant]', e); }
+    try { await window.FB.ensureCasingVariants(curEditTypeId, {force:true}); }
+    catch(e){ console.warn('[saveVariant] ensure failed:', e); }
   }
 
   const db = getDB();
@@ -5185,21 +5210,31 @@ async function saveVariant(){
   if(!ty){ showToast('Type not found'); return; }
   if(!Array.isArray(ty.variants)) ty.variants = [];
 
+  const beforeCount = ty.variants.length;
   const updatedAt = Date.now();
   const data = {name, price:price===''?'':Number(price), imgs:captureImgs('fv_imgs'), updatedAt};
 
-  if(curEditVariantId){
-    const v = ty.variants.find(x=>String(x.id)===String(curEditVariantId));
-    if(v) Object.assign(v, data); else ty.variants.push({id:curEditVariantId, ...data});
+  if(editId){
+    // EDIT: update only the matching style, preserve all others
+    const idx = ty.variants.findIndex(x=>String(x.id)===String(editId));
+    if(idx>=0) ty.variants[idx] = {...ty.variants[idx], ...data};
+    else        ty.variants.push({id:editId, ...data});
   } else {
+    // ADD: push new style onto existing array
     ty.variants.push({id:genId(ty.variants), ...data});
   }
   ty.updatedAt = updatedAt;
 
+  console.log('[STYLE SAVE] mode:', editId?'edit':'add',
+    '| before:', beforeCount, '| after:', ty.variants.length,
+    '| typeId:', curEditTypeId);
+
   if(!(await persistDB(db, tr('saved')))) return;
   tempImgs = {};
   closeModal('variantModal');
-  renderVariantListFromDB();
+
+  // Reload from Firestore to confirm saved state (force bypasses stale cache)
+  await reloadCurrentCasingStyles();
 }
 
 // ─── CASING VARIANT DRAG & DROP ───────────────────────────────────────────────
@@ -5246,21 +5281,25 @@ async function reorderVariantByDrag(dragId, targetId, before){
   _variantOrderSaving = true;
   try{
     if(window.FB && window.FB.ensureCasingVariants && curEditTypeId!=null){
-      try{ await window.FB.ensureCasingVariants(curEditTypeId); }catch(e){}
+      try{ await window.FB.ensureCasingVariants(curEditTypeId, {force:true}); }catch(e){}
     }
     const db = getDB();
     const ty = (db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
-    if(!ty||!Array.isArray(ty.variants)) return;
+    if(!ty||!Array.isArray(ty.variants)){ _variantOrderSaving=false; return; }
     const from   = ty.variants.findIndex(v=>String(v.id)===String(dragId));
     const target = ty.variants.findIndex(v=>String(v.id)===String(targetId));
-    if(from<0||target<0) return;
+    if(from<0||target<0){ _variantOrderSaving=false; return; }
     const [item] = ty.variants.splice(from,1);
     const insertAt = before
       ? (target > from ? target-1 : target)
       : (target < from ? target+1 : target);
     ty.variants.splice(Math.max(0, Math.min(ty.variants.length, insertAt)), 0, item);
+    ty.updatedAt = Date.now();
+    // Show optimistic update immediately, then reload from Firestore
     renderVariantListFromDB();
-    await persistDB(db, '✅ Order saved');
+    if(await persistDB(db, '✅ Order saved')){
+      await reloadCurrentCasingStyles();
+    }
   } finally {
     _variantOrderSaving = false;
   }
@@ -5301,19 +5340,25 @@ async function confirmResetCasingStyles(){
 
 
 async function delVariant(varId){
-  if(!tConfirm('confirmDeleteStyle'))return;
-  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
-    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){}
+  if(!tConfirm('confirmDeleteStyle')) return;
+
+  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId!=null){
+    try { await window.FB.ensureCasingVariants(curEditTypeId, {force:true}); } catch(e){}
   }
-  const db=getDB();
-  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
-  const prev=[...(ty.variants||[])];
-  ty.variants=ty.variants.filter(v=>String(v.id)!==String(varId));
-  renderVariantListFromDB();
-  if(!(await persistDB(db,tr('deleted')))){
-    ty.variants=prev;
-    renderVariantListFromDB();
+
+  const db = getDB();
+  const ty = (db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
+  const prev = [...(ty.variants||[])];
+  // DELETE: remove only the selected style, keep all others
+  ty.variants = ty.variants.filter(v=>String(v.id)!==String(varId));
+  ty.updatedAt = Date.now();
+
+  console.log('[STYLE SAVE] mode: delete | before:', prev.length, '| after:', ty.variants.length);
+
+  if(!(await persistDB(db, tr('deleted')))){
+    ty.variants = prev; // rollback on failure
   }
+  await reloadCurrentCasingStyles();
 }
 
 let tempImgs={};
