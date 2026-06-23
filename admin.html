@@ -3255,6 +3255,8 @@ function showPanel(name, el){
   // Composite panels — load all their sub-screens once when entered
   if(name==='home'){
     loadHero(); loadHomeLayout(); loadServices(); loadTrust(); loadFeatured(); loadFeedPosts();
+    // Pre-load social channels data so it renders immediately when tab is opened
+    loadSocialChannels();
   }
   if(name==='store'){
     loadBranding();
@@ -3308,6 +3310,9 @@ function showTab(panelName, tabKey){
   }
   if(panelName === 'home' && tabKey === 'feed'){
     loadFeedPosts();
+  }
+  if(panelName === 'home' && tabKey === 'social'){
+    loadSocialChannels();
   }
 }
 
@@ -5608,28 +5613,54 @@ const SC_ADMIN_PLATFORMS = [
 ];
 
 function loadSocialChannels(){
-  const sc = (getDB().settings||{}).socialChannels || {};
-  const channels = sc.channels || [];
-  document.getElementById('sc_enabled').checked = sc.enabled !== false;
-  document.getElementById('sc_title').value     = sc.title || 'Follow Us';
+  try {
+    const db = getDB();
+    const sc = (db && db.settings && db.settings.socialChannels) ? db.settings.socialChannels : {};
+    const channels = Array.isArray(sc.channels) ? sc.channels : [];
 
-  const list = document.getElementById('sc_channels_list');
-  if(!list) return;
+    // Enable toggle
+    const enabledEl = document.getElementById('sc_enabled');
+    if(enabledEl) enabledEl.checked = sc.enabled !== false;
 
-  list.innerHTML = SC_ADMIN_PLATFORMS.map(p => {
-    const ch = channels.find(c=>c.id===p.id) || {id:p.id, enabled:false, url:''};
-    return `
-    <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;min-width:130px;flex-shrink:0">
-        <input type="checkbox" id="sc_${p.id}_on" ${ch.enabled?'checked':''} style="width:auto;accent-color:var(--gold-dark)">
-        <span>${p.icon} ${p.label}</span>
-      </label>
-      <input class="fi" id="sc_${p.id}_url"
-        value="${escapeHtml(ch.url||'')}"
-        placeholder="${p.placeholder}"
-        style="flex:1;font-size:13px;padding:8px 12px">
-    </div>`;
-  }).join('');
+    // Title
+    const titleEl = document.getElementById('sc_title');
+    if(titleEl) titleEl.value = sc.title || 'Follow Us';
+
+    // Platform rows — always render all 6 built-in platforms
+    const list = document.getElementById('sc_channels_list');
+    if(!list){
+      console.warn('[admin] sc_channels_list not found');
+      return;
+    }
+
+    if(!SC_ADMIN_PLATFORMS || !SC_ADMIN_PLATFORMS.length){
+      list.innerHTML = '<div style="color:var(--text-muted);padding:16px">Platform list not loaded.</div>';
+      return;
+    }
+
+    list.innerHTML = SC_ADMIN_PLATFORMS.map(p => {
+      // Find saved data for this platform, or use safe defaults
+      const ch = channels.find(c => c && c.id === p.id) || {id:p.id, enabled:false, url:''};
+      const url = (ch.url || '').trim();
+      const checked = ch.enabled ? 'checked' : '';
+
+      return `<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;min-width:126px;flex-shrink:0;font-size:14px">
+          <input type="checkbox" id="sc_${p.id}_on" ${checked} style="width:auto;accent-color:var(--gold-dark)">
+          ${p.icon} ${p.label}
+        </label>
+        <input class="fi" id="sc_${p.id}_url"
+          value="${escapeHtml(url)}"
+          placeholder="${escapeHtml(p.placeholder)}"
+          style="flex:1;font-size:13px;padding:8px 12px">
+      </div>`;
+    }).join('');
+
+  } catch(err) {
+    console.error('[admin] loadSocialChannels failed:', err);
+    const list = document.getElementById('sc_channels_list');
+    if(list) list.innerHTML = `<div style="color:#c0392b;padding:16px">Error loading social channels: ${escapeHtml(String(err.message||err))}</div>`;
+  }
 }
 
 async function saveSocialChannels(){
