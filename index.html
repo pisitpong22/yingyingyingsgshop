@@ -6341,43 +6341,63 @@ const SC_PLATFORM_CONFIG = {
 
 function renderSocialChannels(){
   const db = getDB();
-  const sc = db.settings.socialChannels;
   const el = document.getElementById('socialChannelsSection');
   if(!el) return;
 
-  if(!sc || !sc.enabled){ el.style.display='none'; return; }
+  // Source: contacts[] with showOnHome=true (merged single source of truth)
+  // Falls back to old socialChannels.channels[] for backward compat
+  const sc = db.settings.socialChannels || {};
+  const useContacts = (db.settings.contacts||[]).some(c=>c.showOnHome);
+  let channels;
+  if(useContacts){
+    channels = (db.settings.contacts||[]).filter(c=>c.showOnHome && c.url && c.url.trim());
+  } else {
+    // Legacy: old socialChannels.channels schema
+    channels = (sc.channels||[]).filter(c=>(c.enabled||c.showOnHome) && c.url && c.url.trim());
+  }
 
-  const channels = (sc.channels||[]).filter(c => c.enabled && c.url && c.url.trim());
-  if(!channels.length){ el.style.display='none'; return; }
+  if(!channels.length || sc.enabled===false){ el.style.display='none'; return; }
+  el.style.display='';
 
-  el.style.display = '';
-
-  // Update compact section title
-  const titleEl = document.getElementById('scTitle');
+  const titleEl=document.getElementById('scTitle');
   if(titleEl) titleEl.textContent = sc.title || 'Follow Us';
 
-  // Render cards — system auto-fills name, icon, color, button from SC_PLATFORM_CONFIG
-  const grid = document.getElementById('scGrid');
+  const grid=document.getElementById('scGrid');
   if(!grid) return;
 
   grid.innerHTML = channels.map(ch => {
-    const cfg = SC_PLATFORM_CONFIG[ch.id] || {
-      label: ch.id, accent:'#c9a84c', glow:'rgba(201,168,76,.18)',
+    // Get platform config by detecting from URL or stored platform id
+    const pid = ch.id || detectContactPlatform(ch.url||'', ch.label||'', ch.icon||'');
+    const cfg = SC_PLATFORM_CONFIG[pid] || {
+      label: ch.label||ch.name||pid||'Link',
+      accent:'#c9a84c', glow:'rgba(201,168,76,.18)',
       btnLabel:'Visit', svgPath:null
     };
-    // Use custom name if admin set one, otherwise use platform label
-    const displayName = (ch.name && ch.name.trim()) ? ch.name.trim() : cfg.label;
+    const displayName = (ch.label && ch.label.trim()) ? ch.label.trim()
+      : (ch.name && ch.name.trim()) ? ch.name.trim() : cfg.label;
     const svg = cfg.svgPath
       ? `<svg viewBox="0 0 24 24" fill="${cfg.accent}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>`
-      : `<span style="font-size:18px">${cfg.label[0]}</span>`;
+      : `<span style="font-size:18px;color:${cfg.accent}">${cfg.label[0]||'?'}</span>`;
 
     return `<a class="sc-card" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer"
-      style="--sc-accent:${cfg.accent};--sc-glow:${cfg.glow}">
+      style="--sc-accent:${cfg.accent};--sc-glow:${cfg.glow||'rgba(201,168,76,.18)'}">
       <div class="sc-icon">${svg}</div>
       <div class="sc-name">${escapeHtml(displayName)}</div>
       <span class="sc-btn">${escapeHtml(cfg.btnLabel)}</span>
     </a>`;
   }).join('');
+}
+
+// Detect platform from URL/label/icon (also used by index.html)
+function detectContactPlatform(url, label, icon){
+  const u=(url||'').toLowerCase(), l=(label||'').toLowerCase();
+  if(u.includes('facebook')||u.includes('fb.com')||u.includes('m.me')||l.includes('facebook')) return 'facebook';
+  if(u.includes('instagram')||l.includes('instagram')) return 'instagram';
+  if(u.includes('tiktok')||l.includes('tiktok')) return 'tiktok';
+  if(u.includes('youtube')||l.includes('youtube')) return 'youtube';
+  if(u.includes('shopee')||l.includes('shopee')) return 'shopee';
+  if(u.includes('line.me')||u.includes('line.naver')||l.includes('line')||icon==='💬') return 'line';
+  return '';
 }
 
 function buildFeedPosts(db){

@@ -1267,6 +1267,7 @@
       <div class="side-item" onclick="showPanel('store',this)" data-en="🏷️ Store Identity" data-th="🏷️ ข้อมูลร้าน">🏷️ Store Identity</div>
       <div class="side-item" onclick="showPanel('navigation',this)" data-en="🧭 Navigation &amp; Pages" data-th="🧭 เมนู &amp; หน้า">🧭 Navigation &amp; Pages</div>
       <div class="side-item" onclick="showPanel('checkout',this)" data-en="💳 Payment &amp; Contact" data-th="💳 ชำระเงิน &amp; ติดต่อ">💳 Payment &amp; Contact</div>
+      <div class="side-item" onclick="showPanel('checkout',this);showTab('checkout','contact')" data-en="🔗 Social Links" data-th="🔗 โซเชียลลิงก์">🔗 Social Links</div>
       <div class="side-item" onclick="showPanel('settings',this);showTab('settings','seo')" data-en="🔍 SEO &amp; Social" data-th="🔍 SEO &amp; โซเชียล">🔍 SEO &amp; Social</div>
 
       <div class="side-div"></div>
@@ -1641,29 +1642,59 @@
         <div class="save-bar"><button class="btn-gold" onclick="saveTrust()" data-en="💾 Save Trust Cards" data-th="💾 บันทึก">💾 Save Trust Cards</button></div>
       </div>
 
-      <!-- CONTACT -->
+      <!-- CONTACT & SOCIAL (merged) -->
       <div class="tab-content" data-tab-content="contact" data-parent="checkout">
-        <h3 class="subsection-title" data-en="💬 Contact Buttons" data-th="💬 ปุ่มติดต่อ">💬 Contact Buttons</h3>
+        <h3 class="subsection-title">💬 Contact & Social Links</h3>
+        <div class="subsection-sub">Manage all social and contact links in one place. Each link can appear as a <strong>floating button</strong> (bottom of screen) and/or a <strong>homepage card</strong> in the Social Channels section. Drag ⋮⋮ to reorder.</div>
+
         <div class="form-card">
-          <div class="form-section-title" data-en="🔘 Floating Contact Buttons" data-th="🔘 ปุ่มติดต่อลอย">🔘 Floating Contact Buttons</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <div>
+              <div class="form-section-title" style="margin:0">Platform Links</div>
+              <div class="form-section-desc" style="margin:4px 0 0">
+                <span style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🪟 Float</span>
+                = show as floating chat button &nbsp;·&nbsp;
+                <span style="background:rgba(100,180,100,.12);border:1px solid rgba(100,180,100,.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🏠 Home</span>
+                = show on homepage Social Channels section
+              </div>
+            </div>
+            <button class="btn-add" onclick="addContactBtn()" style="white-space:nowrap;flex-shrink:0">➕ Add Link</button>
+          </div>
+
+          <!-- Column headers -->
+          <div style="display:grid;grid-template-columns:20px 100px 1fr 130px 70px 70px 30px;gap:8px;align-items:center;padding:0 4px 8px;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">
+            <span></span>
+            <span>Platform</span>
+            <span>URL</span>
+            <span>Label / Message</span>
+            <span style="text-align:center">🪟 Float</span>
+            <span style="text-align:center">🏠 Home</span>
+            <span></span>
+          </div>
+
           <div id="contactList"></div>
-          <button class="btn-add" onclick="addContactBtn()" data-en="➕ Add Contact Button" data-th="➕ เพิ่มปุ่มติดต่อ">➕ Add Contact Button</button>
+          <div style="margin-top:12px">
+            <button class="btn-add" onclick="addContactBtn()">➕ Add Link</button>
+          </div>
         </div>
+
         <div class="form-card">
-          <div class="form-section-title" data-en="📞 Order Button (in product detail)" data-th="📞 ปุ่มสั่งซื้อ (ในรายละเอียดสินค้า)">📞 Order Button (in product detail)</div>
+          <div class="form-section-title">📞 Order Button Text</div>
+          <div class="form-section-desc">Appears in product detail modals when customer clicks to order.</div>
           <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Button Text" data-th="ข้อความปุ่ม">Button Text</label><input class="fi" id="cbtn_text"></div>
-            <div class="fg"><label class="fl" data-en="Click Message" data-th="ข้อความเมื่อคลิก">Click Message</label><input class="fi" id="cbtn_msg"></div>
+            <div class="fg"><label class="fl">Button Text</label><input class="fi" id="cbtn_text"></div>
+            <div class="fg"><label class="fl">Click Message</label><input class="fi" id="cbtn_msg"></div>
           </div>
         </div>
         <div class="form-card">
-          <div class="form-section-title" data-en="🪬 Inquire Button (in casing detail)" data-th="🪬 ปุ่มสอบถาม (ในรายละเอียดกรอบ)">🪬 Inquire Button (in casing detail)</div>
+          <div class="form-section-title">🪬 Casing Inquiry Button Text</div>
+          <div class="form-section-desc">Appears in casing detail pages when customer wants to inquire.</div>
           <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Button Text" data-th="ข้อความปุ่ม">Button Text</label><input class="fi" id="cinq_text"></div>
-            <div class="fg"><label class="fl" data-en="Click Message" data-th="ข้อความเมื่อคลิก">Click Message</label><input class="fi" id="cinq_msg"></div>
+            <div class="fg"><label class="fl">Button Text</label><input class="fi" id="cinq_text"></div>
+            <div class="fg"><label class="fl">Click Message</label><input class="fi" id="cinq_msg"></div>
           </div>
         </div>
-        <div class="save-bar"><button class="btn-gold" onclick="saveContact()" data-en="💾 Save Contact" data-th="💾 บันทึก">💾 Save Contact</button></div>
+        <div class="save-bar"><button class="btn-gold" onclick="saveContact()">💾 Save</button></div>
       </div>
 
       <!-- PAYMENT -->
@@ -4554,45 +4585,118 @@ function loadContact(){
   document.getElementById('cinq_text').value=s.casingInquiryText||'';
   document.getElementById('cinq_msg').value=s.casingInquiryMessage||'';
 }
+let _cDragIdx = null;
+
 function renderContactList(arr){
-  document.getElementById('contactList').innerHTML=arr.map((c,i)=>`
-    <div class="rep-row">
-      <div class="rep-fields">
-        <div class="fg"><label class="fl">${lang==='th'?'ไอคอน':'Icon'}</label><input class="fi" data-c-icon="${i}" value="${c.icon||extractContactIcon(c.label)}" placeholder="f / ▶ / ♪ / ◎ / 💬"></div>
-        <div class="fg"><label class="fl">${tr('label')}</label><input class="fi" data-c-label="${i}" value="${stripContactIcon(c.label)||''}" placeholder="Facebook / YouTube / TikTok / Instagram"></div>
-        <div class="fg"><label class="fl">${tr('color')}</label><input type="color" class="color-input" data-c-color="${i}" value="${c.color||'#1877f2'}" style="width:100%;height:42px"></div>
-        <div class="fg"><label class="fl">${tr('contactUrl')}</label><input class="fi" data-c-url="${i}" value="${c.url||''}" placeholder="https://facebook.com/...">
-          <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${tr('contactUrlHint')}</div></div>
-        <div class="fg" style="display:flex;align-items:end;padding-bottom:8px">
-          <label class="fl" style="display:flex;align-items:center;gap:8px;margin:0">
-            <input type="checkbox" data-c-float="${i}" ${c.showFloat!==false?'checked':''} style="width:auto">
-            <span>${lang==='th'?'แสดงเป็นปุ่มลอย':'Show floating'}</span>
-          </label>
-        </div>
-        <div class="fg" style="grid-column:span 2"><label class="fl">${tr('clickMessage')}</label><input class="fi" data-c-msg="${i}" value="${c.message||''}"></div>
+  const el = document.getElementById('contactList');
+  if(!el) return;
+  if(!arr.length){
+    el.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">No links yet. Click ➕ Add Link to get started.</div>';
+    return;
+  }
+  el.innerHTML = arr.map((c,i)=>{
+    // Detect platform from URL or icon to show right icon
+    const platformKey = detectPlatform(c.url||'', c.label||'', c.icon||'');
+    const pCfg = SC_ADMIN_PLATFORMS.find(p=>p.id===platformKey);
+    const iconEmoji = pCfg ? pCfg.icon : (c.icon||'🔗');
+    const colorVal = c.color||'#888888';
+    return `
+    <div class="c-row" data-c-idx="${i}" draggable="true"
+      ondragstart="cDragStart(event,${i})" ondragover="cDragOver(event)"
+      ondragleave="cDragLeave(event)" ondrop="cDrop(event,${i})" ondragend="cDragEnd()"
+      style="display:grid;grid-template-columns:20px 100px 1fr 130px 70px 70px 30px;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border);transition:background .12s">
+      <span style="cursor:grab;color:var(--text-muted);font-size:16px;text-align:center;user-select:none" title="Drag to reorder">⋮⋮</span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <select data-c-platform="${i}" onchange="cPlatformChange(${i},this.value)"
+          style="font-size:12px;padding:5px 6px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;width:100%">
+          <option value="">Custom</option>
+          ${SC_ADMIN_PLATFORMS.map(p=>`<option value="${p.id}" ${platformKey===p.id?'selected':''}>${p.icon} ${p.label}</option>`).join('')}
+        </select>
       </div>
-      <button class="rep-rm" onclick="rmContact(${i})">✕</button>
-    </div>
-  `).join('');
+      <input class="fi" data-c-url="${i}" value="${escapeHtml(c.url||'')}"
+        placeholder="https://…" style="font-size:12px;padding:7px 9px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <input class="fi" data-c-label="${i}" value="${escapeHtml(stripContactIcon(c.label)||'')}"
+          placeholder="Label" style="font-size:12px;padding:5px 8px">
+        <input class="fi" data-c-msg="${i}" value="${escapeHtml(c.message||'')}"
+          placeholder="Click message" style="font-size:11px;padding:5px 8px">
+      </div>
+      <label style="display:flex;justify-content:center;cursor:pointer" title="Show as floating button">
+        <input type="checkbox" data-c-float="${i}" ${c.showFloat!==false?'checked':''}
+          style="width:18px;height:18px;accent-color:var(--gold-dark)">
+      </label>
+      <label style="display:flex;justify-content:center;cursor:pointer" title="Show on homepage Social Channels">
+        <input type="checkbox" data-c-home="${i}" ${c.showOnHome?'checked':''}
+          style="width:18px;height:18px;accent-color:#2e7d32">
+      </label>
+      <button onclick="rmContact(${i})" class="btn-del" style="padding:5px 8px;font-size:12px">✕</button>
+    </div>`;
+  }).join('');
 }
+
+// Detect which platform a contact entry belongs to
+function detectPlatform(url, label, icon){
+  const u = url.toLowerCase();
+  const l = (label||'').toLowerCase();
+  if(u.includes('facebook') || u.includes('fb.com') || u.includes('m.me') || l.includes('facebook')) return 'facebook';
+  if(u.includes('instagram') || l.includes('instagram')) return 'instagram';
+  if(u.includes('tiktok') || l.includes('tiktok')) return 'tiktok';
+  if(u.includes('youtube') || l.includes('youtube')) return 'youtube';
+  if(u.includes('shopee') || l.includes('shopee')) return 'shopee';
+  if(u.includes('line.me') || u.includes('line.naver') || l.includes('line') || icon==='💬') return 'line';
+  if(u.includes('wa.me') || u.includes('whatsapp') || l.includes('whatsapp')) return 'whatsapp';
+  return '';
+}
+
+function cPlatformChange(idx, platformId){
+  const p = SC_ADMIN_PLATFORMS.find(x=>x.id===platformId);
+  if(!p) return;
+  // Auto-fill label if empty
+  const labelEl = document.querySelector(`[data-c-label="${idx}"]`);
+  if(labelEl && !labelEl.value.trim()) labelEl.value = p.label;
+  // Auto-fill placeholder color
+  const colorEl = document.querySelector(`[data-c-color="${idx}"]`);
+  // Color not in new grid — we use platform config on render
+}
+
+// Drag for contact list
+function cDragStart(e,idx){ _cDragIdx=idx; e.currentTarget.style.opacity='.45'; try{e.dataTransfer.effectAllowed='move';}catch(_){} }
+function cDragOver(e){ e.preventDefault(); e.currentTarget.style.background='rgba(201,168,76,.09)'; }
+function cDragLeave(e){ e.currentTarget.style.background=''; }
+function cDrop(e,targetIdx){
+  e.preventDefault(); e.currentTarget.style.background='';
+  if(_cDragIdx===null || _cDragIdx===targetIdx) return;
+  const arr = captureContacts();
+  const [moved] = arr.splice(_cDragIdx,1);
+  arr.splice(targetIdx,0,moved);
+  _cDragIdx=null;
+  renderContactList(arr);
+}
+function cDragEnd(){ _cDragIdx=null; document.querySelectorAll('.c-row').forEach(r=>{r.style.opacity='';r.style.background='';}); }
 function captureContacts(){
-  const arr=[];document.querySelectorAll('[data-c-label]').forEach(el=>{
+  const arr=[];
+  document.querySelectorAll('[data-c-label]').forEach(el=>{
     const i=el.dataset.cLabel;
+    const urlEl=document.querySelector(`[data-c-url="${i}"]`);
+    const platformEl=document.querySelector(`[data-c-platform="${i}"]`);
+    const platformId=platformEl?platformEl.value:'';
+    const pCfg=SC_ADMIN_PLATFORMS.find(p=>p.id===platformId);
+    const labelRaw=el.value.trim()||(pCfg?pCfg.label:'');
     arr.push({
-      icon:document.querySelector(`[data-c-icon="${i}"]`)?.value || '☎',
-      label:el.value,
-      color:document.querySelector(`[data-c-color="${i}"]`).value,
-      url:document.querySelector(`[data-c-url="${i}"]`)?document.querySelector(`[data-c-url="${i}"]`).value:'',
-      showFloat:!!document.querySelector(`[data-c-float="${i}"]`)?.checked,
-      message:document.querySelector(`[data-c-msg="${i}"]`).value
+      icon: pCfg ? pCfg.icon : '🔗',
+      label: labelRaw,
+      color: pCfg ? pCfg.accent : '#888888',
+      url: urlEl ? urlEl.value.trim() : '',
+      showFloat: !!document.querySelector(`[data-c-float="${i}"]`)?.checked,
+      showOnHome: !!document.querySelector(`[data-c-home="${i}"]`)?.checked,
+      message: document.querySelector(`[data-c-msg="${i}"]`)?.value.trim() || '',
     });
   });
   return arr;
 }
 function addContactBtn(){
-  const list=document.getElementById('contactList');
-  const cur=list && list.querySelector('[data-c-label]') ? captureContacts() : [...(getDB().settings.contacts||[])];
-  cur.push({icon:'☎',label:'New',color:'#888888',url:'',message:'Contact us',showFloat:true});
+  const cur=document.querySelector('#contactList [data-c-label]') ? captureContacts() : [...(getDB().settings.contacts||[])];
+  cur.push({icon:'🔗',label:'',color:'#888888',url:'',message:'',showFloat:true,showOnHome:false});
   renderContactList(cur);
 }
 function rmContact(i){const cur=captureContacts();cur.splice(i,1);renderContactList(cur);}
@@ -5615,12 +5719,15 @@ async function dupHsArticle(id){
 // Platform list for admin — system auto-fills icons, colors, labels on frontend.
 // Admin only provides: enable toggle + URL.
 const SC_ADMIN_PLATFORMS = [
-  {id:'facebook',  label:'Facebook',   icon:'📘', placeholder:'https://m.me/yourpage or facebook.com/…'},
-  {id:'instagram', label:'Instagram',  icon:'📸', placeholder:'https://instagram.com/yourhandle'},
-  {id:'tiktok',    label:'TikTok',     icon:'🎵', placeholder:'https://tiktok.com/@yourhandle'},
-  {id:'youtube',   label:'YouTube',    icon:'▶️',  placeholder:'https://youtube.com/@yourchannel'},
-  {id:'shopee',    label:'Shopee',     icon:'🛒', placeholder:'https://shopee.sg/yourshop'},
-  {id:'line',      label:'LINE',       icon:'💬', placeholder:'https://line.me/ti/p/~yourlineid'},
+  {id:'facebook',  label:'Facebook',   icon:'📘', placeholder:'https://m.me/yourpage', accent:'#1877F2'},
+  {id:'instagram', label:'Instagram',  icon:'📸', placeholder:'https://instagram.com/yourhandle', accent:'#C13584'},
+  {id:'tiktok',    label:'TikTok',     icon:'🎵', placeholder:'https://tiktok.com/@yourhandle', accent:'#010101'},
+  {id:'youtube',   label:'YouTube',    icon:'▶️',  placeholder:'https://youtube.com/@yourchannel', accent:'#FF0000'},
+  {id:'shopee',    label:'Shopee',     icon:'🛒', placeholder:'https://shopee.sg/yourshop', accent:'#EE4D2D'},
+  {id:'line',      label:'LINE',       icon:'💬', placeholder:'https://line.me/ti/p/~yourlineid', accent:'#06C755'},
+  {id:'whatsapp',  label:'WhatsApp',   icon:'💚', placeholder:'https://wa.me/6512345678', accent:'#25D366'},
+  {id:'telegram',  label:'Telegram',   icon:'✈️',  placeholder:'https://t.me/yourhandle', accent:'#229ED9'},
+  {id:'website',   label:'Website',    icon:'🌐', placeholder:'https://yourwebsite.com', accent:'#c9a84c'},
 ];
 
 // ─── SOCIAL CHANNELS ADMIN — multi-entry per platform ────────────────────────
@@ -5672,6 +5779,8 @@ function loadSocialChannels(){
   }
 }
 
+let _scDragIdx = null;
+
 function scRenderList(){
   const list = document.getElementById('sc_channels_list');
   if(!list) return;
@@ -5687,30 +5796,66 @@ function scRenderList(){
     const p = SC_ADMIN_PLATFORMS.find(x => x.id === entry.id) || {icon:'🔗', label:entry.id, placeholder:'https://'};
     const checked = entry.enabled ? 'checked' : '';
     return `
-    <div class="rep-row" style="align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;min-width:0">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;font-weight:700;font-size:14px;min-width:36px">
-          <input type="checkbox" data-sc-idx="${idx}" data-sc-field="enabled" ${checked}
-            onchange="scUpdate(${idx},'enabled',this.checked)"
-            style="width:auto;accent-color:var(--gold-dark)">
-        </label>
-        <span style="font-size:18px;flex-shrink:0" title="${escapeHtml(p.label)}">${p.icon}</span>
-        <select class="fi" onchange="scUpdate(${idx},'id',this.value)"
-          style="font-size:13px;padding:7px 10px;width:auto;min-width:120px;flex-shrink:0">
-          ${SC_ADMIN_PLATFORMS.map(pl =>
-            `<option value="${pl.id}" ${pl.id===entry.id?'selected':''}>${pl.icon} ${pl.label}</option>`
-          ).join('')}
-        </select>
-        <input class="fi" placeholder="Display name (optional)" value="${escapeHtml(entry.name)}"
-          oninput="scUpdate(${idx},'name',this.value)"
-          style="font-size:13px;padding:7px 10px;width:140px;flex-shrink:0">
-        <input class="fi" placeholder="${escapeHtml(p.placeholder)}" value="${escapeHtml(entry.url)}"
-          oninput="scUpdate(${idx},'url',this.value)"
-          style="font-size:13px;padding:7px 10px;flex:1;min-width:180px">
-      </div>
-      <button class="btn-del" style="flex-shrink:0;padding:6px 10px;font-size:12px" onclick="scRemove(${idx})">✕</button>
+    <div class="sc-row" data-sc-idx="${idx}"
+      draggable="true"
+      ondragstart="scDragStart(event,${idx})"
+      ondragover="scDragOver(event)"
+      ondragleave="scDragLeave(event)"
+      ondrop="scDrop(event,${idx})"
+      ondragend="scDragEnd()"
+      style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);cursor:grab;transition:background .15s">
+      <span class="variant-drag-handle" style="cursor:grab;color:var(--text-muted);font-size:18px;flex-shrink:0;user-select:none">⋮⋮</span>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0">
+        <input type="checkbox" ${checked}
+          onchange="scUpdate(${idx},'enabled',this.checked)"
+          style="width:auto;accent-color:var(--gold-dark)">
+      </label>
+      <span style="font-size:18px;flex-shrink:0">${p.icon}</span>
+      <select class="fi" onchange="scUpdate(${idx},'id',this.value)"
+        style="font-size:13px;padding:7px 8px;width:auto;min-width:110px;flex-shrink:0">
+        ${SC_ADMIN_PLATFORMS.map(pl =>
+          `<option value="${pl.id}" ${pl.id===entry.id?'selected':''}>${pl.icon} ${pl.label}</option>`
+        ).join('')}
+      </select>
+      <input class="fi" placeholder="Label (optional)" value="${escapeHtml(entry.name)}"
+        oninput="scUpdate(${idx},'name',this.value)"
+        style="font-size:13px;padding:7px 8px;width:120px;flex-shrink:0">
+      <input class="fi" placeholder="${escapeHtml(p.placeholder)}" value="${escapeHtml(entry.url)}"
+        oninput="scUpdate(${idx},'url',this.value)"
+        style="font-size:13px;padding:7px 8px;flex:1;min-width:160px">
+      <button class="btn-del" style="flex-shrink:0;padding:5px 9px;font-size:12px" onclick="scRemove(${idx})">✕</button>
     </div>`;
   }).join('');
+}
+
+// Drag handlers for sc rows
+function scDragStart(e, idx){
+  _scDragIdx = idx;
+  e.currentTarget.style.opacity = '.45';
+  try{ e.dataTransfer.effectAllowed = 'move'; }catch(_){}
+}
+function scDragOver(e){
+  e.preventDefault();
+  e.currentTarget.style.background = 'rgba(201,168,76,.1)';
+}
+function scDragLeave(e){
+  e.currentTarget.style.background = '';
+}
+function scDrop(e, targetIdx){
+  e.preventDefault();
+  e.currentTarget.style.background = '';
+  if(_scDragIdx === null || _scDragIdx === targetIdx) return;
+  const [moved] = _scEntries.splice(_scDragIdx, 1);
+  _scEntries.splice(targetIdx, 0, moved);
+  _scDragIdx = null;
+  scRenderList();
+}
+function scDragEnd(){
+  _scDragIdx = null;
+  document.querySelectorAll('.sc-row').forEach(r => {
+    r.style.opacity = '';
+    r.style.background = '';
+  });
 }
 
 function scUpdate(idx, field, value){
