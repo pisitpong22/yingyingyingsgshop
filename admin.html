@@ -2262,10 +2262,39 @@
 
         <!-- Advanced tab -->
         <div class="tab-content" data-tab-content="advanced" data-parent="settings">
+<<<<<<< HEAD
+=======
+
+          <!-- SAFE: Reset Casing Styles Only -->
+          <div class="form-card" style="border-color:rgba(200,100,0,.2);margin-bottom:18px">
+            <div class="form-section-title" style="color:#b35200">🪬 Reset Casing Styles</div>
+            <div class="form-section-desc">
+              Clears all casing style data (variants) from Firestore and resets the style index.
+              <strong>Keeps:</strong> casing type names, prices, descriptions, banner images, and all other store data.
+              <strong>Deletes:</strong> all casing styles (variants) and their photos.
+              Use this to start fresh after data corruption.
+            </div>
+            <div style="margin:14px 0 0;padding:14px;background:rgba(200,100,0,.06);border:1px solid rgba(200,100,0,.18);border-radius:10px">
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Step 1: Export data first (Data Management tab), then click below.</div>
+              <button class="btn-del" style="background:#b35200;border-color:#b35200" onclick="confirmResetCasingStyles()">🗑️ Reset Casing Styles Only</button>
+              <div id="resetCasingStatus" style="margin-top:10px;font-size:13px;color:var(--text-muted)"></div>
+            </div>
+          </div>
+
+          <!-- DANGER: Reset All Data -->
+>>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
           <div class="form-card" style="border-color:rgba(200,50,50,.2)">
             <div class="form-section-title" style="color:#c0392b">⚠️ Danger Zone</div>
             <div class="form-section-desc">These actions cannot be undone. Please export your data first before performing any reset.</div>
             <div style="margin-top:20px;padding:16px;background:rgba(200,50,50,.06);border:1px solid rgba(200,50,50,.15);border-radius:12px">
+<<<<<<< HEAD
+=======
+              <div style="font-weight:700;color:#c0392b;margin-bottom:6px">Reset Casing Styles Only</div>
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Clears ALL casing styles from every casing type. Casing type names, prices, descriptions, and banner images are preserved. All other data (amulets, reviews, history, settings) is untouched. Storage files are NOT deleted.</div>
+              <button class="btn-del" onclick="confirmResetCasingStyles()">🧹 Reset Casing Styles</button>
+            </div>
+            <div style="margin-top:12px;padding:16px;background:rgba(200,50,50,.06);border:1px solid rgba(200,50,50,.15);border-radius:12px">
+>>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
               <div style="font-weight:700;color:#c0392b;margin-bottom:6px">Reset All Data</div>
               <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Permanently deletes all products, settings, reviews, and articles. Your Firebase account and login will remain intact.</div>
               <button class="btn-del" onclick="confirmReset()">⚠️ Reset All Data</button>
@@ -2733,6 +2762,7 @@ function refreshDynamic(){
   else if(active.id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(active.id==='panel-casing'){
     loadPanelPageIntro('casing');
+<<<<<<< HEAD
     if(curEditTypeId){
       // Only auto-reload from onDBChange if we're not mid-save
       // (saveVariant handles reload itself with force:true)
@@ -2740,6 +2770,9 @@ function refreshDynamic(){
     } else {
       loadCasingTypes();
     }
+=======
+    if(curEditTypeId) loadVariants(); else loadCasingTypes();
+>>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   }
   else if(active.id==='panel-content-nav'){loadNav();loadCustomPagesList();}
   else if(active.id==='panel-content-hero'){
@@ -5055,6 +5088,7 @@ function exitTypeView(){
   document.getElementById('casingVariantsView').style.display='none';
 }
 
+<<<<<<< HEAD
 async function loadVariants(){
   const c=document.getElementById('variantsList');
   if(c) c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">Loading styles…</div>`;
@@ -5070,15 +5104,33 @@ async function loadVariants(){
   if(!c)return;
   const vars=ty.variants||[];
   // Only show "No styles yet" if load is complete AND truly empty
+=======
+// Render variant list directly from in-memory DB without any Firestore fetch.
+// Called after save/delete when ty.variants is already up to date.
+function renderVariantListFromDB(){
+  const c=document.getElementById('variantsList');
+  if(!c) return;
+  const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+  const vars=ty?ty.variants||[]:[];
+>>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   if(!vars.length){
     c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
     return;
   }
+<<<<<<< HEAD
   const last = vars.length - 1;
+=======
+  _renderVariantTable(vars, c);
+}
+
+// Separated table render so both loadVariants and renderVariantListFromDB can use it
+function _renderVariantTable(vars, c){
+  const last=vars.length-1;
+>>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   c.innerHTML=`<table class="dtable">
     <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
-    <tbody>${vars.map((v, idx)=>`
-      <tr class="variant-row" data-variant-id="${escapeHtml(v.id)}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}
+    <tbody>${vars.map((v,idx)=>`
+      <tr class="variant-row" data-variant-id="${escapeHtml(String(v.id))}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}
           ondragover="variantDragOver(event)"
           ondragleave="variantDragLeave(event)"
           ondrop="variantDrop(event,'${escapeHtml(String(v.id))}')">
@@ -5089,7 +5141,7 @@ async function loadVariants(){
                   title="${lang==='th'?'ลากเพื่อจัดลำดับ':'Drag to reorder'}"
                   ondragstart="variantDragStart(event,'${escapeHtml(String(v.id))}')"
                   ondragend="variantDragEnd(event)">⋮⋮</span>
-            <span class="variant-order-num">${idx + 1}</span>
+            <span class="variant-order-num">${idx+1}</span>
           </div>
         </td>
         <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="no-img">🪬</div>`}</td>
@@ -5102,13 +5154,14 @@ async function loadVariants(){
         </div></td>
       </tr>`).join('')}
     </tbody></table>`;
-  if(_variantHighlightId !== null){
+  if(_variantHighlightId!==null){
     setTimeout(()=>{
       c.querySelector(`[data-variant-id="${CSS.escape(String(_variantHighlightId))}"]`)?.scrollIntoView({block:'nearest',behavior:'smooth'});
     },0);
   }
 }
 
+<<<<<<< HEAD
 // Move a variant up/down within its parent casing type
 async function moveVariant(variantId, dir){
   if(_variantOrderSaving){
@@ -5303,6 +5356,22 @@ async function delVariant(varId){
   } finally {
     window._casingMidSave = false;
     loadVariants();
+=======
+
+async function delVariant(varId){
+  if(!tConfirm('confirmDeleteStyle'))return;
+  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
+    try { await window.FB.ensureCasingVariants(curEditTypeId); } catch(e){}
+  }
+  const db=getDB();
+  const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
+  const prev=[...(ty.variants||[])];
+  ty.variants=ty.variants.filter(v=>String(v.id)!==String(varId));
+  renderVariantListFromDB();
+  if(!(await persistDB(db,tr('deleted')))){
+    ty.variants=prev;
+    renderVariantListFromDB();
+>>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   }
 }
 
@@ -6439,6 +6508,11 @@ function importDB(event){
     }catch(err){showToast(tr('cantRead'));}
   };r.readAsText(file);event.target.value='';
 }
+// ─── RESET CASING STYLES ONLY ─────────────────────────────────────────────
+// Safely clears all casing variant/style data from Firestore.
+// Preserves: type names, prices, descriptions, banner images, sampleImgs.
+// Deletes: all dbcasing_variant_* and dbcasing_variantchunk_* docs,
+//          clears variants/variantIds from casingTypes in main DB.
 function confirmReset(){if(tConfirm('confirmReset')){localStorage.removeItem(DB_KEY);loadDash();showToast(tr('reset'));}}
 
 let _toastTimer = null;
