@@ -578,23 +578,11 @@ async function loadCasingTypesV2(meta){
 // Phase 2: load variants for a specific casing type on-demand
 async function ensureCasingVariants(typeId, opts={}){
   const key = String(typeId);
-<<<<<<< HEAD
-  if(opts.force) _casingVariantsLoaded.delete(key); // force reload
-=======
   if(opts.force) _casingVariantsLoaded.delete(key);
->>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   if(_casingVariantsLoaded.has(key)) return;
 
   const db = getDB();
   const ty = (db.casingTypes||[]).find(t=>String(t.id)===key);
-<<<<<<< HEAD
-  if(!ty) return;
-
-  // ── Try cached variant ID lists (multiple sources, string/number key) ──────
-  const meta = _dbMeta || {};
-  const metaVariantIds = meta._casingVariantIds || {};
-  let variantIds =
-=======
   if(!ty){ _casingVariantsLoaded.add(key); return; }
 
   // Get variant IDs from cache (set during loadCasingTypesV2 Phase 1)
@@ -602,146 +590,21 @@ async function ensureCasingVariants(typeId, opts={}){
   const meta = _dbMeta || {};
   const metaVariantIds = meta._casingVariantIds || {};
   const variantIds =
->>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
     (_casingVariantIds[key]?.length    ? _casingVariantIds[key]    : null) ||
     (_casingVariantIds[typeId]?.length ? _casingVariantIds[typeId] : null) ||
     (metaVariantIds[key]?.length       ? metaVariantIds[key]       : null) ||
     (metaVariantIds[typeId]?.length    ? metaVariantIds[typeId]    : null) ||
     (ty._variantIds?.length            ? ty._variantIds            : null) ||
-<<<<<<< HEAD
-    null;
-
-  // ── RECOVERY: if index is empty, scan Firestore for variant docs ───────────
-  // This happens when _casingVariantIds was wiped by a saveType call that ran
-  // before variants were loaded (the pre-fix bug). Each variant doc stores:
-  //   { key:'casingTypes', typeId, variantId, json }
-  // We query by key+typeId to rediscover the variant IDs.
-  // ─────────────────────────────────────────────────────────────────────────────
-  if(!variantIds){
-    console.log('[casing] index empty — querying Firestore for type', typeId, 'variants');
-    try {
-      const colRef = collection(fs, 'app');
-      // Try string typeId first, then number (schema may vary)
-      let snap = await getDocs(
-        query(colRef, where('key','==','casingTypes'), where('typeId','==',key))
-      );
-      if(!snap.size){
-        snap = await getDocs(
-          query(colRef, where('key','==','casingTypes'), where('typeId','==',Number(typeId)))
-        );
-      }
-
-      // Collect main variant docs (skip chunk docs which have _chunkIdx field)
-      const recoveredMap = new Map(); // variantId → docData
-      snap.docs.forEach(d => {
-        const data = d.data();
-        if(data.variantId != null && !('_chunkIdx' in data)){
-          recoveredMap.set(String(data.variantId), data);
-        }
-      });
-
-      if(recoveredMap.size > 0){
-        console.log('[casing] recovery: found', recoveredMap.size, 'variants for type', typeId);
-        const recVariants = [];
-        let fallbackCount = 0;
-
-        for(const [varId, data] of recoveredMap){
-          try {
-            let rawJson = null;
-
-            if(data._chunked){
-              rawJson = await readJsonRecord(
-                casingVariantDoc(typeId, varId),
-                idx => casingVariantChunkDoc(typeId, varId, idx),
-                `casing style (recovery): ${typeId}/${varId}`
-              );
-            } else if(data.json){
-              rawJson = data.json;
-            }
-
-            // ── Parse rawJson tolerantly ──────────────────────────────────
-            let parsed = null;
-            if(rawJson){
-              try {
-                parsed = JSON.parse(rawJson);
-              } catch(jsonErr){
-                // rawJson is not valid JSON — may be a raw URL or plain string
-                const trimmed = typeof rawJson === 'string' ? rawJson.trim() : '';
-                if(trimmed){
-                  parsed = {
-                    id: varId,
-                    name: data.name || data.title || ('Style ' + varId),
-                    price: data.price || data.priceRange || '',
-                    imgs: trimmed.startsWith('http') ? [trimmed] : [],
-                  };
-                  fallbackCount++;
-                }
-              }
-            }
-
-            if(!parsed) continue;
-
-            // ── Normalize variant shape ────────────────────────────────────
-            const rawImgs =
-              parsed.imgs       || parsed.images    ||
-              parsed.sampleImgs || parsed.gallery   ||
-              (parsed.url   ? [parsed.url]   : null) ||
-              (parsed.image ? [parsed.image] : null) ||
-              (parsed.img   ? [parsed.img]   : null) ||
-              (data.url     ? [data.url]     : null) ||
-              (data.image   ? [data.image]   : null) ||
-              (data.img     ? [data.img]     : null) ||
-              [];
-
-            recVariants.push({
-              id:    parsed.id    || varId,
-              name:  parsed.name  || parsed.title  || parsed.label || ('Style ' + varId),
-              price: parsed.price || parsed.priceRange || '',
-              desc:  parsed.desc  || parsed.description || '',
-              imgs:  Array.isArray(rawImgs) ? rawImgs : (rawImgs ? [rawImgs] : []),
-            });
-          } catch(e){
-            console.warn('[casing] recovery parse failed', varId, e.message);
-          }
-        }
-
-        // ── Natural sort by name then id ─────────────────────────────────
-        recVariants.sort((a, b) =>
-          String(a.name || a.id).localeCompare(String(b.name || b.id), undefined, {
-            numeric: true, sensitivity: 'base'
-          })
-        );
-
-        ty.variants = recVariants;
-        variantIds = [...recoveredMap.keys()];
-        _casingVariantIds[key] = variantIds;
-        _casingVariantsLoaded.add(key);
-        console.log('[casing] recovery complete:', recVariants.length, 'variants loaded',
-          fallbackCount > 0 ? `(${fallbackCount} fallback)` : '');
-        notifyDBReady();
-        return;
-      }
-    } catch(qErr){
-      console.warn('[casing] Firestore recovery query failed:', qErr);
-    }
-    // Truly no variants for this type
-=======
     [];
 
   if(!variantIds.length){
     // No variants in index — type genuinely has no styles yet
     ty.variants = [];
->>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
     _casingVariantsLoaded.add(key);
     return;
   }
 
-<<<<<<< HEAD
-  // ── Normal path: load variants by known IDs ────────────────────────────────
-  console.log('[casing] loading', variantIds.length, 'variants for type', typeId);
-=======
   // Load variants by their known IDs
->>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   const variants = await Promise.all(variantIds.map(async variantId => {
     return JSON.parse(await readJsonRecord(
       casingVariantDoc(typeId, variantId),
@@ -750,24 +613,13 @@ async function ensureCasingVariants(typeId, opts={}){
     ));
   }));
 
-<<<<<<< HEAD
-  variants.sort((a, b) =>
-    String(a.name || a.id).localeCompare(String(b.name || b.id), undefined, {
-      numeric: true, sensitivity: 'base'
-    })
-  );
-=======
->>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   ty.variants = variants;
   _casingVariantIds[key] = variantIds;
   _casingVariantsLoaded.add(key);
   notifyDBReady();
 }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
 async function readJsonRecord(ref, chunkRefForIndex, label){
   const snap = await getDoc(ref);
   if(!snap.exists()){
@@ -1401,8 +1253,6 @@ window.FB = {
   ensureCasingVariants,
   // Expose variant ID cache so admin can show counts without loading all variants
   get _casingVariantIds(){ return _casingVariantIds; },
-<<<<<<< HEAD
-=======
 
   // Delete all casing variant Firestore docs (called by admin Reset Casing Styles tool)
   async resetCasingVariantDocs(){
@@ -1423,7 +1273,6 @@ window.FB = {
     await Promise.all(batches);
     return toDelete.length;
   },
->>>>>>> 8cbf88f (Reset casing: remove recovery logic, add Firestore doc deletion, clean stable save flow with in-memory render)
   // History & Stories
   hsGetAll,
   hsAddArticle,
