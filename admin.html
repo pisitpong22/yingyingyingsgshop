@@ -5146,6 +5146,160 @@ function _renderVariantTable(vars, c){
 }
 
 
+// ─── CASING VARIANT FORM ─────────────────────────────────────────────────────
+function openVariantForm(varId=null){
+  curEditVariantId = varId || null;
+  const ty = (getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+
+  document.getElementById('fv_name').value  = '';
+  document.getElementById('fv_price').value = '';
+  document.getElementById('fv_imgs_p').innerHTML = '';
+  tempImgs['fv_imgs'] = [];
+
+  if(varId && ty){
+    const v = (ty.variants||[]).find(x=>String(x.id)===String(varId));
+    if(v){
+      document.getElementById('fv_name').value  = v.name  || '';
+      document.getElementById('fv_price').value = v.price != null ? v.price : '';
+      if(Array.isArray(v.imgs)) v.imgs.forEach(u=>addImgPreview('fv_imgs',u));
+    }
+  }
+  document.getElementById('variantModalTitle').textContent = varId ? tr('editStyle') : tr('addStyle');
+  openModal('variantModal');
+}
+
+async function saveVariant(){
+  if(!ensureUploadsDone()) return;
+  const name  = document.getElementById('fv_name').value.trim();
+  const price = document.getElementById('fv_price').value;
+  if(!name){ showToast(tr('needName')); return; }
+
+  // Ensure variants are in memory before modifying
+  if(window.FB && window.FB.ensureCasingVariants && curEditTypeId!=null){
+    try { await window.FB.ensureCasingVariants(curEditTypeId); }
+    catch(e){ console.warn('[saveVariant]', e); }
+  }
+
+  const db = getDB();
+  const ty  = (db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+  if(!ty){ showToast('Type not found'); return; }
+  if(!Array.isArray(ty.variants)) ty.variants = [];
+
+  const updatedAt = Date.now();
+  const data = {name, price:price===''?'':Number(price), imgs:captureImgs('fv_imgs'), updatedAt};
+
+  if(curEditVariantId){
+    const v = ty.variants.find(x=>String(x.id)===String(curEditVariantId));
+    if(v) Object.assign(v, data); else ty.variants.push({id:curEditVariantId, ...data});
+  } else {
+    ty.variants.push({id:genId(ty.variants), ...data});
+  }
+  ty.updatedAt = updatedAt;
+
+  if(!(await persistDB(db, tr('saved')))) return;
+  tempImgs = {};
+  closeModal('variantModal');
+  renderVariantListFromDB();
+}
+
+// ─── CASING VARIANT DRAG & DROP ───────────────────────────────────────────────
+function variantDragStart(e, variantId){
+  if(_variantOrderSaving){ e.preventDefault(); return; }
+  _variantDragId = variantId;
+  const row = e.currentTarget.closest('tr');
+  if(row) row.classList.add('dragging');
+  try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',String(variantId)); }catch(_){}
+}
+
+function variantDragOver(e){
+  e.preventDefault();
+  try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+  const row = e.currentTarget;
+  if(!row || _variantDragId===null) return;
+  const rect = row.getBoundingClientRect();
+  row.classList.remove('drag-over-top','drag-over-bottom');
+  row.classList.add(e.clientY < rect.top + rect.height/2 ? 'drag-over-top' : 'drag-over-bottom');
+}
+
+function variantDragLeave(e){
+  e.currentTarget.classList.remove('drag-over-top','drag-over-bottom');
+}
+
+async function variantDrop(e, targetId){
+  e.preventDefault();
+  const row = e.currentTarget;
+  if(row) row.classList.remove('drag-over-top','drag-over-bottom');
+  if(_variantDragId===null || String(_variantDragId)===String(targetId)) return;
+  const rect = row.getBoundingClientRect();
+  const before = e.clientY < (rect.top + rect.height/2);
+  await reorderVariantByDrag(_variantDragId, targetId, before);
+}
+
+function variantDragEnd(){
+  _variantDragId = null;
+  document.querySelectorAll('.variant-row.dragging,.drag-over-top,.drag-over-bottom')
+    .forEach(r=>r.classList.remove('dragging','drag-over-top','drag-over-bottom'));
+}
+
+async function reorderVariantByDrag(dragId, targetId, before){
+  if(_variantOrderSaving) return;
+  _variantOrderSaving = true;
+  try{
+    if(window.FB && window.FB.ensureCasingVariants && curEditTypeId!=null){
+      try{ await window.FB.ensureCasingVariants(curEditTypeId); }catch(e){}
+    }
+    const db = getDB();
+    const ty = (db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+    if(!ty||!Array.isArray(ty.variants)) return;
+    const from   = ty.variants.findIndex(v=>String(v.id)===String(dragId));
+    const target = ty.variants.findIndex(v=>String(v.id)===String(targetId));
+    if(from<0||target<0) return;
+    const [item] = ty.variants.splice(from,1);
+    const insertAt = before
+      ? (target > from ? target-1 : target)
+      : (target < from ? target+1 : target);
+    ty.variants.splice(Math.max(0, Math.min(ty.variants.length, insertAt)), 0, item);
+    renderVariantListFromDB();
+    await persistDB(db, '✅ Order saved');
+  } finally {
+    _variantOrderSaving = false;
+  }
+}
+
+// ─── CONFIRM RESET CASING STYLES ─────────────────────────────────────────────
+async function confirmResetCasingStyles(){
+  if(!confirm(
+    '⚠️ RESET CASING STYLES\n\n' +
+    'This will permanently delete ALL casing styles/variants.\n\n' +
+    '✅ Preserved: type names, prices, descriptions, banner images, Storage files\n' +
+    '❌ Deleted: all variant data in Firestore\n\n' +
+    'Export your data first if you want a backup.\n\nContinue?'
+  )) return;
+
+  showToast('🔄 Resetting casing styles…');
+  try {
+    let deletedCount = 0;
+    if(window.FB && window.FB.resetCasingVariantDocs){
+      deletedCount = await window.FB.resetCasingVariantDocs();
+      console.log('[admin] deleted', deletedCount, 'variant Firestore docs');
+    }
+    const db = getDB();
+    if(db.casingTypes){
+      db.casingTypes.forEach(ty => {
+        ty.variants = [];
+        ty._variantIds = [];
+        ty.updatedAt = Date.now();
+      });
+    }
+    const ok = await persistDB(db, '✅ Casing styles reset.');
+    if(ok){ exitTypeView(); loadCasingTypes(); showToast('✅ Reset complete. Add styles fresh.'); }
+  } catch(err){
+    console.error('[admin] reset failed:', err);
+    showToast('❌ Reset failed: ' + (err.message||err));
+  }
+}
+
+
 async function delVariant(varId){
   if(!tConfirm('confirmDeleteStyle'))return;
   if(window.FB && window.FB.ensureCasingVariants && curEditTypeId != null){
@@ -6985,6 +7139,27 @@ function showLiveToast(msg){
     t.style.transform = 'translateY(-10px)';
   }, 2200);
 }
+
+// ─── INLINE HANDLER AUDIT (runs on load) ─────────────────────────────────────
+function auditInlineHandlers(){
+  const skip = new Set(['if','for','while','switch','return','confirm','alert','Number',
+    'String','parseInt','parseFloat','Boolean','JSON','Math','Array','Object','console',
+    'event','goPage','window','document','showPanel','showTab','this','null','true','false',
+    'CSS','encodeURIComponent','parseInt','escape','unescape','decodeURIComponent']);
+  const missing = new Set();
+  document.querySelectorAll('[onclick],[onchange],[oninput],[onsubmit],[ondragstart],[ondragover],[ondragleave],[ondrop],[ondragend]').forEach(el=>{
+    ['onclick','onchange','oninput','onsubmit','ondragstart','ondragover','ondragleave','ondrop','ondragend'].forEach(attr=>{
+      const code=el.getAttribute(attr);if(!code)return;
+      for(const m of code.matchAll(/\b([a-zA-Z_$][\w$]*)\s*\(/g)){
+        const name=m[1];
+        if(!skip.has(name) && typeof window[name]!=='function') missing.add(name);
+      }
+    });
+  });
+  if(missing.size) console.warn('[ADMIN AUDIT] Missing inline handler functions:','['+[...missing].sort().join(', ')+']');
+  else console.log('[ADMIN AUDIT] ✅ All inline handler functions exist');
+}
+setTimeout(auditInlineHandlers, 1000); // run after page initialises
 
 </script>
 </body>
