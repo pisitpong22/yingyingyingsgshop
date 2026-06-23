@@ -6296,7 +6296,19 @@ function clearF(ids,imgKey){
   if(imgKey){tempImgs[imgKey]=[];const p=document.getElementById(imgKey+'_p');if(p)p.innerHTML='';}
 }
 
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openModal(id){
+  const el=document.getElementById(id);
+  if(!el){console.warn('[modal] not found:',id);return;}
+  el.classList.add('open');
+}
+function closeModal(id){
+  if(id){document.getElementById(id)?.classList.remove('open');return;}
+  document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open'));
+}
+function closeModals(){ closeModal(); }
+window.openModal=openModal;
+window.closeModal=closeModal;
+window.closeModals=closeModals;
 
 // ─── CDN PRE-WARM ──────────────────────────────────────────────────────────
 // Walks the DB, collects every image URL, requests each one through ImageKit
@@ -7145,13 +7157,19 @@ function auditInlineHandlers(){
   const skip = new Set(['if','for','while','switch','return','confirm','alert','Number',
     'String','parseInt','parseFloat','Boolean','JSON','Math','Array','Object','console',
     'event','goPage','window','document','showPanel','showTab','this','null','true','false',
-    'CSS','encodeURIComponent','parseInt','escape','unescape','decodeURIComponent']);
+    'CSS','encodeURIComponent','click','open','getElementById','querySelector',
+    'querySelectorAll','closest','classList','setAttribute','removeAttribute',
+    'addEventListener','removeEventListener','focus','blur','scrollIntoView',
+    'preventDefault','stopPropagation','toString','valueOf','escape','unescape']);
   const missing = new Set();
   document.querySelectorAll('[onclick],[onchange],[oninput],[onsubmit],[ondragstart],[ondragover],[ondragleave],[ondrop],[ondragend]').forEach(el=>{
     ['onclick','onchange','oninput','onsubmit','ondragstart','ondragover','ondragleave','ondrop','ondragend'].forEach(attr=>{
       const code=el.getAttribute(attr);if(!code)return;
       for(const m of code.matchAll(/\b([a-zA-Z_$][\w$]*)\s*\(/g)){
         const name=m[1];
+        // skip method calls (preceded by '.')
+        const prev=code[m.index-1];
+        if(prev==='.') continue;
         if(!skip.has(name) && typeof window[name]!=='function') missing.add(name);
       }
     });
