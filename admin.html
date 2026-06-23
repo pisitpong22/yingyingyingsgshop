@@ -1658,7 +1658,7 @@
                 = show on homepage Social Channels section
               </div>
             </div>
-            <button class="btn-add" onclick="addContactBtn()" style="white-space:nowrap;flex-shrink:0">➕ Add Link</button>
+
           </div>
 
           <!-- Column headers -->
@@ -1673,7 +1673,7 @@
           </div>
 
           <div id="contactList"></div>
-          <div style="margin-top:12px">
+          <div style="margin-top:10px">
             <button class="btn-add" onclick="addContactBtn()">➕ Add Link</button>
           </div>
         </div>
@@ -5296,17 +5296,26 @@ function openVariantForm(varId=null){
 async function reloadCurrentCasingStyles(){
   if(!curEditTypeId) return;
   const list = document.getElementById('variantsList');
-  if(list){
-    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading styles…</div>`;
+  if(list) list.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading styles…</div>`;
+
+  // force=true: bypass stale cache and fetch fresh from Firestore
+  if(window.FB && window.FB.ensureCasingVariants){
+    try { await window.FB.ensureCasingVariants(curEditTypeId, {force:true}); }
+    catch(err){ console.warn('[casing reload]', err); }
   }
-  try {
-    if(window.FB && window.FB.ensureCasingVariants){
-      await window.FB.ensureCasingVariants(curEditTypeId, {force:true});
-    }
-  } catch(err){
-    console.warn('[admin casing] reload styles failed:', err);
+
+  // Render directly from DB — avoid calling loadVariants() which would
+  // trigger another ensureCasingVariants (no-force) and possibly get stale data
+  const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+  const vars=ty?[...(ty.variants||[])]:[];
+
+  if(!list) return;
+  if(!vars.length){
+    list.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
+    return;
   }
-  await loadVariants();
+  vars.sort((a,b)=>String(a.name||a.id||'').localeCompare(String(b.name||b.id||''),undefined,{numeric:true,sensitivity:'base'}));
+  _renderVariantTable(vars, list);
 }
 
 

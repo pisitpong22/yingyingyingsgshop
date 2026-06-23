@@ -3689,11 +3689,11 @@ function defaultSettings(){
       {icon:'📱',title:'Multi-Channel',desc:'Facebook, Line & Instagram — always available'},
     ],
     contacts:[
-      {icon:'f',label:'Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger'},
-      {icon:'▶',label:'YouTube',color:'#ff0033',url:'',message:'Visit our YouTube'},
-      {icon:'♪',label:'TikTok',color:'#111111',url:'',message:'Visit our TikTok'},
-      {icon:'◎',label:'Instagram',color:'#c13584',url:'',message:'Visit our Instagram'},
-      {icon:'💬',label:'Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line'},
+      {icon:'f',label:'Facebook',color:'#1877f2',url:'https://m.me/yingyingyingsg',message:'Contact us on Facebook Messenger',showFloat:true,showOnHome:true},
+      {icon:'💬',label:'Line',color:'#06c755',url:'https://line.me/ti/p/~yingyingyingsg',message:'Contact us on Line',showFloat:true,showOnHome:true},
+      {icon:'▶',label:'YouTube',color:'#ff0033',url:'',message:'Visit our YouTube',showFloat:false,showOnHome:false},
+      {icon:'♪',label:'TikTok',color:'#111111',url:'',message:'Visit our TikTok',showFloat:false,showOnHome:false},
+      {icon:'◎',label:'Instagram',color:'#c13584',url:'',message:'Visit our Instagram',showFloat:false,showOnHome:false},
     ],
     contactBtnText:'📞 Contact to Order',
     contactBtnMessage:'📞 Contact us to order or for more information',
@@ -3841,7 +3841,7 @@ function applyDbMigrations(d){
     const knownIds = def.homeOrder.map(s => s.id);
     d.settings.homeOrder = d.settings.homeOrder.filter(x => x && knownIds.includes(x.id));
   }
-  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);if(c.showFloat===undefined)c.showFloat=true;c.label=stripContactIcon(c.label);});}
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);if(c.showFloat===undefined)c.showFloat=true;if(c.showOnHome===undefined)c.showOnHome=false;c.label=stripContactIcon(c.label);});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
     if(!d.settings.nav.find(n=>n.id==='feed')){
       const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
