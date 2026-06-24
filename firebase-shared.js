@@ -580,8 +580,17 @@ async function ensureCasingVariants(typeId, opts={}){
   const key = String(typeId);
   if(opts.force) _casingVariantsLoaded.delete(key);
   if(_casingVariantsLoaded.has(key)){
-    console.log('[ensureCasingVariants] early return (already loaded) for key=',key,'opts=',opts);
-    return;
+    // Verify the variants are actually present in the current _db.
+    // _db may have been replaced by loadSplitDB (Phase1) between the time this key
+    // was added and now — Phase1 sets ty.variants=[] even though we loaded them before.
+    const dbCheck = getDB();
+    const tyCheck = (dbCheck.casingTypes||[]).find(t=>String(t.id)===key);
+    if(tyCheck && Array.isArray(tyCheck.variants) && tyCheck.variants.length > 0){
+      return; // truly loaded — variants exist in current _db ✓
+    }
+    // Stale marker: _db was replaced by Phase1 after we loaded, variants are gone.
+    // Remove marker and fall through to reload from Firestore.
+    _casingVariantsLoaded.delete(key);
   }
 
   const db = getDB();
