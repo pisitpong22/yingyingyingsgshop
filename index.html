@@ -837,105 +837,68 @@
 
 
   /* ─── SOCIAL CHANNELS SECTION ─────────────────────────────────────────── */
-  /* ─── SOCIAL CHANNELS — compact liquid-glass strip ────────────────────── */
+  /* ─── SOCIAL CHANNELS — grouped circular icon layout ──────────────────── */
   .social-channels-section{
-    padding:32px 20px 36px;
-    background:linear-gradient(180deg,#f5e9cc 0%,#fffaf0 100%);
+    padding:40px 20px 44px;
+    background:linear-gradient(180deg,#fdf8ef 0%,#fffcf5 100%);
     border-top:1px solid rgba(201,168,76,.12);
     border-bottom:1px solid rgba(201,168,76,.1);
   }
-  .social-channels-inner{max-width:960px;margin:0 auto}
-  .social-channels-head{
-    display:flex;align-items:center;gap:12px;margin-bottom:20px;
-  }
+  .social-channels-inner{max-width:860px;margin:0 auto}
+
+  .social-channels-head{text-align:center;margin-bottom:28px}
   .social-channels-head h2{
-    font-family:var(--font-display);font-size:17px;font-weight:800;
-    color:var(--text);margin:0;letter-spacing:-.1px;white-space:nowrap;
+    font-family:var(--font-display);font-size:28px;font-weight:900;
+    color:var(--text);margin:0 0 4px;letter-spacing:-.3px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
   }
-  .social-channels-head-line{
-    flex:1;height:1px;
-    background:linear-gradient(90deg,rgba(201,168,76,.3),transparent);
-  }
-  .social-channels-head p{display:none} /* subtitle hidden in compact mode */
+  .sc-sparkle{color:var(--gold);font-size:20px;opacity:.75}
+  .social-channels-head p{font-size:14px;color:var(--text-muted);margin:10px 0 0;line-height:1.6}
+  .sc-head-divider{width:44px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:10px auto 0;border-radius:2px}
 
-  /* auto-grid: fills row, min 130px per card */
-  .social-channels-grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-    gap:10px;
+  /* Group of items */
+  .sc-group{margin-bottom:28px}
+  .sc-group:last-child{margin-bottom:0}
+  .sc-group-header{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:18px;padding-bottom:10px;
+    border-bottom:1px solid rgba(201,168,76,.18);
+    cursor:default;
   }
+  .sc-group-label{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dark)}
+  .sc-group-arrow{font-size:13px;color:var(--gold-dark);opacity:.55}
 
-  .sc-card{
-    background:rgba(255,252,242,.8);
-    backdrop-filter:blur(16px) saturate(140%);
-    -webkit-backdrop-filter:blur(16px) saturate(140%);
-    border:1px solid rgba(201,168,76,.22);
-    border-radius:16px;
-    padding:16px 10px 14px;
-    text-align:center;
-    cursor:pointer;
-    text-decoration:none;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:6px;
-    position:relative;overflow:hidden;
-    transition:transform .24s cubic-bezier(.22,1,.36,1), box-shadow .24s, border-color .24s;
-    box-shadow:0 4px 16px rgba(120,80,20,.08), 0 1px 0 rgba(255,255,255,.9) inset;
-    min-height:90px;
+  /* Circular icon + name */
+  .sc-icons-row{display:flex;gap:20px;flex-wrap:wrap}
+  .sc-item{
+    display:flex;flex-direction:column;align-items:center;gap:9px;
+    text-decoration:none;cursor:pointer;width:78px;
+    transition:transform .22s cubic-bezier(.22,1,.36,1);
   }
-  .sc-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:2.5px;
-    background:var(--sc-accent);opacity:.75;border-radius:16px 16px 0 0;
-    transition:opacity .2s;
-  }
-  .sc-card::after{
-    content:'';position:absolute;top:0;left:0;right:0;height:40%;
-    background:linear-gradient(180deg,rgba(255,255,255,.35),transparent);
-    pointer-events:none;
-  }
-  .sc-card:hover{
-    transform:translateY(-4px);
-    border-color:rgba(201,168,76,.38);
-    box-shadow:0 12px 32px var(--sc-glow), 0 1px 0 rgba(255,255,255,.9) inset;
-  }
-  .sc-card:hover::before{opacity:1}
-
-  .sc-icon{
-    width:40px;height:40px;border-radius:11px;
+  .sc-item:hover{transform:translateY(-4px)}
+  .sc-circle{
+    width:66px;height:66px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    background:rgba(255,255,255,.75);
-    border:1px solid rgba(201,168,76,.14);
-    position:relative;z-index:1;flex-shrink:0;
-    transition:transform .22s;
+    background:#fff;
+    box-shadow:0 4px 16px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.06);
+    transition:box-shadow .22s;flex-shrink:0;overflow:hidden;
   }
-  .sc-card:hover .sc-icon{transform:scale(1.1)}
-  .sc-icon svg{width:20px;height:20px}
-
-  .sc-name{
+  .sc-item:hover .sc-circle{box-shadow:0 8px 24px rgba(0,0,0,.16)}
+  .sc-circle svg{width:34px;height:34px}
+  .sc-label{
     font-family:var(--font-display);font-size:12px;font-weight:700;
-    color:var(--text);position:relative;z-index:1;line-height:1.2;
+    color:var(--text);text-align:center;line-height:1.3;
+    word-break:break-word;max-width:78px;
   }
-  .sc-handle{display:none} /* hidden in compact mode */
-  .sc-btn{
-    display:inline-flex;align-items:center;
-    font-size:10.5px;font-weight:700;
-    padding:5px 12px;border-radius:999px;
-    background:var(--sc-accent);color:#fff;
-    border:none;cursor:pointer;
-    transition:opacity .18s,transform .18s;
-    position:relative;z-index:1;text-decoration:none;
-    box-shadow:0 2px 8px rgba(0,0,0,.14);
-    white-space:nowrap;
-  }
-  .sc-btn:hover{opacity:.85;transform:translateY(-1px)}
 
   @media(max-width:600px){
-    .social-channels-section{padding:24px 14px 28px}
-    .social-channels-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-    .sc-card{min-height:80px;padding:12px 8px;border-radius:12px}
-    .sc-icon{width:34px;height:34px;border-radius:9px}
-    .sc-icon svg{width:17px;height:17px}
-    .sc-name{font-size:11px}
-    .sc-btn{font-size:9.5px;padding:4px 9px}
+    .social-channels-section{padding:28px 16px 32px}
+    .social-channels-head h2{font-size:22px}
+    .sc-icons-row{gap:14px}
+    .sc-item{width:68px}
+    .sc-circle{width:58px;height:58px}
+    .sc-circle svg{width:28px;height:28px}
+    .sc-label{font-size:11px;max-width:68px}
   }
 
   /* ─── HISTORY & STORIES / KNOWLEDGE CENTER ─────────────────────────────
@@ -3226,14 +3189,19 @@
   </section>
   </div>
 
-  <!-- SOCIAL CHANNELS SECTION — compact strip -->
+  <!-- SOCIAL CHANNELS SECTION — grouped circular layout -->
   <section class="social-channels-section" id="socialChannelsSection" style="display:none">
     <div class="social-channels-inner">
       <div class="social-channels-head">
-        <h2 id="scTitle">Follow Us</h2>
-        <div class="social-channels-head-line"></div>
+        <h2 id="scTitle">
+          <span class="sc-sparkle">✦</span>
+          Follow Us
+          <span class="sc-sparkle">✦</span>
+        </h2>
+        <div class="sc-head-divider"></div>
+        <p id="scSubtitle">Stay connected with our official pages &amp; social channels</p>
       </div>
-      <div class="social-channels-grid" id="scGrid"></div>
+      <div id="scGrid"></div>
     </div>
   </section>
 
@@ -6308,7 +6276,7 @@ async function openHsArticle(id){
 // Adding a new platform: add entry here + in SC_ADMIN_PLATFORMS (admin.html).
 const SC_PLATFORM_CONFIG = {
   facebook:  {
-    label:'Facebook', accent:'#1877F2', glow:'rgba(24,119,242,.2)',
+    label:'Facebook', groupLabel:'Facebook', accent:'#1877F2', glow:'rgba(24,119,242,.2)',
     btnLabel:'Visit Facebook',
     svgPath:'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z',
   },
@@ -6344,49 +6312,74 @@ function renderSocialChannels(){
   const el = document.getElementById('socialChannelsSection');
   if(!el) return;
 
-  // Source: contacts[] with showOnHome=true (merged single source of truth)
-  // Falls back to old socialChannels.channels[] for backward compat
   const sc = db.settings.socialChannels || {};
-  const useContacts = (db.settings.contacts||[]).some(c=>c.showOnHome);
+  if(sc.enabled === false){ el.style.display='none'; return; }
+
+  // Channels = contacts with showOnHome=true, or legacy socialChannels.channels
   let channels;
-  if(useContacts){
-    channels = (db.settings.contacts||[]).filter(c=>c.showOnHome && c.url && c.url.trim());
+  const contactsWithHome = (db.settings.contacts||[]).filter(c=>c.showOnHome && c.url && c.url.trim());
+  if(contactsWithHome.length){
+    channels = contactsWithHome;
   } else {
-    // Legacy: old socialChannels.channels schema
     channels = (sc.channels||[]).filter(c=>(c.enabled||c.showOnHome) && c.url && c.url.trim());
   }
 
-  if(!channels.length || sc.enabled===false){ el.style.display='none'; return; }
+  if(!channels.length){ el.style.display='none'; return; }
   el.style.display='';
 
-  const titleEl=document.getElementById('scTitle');
-  if(titleEl) titleEl.textContent = sc.title || 'Follow Us';
+  // Title + subtitle
+  const titleEl = document.getElementById('scTitle');
+  if(titleEl) titleEl.innerHTML =
+    `<span class="sc-sparkle">✦</span>${escapeHtml(sc.title||'Follow Us')}<span class="sc-sparkle">✦</span>`;
+  const subEl = document.getElementById('scSubtitle');
+  if(subEl) subEl.textContent = sc.subtitle || 'Stay connected with our official pages & social channels';
 
-  const grid=document.getElementById('scGrid');
+  // Group channels by platform
+  const groups = new Map(); // platformId → {label, channels[]}
+  channels.forEach(ch => {
+    const pid = ch.id || detectContactPlatform(ch.url||'', ch.label||'', ch.icon||'');
+    const cfg = SC_PLATFORM_CONFIG[pid] || {label:'Link', accent:'#c9a84c', svgPath:null};
+
+    // Group name: e.g. all facebook entries → "Official Facebook Pages"
+    const groupId = pid || 'other';
+    if(!groups.has(groupId)){
+      const groupLabel = pid === 'facebook' ? 'Official Facebook Pages'
+        : pid ? (cfg.label + ' Channels') : 'Other Links';
+      groups.set(groupId, {label:groupLabel, cfg, channels:[]});
+    }
+    groups.get(groupId).channels.push(ch);
+  });
+
+  // Render groups
+  const grid = document.getElementById('scGrid');
   if(!grid) return;
 
-  grid.innerHTML = channels.map(ch => {
-    // Get platform config by detecting from URL or stored platform id
-    const pid = ch.id || detectContactPlatform(ch.url||'', ch.label||'', ch.icon||'');
-    const cfg = SC_PLATFORM_CONFIG[pid] || {
-      label: ch.label||ch.name||pid||'Link',
-      accent:'#c9a84c', glow:'rgba(201,168,76,.18)',
-      btnLabel:'Visit', svgPath:null
-    };
-    const displayName = (ch.label && ch.label.trim()) ? ch.label.trim()
-      : (ch.name && ch.name.trim()) ? ch.name.trim() : cfg.label;
-    const svg = cfg.svgPath
-      ? `<svg viewBox="0 0 24 24" fill="${cfg.accent}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>`
-      : `<span style="font-size:18px;color:${cfg.accent}">${cfg.label[0]||'?'}</span>`;
+  let html = '';
+  for(const [groupId, group] of groups){
+    const cfg = group.cfg;
+    const itemsHtml = group.channels.map(ch => {
+      const displayName = (ch.label&&ch.label.trim()) ? ch.label.trim()
+        : (ch.name&&ch.name.trim()) ? ch.name.trim() : cfg.label;
+      const svg = cfg.svgPath
+        ? `<svg viewBox="0 0 24 24" fill="${cfg.accent}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>`
+        : `<span style="font-size:26px">${cfg.label[0]||'?'}</span>`;
+      return `<a class="sc-item" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer">
+        <div class="sc-circle">${svg}</div>
+        <span class="sc-label">${escapeHtml(displayName)}</span>
+      </a>`;
+    }).join('');
 
-    return `<a class="sc-card" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer"
-      style="--sc-accent:${cfg.accent};--sc-glow:${cfg.glow||'rgba(201,168,76,.18)'}">
-      <div class="sc-icon">${svg}</div>
-      <div class="sc-name">${escapeHtml(displayName)}</div>
-      <span class="sc-btn">${escapeHtml(cfg.btnLabel)}</span>
-    </a>`;
-  }).join('');
+    html += `<div class="sc-group">
+      <div class="sc-group-header">
+        <span class="sc-group-label">${escapeHtml(group.label)}</span>
+        <span class="sc-group-arrow">›</span>
+      </div>
+      <div class="sc-icons-row">${itemsHtml}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
 }
+
 
 // Detect platform from URL/label/icon (also used by index.html)
 function detectContactPlatform(url, label, icon){
