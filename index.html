@@ -894,11 +894,26 @@
   @media(max-width:600px){
     .social-channels-section{padding:28px 16px 32px}
     .social-channels-head h2{font-size:22px}
-    .sc-icons-row{gap:14px}
-    .sc-item{width:68px}
-    .sc-circle{width:58px;height:58px}
-    .sc-circle svg{width:28px;height:28px}
-    .sc-label{font-size:11px;max-width:68px}
+    /* 4 per row on mobile — fixed 4 columns */
+    .sc-icons-row{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:8px;
+    }
+    .sc-item{width:auto}
+    .sc-circle{width:52px;height:52px;margin:0 auto}
+    .sc-circle svg{width:26px;height:26px}
+    .sc-label{font-size:10.5px;max-width:100%}
+  }
+  /* Desktop: auto-fill 4+ per row */
+  @media(min-width:601px){
+    .sc-icons-row{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+      gap:16px;
+      max-width:600px; /* cap so items don't spread too wide */
+    }
+    .sc-item{width:auto}
   }
 
   /* ─── HISTORY & STORIES / KNOWLEDGE CENTER ─────────────────────────────
@@ -6340,11 +6355,10 @@ function renderSocialChannels(){
     const pid = ch.id || detectContactPlatform(ch.url||'', ch.label||'', ch.icon||'');
     const cfg = SC_PLATFORM_CONFIG[pid] || {label:'Link', accent:'#c9a84c', svgPath:null};
 
-    // Group name: e.g. all facebook entries → "Official Facebook Pages"
     const groupId = pid || 'other';
     if(!groups.has(groupId)){
-      const groupLabel = pid === 'facebook' ? 'Official Facebook Pages'
-        : pid ? (cfg.label + ' Channels') : 'Other Links';
+      // Label = just the platform name (Facebook, Instagram, etc.)
+      const groupLabel = cfg.label || pid || 'Other';
       groups.set(groupId, {label:groupLabel, cfg, channels:[]});
     }
     groups.get(groupId).channels.push(ch);
