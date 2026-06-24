@@ -4251,16 +4251,17 @@ function applySettings(){
       <div class="trust-desc">${c.desc}</div>
     </div>`).join('');
 
-  setRich('amuletsTitle', s.sections.amulets.title);
-  setRich('amuletsDesc', s.sections.amulets.desc);
-  setRich('accTitle', s.sections.accessories.title);
-  setRich('accDesc', s.sections.accessories.desc);
-  setRich('casingTitle', s.sections.casing.title);
-  setRich('casingDesc', s.sections.casing.desc);
-  setRich('projTitle', s.sections.projects.title);
-  setRich('projDesc', s.sections.projects.desc);
-  setRich('aboutTitle', s.sections.about.title);
-  setRich('aboutDesc', s.sections.about.desc);
+  const sec = s.sections || {};
+  setRich('amuletsTitle', (sec.amulets||{}).title||'');
+  setRich('amuletsDesc',  (sec.amulets||{}).desc||'');
+  setRich('accTitle',     (sec.accessories||{}).title||'');
+  setRich('accDesc',      (sec.accessories||{}).desc||'');
+  setRich('casingTitle',  (sec.casing||{}).title||'');
+  setRich('casingDesc',   (sec.casing||{}).desc||'');
+  setRich('projTitle',    (sec.projects||{}).title||'');
+  setRich('projDesc',     (sec.projects||{}).desc||'');
+  setRich('aboutTitle',   (sec.about||{}).title||'');
+  setRich('aboutDesc',    (sec.about||{}).desc||'');
 
   renderTrustStrip();
   renderSocialChannels();

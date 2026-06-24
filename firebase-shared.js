@@ -147,13 +147,13 @@ function requestedPageFromUrl(){
 
 function keysForStorePage(page){
   switch(page){
-    case 'amulets':      return ['amulets'];
-    case 'accessories':  return ['accessories'];
-    case 'casing':       return ['casingTypes'];
-    case 'projects':     return ['projects'];
-    case 'reviews':      return ['reviews'];
-    case 'history-stories': return ['historyStories'];
-    case 'feed':         return ['feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
+    case 'amulets':      return ['settings','amulets'];
+    case 'accessories':  return ['settings','accessories'];
+    case 'casing':       return ['settings','casingTypes'];
+    case 'projects':     return ['settings','projects'];
+    case 'reviews':      return ['settings','reviews'];
+    case 'history-stories': return ['settings','historyStories'];
+    case 'feed':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
     case 'home':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
     default:             return ['settings'];
   }
