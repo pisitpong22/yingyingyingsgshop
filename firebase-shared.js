@@ -579,7 +579,10 @@ async function loadCasingTypesV2(meta){
 async function ensureCasingVariants(typeId, opts={}){
   const key = String(typeId);
   if(opts.force) _casingVariantsLoaded.delete(key);
-  if(_casingVariantsLoaded.has(key)) return;
+  if(_casingVariantsLoaded.has(key)){
+    console.log('[ensureCasingVariants] early return (already loaded) for key=',key,'opts=',opts);
+    return;
+  }
 
   const db = getDB();
   const ty = (db.casingTypes||[]).find(t=>String(t.id)===key);
@@ -599,6 +602,7 @@ async function ensureCasingVariants(typeId, opts={}){
 
   if(!variantIds.length){
     // No variants in index — type genuinely has no styles yet
+    console.warn('[ensureCasingVariants] EMPTY variantIds for key=',key,'_casingVariantIds=',_casingVariantIds[key],'ty._variantIds=',ty._variantIds,'_dbMeta ids=',(_dbMeta?._casingVariantIds||{})[key]);
     ty.variants = [];
     _casingVariantsLoaded.add(key);
     return;
