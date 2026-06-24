@@ -5238,7 +5238,19 @@ async function enterTypeView(typeId){
 async function loadVariants(){
   const c=document.getElementById('variantsList');
   if(!c) return;
-  c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">Loading styles…</div>`;
+
+  // Only show "Loading…" if no hint of existing variants.
+  // If _variantIds or variants are already in memory, keep the current list visible
+  // while the async reload runs in the background (prevents blank flash).
+  const dbNow=getDB();
+  const tyNow=(dbNow.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+  const knowsVariantsExist = tyNow && (
+    (Array.isArray(tyNow.variants) && tyNow.variants.length > 0) ||
+    (Array.isArray(tyNow._variantIds) && tyNow._variantIds.length > 0)
+  );
+  if(!knowsVariantsExist){
+    c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">Loading styles…</div>`;
+  }
 
   try {
     if(window.FB && window.FB.ensureCasingVariants && curEditTypeId!=null){
@@ -5254,8 +5266,7 @@ async function loadVariants(){
     c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
     return;
   }
-  vars.sort((a,b)=>String(a.name||a.id||'').localeCompare(String(b.name||b.id||''),undefined,{numeric:true,sensitivity:'base'}));
-
+  // Order is preserved from Firestore (drag-drop reorder saves canonical order)
   _renderVariantTable(vars,c);
 }
 
@@ -5368,7 +5379,6 @@ function reloadCurrentCasingStyles(){
     list.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
     return;
   }
-  vars.sort((a,b)=>String(a.name||a.id||'').localeCompare(String(b.name||b.id||''),undefined,{numeric:true,sensitivity:'base'}));
   _renderVariantTable(vars, list);
 }
 
