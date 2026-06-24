@@ -837,83 +837,82 @@
 
 
   /* ─── SOCIAL CHANNELS SECTION ─────────────────────────────────────────── */
-  /* ─── SOCIAL CHANNELS — grouped circular icon layout ──────────────────── */
+  /* ─── SOCIAL CHANNELS — flat single row, no platform headings ───────── */
   .social-channels-section{
-    padding:40px 20px 44px;
+    padding:32px 20px 36px;
     background:linear-gradient(180deg,#fdf8ef 0%,#fffcf5 100%);
     border-top:1px solid rgba(201,168,76,.12);
     border-bottom:1px solid rgba(201,168,76,.1);
   }
-  .social-channels-inner{max-width:860px;margin:0 auto}
+  .social-channels-inner{max-width:920px;margin:0 auto}
 
-  .social-channels-head{text-align:center;margin-bottom:28px}
+  /* Header */
+  .social-channels-head{text-align:center;margin-bottom:24px}
   .social-channels-head h2{
-    font-family:var(--font-display);font-size:28px;font-weight:900;
-    color:var(--text);margin:0 0 4px;letter-spacing:-.3px;
-    display:flex;align-items:center;justify-content:center;gap:12px;
+    font-family:var(--font-display);font-size:24px;font-weight:900;
+    color:var(--text);margin:0;letter-spacing:-.2px;
+    display:flex;align-items:center;justify-content:center;gap:10px;
   }
-  .sc-sparkle{color:var(--gold);font-size:20px;opacity:.75}
-  .social-channels-head p{font-size:14px;color:var(--text-muted);margin:10px 0 0;line-height:1.6}
-  .sc-head-divider{width:44px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:10px auto 0;border-radius:2px}
+  .sc-sparkle{color:var(--gold);font-size:17px;opacity:.75}
+  .social-channels-head p{font-size:13px;color:var(--text-muted);margin:8px 0 0;line-height:1.5}
+  .sc-head-divider{width:36px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:8px auto 0;border-radius:2px}
 
-  /* Group of items */
-  .sc-group{margin-bottom:28px}
-  .sc-group:last-child{margin-bottom:0}
-  .sc-group-header{
-    display:flex;align-items:center;justify-content:space-between;
-    margin-bottom:18px;padding-bottom:10px;
-    border-bottom:1px solid rgba(201,168,76,.18);
-    cursor:default;
+  /* Flat grid — desktop: 8 per row, mobile: 4 per row */
+  #scGrid{
+    display:grid;
+    grid-template-columns:repeat(8,minmax(0,1fr));
+    gap:10px 8px;
+    align-items:start;
   }
-  .sc-group-label{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dark)}
-  .sc-group-arrow{font-size:13px;color:var(--gold-dark);opacity:.55}
 
-  /* Circular icon + name */
-  .sc-icons-row{display:flex;gap:20px;flex-wrap:wrap}
+  /* Each item */
   .sc-item{
-    display:flex;flex-direction:column;align-items:center;gap:9px;
-    text-decoration:none;cursor:pointer;width:78px;
-    transition:transform .22s cubic-bezier(.22,1,.36,1);
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    text-decoration:none;cursor:pointer;
+    transition:transform .2s cubic-bezier(.22,1,.36,1);
   }
-  .sc-item:hover{transform:translateY(-4px)}
+  .sc-item:hover{transform:translateY(-3px)}
+
+  /* Circular icon */
   .sc-circle{
-    width:66px;height:66px;border-radius:50%;
+    width:56px;height:56px;border-radius:50%;
     display:flex;align-items:center;justify-content:center;
     background:#fff;
-    box-shadow:0 4px 16px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.06);
-    transition:box-shadow .22s;flex-shrink:0;overflow:hidden;
+    box-shadow:0 3px 10px rgba(0,0,0,.1),0 1px 3px rgba(0,0,0,.06);
+    flex-shrink:0;overflow:hidden;
+    transition:box-shadow .2s;
   }
-  .sc-item:hover .sc-circle{box-shadow:0 8px 24px rgba(0,0,0,.16)}
-  .sc-circle svg{width:34px;height:34px}
-  .sc-label{
-    font-family:var(--font-display);font-size:12px;font-weight:700;
-    color:var(--text);text-align:center;line-height:1.3;
-    word-break:break-word;max-width:78px;
+  .sc-item:hover .sc-circle{box-shadow:0 6px 18px rgba(0,0,0,.14),0 0 0 2px rgba(201,168,76,.2)}
+  .sc-circle svg{width:30px;height:30px}
+
+  /* Name — controlled wrapping, no platform label */
+  .sc-name{
+    display:flex;flex-direction:column;align-items:center;
+    text-align:center;
+    gap:0;
+  }
+  .sc-name span{
+    display:block;
+    font-family:var(--font-display);
+    font-size:10.5px;font-weight:700;
+    color:var(--text);line-height:1.25;
+    white-space:nowrap; /* each span stays on its own line, no random breaks */
+  }
+  /* Mobile: overflow truncate fallback */
+  @media(max-width:600px){
+    .sc-name span{font-size:9.5px}
   }
 
-  @media(max-width:600px){
-    .social-channels-section{padding:28px 16px 32px}
-    .social-channels-head h2{font-size:22px}
-    /* 4 per row on mobile — fixed 4 columns */
-    .sc-icons-row{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:8px;
+  /* Mobile: 4 per row */
+  @media(max-width:640px){
+    .social-channels-section{padding:24px 14px 28px}
+    #scGrid{
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px 6px;
     }
-    .sc-item{width:auto}
-    .sc-circle{width:52px;height:52px;margin:0 auto}
-    .sc-circle svg{width:26px;height:26px}
-    .sc-label{font-size:10.5px;max-width:100%}
-  }
-  /* Desktop: auto-fill 4+ per row */
-  @media(min-width:601px){
-    .sc-icons-row{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
-      gap:16px;
-      max-width:600px; /* cap so items don't spread too wide */
-    }
-    .sc-item{width:auto}
+    .sc-circle{width:48px;height:48px}
+    .sc-circle svg{width:25px;height:25px}
+    .social-channels-head h2{font-size:20px}
   }
 
   /* ─── HISTORY & STORIES / KNOWLEDGE CENTER ─────────────────────────────
@@ -6313,7 +6312,8 @@ const SC_PLATFORM_CONFIG = {
   shopee: {
     label:'Shopee', accent:'#EE4D2D', glow:'rgba(238,77,45,.16)',
     btnLabel:'Shopee',
-    svgPath:'M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 4.5c1.933 0 3.5 1.567 3.5 3.5S13.933 11.5 12 11.5 8.5 9.933 8.5 8 10.067 4.5 12 4.5zM6 17.5c0-2.761 2.686-5 6-5s6 2.239 6 5H6z',
+    // Official Shopee shopping bag icon
+    svgPath:'M17.5 4h-2A3.5 3.5 0 0 0 12 .5 3.5 3.5 0 0 0 8.5 4h-2A1.5 1.5 0 0 0 5 5.5v15A1.5 1.5 0 0 0 6.5 22h11a1.5 1.5 0 0 0 1.5-1.5v-15A1.5 1.5 0 0 0 17.5 4zm-5.5-2a2 2 0 0 1 2 2h-4a2 2 0 0 1 2-2zm0 11a3 3 0 1 1 3-3 3 3 0 0 1-3 3zm0-4.5a1.5 1.5 0 1 0 1.5 1.5A1.5 1.5 0 0 0 12 8.5z',
   },
   line: {
     label:'LINE', accent:'#06C755', glow:'rgba(6,199,85,.16)',
@@ -6321,6 +6321,22 @@ const SC_PLATFORM_CONFIG = {
     svgPath:'M19.952 11.563c0-4.261-4.268-7.729-9.512-7.729-5.24 0-9.512 3.468-9.512 7.729 0 3.82 3.384 7.019 7.955 7.627.31.067.733.205.839.47.096.24.063.619.031.863l-.136.82c-.041.24-.192.938.819.511 1.01-.427 5.456-3.213 7.444-5.5h-.001c1.374-1.506 2.073-3.036 2.073-4.791z',
   },
 };
+
+// Format channel display name into controlled line-break spans
+// Prevents "Yingyingyin g Amulet" style breaks
+function formatSCName(raw){
+  const n = (raw||'').trim();
+  // Controlled two-line patterns
+  const patterns = [
+    [/^Yingyingying (.+)$/, m => [m[1], null, 'Yingyingying', m[2]]],
+  ];
+  // Specific known names
+  if(n === 'Guardian House Amulet') return '<span>Guardian House</span><span>Amulet</span>';
+  if(n === 'Ying Bring You Tour')   return '<span>Ying Bring</span><span>You Tour</span>';
+  if(n.startsWith('Yingyingying '))  return `<span>Yingyingying</span><span>${escapeHtml(n.slice(14))}</span>`;
+  // Single-line names
+  return `<span>${escapeHtml(n)}</span>`;
+}
 
 function renderSocialChannels(){
   const db = getDB();
@@ -6330,7 +6346,7 @@ function renderSocialChannels(){
   const sc = db.settings.socialChannels || {};
   if(sc.enabled === false){ el.style.display='none'; return; }
 
-  // Channels = contacts with showOnHome=true, or legacy socialChannels.channels
+  // Source: contacts with showOnHome=true, OR legacy socialChannels.channels
   let channels;
   const contactsWithHome = (db.settings.contacts||[]).filter(c=>c.showOnHome && c.url && c.url.trim());
   if(contactsWithHome.length){
@@ -6342,56 +6358,36 @@ function renderSocialChannels(){
   if(!channels.length){ el.style.display='none'; return; }
   el.style.display='';
 
-  // Title + subtitle
+  // Title
   const titleEl = document.getElementById('scTitle');
   if(titleEl) titleEl.innerHTML =
     `<span class="sc-sparkle">✦</span>${escapeHtml(sc.title||'Follow Us')}<span class="sc-sparkle">✦</span>`;
   const subEl = document.getElementById('scSubtitle');
   if(subEl) subEl.textContent = sc.subtitle || 'Stay connected with our official pages & social channels';
 
-  // Group channels by platform
-  const groups = new Map(); // platformId → {label, channels[]}
-  channels.forEach(ch => {
-    const pid = ch.id || detectContactPlatform(ch.url||'', ch.label||'', ch.icon||'');
-    const cfg = SC_PLATFORM_CONFIG[pid] || {label:'Link', accent:'#c9a84c', svgPath:null};
-
-    const groupId = pid || 'other';
-    if(!groups.has(groupId)){
-      // Label = just the platform name (Facebook, Instagram, etc.)
-      const groupLabel = cfg.label || pid || 'Other';
-      groups.set(groupId, {label:groupLabel, cfg, channels:[]});
-    }
-    groups.get(groupId).channels.push(ch);
-  });
-
-  // Render groups
+  // Flat list — all channels in one grid, no groups, no platform labels
   const grid = document.getElementById('scGrid');
   if(!grid) return;
 
-  let html = '';
-  for(const [groupId, group] of groups){
-    const cfg = group.cfg;
-    const itemsHtml = group.channels.map(ch => {
-      const displayName = (ch.label&&ch.label.trim()) ? ch.label.trim()
-        : (ch.name&&ch.name.trim()) ? ch.name.trim() : cfg.label;
-      const svg = cfg.svgPath
-        ? `<svg viewBox="0 0 24 24" fill="${cfg.accent}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>`
-        : `<span style="font-size:26px">${cfg.label[0]||'?'}</span>`;
-      return `<a class="sc-item" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer">
-        <div class="sc-circle">${svg}</div>
-        <span class="sc-label">${escapeHtml(displayName)}</span>
-      </a>`;
-    }).join('');
+  grid.innerHTML = channels.map(ch => {
+    const pid = ch.id || detectContactPlatform(ch.url||'', ch.label||'', ch.icon||'');
+    const cfg = SC_PLATFORM_CONFIG[pid] || {label:'Link', accent:'#c9a84c', svgPath:null};
 
-    html += `<div class="sc-group">
-      <div class="sc-group-header">
-        <span class="sc-group-label">${escapeHtml(group.label)}</span>
-        <span class="sc-group-arrow">›</span>
-      </div>
-      <div class="sc-icons-row">${itemsHtml}</div>
-    </div>`;
-  }
-  grid.innerHTML = html;
+    const displayName = (ch.label && ch.label.trim()) ? ch.label.trim()
+      : (ch.name  && ch.name.trim())  ? ch.name.trim()  : '';
+
+    const svg = cfg.svgPath
+      ? `<svg viewBox="0 0 24 24" fill="${cfg.accent}" xmlns="http://www.w3.org/2000/svg"><path d="${cfg.svgPath}"/></svg>`
+      : `<span style="font-size:22px">${cfg.label[0]||'?'}</span>`;
+
+    const nameHtml = displayName ? `<div class="sc-name">${formatSCName(displayName)}</div>` : '';
+
+    return `<a class="sc-item" href="${escapeHtml(ch.url)}" target="_blank" rel="noopener noreferrer"
+      title="${escapeHtml(displayName)}">
+      <div class="sc-circle">${svg}</div>
+      ${nameHtml}
+    </a>`;
+  }).join('');
 }
 
 
