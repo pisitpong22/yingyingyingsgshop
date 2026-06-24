@@ -6326,15 +6326,13 @@ const SC_PLATFORM_CONFIG = {
 // Prevents "Yingyingyin g Amulet" style breaks
 function formatSCName(raw){
   const n = (raw||'').trim();
-  // Controlled two-line patterns
-  const patterns = [
-    [/^Yingyingying (.+)$/, m => [m[1], null, 'Yingyingying', m[2]]],
-  ];
-  // Specific known names
+  const PREFIX = 'Yingyingying '; // 13 chars including the trailing space
   if(n === 'Guardian House Amulet') return '<span>Guardian House</span><span>Amulet</span>';
   if(n === 'Ying Bring You Tour')   return '<span>Ying Bring</span><span>You Tour</span>';
-  if(n.startsWith('Yingyingying '))  return `<span>Yingyingying</span><span>${escapeHtml(n.slice(14))}</span>`;
-  // Single-line names
+  if(n.startsWith(PREFIX)){
+    const rest = escapeHtml(n.slice(PREFIX.length)); // slice at 13, not 14
+    return `<span>Yingyingying</span><span>${rest}</span>`;
+  }
   return `<span>${escapeHtml(n)}</span>`;
 }
 
