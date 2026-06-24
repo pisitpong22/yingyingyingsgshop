@@ -3241,7 +3241,12 @@ async function persistDB(db, successMsg, opts={}){
     return false;
   }
 }
-function genId(arr){return arr.length?Math.max(...arr.map(i=>i.id))+1:1;}
+function genId(arr){
+  if(!arr.length) return 1;
+  // Parse ids as numbers; skip non-numeric (string) ids to avoid NaN
+  const nums = arr.map(i=>Number(i.id)).filter(n=>!isNaN(n) && isFinite(n));
+  return nums.length ? Math.max(...nums) + 1 : arr.length + 1;
+}
 
 // ─── PANEL SHORTCUT REDIRECTS ──────────────────────────────────────────────
 // Old sidebar items pointed at granular panels (content-hero, content-services,
@@ -5284,7 +5289,11 @@ function openVariantForm(varId=null){
     if(v){
       document.getElementById('fv_name').value  = v.name  || '';
       document.getElementById('fv_price').value = v.price != null ? v.price : '';
-      if(Array.isArray(v.imgs)) v.imgs.forEach(u=>addImgPreview('fv_imgs',u));
+      // Load existing images into tempImgs, then render previews
+      if(Array.isArray(v.imgs) && v.imgs.length){
+        tempImgs['fv_imgs'] = [...v.imgs]; // existing URLs as plain strings → renderPrev normalises
+        renderPrev('fv_imgs');
+      }
     }
   }
   document.getElementById('variantModalTitle').textContent = varId ? tr('editStyle') : tr('addStyle');
