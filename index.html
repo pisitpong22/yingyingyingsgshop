@@ -492,16 +492,35 @@
   .scroll-cue::after{content:'';width:1px;height:30px;background:linear-gradient(180deg,var(--gold),transparent)}
   @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
 
-  .sec-head{text-align:center;padding:68px 24px 46px;background:linear-gradient(180deg,var(--deep) 0%,#1e1400 100%)}
-  .sec-head h2{font-family:var(--font-display);font-size:34px;color:var(--gold-light);margin-bottom:10px}
-  .sec-head p{color:#c8b888;font-size:15px;max-width:min(1080px,calc(100vw - 48px));margin:0 auto;line-height:1.8}
-  .sec-head h2 b,.sec-head h2 strong{font-weight:700}
-  .sec-head h2 i,.sec-head h2 em{font-style:italic}
-  .sec-head h2 u{text-decoration-color:rgba(232,201,106,.65);text-underline-offset:4px}
-  .sec-head p b,.sec-head p strong{font-weight:700;color:#f1d77a}
+  .sec-head{
+    text-align:center;
+    padding:56px 24px 44px;
+    background:
+      radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.1) 0%,transparent 60%),
+      linear-gradient(180deg,#fdf6e4 0%,#f9edd0 100%);
+    border-bottom:1px solid rgba(201,168,76,.16);
+    position:relative;
+  }
+  .sec-head::before{
+    content:'';
+    position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,.5),rgba(201,168,76,.8),rgba(201,168,76,.5),transparent);
+  }
+  .sec-head h2{
+    font-family:var(--font-display);font-size:36px;
+    background:linear-gradient(135deg,#a07828,#c9a84c,#e8c96a);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    margin-bottom:10px;font-weight:800;
+  }
+  .sec-head .gline{width:48px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto 16px;border-radius:2px}
+  .sec-head p{color:#6b5030;font-size:14.5px;max-width:min(860px,calc(100vw - 48px));margin:0 auto;line-height:1.8}
+  .sec-head p b,.sec-head p strong{font-weight:700;color:#7a5c1e}
   .sec-head p i,.sec-head p em{font-style:italic}
-  .sec-head p u{text-decoration-color:rgba(232,201,106,.55);text-underline-offset:3px}
-  .sec-head p h2,.sec-head p h3{font-family:var(--font-display);color:var(--gold-light);line-height:1.35;margin:.8em 0 .35em}
+  .sec-head p u{text-decoration-color:rgba(201,168,76,.55);text-underline-offset:3px}
+  .sec-head p h2,.sec-head p h3{font-family:var(--font-display);color:var(--gold-dark);line-height:1.35;margin:.8em 0 .35em}
+  .sec-head h2 b,.sec-head h2 strong{font-weight:800}
+  .sec-head h2 i,.sec-head h2 em{font-style:italic}
+  .sec-head h2 u{text-decoration-color:rgba(201,168,76,.5);text-underline-offset:4px}
   .sec-head p h2{font-size:22px}
   .sec-head p h3{font-size:18px}
   .sec-head p ul,.sec-head p ol{display:inline-block;text-align:left;margin:.45em auto .45em 1.4em;padding:0;max-width:100%}
@@ -613,6 +632,10 @@
     content-visibility:auto;
     contain-intrinsic-size:auto 800px;
   }
+  /* Casing page: cream background throughout (no dark gradient) */
+  #page-casing{
+    background:linear-gradient(180deg,#f9edd0 0%,#fdf8ef 160px,#fdf8ef 100%);
+  }
   /* The hero is always visible — opt OUT so it never has to be re-painted */
   #page-home .hero-wrap{content-visibility:visible}
   .card-ph{display:flex;flex-direction:column;align-items:center;gap:7px;color:#6a5030}
@@ -696,7 +719,7 @@
   .ftype-arrow{color:var(--gold-dark);font-weight:700;font-size:14px}
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
-  .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+  .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
   /* ───── CASING TYPE DETAIL PAGE ───── */
   .casing-detail-head{
     margin:14px 0 36px;
@@ -1263,54 +1286,62 @@
   .casing-finder-panel{
     position:sticky;
     top:86px;
+    /* Liquid glass — cream base, gold accents */
     background:
-      radial-gradient(circle at 28% 0%,rgba(232,201,106,.14),transparent 34%),
-      linear-gradient(180deg,#171006 0%,#221707 100%);
-    color:var(--gold-light);
-    border:1px solid rgba(201,168,76,.24);
-    border-radius:18px;
+      radial-gradient(circle at 20% 0%,rgba(201,168,76,.09),transparent 40%),
+      rgba(255,252,240,.85);
+    backdrop-filter:blur(20px) saturate(150%);
+    -webkit-backdrop-filter:blur(20px) saturate(150%);
+    color:var(--text);
+    border:1px solid rgba(201,168,76,.28);
+    border-top:2px solid rgba(201,168,76,.4);
+    border-radius:20px;
     padding:24px;
-    box-shadow:0 18px 60px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.04);
+    box-shadow:
+      0 12px 40px rgba(120,80,20,.1),
+      0 1px 0 rgba(255,255,255,.95) inset;
   }
-  .casing-finder-panel .crumb{margin-bottom:18px;color:#9e8a60}
-  .casing-finder-panel .crumb a{color:var(--gold-light)}
-  .casing-finder-panel .crumb-cur{color:#f0dd9b}
+  .casing-finder-panel .crumb{margin-bottom:16px;color:var(--text-muted);font-size:12.5px}
+  .casing-finder-panel .crumb a{color:var(--gold-dark);font-weight:600}
+  .casing-finder-panel .crumb-cur{color:var(--text);font-weight:700}
   .casing-finder-panel .casing-detail-title-row{display:block;margin-bottom:14px}
   .casing-finder-panel .casing-detail-title{
-    color:#f4d96e;
-    font-size:30px;
-    line-height:1.08;
-    margin-bottom:12px;
+    font-family:var(--font-display);
+    background:linear-gradient(135deg,#a07828,#c9a84c);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    font-size:28px;line-height:1.1;margin-bottom:10px;font-weight:800;
   }
   .casing-finder-panel .casing-detail-price-badge{
-    background:rgba(201,168,76,.12);
-    border-color:rgba(201,168,76,.38);
+    background:rgba(201,168,76,.1);
+    border-color:rgba(201,168,76,.3);
     box-shadow:none;
   }
-  .casing-finder-panel .cd-price-chip-label{color:#d8c076}
-  .casing-finder-panel .cd-price-chip-value{color:#f4d96e}
+  .casing-finder-panel .cd-price-chip-label{color:var(--gold-dark)}
+  .casing-finder-panel .cd-price-chip-value{color:var(--gold-dark)}
   .casing-finder-panel .casing-detail-desc{
-    background:rgba(255,255,255,.045);
-    border-color:rgba(201,168,76,.18);
-    border-left-color:var(--gold);
-    color:#d8c896;
+    background:rgba(255,252,240,.5);
+    border-color:rgba(201,168,76,.2);
+    border-left:3px solid var(--gold);
+    color:var(--text-muted);
     box-shadow:none;
-    padding:16px 18px;
-    margin:18px 0;
+    padding:14px 16px;
+    margin:16px 0;
+    border-radius:0 10px 10px 0;
   }
   .casing-finder-panel .casing-detail-desc strong,
-  .casing-finder-panel .casing-detail-desc b{color:#f0dd9b}
+  .casing-finder-panel .casing-detail-desc b{color:var(--text);font-weight:700}
   .casing-finder-panel .casing-timeframe{
-    background:linear-gradient(135deg,#ffe37b 0%,#d6ad33 100%);
-    color:#1d1304;
-    border-color:rgba(255,239,174,.42);
-    box-shadow:0 10px 24px rgba(214,173,51,.22);
+    background:linear-gradient(135deg,rgba(255,228,106,.3),rgba(201,168,76,.15));
+    color:var(--gold-dark);
+    border-color:rgba(201,168,76,.3);
+    box-shadow:none;
+    font-weight:700;
   }
   .finder-kicker{
     font-size:11px;
     letter-spacing:1.8px;
     text-transform:uppercase;
-    color:#c8b36a;
+    color:var(--gold-dark);
     font-weight:800;
     margin:4px 0 10px;
   }
@@ -1336,12 +1367,12 @@
     border-color:rgba(232,201,106,.55);
   }
   .casing-finder-panel .search-input{
-    background:rgba(255,249,238,.08);
-    border-color:rgba(201,168,76,.24);
-    color:#f4e8bd;
+    background:rgba(255,252,240,.7);
+    border-color:rgba(201,168,76,.25);
+    color:var(--text);
   }
-  .casing-finder-panel .search-input::placeholder{color:#8f7a47}
-  .casing-finder-panel .search-input-wrap::before{opacity:.45;color:#d8c076}
+  .casing-finder-panel .search-input::placeholder{color:#b8a07a}
+  .casing-finder-panel .search-input-wrap::before{opacity:.6;color:var(--gold-dark)}
   .casing-finder-panel .casing-style-strip{
     flex-direction:column;
     max-height:330px;
@@ -1353,8 +1384,8 @@
     width:100%;
     justify-content:space-between;
     max-width:none;
-    background:rgba(255,249,238,.07);
-    border-color:rgba(201,168,76,.18);
+    background:rgba(255,252,240,.6);
+    border-color:rgba(201,168,76,.2);
     color:#eadba8;
   }
   .casing-finder-panel .casing-style-chip .chip-price{color:#d6bd63}
