@@ -5278,10 +5278,10 @@ function renderCasingTypes(){
   }).join('');
 }
 
-async function openCasingType(typeId){
+async function openCasingType(typeId, {scroll=true}={}){
   curCasingType=typeId;
   _variantRenderToken++;
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(scroll) window.scrollTo({top:0,behavior:'smooth'});
   const db=getDB();
   const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
 
@@ -5592,7 +5592,7 @@ function renderVariantsLoading(typeId){
 
 function renderVariants(typeId){
   const db=getDB();
-  const ty=(db.casingTypes||[]).find(x=>x.id===typeId);
+  const ty=(db.casingTypes||[]).find(x=>String(x.id)===String(typeId));
   if(!ty){curCasingType=null;renderCasingTypes();return;}
   document.getElementById('casingTypes').style.display='none';
   document.getElementById('casingVariants').style.display='block';
@@ -7165,8 +7165,13 @@ async function bootIndex(){
         const active=document.querySelector('.page.active');
         const page=active ? active.id.replace(/^page-/,'') : pageFromUrl() || 'home';
         if(page==='casing'){
-          if(curCasingType) renderVariants(curCasingType);
-          else renderCasingTypes();
+          if(curCasingType){
+            // Re-open with full reload so ensureCasingVariants runs fresh
+            // (covers type edit + variant updates from admin without refresh)
+            openCasingType(curCasingType, {scroll:false}).catch(()=>{});
+          } else {
+            renderCasingTypes();
+          }
         } else if(page==='home'){
           // Reset flag so a full reload can happen if DB changed
           // (e.g. historyStories was just loaded for the first time)

@@ -2798,7 +2798,12 @@ function refreshDynamic(){
   else if(active.id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(active.id==='panel-casing'){
     loadPanelPageIntro('casing');
-    if(curEditTypeId) loadVariants(); else loadCasingTypes();
+    // Always reload type list counts. If in variant view, also refresh variant list.
+    if(curEditTypeId){
+      loadVariants(); // async — ensureCasingVariants runs fresh if cache cleared
+    } else {
+      loadCasingTypes();
+    }
   }
   else if(active.id==='panel-content-nav'){loadNav();loadCustomPagesList();}
   else if(active.id==='panel-content-hero'){
@@ -5171,7 +5176,28 @@ async function saveType(){
     db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[],updatedAt});
   }
   if(!(await persistDB(db,tr('saved')))) return;
-  tempImgs={};closeModal('typeModal');loadCasingTypes();loadDash();
+  tempImgs={};
+  closeModal('typeModal');
+  loadCasingTypes();
+  loadDash();
+  // If currently in variant view for this type, reload it to reflect name/price changes
+  // Also invalidate variant cache so next openVariantForm gets fresh data
+  if(curEditTypeId != null){
+    const editedKey = String(curEditTypeId);
+    if(window.FB && window.FB.ensureCasingVariants){
+      // Force-invalidate so next loadVariants does a fresh Firestore pull
+      try{ await window.FB.ensureCasingVariants(editedKey, {force:true}); }catch(e){}
+    }
+    // Update variant view breadcrumb and header with new name
+    const freshTy=(getDB().casingTypes||[]).find(t=>String(t.id)===editedKey);
+    if(freshTy){
+      const crumbEl=document.getElementById('vCrumbName');
+      const nameEl=document.getElementById('vTypeName');
+      if(crumbEl) crumbEl.textContent=freshTy.name;
+      if(nameEl)  nameEl.textContent=freshTy.name;
+    }
+    loadVariants();
+  }
 }
 
 async function delType(typeId){
@@ -5275,8 +5301,15 @@ function _renderVariantTable(vars, c){
 
 
 // ─── CASING VARIANT FORM ─────────────────────────────────────────────────────
-function openVariantForm(varId=null){
+async function openVariantForm(varId=null){
   curEditVariantId = varId || null;
+
+  // Ensure variants are loaded before reading — handles stale cache after saveType
+  if(varId && curEditTypeId != null && window.FB && window.FB.ensureCasingVariants){
+    try { await window.FB.ensureCasingVariants(curEditTypeId); }
+    catch(e){ console.warn('[admin] openVariantForm ensure:', e); }
+  }
+
   const ty = (getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
 
   document.getElementById('fv_name').value  = '';
@@ -5289,9 +5322,8 @@ function openVariantForm(varId=null){
     if(v){
       document.getElementById('fv_name').value  = v.name  || '';
       document.getElementById('fv_price').value = v.price != null ? v.price : '';
-      // Load existing images into tempImgs, then render previews
       if(Array.isArray(v.imgs) && v.imgs.length){
-        tempImgs['fv_imgs'] = [...v.imgs]; // existing URLs as plain strings → renderPrev normalises
+        tempImgs['fv_imgs'] = [...v.imgs];
         renderPrev('fv_imgs');
       }
     }
