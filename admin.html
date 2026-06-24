@@ -2791,33 +2791,44 @@ function setLang(l){
 
 function refreshDynamic(){
   const active=document.querySelector('.panel.active');if(!active)return;
-  if(active.id==='panel-amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
-  if(active.id==='panel-history-stories') loadHsPanel();
-  else if(typeof _hsUnsubscribe === 'function'){ try{_hsUnsubscribe();}catch(e){} _hsUnsubscribe=null; }
-  else if(active.id==='panel-accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
-  else if(active.id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
-  else if(active.id==='panel-casing'){
+  const id=active.id;
+  const tabContent=active.getAttribute('data-tab-content');
+  const tabParent=active.getAttribute('data-parent');
+
+  if(id==='panel-amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
+  else if(id==='panel-history-stories') loadHsPanel();
+  else if(id==='panel-accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
+  else if(id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
+  else if(id==='panel-casing'){
     loadPanelPageIntro('casing');
-    // Always reload type list counts. If in variant view, also refresh variant list.
-    if(curEditTypeId){
-      loadVariants(); // async — ensureCasingVariants runs fresh if cache cleared
-    } else {
-      loadCasingTypes();
-    }
+    if(curEditTypeId) loadVariants();
+    else loadCasingTypes();
   }
-  else if(active.id==='panel-content-nav'){loadNav();loadCustomPagesList();}
-  else if(active.id==='panel-content-hero'){
+  else if(id==='panel-reviews') loadReviewsPanel();
+  else if(id==='panel-content-nav'){loadNav();loadCustomPagesList();}
+  else if(id==='panel-content-hero'){
     const h=getDB().settings.hero;
     renderHeroBtns(h.buttons||[]);renderHeroStats(h.stats||[]);
   }
-  else if(active.id==='panel-content-services'){renderSvcList(getDB().settings.homeServices.cards||[]);}
-  else if(active.id==='panel-content-trust'){renderTrustList(getDB().settings.trustCards||[]);}
-  else if(active.id==='panel-content-contact'){loadContact();}
-  else if(active.id==='panel-content-payment'){loadPayment();}
-  else if(active.id==='panel-content-featured'){loadFeatured();}
-  else if(active.getAttribute('data-tab-content')==='social' && active.getAttribute('data-parent')==='home'){loadSocialChannels();}
-  else if(active.getAttribute('data-tab-content')==='seo' && active.getAttribute('data-parent')==='settings'){loadSeoPanel();}
-  else if(active.id==='panel-reviews'){loadReviewsPanel();}
+  else if(id==='panel-content-services') renderSvcList(getDB().settings.homeServices.cards||[]);
+  else if(id==='panel-content-trust')    renderTrustList(getDB().settings.trustCards||[]);
+  else if(id==='panel-content-contact')  loadContact();
+  else if(id==='panel-content-payment')  loadPayment();
+  else if(id==='panel-content-featured') loadFeatured();
+  else if(tabContent==='social' && tabParent==='home')    loadSocialChannels();
+  else if(tabContent==='seo'    && tabParent==='settings') loadSeoPanel();
+  else if(tabContent==='feed'   && tabParent==='home')     loadFeedPosts();
+  else if(tabContent==='hero'   && tabParent==='home'){
+    const h=getDB().settings.hero;
+    renderHeroBtns(h.buttons||[]);renderHeroStats(h.stats||[]);
+    loadPanelPageIntro('home');
+  }
+  else if(tabContent==='trust'     && tabParent==='home') renderTrustList(getDB().settings.trustCards||[]);
+  else if(tabContent==='services'  && tabParent==='home') renderSvcList(getDB().settings.homeServices.cards||[]);
+  else if(tabContent==='contact'   && tabParent==='checkout') loadContact();
+  else if(tabContent==='payment'   && tabParent==='checkout') loadPayment();
+  // Settings tabs
+  else if(tabContent==='seo' && tabParent==='settings') loadSeoPanel();
 }
 
 // Wrap confirm to use translated text
@@ -3465,7 +3476,7 @@ async function saveBranding(){
   db.settings.logoSub=document.getElementById('b_logoSub').value;
   db.settings.topbar=document.getElementById('b_topbar').value;
   db.settings.displayFont=_selectedFont||'Noto Serif';
-  await persistDB(db,tr('brandingSaved'));
+  if(await persistDB(db,tr('brandingSaved'))) refreshDynamic();
 }
 
 // NAV
@@ -3963,6 +3974,7 @@ async function saveHero(){
   db.settings.hero.buttons=captureHeroBtns();
   db.settings.hero.stats=captureHeroStats();
   await persistDB(db,tr('heroSaved'));
+  refreshDynamic();
 }
 
 // Quick way to wipe all hero visuals (bg image, glb, front/back images)
@@ -4194,6 +4206,7 @@ async function saveServices(){
   db.settings.homeServices.title=document.getElementById('svc_title').value;
   db.settings.homeServices.cards=captureSvc();
   await persistDB(db,tr('serviceSaved'));
+  refreshDynamic();
 }
 
 // FEED POSTS
@@ -4491,7 +4504,7 @@ async function saveSections(){
     }
   });
 
-  await persistDB(db,tr('sectionsSaved'));
+  if(await persistDB(db,tr('sectionsSaved'))) refreshDynamic();
 }
 
 const PAGE_INTRO_LABELS = {
@@ -4584,7 +4597,7 @@ function captureTrust(){
 }
 function addTrustCard(){const cur=captureTrust();cur.push({icon:'⭐',stat:'',title:'New Feature',desc:'Description'});renderTrustList(cur);}
 function rmTrust(i){const cur=captureTrust();cur.splice(i,1);renderTrustList(cur);}
-async function saveTrust(){const db=getDB();db.settings.trustCards=captureTrust();await persistDB(db,tr('trustSaved'));}
+async function saveTrust(){const db=getDB();db.settings.trustCards=captureTrust();if(await persistDB(db,tr('trustSaved')))refreshDynamic();}
 
 // CONTACT
 function loadContact(){
@@ -4718,6 +4731,7 @@ async function saveContact(){
   db.settings.casingInquiryText=document.getElementById('cinq_text').value;
   db.settings.casingInquiryMessage=document.getElementById('cinq_msg').value;
   await persistDB(db,tr('contactSaved'));
+  refreshDynamic();
 }
 
 // ── PAYMENT ──
@@ -4781,6 +4795,7 @@ async function saveFeatured(){
     ids:db.settings.featured?.ids||[],
   };
   await persistDB(db,tr('featuredSaved'));
+  refreshDynamic();
 }
 
 // ── REVIEWS ──
@@ -4928,6 +4943,7 @@ async function saveReviewsSection(){
     homeMode:   document.getElementById('rev_homeMode').value || 'top',
   };
   await persistDB(db,tr('saved'));
+  refreshDynamic();
 }
 // Toggle visibility of name/display fields based on Anonymous switch.
 // When anon is on (default), the name fields are hidden — admin can skip
@@ -5946,7 +5962,7 @@ async function saveSocialChannels(){
     url:     (e.url||'').trim(),
     enabled: !!e.enabled,
   }));
-  await persistDB(db, '✅ Social Channels saved');
+  if(await persistDB(db, '✅ Social Channels saved')) refreshDynamic();
 }
 
 function loadSeoPanel(){
@@ -5985,6 +6001,7 @@ async function saveSeo(){
   db.settings.seo.siteName     = document.getElementById('seo_site_name').value.trim();
   db.settings.seo.twitterCard  = document.getElementById('seo_twitter_card').value;
   await persistDB(db, '✅ SEO settings saved');
+  refreshDynamic();
 }
 
 async function saveAmulet(){
@@ -7064,13 +7081,12 @@ async function bootAdmin(){
   // Re-render the dashboard whenever the underlying DB changes (e.g. another
   // admin tab saved something) so we always show fresh data.
   FB.onDBChange(() => {
-    if(FB.currentUser()){
-      const active = document.querySelector('.panel.active');
-      if(!active || active.id === 'panel-dashboard'){
-        // Soft refresh dashboard counts only — heavier panels keep their state
-        if(typeof loadDash === 'function') loadDash();
-      }
-    }
+    if(!FB.currentUser()) return;
+    clearTimeout(window._adminRefreshTimer);
+    window._adminRefreshTimer = setTimeout(() => {
+      loadDash();          // always refresh dashboard counts
+      refreshDynamic();    // refresh whichever panel is currently open
+    }, 80);
   });
 }
 
