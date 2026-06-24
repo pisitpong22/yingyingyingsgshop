@@ -169,26 +169,28 @@
     z-index:200;
     width:calc(100% - 48px);
     max-width:1100px;
-    background:rgba(20,15,6,0.55);
-    backdrop-filter:blur(28px) saturate(180%);
-    -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border:1px solid rgba(201,168,76,0.22);
+    /* Liquid glass — semi-transparent, adapts to both dark (home) and cream (other pages) */
+    background:rgba(255,250,235,0.18);
+    backdrop-filter:blur(24px) saturate(160%);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    border:1px solid rgba(201,168,76,0.32);
+    border-top:1px solid rgba(255,245,200,0.35);
     border-radius:999px;
     box-shadow:
-      0 8px 32px rgba(0,0,0,.28),
-      0 1px 0 rgba(255,248,210,.07) inset,
-      0 -1px 0 rgba(0,0,0,.18) inset;
+      0 8px 32px rgba(0,0,0,.12),
+      0 1px 0 rgba(255,248,210,.25) inset;
   }
   .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 18px;height:58px;gap:12px}
   .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
   .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
   .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
   .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
-  .logo-text{color:var(--gold-light);font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display)}
-  .logo-sub{color:#9e8a60;font-size:10px;letter-spacing:2px}
+  .logo-text{color:#5a3e10;font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 3px rgba(255,255,255,.4)}
+  .logo-sub{color:#8a6840;font-size:10px;letter-spacing:2px}
   .nav-links{display:flex;gap:2px;list-style:none;flex-wrap:wrap}
-  .nav-links a{color:#c8b888;text-decoration:none;padding:8px 13px;border-radius:7px;font-size:14px;font-weight:500;transition:all .2s;cursor:pointer;white-space:nowrap}
-  .nav-links a:hover,.nav-links a.active{color:var(--gold-light);background:rgba(201,168,76,0.13)}
+  .nav-links a{color:#5a3e10;text-decoration:none;padding:8px 13px;border-radius:7px;font-size:14px;font-weight:600;transition:all .2s;cursor:pointer;white-space:nowrap;text-shadow:0 1px 2px rgba(255,255,255,.3)}
+  .nav-links a:hover{color:#3d2700;background:rgba(201,168,76,.18);text-shadow:none}
+  .nav-links a.active{color:#1a1208;background:linear-gradient(135deg,rgba(232,201,106,.9),rgba(201,168,76,.8));box-shadow:0 3px 12px rgba(201,168,76,.3);font-weight:700;text-shadow:none}
 
   .page{display:none;animation:fadeUp .4s ease}
   .page.active{display:block;padding-top:80px}
@@ -2209,9 +2211,10 @@
   }
   nav{
     top:16px;
-    background:rgba(14,10,4,.52);
-    border:1px solid rgba(232,201,106,.2);
-    box-shadow:0 8px 32px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,248,210,.06);
+    /* On homepage (dark hero bg), add slight amber tint for visibility */
+    background:rgba(40,28,6,0.28);
+    border:1px solid rgba(201,168,76,.35);
+    box-shadow:0 8px 32px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,248,210,.15);
   }
   .nav-inner{height:58px}
   .nav-links{
@@ -2227,20 +2230,23 @@
   .nav-links a{
     border-radius:999px;
     padding:10px 17px;
-    font-weight:900;
+    font-weight:700;
     font-size:13px;
     letter-spacing:.15px;
-    color:#eadcae;
+    color:#f0e0b0;
+    text-shadow:0 1px 3px rgba(0,0,0,.4);
   }
   .nav-links a:hover{
-    background:rgba(232,201,106,.16);
+    background:rgba(232,201,106,.18);
     color:#fff5ca;
-    box-shadow:inset 0 0 0 1px rgba(232,201,106,.12);
+    text-shadow:0 1px 2px rgba(0,0,0,.3);
   }
   .nav-links a.active{
     background:linear-gradient(135deg,#e8c96a,#c9a84c);
     color:#161006;
-    box-shadow:0 8px 22px rgba(201,168,76,.26);
+    font-weight:800;
+    box-shadow:0 4px 16px rgba(201,168,76,.35);
+    text-shadow:none;
   }
   .hero-wrap{
     background:

@@ -611,7 +611,6 @@ async function ensureCasingVariants(typeId, opts={}){
 
   if(!variantIds.length){
     // No variants in index — type genuinely has no styles yet
-    console.warn('[ensureCasingVariants] EMPTY variantIds for key=',key,'_casingVariantIds=',_casingVariantIds[key],'ty._variantIds=',ty._variantIds,'_dbMeta ids=',(_dbMeta?._casingVariantIds||{})[key]);
     ty.variants = [];
     _casingVariantsLoaded.add(key);
     return;

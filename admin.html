@@ -5249,7 +5249,6 @@ async function loadVariants(){
     (Array.isArray(tyNow.variants) && tyNow.variants.length > 0) ||
     (Array.isArray(tyNow._variantIds) && tyNow._variantIds.length > 0)
   );
-  console.log('[loadVariants] start: curEditTypeId=',curEditTypeId,'variants=',tyNow?.variants?.length,'_variantIds=',tyNow?._variantIds?.length,'knowsVariantsExist=',knowsVariantsExist, new Error().stack.split('\n')[2]?.trim());
   if(!knowsVariantsExist){
     c.innerHTML=`<div style="text-align:center;padding:30px;color:var(--text-muted)">Loading styles…</div>`;
   }
@@ -5264,7 +5263,6 @@ async function loadVariants(){
   const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
   const vars=ty&&Array.isArray(ty.variants)?[...ty.variants]:[];
 
-  console.log('[loadVariants] after ensure: ty=',ty?.name,'vars.length=',vars.length,'_variantIds=',ty?._variantIds?.length);
   if(!vars.length){
     c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
     return;
