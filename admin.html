@@ -5196,15 +5196,15 @@ async function saveType(){
   closeModal('typeModal');
   loadCasingTypes();
   loadDash();
-  // If currently in variant view for this type, reload it to reflect name/price changes
-  // Also invalidate variant cache so next openVariantForm gets fresh data
+  // If currently in variant view: update header text and reload styles.
+  // DO NOT call ensureCasingVariants(force:true) here — it triggers notifyDBReady()
+  // which fires onDBChange → refreshDynamic() → loadVariants() creating a race condition.
+  // The onSnapshot from persistDB already clears _casingVariantsLoaded.
+  // loadVariants() (no force) will reload naturally since cache is cleared.
   if(curEditTypeId != null){
+    clearTimeout(window._adminRefreshTimer); // prevent debounced refreshDynamic from racing
     const editedKey = String(curEditTypeId);
-    if(window.FB && window.FB.ensureCasingVariants){
-      // Force-invalidate so next loadVariants does a fresh Firestore pull
-      try{ await window.FB.ensureCasingVariants(editedKey, {force:true}); }catch(e){}
-    }
-    // Update variant view breadcrumb and header with new name
+    // Update header immediately from in-memory DB (name change visible right away)
     const freshTy=(getDB().casingTypes||[]).find(t=>String(t.id)===editedKey);
     if(freshTy){
       const crumbEl=document.getElementById('vCrumbName');
@@ -5212,7 +5212,7 @@ async function saveType(){
       if(crumbEl) crumbEl.textContent=freshTy.name;
       if(nameEl)  nameEl.textContent=freshTy.name;
     }
-    loadVariants();
+    await loadVariants(); // await prevents debounce from triggering a second render
   }
 }
 
