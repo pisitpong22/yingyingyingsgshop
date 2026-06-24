@@ -5194,17 +5194,15 @@ async function saveType(){
   if(!(await persistDB(db,tr('saved')))) return;
   tempImgs={};
   closeModal('typeModal');
-  loadCasingTypes();
-  loadDash();
-  // If currently in variant view: update header text and reload styles.
-  // DO NOT call ensureCasingVariants(force:true) here — it triggers notifyDBReady()
-  // which fires onDBChange → refreshDynamic() → loadVariants() creating a race condition.
-  // The onSnapshot from persistDB already clears _casingVariantsLoaded.
-  // loadVariants() (no force) will reload naturally since cache is cleared.
+  // When in variant view, casingTypesView is hidden — skip loadCasingTypes().
+  // loadCasingTypes() fires background ensureCasingVariants() for all types,
+  // each of which calls notifyDBReady() → onDBChange → debounced loadVariants().
+  // Those debounced calls fire AFTER saveType's explicit await loadVariants() has
+  // already rendered correctly, overwriting the correct list with "Loading…"/empty.
   if(curEditTypeId != null){
-    clearTimeout(window._adminRefreshTimer); // prevent debounced refreshDynamic from racing
+    // Variant view is visible — reload styles only, skip hidden type list refresh
+    clearTimeout(window._adminRefreshTimer);
     const editedKey = String(curEditTypeId);
-    // Update header immediately from in-memory DB (name change visible right away)
     const freshTy=(getDB().casingTypes||[]).find(t=>String(t.id)===editedKey);
     if(freshTy){
       const crumbEl=document.getElementById('vCrumbName');
@@ -5212,8 +5210,12 @@ async function saveType(){
       if(crumbEl) crumbEl.textContent=freshTy.name;
       if(nameEl)  nameEl.textContent=freshTy.name;
     }
-    await loadVariants(); // await prevents debounce from triggering a second render
+    await loadVariants();
+    clearTimeout(window._adminRefreshTimer); // clear any timers queued during the await
+  } else {
+    loadCasingTypes(); // only when type list is actually visible
   }
+  loadDash();
 }
 
 async function delType(typeId){
