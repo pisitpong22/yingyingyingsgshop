@@ -1000,6 +1000,9 @@
   .update-badge-review{background:rgba(220,160,0,.12);color:#7a5800}
   .update-badge-article{background:rgba(100,50,180,.12);color:#4a1a90}
   .update-badge-announcement{background:rgba(200,50,50,.12);color:#8a1a1a}
+  .update-badge-accessory{background:rgba(50,150,180,.12);color:#0e5a78}
+  .update-badge-history{background:rgba(120,80,180,.12);color:#4a2080}
+  .update-badge-hs{background:rgba(120,80,180,.12);color:#4a2080}
 
   .update-card-title{
     font-family:var(--font-display);font-size:17px;font-weight:700;
@@ -4669,7 +4672,21 @@ function scheduleSocialCasingPreviewLoad(){
 
 function renderSocialHomeFeed(){
   const db=getDB();
-  const posts=buildFeedPosts(db).slice(0,6);
+  // Balance: take up to 2 per type so casing doesn't dominate
+  const allPosts=buildFeedPosts(db);
+  const seenTypes={}; const balanced=[];
+  const LIMIT_PER_TYPE={casing:2,amulet:2,accessory:2,project:2,review:2,hs:2,default:3,article:3,announcement:3};
+  // Manual/pinned posts first (no type-capping)
+  allPosts.filter(p=>p.pinned||p.type==='default'||p.type==='article'||p.type==='announcement')
+    .slice(0,3).forEach(p=>balanced.push(p));
+  // Auto-generated: cap per type
+  allPosts.filter(p=>!p.pinned&&p.type!=='default'&&p.type!=='article'&&p.type!=='announcement')
+    .forEach(p=>{
+      const t=p.type||'default';
+      seenTypes[t]=(seenTypes[t]||0)+1;
+      if(seenTypes[t]<=(LIMIT_PER_TYPE[t]||2)) balanced.push(p);
+    });
+  const posts=balanced.slice(0,9);
   const list=document.getElementById('socialFeedList');
   if(list){
     if(loadState.homeFeed === 'loading' || loadState.homeFeed === 'idle'){
@@ -4695,7 +4712,8 @@ function renderSocialPost(p){
   const badge=p.badge||(feedTypeMeta(p.type||'default').badge);
   // Map badge text to CSS class
   const typeMap={default:'default',casing:'casing',amulet:'amulet',project:'project',
-                 review:'review',article:'article',announcement:'announcement'};
+                 review:'review',article:'article',announcement:'announcement',
+                 accessory:'accessory',history:'history',hs:'hs'};
   const badgeType=typeMap[p.type||'default']||'default';
   const thumbHtml=thumb
     ? `<img loading="lazy" decoding="async" ${imgAttrs(thumb,'medium','(max-width:700px) 100vw, 400px')} alt="">`
@@ -6651,11 +6669,11 @@ function buildFeedPosts(db){
     });
   const casing=buildCasingUpdatePosts(db);
   const amulets=buildAmuletFeedPosts(db);
+  const accessories=buildAccessoriesFeedPosts(db);
   const projects=buildProjectFeedPosts(db);
   const reviews=buildReviewFeedPosts(db);
-  // Merge: manual first, then auto-generated (de-dup by key not needed — different types)
   const hs=buildHistoryStoriesFeedPosts(db);
-  const auto=[...casing,...amulets,...projects,...reviews,...hs];
+  const auto=[...casing,...amulets,...accessories,...projects,...reviews,...hs];
   return [...manual,...auto].sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if((b.ts||0) !== (a.ts||0)) return (b.ts||0) - (a.ts||0);
@@ -6677,6 +6695,26 @@ function buildAmuletFeedPosts(db){
       imgs:feedImages(a.imgs),
       action:`openProd('amulets',${a.id})`,
       cta:'View Amulet',
+      pinned:false,
+      ts:Number(a.updatedAt||a.createdAt||0)||0,
+      score:(a.imgs||[]).length,
+    }));
+}
+
+function buildAccessoriesFeedPosts(db){
+  return (db.accessories||[])
+    .filter(a=>a && (a.imgs&&a.imgs.length))
+    .slice(0,6)
+    .map(a=>({
+      type:'accessory',
+      badge:'⛓️ Accessory',
+      badgeCls:'feed-badge-accessory',
+      kicker:'New Accessory',
+      title:a.name || 'New Accessory',
+      text:[a.desc||'', a.price?`S$${Number(a.price).toLocaleString()}`:''].filter(Boolean).join(' · '),
+      imgs:feedImages(a.imgs),
+      action:`openProd('accessories',${a.id})`,
+      cta:'View Accessory',
       pinned:false,
       ts:Number(a.updatedAt||a.createdAt||0)||0,
       score:(a.imgs||[]).length,
@@ -6735,7 +6773,7 @@ function buildHistoryStoriesFeedPosts(db){
     .filter(a=>a && a.status!=='draft')
     .slice(0,4)
     .map(a=>({
-      type:'article',
+      type:'hs',
       badge:'📖 '+(CAT_LABELS[a.category]||'History & Stories'),
       badgeCls:'feed-badge-article',
       kicker:'History & Stories',
