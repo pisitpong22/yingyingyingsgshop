@@ -169,28 +169,35 @@
     z-index:200;
     width:calc(100% - 48px);
     max-width:1100px;
-    /* Liquid glass — semi-transparent, adapts to both dark (home) and cream (other pages) */
-    background:rgba(255,250,235,0.18);
-    backdrop-filter:blur(24px) saturate(160%);
-    -webkit-backdrop-filter:blur(24px) saturate(160%);
-    border:1px solid rgba(201,168,76,0.32);
-    border-top:1px solid rgba(255,245,200,0.35);
+    background:rgba(255,255,255,0.15);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border:1px solid rgba(201,168,76,0.3);
+    border-top:1px solid rgba(255,250,220,0.45);
     border-radius:999px;
     box-shadow:
-      0 8px 32px rgba(0,0,0,.12),
-      0 1px 0 rgba(255,248,210,.25) inset;
+      0 8px 28px rgba(0,0,0,.14),
+      0 1px 0 rgba(255,250,220,.3) inset;
   }
   .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 18px;height:58px;gap:12px}
   .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
   .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
   .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
   .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
-  .logo-text{color:#5a3e10;font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 3px rgba(255,255,255,.4)}
-  .logo-sub{color:#8a6840;font-size:10px;letter-spacing:2px}
+  .logo-text{color:#e8d070;font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .logo-sub{color:#c9a84c;font-size:10px;letter-spacing:2px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+  body:not(.is-home-page) .logo-text{color:#4a3010;text-shadow:0 1px 2px rgba(255,255,255,.6)}
+  body:not(.is-home-page) .logo-sub{color:#7a5c20;text-shadow:none}
   .nav-links{display:flex;gap:2px;list-style:none;flex-wrap:wrap}
-  .nav-links a{color:#5a3e10;text-decoration:none;padding:8px 13px;border-radius:7px;font-size:14px;font-weight:600;transition:all .2s;cursor:pointer;white-space:nowrap;text-shadow:0 1px 2px rgba(255,255,255,.3)}
-  .nav-links a:hover{color:#3d2700;background:rgba(201,168,76,.18);text-shadow:none}
-  .nav-links a.active{color:#1a1208;background:linear-gradient(135deg,rgba(232,201,106,.9),rgba(201,168,76,.8));box-shadow:0 3px 12px rgba(201,168,76,.3);font-weight:700;text-shadow:none}
+  /* Default (home — dark bg): gold text, dark shadow */
+  .nav-links a{color:#e8d070;text-decoration:none;padding:8px 13px;border-radius:7px;font-size:14px;font-weight:700;transition:all .2s;cursor:pointer;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .nav-links a:hover{color:#fffde0;background:rgba(201,168,76,.2);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .nav-links a.active{color:#1a0f00;background:linear-gradient(135deg,#e8c96a,#c9a84c);box-shadow:0 3px 14px rgba(201,168,76,.4);font-weight:800;text-shadow:none}
+
+  /* Non-home pages (cream bg): dark brown text */
+  body:not(.is-home-page) .nav-links a{color:#3d2600;text-shadow:0 1px 2px rgba(255,255,255,.5)}
+  body:not(.is-home-page) .nav-links a:hover{color:#1a1000;background:rgba(201,168,76,.2);text-shadow:none}
+  body:not(.is-home-page) .nav-links a.active{color:#1a0f00;text-shadow:none}
 
   .page{display:none;animation:fadeUp .4s ease}
   .page.active{display:block;padding-top:80px}
@@ -2211,10 +2218,9 @@
   }
   nav{
     top:16px;
-    /* On homepage (dark hero bg), add slight amber tint for visibility */
-    background:rgba(40,28,6,0.28);
+    background:rgba(20,14,4,0.22);
     border:1px solid rgba(201,168,76,.35);
-    box-shadow:0 8px 32px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,248,210,.15);
+    box-shadow:0 8px 28px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,248,210,.18);
   }
   .nav-inner{height:58px}
   .nav-links{
