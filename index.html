@@ -54,10 +54,13 @@
 </script>
 <style>
   :root{
-    --gold:#c9a84c;--gold-light:#e8c96a;--gold-dark:#8b6914;
-    --cream:#fdf6e3;--deep:#12100a;--accent:#8b0000;
-    --text:#2c1a06;--text-muted:#7a6040;--surface:#fff9ee;
-    --border:rgba(201,168,76,0.28);
+    --gold:#c9a84c;--gold-light:#e8c96a;--gold-dark:#c9a84c;
+    --cream:#0d0a06;--deep:#0d0a06;--accent:#8b0000;
+    /* Dark theme — all pages */
+    --text:rgba(255,248,220,.88);
+    --text-muted:rgba(255,240,180,.45);
+    --surface:rgba(255,255,255,.06);
+    --border:rgba(201,168,76,0.25);
     --font-display:var(--font-display);
 
     /* ─── LIQUID GLASS DESIGN TOKENS ───
@@ -81,11 +84,10 @@
   body{
     font-family:'Inter',sans-serif;
     background:
-      radial-gradient(ellipse at 0% 0%, rgba(255,220,130,.2) 0%, transparent 40%),
-      radial-gradient(ellipse at 100% 0%, rgba(180,120,40,.12) 0%, transparent 38%),
-      radial-gradient(ellipse at 50% 100%, rgba(201,168,76,.08) 0%, transparent 45%),
-      radial-gradient(at 40% 40%, rgba(139,0,0,.04) 0%, transparent 55%),
-      linear-gradient(180deg, #fff9e8 0%, #f8edd0 50%, #fffaf2 100%);
+      radial-gradient(ellipse at 20% 20%,rgba(201,168,76,.14) 0%,transparent 45%),
+      radial-gradient(ellipse at 80% 70%,rgba(120,60,180,.09) 0%,transparent 42%),
+      radial-gradient(ellipse at 50% 100%,rgba(201,168,76,.08) 0%,transparent 40%),
+      linear-gradient(180deg,#0d0a06 0%,#120d05 100%);
     color:var(--text);
     overflow-x:hidden;
     min-height:100vh;
@@ -181,10 +183,159 @@
   }
   /* Non-home (cream bg): cream pill */
   body:not(.is-home-page) nav{
-    background:rgba(255,252,240,.78);
-    border-color:rgba(201,168,76,.28);
-    box-shadow:0 4px 18px rgba(120,80,20,.1),0 1px 0 rgba(255,250,220,.6) inset;
+    background:rgba(15,10,3,.55);
+    border-color:rgba(201,168,76,.32);
+    box-shadow:0 4px 18px rgba(0,0,0,.28),0 1px 0 rgba(255,248,210,.12) inset;
   }
+
+  /* ── Design A: trust strip inside dark home page ── */
+  .social-home .trust-strip{
+    background:rgba(255,255,255,.055);
+    backdrop-filter:blur(22px) saturate(160%);
+    -webkit-backdrop-filter:blur(22px) saturate(160%);
+    border:1px solid rgba(255,255,255,.1);
+    border-top:1px solid rgba(255,255,255,.18);
+    box-shadow:0 8px 32px rgba(0,0,0,.25);
+  }
+  .social-home .trust-strip-card{color:#fff8e0}
+  .social-home .trust-strip-card+.trust-strip-card::before{background:rgba(255,255,255,.08)}
+  .social-home .trust-strip-card:hover{background:rgba(255,255,255,.08)}
+  .social-home .trust-strip-title{color:rgba(255,248,200,.85)}
+  .social-home .trust-strip-desc{color:rgba(255,248,200,.4)}
+  .social-home .trust-strip-stat{background:linear-gradient(135deg,#e8c96a,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  /* ── Design A: section headings on dark bg ── */
+  .social-home .sec-head{
+    background:transparent;
+    border:none;
+    box-shadow:none;
+  }
+  .social-home .sec-head::before{display:none}
+  .social-home .sec-head h2,.social-home .sec-head .sec-title{
+    background:linear-gradient(135deg,#e8d080,#c9a84c);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .social-home .sec-head .sec-eyebrow,.social-home .sec-head .eyebrow-text{color:rgba(232,201,106,.7)}
+  .social-home .sec-head p,.social-home .sec-head .sec-desc{color:rgba(255,248,200,.5)}
+  .social-home .gline{background:linear-gradient(90deg,transparent,rgba(201,168,76,.5),transparent)}
+
+  /* ── Design A: latest updates section ── */
+  .social-home .latest-updates-section{
+    background:transparent;
+    border-top:none;
+  }
+  .social-home .latest-updates-eyebrow{color:rgba(201,168,76,.7)}
+  .social-home .latest-updates-title{color:rgba(255,248,200,.92)}
+  .social-home .latest-updates-sub{color:rgba(255,248,200,.45)}
+  .social-home .latest-updates-head .gline{background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent)}
+
+  /* ── Design A: update-card dark glass ── */
+  .social-home .update-card{
+    background:rgba(255,255,255,.055);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.1);
+    border-top:1px solid rgba(255,255,255,.15);
+    box-shadow:0 4px 24px rgba(0,0,0,.3);
+  }
+  .social-home .update-card:hover{
+    background:rgba(255,255,255,.09);
+    border-color:rgba(201,168,76,.35);
+    box-shadow:0 16px 48px rgba(0,0,0,.4);
+    transform:translateY(-6px);
+  }
+  .social-home .update-card-title{color:rgba(255,248,200,.88)}
+  .social-home .update-card-text{color:rgba(255,248,200,.45)}
+  .social-home .update-card-date{color:rgba(255,248,200,.3)}
+  .social-home .update-card-cta{color:#c9a84c}
+  .social-home .update-card-foot{border-top-color:rgba(255,255,255,.08)}
+  .social-home .update-card-thumb{background:linear-gradient(145deg,#1e1608,#0d0906)}
+  .social-home .update-card-badge{background:rgba(255,255,255,.08);color:#e8c96a;border:1px solid rgba(201,168,76,.25)}
+  .social-home .update-badge-casing{background:rgba(80,100,200,.15);color:#aab8ff;border:none}
+  .social-home .update-badge-amulet{background:rgba(200,120,50,.15);color:#ffc07a;border:none}
+  .social-home .update-badge-project{background:rgba(50,180,90,.15);color:#90ffa8;border:none}
+  .social-home .update-badge-review{background:rgba(220,180,0,.15);color:#ffe066;border:none}
+  .social-home .update-badge-hs{background:rgba(160,80,220,.15);color:#d4a8ff;border:none}
+  .social-home .update-badge-accessory{background:rgba(50,200,220,.15);color:#7af0ff;border:none}
+  /* ── Design A: service cards dark glass ── */
+  .social-home .svc-card{
+    background:rgba(255,255,255,.055);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.1);
+    border-top:1px solid rgba(255,255,255,.16);
+    box-shadow:0 6px 28px rgba(0,0,0,.28);
+  }
+  .social-home .svc-card:hover{
+    background:rgba(255,255,255,.09);
+    border-color:rgba(201,168,76,.35);
+    box-shadow:0 14px 44px rgba(0,0,0,.4);
+  }
+  .social-home .svc-icon{
+    background:rgba(201,168,76,.15);
+    border-color:rgba(201,168,76,.25);
+  }
+  .social-home .svc-stat{color:rgba(201,168,76,.7)}
+  .social-home .svc-title{color:rgba(255,248,200,.9)}
+  .social-home .svc-desc{color:rgba(255,248,200,.45)}
+  .social-home .svc-arrow{color:#c9a84c}
+  /* ── Design A: home reviews section dark glass ── */
+  .social-home .home-reviews-section{
+    background:transparent;
+    padding:60px 24px 72px;
+  }
+  .social-home .home-reviews-section::before{display:none}
+  .social-home .home-reviews-eyebrow{color:rgba(201,168,76,.7)}
+  .social-home .home-reviews-head h2{
+    background:linear-gradient(135deg,#e8d080,#c9a84c);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .social-home .home-reviews-head p{color:rgba(255,248,200,.45)}
+  .social-home .home-reviews-head .gline{background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent)}
+  .social-home .home-reviews-btn{border-color:rgba(201,168,76,.4);color:rgba(201,168,76,.8)}
+  .social-home .home-reviews-btn:hover{background:rgba(201,168,76,.2);color:#e8c96a;box-shadow:none}
+
+  /* rev-card dark glass */
+  .social-home .rev-grid .rev-card{
+    background:rgba(255,255,255,.055);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.1);
+    border-top:1px solid rgba(255,255,255,.16);
+    box-shadow:0 4px 24px rgba(0,0,0,.3);
+    color:rgba(255,248,200,.85);
+  }
+  .social-home .rev-grid .rev-card:hover{
+    border-color:rgba(201,168,76,.35);
+    transform:translateY(-5px);
+    box-shadow:0 14px 44px rgba(0,0,0,.4);
+  }
+  .social-home .rev-card-stars{color:#c9a84c}
+  .social-home .rev-card-text{color:rgba(255,248,200,.55);font-style:italic}
+  .social-home .rev-card-name{color:rgba(255,248,200,.8)}
+  .social-home .rev-card-country{color:rgba(255,248,200,.35)}
+  .social-home .rev-card-quote{color:rgba(201,168,76,.25);font-family:var(--font-display);font-size:40px;line-height:1}
+
+
+
+  /* home-services-section on dark bg */
+  .social-home .home-services-section{background:transparent}
+  .social-home .home-services-section .sec-head{background:transparent;box-shadow:none;border:none}
+
+  /* Social channels on dark bg */
+  .social-home .social-channels-section{background:transparent;border-color:rgba(255,255,255,.06)}
+  .social-home .social-channels-head h2{color:rgba(255,248,200,.88)}
+  .social-home .social-channels-head p{color:rgba(255,248,200,.45)}
+  .social-home .sc-circle{
+    background:rgba(255,255,255,.07) !important;
+    border:1px solid rgba(255,255,255,.12) !important;
+  }
+  .social-home .sc-circle:hover{background:rgba(201,168,76,.18) !important;border-color:rgba(201,168,76,.4) !important}
+  .social-home .sc-name span{color:rgba(255,248,200,.5)}
+  .social-home .sc-follow-label h3{color:rgba(255,248,200,.85)}
+  .social-home .sc-follow-label p{color:rgba(255,248,200,.45)}
+
+
+
   .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px;height:52px;gap:10px}
   .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
   .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
@@ -192,17 +343,17 @@
   .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
   .logo-text{color:#e8d070;font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 4px rgba(0,0,0,.6)}
   .logo-sub{color:#c9a84c;font-size:10px;letter-spacing:2px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-  body:not(.is-home-page) .logo-text{color:#4a3010;text-shadow:0 1px 2px rgba(255,255,255,.6)}
-  body:not(.is-home-page) .logo-sub{color:#7a5c20;text-shadow:none}
+  body:not(.is-home-page) .logo-text{color:#e8d070;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  body:not(.is-home-page) .logo-sub{color:#c9a84c;text-shadow:none}
   .nav-links{display:flex;gap:2px;list-style:none;flex-wrap:wrap}
   /* Default (home — dark bg): gold text, dark shadow */
   .nav-links a{color:#e8d070;text-decoration:none;padding:8px 13px;border-radius:7px;font-size:14px;font-weight:700;transition:all .2s;cursor:pointer;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.6)}
   .nav-links a:hover{color:#fffde0;background:rgba(201,168,76,.2);text-shadow:0 1px 3px rgba(0,0,0,.5)}
   .nav-links a.active{color:#1a0f00;background:linear-gradient(135deg,#e8c96a,#c9a84c);box-shadow:0 3px 14px rgba(201,168,76,.4);font-weight:800;text-shadow:none}
 
-  /* Non-home pages (cream bg): dark brown text */
-  body:not(.is-home-page) .nav-links a{color:#3d2600;text-shadow:0 1px 2px rgba(255,255,255,.5)}
-  body:not(.is-home-page) .nav-links a:hover{color:#1a1000;background:rgba(201,168,76,.2);text-shadow:none}
+  /* Non-home pages: same dark theme */
+  body:not(.is-home-page) .nav-links a{color:#e8d070;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  body:not(.is-home-page) .nav-links a:hover{color:#fffde0;background:rgba(201,168,76,.2);text-shadow:none}
   body:not(.is-home-page) .nav-links a.active{color:#1a0f00;text-shadow:none}
 
   .page{display:none;animation:fadeUp .4s ease}
@@ -280,6 +431,74 @@
   .hero.no-3d .hero-stats{justify-content:center;max-width:none;margin-left:auto;margin-right:auto;width:fit-content}
   .hero.no-3d .stat{text-align:center;padding-left:0}
   .hero.no-3d .stat::before{display:none}
+
+  /* ── Design A: hero grid layout on desktop ── */
+  .social-home .social-cover{
+    min-height:84vh;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  .social-home .social-hero-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:center;
+    gap:0;
+    min-height:84vh;
+    max-width:1280px;
+    margin:0 auto;
+    padding:0 72px;
+    width:100%;
+  }
+  .social-home .hero-inner{
+    padding:60px 48px 60px 0;
+    max-width:100%;
+  }
+  .social-home .social-visual{
+    display:flex !important;
+    align-items:center;
+    justify-content:center;
+    height:84vh;
+  }
+  /* Hero text color overrides */
+  .social-home .eyebrow{color:rgba(201,168,76,.8);border-color:rgba(201,168,76,.25)}
+  .social-home .hero-title{color:#fff}
+  .social-home .hero-title .ying{color:#e8c96a}
+  .social-home .hero-sub{color:rgba(255,240,180,.6)}
+  .social-home .hero-desc{color:rgba(255,240,180,.5)}
+  .social-home .btn{background:rgba(201,168,76,.9);color:#1a0f00;border-color:#c9a84c}
+  .social-home .btn:hover{background:#e8c96a;box-shadow:0 8px 28px rgba(201,168,76,.35)}
+  .social-home .btn-ol{border-color:rgba(201,168,76,.5);color:rgba(201,168,76,.85)}
+  .social-home .stat-num{background:linear-gradient(135deg,#e8c96a,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .social-home .stat-label{color:rgba(255,248,200,.45)}
+  .social-home .stat::before{background:rgba(255,255,255,.15)}
+
+  @media(max-width:900px){
+    .social-home .social-hero-row{
+      grid-template-columns:1fr;
+      padding:0 22px;
+      min-height:auto;
+    }
+    .social-home .hero-inner{padding:52px 0 0}
+    .social-home .social-visual{height:50vh;min-height:300px}
+  }
+
+  /* ── Design A: trust strip placement ── */
+  .social-home .trust-wrap-outer{
+    max-width:1100px;
+    margin:-24px auto 0;
+    padding:0 24px 48px;
+    position:relative;
+    z-index:10;
+  }
+
+  /* ── Design A: section spacing on dark bg ── */
+  .social-home .home-services-section{padding-top:48px;padding-bottom:48px}
+  .social-home .social-channels-section{padding-top:48px;padding-bottom:48px}
+  .social-home .latest-updates-section{padding-top:48px;padding-bottom:56px}
+  .social-home .home-reviews-section{padding-top:48px;padding-bottom:72px}
+
   @media(max-width:780px){
     /* ─── Mobile Hero — redesigned for breathing room ─── */
     .hero{
@@ -515,10 +734,8 @@
   .sec-head{
     text-align:center;
     padding:56px 24px 44px;
-    background:
-      radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.1) 0%,transparent 60%),
-      linear-gradient(180deg,#fdf6e4 0%,#f9edd0 100%);
-    border-bottom:1px solid rgba(201,168,76,.16);
+    background:transparent;
+    border-bottom:1px solid rgba(201,168,76,.1);
     position:relative;
   }
   .sec-head::before{
@@ -680,8 +897,13 @@
   .cat-tab:hover,.cat-tab.active{background:linear-gradient(135deg,rgba(232,201,106,.25),rgba(201,168,76,.15));color:var(--gold-dark);border-color:rgba(201,168,76,.4);font-weight:700}
 
   .ftype-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
-  .ftype-card{
-    background:rgba(255,252,240,.88);
+    .ftype-card{
+    background:rgba(255,255,255,.06);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.1);border-top:1px solid rgba(255,255,255,.16);
+    border-radius:18px;overflow:hidden;cursor:pointer;
+    transition:transform .26s cubic-bezier(.22,1,.36,1),box-shadow .26s,border-color .26s;
+    box-shadow:0 6px 28px rgba(0,0,0,.3);position:relative;
+  ,.88);
     backdrop-filter:blur(18px) saturate(140%);
     -webkit-backdrop-filter:blur(18px) saturate(140%);
     border:1px solid rgba(201,168,76,.2);
@@ -883,10 +1105,11 @@
 
   /* ─── SERVICE CARDS ─────────────────────────────────────────────────────── */
   .svc-card{
-    background:rgba(255,252,240,.88);
+    background:rgba(255,255,255,.06);
     backdrop-filter:blur(16px) saturate(140%);
     -webkit-backdrop-filter:blur(16px) saturate(140%);
-    border:1px solid rgba(201,168,76,.2);
+    border:1px solid rgba(255,255,255,.1);
+    border-top:1px solid rgba(255,255,255,.16);
     border-radius:18px;
     padding:24px 22px;
     display:flex;align-items:flex-start;gap:16px;
@@ -895,8 +1118,9 @@
   }
   .svc-card:hover{
     transform:translateY(-4px);
-    border-color:rgba(201,168,76,.4);
-    box-shadow:0 14px 36px rgba(120,80,20,.14), 0 1px 0 rgba(255,255,255,.9) inset;
+    border-color:rgba(201,168,76,.38);
+    background:rgba(255,255,255,.09);
+    box-shadow:0 14px 40px rgba(0,0,0,.4);
   }
   .svc-icon{
     font-size:28px;flex-shrink:0;
@@ -913,9 +1137,9 @@
   }
   .svc-title{
     font-family:var(--font-display);font-size:16px;font-weight:700;
-    color:var(--text);margin-bottom:4px;line-height:1.2;
+    color:rgba(255,248,200,.9);margin-bottom:4px;line-height:1.2;
   }
-  .svc-desc{font-size:12.5px;color:var(--text-muted);line-height:1.5}
+  .svc-desc{font-size:12.5px;color:rgba(255,248,200,.45);line-height:1.5}
   .svc-arrow{
     font-size:13px;color:var(--gold-dark);margin-top:8px;font-weight:600;
     opacity:0;transition:opacity .2s, transform .2s;transform:translateX(-4px);
@@ -2514,10 +2738,12 @@
   .social-home{
     min-height:100vh;
     background:
-      radial-gradient(ellipse at 20% 0%,rgba(255,220,130,.28) 0%,transparent 50%),
-      radial-gradient(ellipse at 80% 5%,rgba(180,120,40,.15) 0%,transparent 45%),
-      linear-gradient(180deg,#0e0a03 0%,#1a1004 180px,#f5ead4 460px,#fffaf0 100%);
+      radial-gradient(ellipse at 15% 20%,rgba(201,168,76,.14) 0%,transparent 45%),
+      radial-gradient(ellipse at 85% 60%,rgba(120,60,180,.09) 0%,transparent 42%),
+      radial-gradient(ellipse at 50% 95%,rgba(201,168,76,.08) 0%,transparent 40%),
+      linear-gradient(180deg,#0d0a06 0%,#120d05 100%);
     padding-bottom:96px;
+    position:relative;
   }
   /* Luxury glass hero */
   .social-cover{
@@ -2701,7 +2927,7 @@
       grid-template-columns:repeat(2,1fr);
       border-radius:14px;
     }
-    .home-services-section{margin-top:0}
+    .home-services-section{margin-top:0;padding:56px 24px;background:transparent;}
     .trust-strip-card{padding:16px 14px;gap:10px}
     .trust-strip-icon{font-size:20px}
     .trust-strip-stat{font-size:15px}
@@ -3340,6 +3566,42 @@
     .contact-link-icon{width:48px;height:48px;border-radius:16px;font-size:22px}
     .contact-link-title{font-size:15px}
   }
+
+  /* ════ GLOBAL DARK THEME OVERRIDES ════ */
+  .ftype-card{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.17)!important;box-shadow:0 6px 28px rgba(0,0,0,.32)!important}
+  .ftype-card:hover{background:rgba(255,255,255,.09)!important;border-color:rgba(201,168,76,.45)!important;box-shadow:0 18px 52px rgba(0,0,0,.46)!important}
+  .ftype-name{color:rgba(255,248,200,.9)!important}
+  .ftype-desc,.ftype-sub{color:rgba(255,248,200,.45)!important}
+  .ftype-price{color:#c9a84c!important}
+  .ftype-badge{background:rgba(201,168,76,.18)!important;color:#e8c96a!important}
+  .casing-finder-panel{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.18)!important;box-shadow:0 8px 32px rgba(0,0,0,.3)!important}
+  .prod-card{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.16)!important;box-shadow:0 4px 20px rgba(0,0,0,.28)!important}
+  .prod-name{color:rgba(255,248,200,.9)!important}
+  .prod-sub,.prod-desc{color:rgba(255,248,200,.45)!important}
+  .prod-price{color:#c9a84c!important}
+  .rev-card{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.16)!important;box-shadow:0 4px 20px rgba(0,0,0,.28)!important}
+  .rev-card-text{color:rgba(255,248,200,.5)!important}
+  .rev-card-name{color:rgba(255,248,200,.85)!important}
+  .rev-card-country{color:rgba(255,248,200,.35)!important}
+  .svc-card{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.16)!important;box-shadow:0 6px 28px rgba(0,0,0,.28)!important}
+  .svc-card:hover{background:rgba(255,255,255,.09)!important;border-color:rgba(201,168,76,.38)!important}
+  .svc-title{color:rgba(255,248,200,.9)!important}
+  .svc-desc{color:rgba(255,248,200,.45)!important}
+  .svc-icon{background:rgba(201,168,76,.15)!important;border-color:rgba(201,168,76,.25)!important}
+  .svc-arrow{color:#c9a84c!important}
+  /* All page section backgrounds → transparent (dark body shows through) */
+  .page-section,[class*="-section"]{background:transparent}
+  /* Text elements on dark bg */
+  h1,h2,h3,h4{color:rgba(255,248,200,.9)}
+  p{color:rgba(255,248,200,.6)}
+  .sec-eyebrow,.eyebrow-text{color:rgba(201,168,76,.75)!important}
+  /* gline gold on dark */
+  .gline{background:linear-gradient(90deg,transparent,rgba(201,168,76,.4),transparent)!important}
+  /* Services section centering */
+  .home-services-section{background:transparent!important;padding:56px 24px!important}
+  #svcCards{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:14px!important;margin:0 auto!important;max-width:1100px!important}
+  @media(max-width:900px){#svcCards{grid-template-columns:repeat(2,1fr)!important}}
+  @media(max-width:500px){#svcCards{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -3398,8 +3660,8 @@
       <div class="social-tabs" id="socialTabs"></div>
     </section>
 
-    <!-- LUXURY TRUST STRIP — horizontal premium bar below hero -->
-    <div style="max-width:1100px;margin:0 auto;padding:0 20px 32px">
+    <!-- LUXURY TRUST STRIP — dark glass bar below hero -->
+    <div class="trust-wrap-outer">
       <div class="trust-strip" id="trustStrip"></div>
     </div>
   </div>
@@ -3412,7 +3674,7 @@
   <section class="home-reviews-section home-section" id="homeReviewsSection" data-home-section="reviews" style="display:none">
     <div class="home-reviews-inner">
       <div class="home-reviews-head">
-        <div class="home-reviews-eyebrow" data-en="✦ WHAT CUSTOMERS SAY ✦" data-th="✦ ลูกค้าพูดถึงเรา ✦">✦ WHAT CUSTOMERS SAY ✦</div>
+        <div class="home-reviews-eyebrow" data-en="✦ WHAT THEY SAY ✦" data-th="✦ ลูกค้าพูดถึงเรา ✦">✦ WHAT THEY SAY ✦</div>
         <h2 id="homeRevTitle"></h2>
         <div class="gline"></div>
         <p id="homeRevSub"></p>
@@ -3437,13 +3699,14 @@
   </section>
 
   <!-- HOMEPAGE SERVICE CARDS -->
-  <section class="home-services-section home-section" id="homeServicesSection" data-home-section="services" style="background:radial-gradient(ellipse at 30% 50%,rgba(201,168,76,.08) 0%,transparent 55%),linear-gradient(180deg,#fffaf0 0%,#f8edd6 100%);padding:36px 24px 40px;position:relative">
-    <div style="max-width:1100px;margin:auto">
-      <div style="text-align:center;margin-bottom:28px">
-        <h2 style="font-family:var(--font-display);font-size:28px;color:var(--text);letter-spacing:-.2px" id="svcTitle"></h2>
+  <section class="home-services-section home-section" id="homeServicesSection" data-home-section="services">
+    <div style="max-width:1100px;margin:0 auto;padding:0 8px">
+      <div style="text-align:center;margin-bottom:32px">
+        <p style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:8px">✦ Products & Services ✦</p>
+        <h2 style="font-family:var(--font-display);font-size:30px;color:var(--text);letter-spacing:-.2px" id="svcTitle"></h2>
         <div class="gline"></div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px" id="svcCards"></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px" id="svcCards"></div>
     </div>
   </section>
   </div>
