@@ -4582,6 +4582,97 @@
     .social-3d{width:182px !important;height:236px !important}
     .social-visual{height:220px !important;min-height:220px !important}
   }
+
+  /* Mobile hero correction: 3D first, lighter image, less empty dark space. */
+  @media(max-width:560px){
+    .social-home{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px)) !important}
+    .social-cover{
+      padding:56px 18px 0 !important;
+      min-height:auto !important;
+    }
+    .social-cover::before{
+      background:
+        linear-gradient(180deg,rgba(5,4,2,.16) 0%,rgba(5,4,2,.08) 42%,rgba(5,4,2,.18) 100%) !important;
+    }
+    .social-profile-card{
+      display:flex !important;
+      flex-direction:column !important;
+      gap:8px !important;
+      min-height:0 !important;
+    }
+    .social-visual{
+      order:1 !important;
+      width:100% !important;
+      height:230px !important;
+      min-height:230px !important;
+      margin:0 !important;
+      display:flex !important;
+      align-items:flex-end !important;
+      justify-content:center !important;
+    }
+    .social-3d{
+      width:190px !important;
+      height:244px !important;
+      transform:rotate(6deg) translateY(40px) !important;
+    }
+    .social-brand-block{
+      order:2 !important;
+      width:100% !important;
+      padding:0 !important;
+      background:transparent !important;
+      border:0 !important;
+      box-shadow:none !important;
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+    }
+    .social-kicker{
+      margin:8px 0 10px !important;
+      font-size:8.5px !important;
+      letter-spacing:2.3px !important;
+      line-height:1.35 !important;
+    }
+    .social-title{
+      font-size:35px !important;
+      line-height:1.03 !important;
+      max-width:360px !important;
+    }
+    .social-desc{
+      font-size:13px !important;
+      line-height:1.45 !important;
+      max-height:112px !important;
+      margin-top:10px !important;
+    }
+    .trust-wrap-outer{
+      max-width:calc(100% - 28px) !important;
+      margin:10px auto 0 !important;
+      padding:0 0 14px !important;
+    }
+    .trust-strip{
+      grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      border-radius:18px !important;
+      background:rgba(42,34,24,.68) !important;
+    }
+    .trust-strip-card{
+      min-height:74px !important;
+      padding:10px 9px !important;
+      gap:8px !important;
+    }
+    .trust-strip-icon{
+      flex-basis:30px !important;
+      width:30px !important;
+      height:30px !important;
+      font-size:16px !important;
+    }
+    .trust-strip-title{font-size:11.5px !important;line-height:1.15 !important}
+    #homeServicesSection{padding-top:24px !important}
+  }
+
+  @media(max-width:380px){
+    .social-title{font-size:32px !important}
+    .social-visual{height:210px !important;min-height:210px !important}
+    .social-3d{width:172px !important;height:224px !important}
+    .social-desc{max-height:104px !important}
+  }
 </style>
 </head>
 <body>
