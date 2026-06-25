@@ -4497,14 +4497,25 @@
   .logo-icon.has-image::before{content:none !important}
   .social-cover-bg{
     display:block !important;
+    inset:0 !important;
     background-size:cover !important;
-    background-position:center !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+  }
+  @media(min-width:901px){
+    .social-cover{
+      min-height:max(820px,100vh) !important;
+    }
   }
   .social-cover::before{
     display:block !important;
-    background:linear-gradient(180deg,transparent 0%,rgba(7,5,2,.05) 42%,rgba(13,9,4,.82) 100%) !important;
+    background:
+      linear-gradient(180deg,rgba(4,3,1,.28) 0%,rgba(4,3,1,.18) 42%,rgba(4,3,1,.22) 100%) !important;
   }
-  .social-cover::after{display:block !important}
+  .social-cover::after{
+    display:block !important;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,.18),transparent) !important;
+  }
   .update-card-thumb{
     min-height:190px !important;
     aspect-ratio:16/10 !important;
