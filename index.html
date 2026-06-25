@@ -5093,6 +5093,22 @@
       display:flex !important;
     }
   }
+
+  .hs-load-more{
+    display:block;
+    margin:22px auto 0;
+    padding:12px 22px;
+    border-radius:999px;
+    border:1px solid rgba(201,168,76,.34);
+    background:rgba(201,168,76,.14);
+    color:#e8c96a;
+    font:800 13px/1 var(--font-body);
+    letter-spacing:.5px;
+    cursor:pointer;
+  }
+  .hs-load-more:hover{
+    background:rgba(201,168,76,.22);
+  }
 </style>
 </head>
 <body>
@@ -6711,6 +6727,11 @@ function shortNavLabel(label){
 
 function setActiveNav(name){
   document.body.classList.toggle('is-home-page', name === 'home');
+  if(name === 'home'){
+    if(typeof window._resumePhraRender === 'function') window._resumePhraRender();
+  } else if(typeof window._pausePhraRender === 'function'){
+    window._pausePhraRender();
+  }
   document.querySelectorAll('.nav-links a,.mobile-tab').forEach(a=>a.classList.remove('active'));
   const n=document.getElementById('nav-'+name);if(n)n.classList.add('active');
   const mt=document.getElementById('mtab-'+name);if(mt)mt.classList.add('active');
@@ -6782,7 +6803,22 @@ async function goPage(name, opts={}){
   if(name==='projects') showGridSkeleton('pGrid',8);
   if(name==='reviews')  showGridSkeleton('revGrid',6);
 
-  if(name!=='casing'){
+  if(name==='history-stories'){
+    _hsVisible = historyInitialLimit();
+    renderHistoryStories();
+    ensurePageData(name).then(()=>{
+      if(document.getElementById('page-history-stories')?.classList.contains('active')){
+        renderHistoryStories();
+      }
+    }).catch(err=>{
+      console.warn('[history-stories] load failed:', err);
+      const gw=document.getElementById('hsGridWrap');
+      if(gw) gw.innerHTML = `<div class="hs-empty">
+        <div class="hs-empty-icon">📖</div>
+        <p>${lang==='th'?'โหลดข้อมูล History & Stories ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ':'Could not load History & Stories. Please refresh.'}</p>
+      </div>`;
+    });
+  } else if(name!=='casing'){
     await ensurePageData(name);
   }
   if(name==='amulets'){curAcat='all';renderA('all');}
@@ -6804,7 +6840,6 @@ async function goPage(name, opts={}){
   }
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
-  if(name==='history-stories') renderHistoryStories();
   if(name==='payment')renderPayment();
   if(name==='contact')renderContactPage();
   if(opts.updateUrl !== false) updatePageUrl(name);
@@ -8188,12 +8223,24 @@ const HS_CATEGORIES = [
 let _hsCat = 'all';
 let _hsQ   = '';
 let _hsLoadingRequested = false;
+let _hsVisible = 0;
 
 function hsCatLabel(id){ const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.label:(id||'Article'); }
 function hsCatIcon(id){  const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.icon:'📄'; }
+function historyInitialLimit(){
+  return (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) ? 4 : 9;
+}
+function historyMoreStep(){
+  return (window.matchMedia && window.matchMedia('(max-width: 760px)').matches) ? 4 : 6;
+}
+function hsLoadMore(){
+  _hsVisible += historyMoreStep();
+  renderHistoryStories();
+}
 
 function renderHistoryStories(){
   const db = getDB();
+  if(!_hsVisible) _hsVisible = historyInitialLimit();
   // Show skeleton if historyStories not yet loaded
   if(!Array.isArray(db.historyStories) || !db.historyStories.length){
     const fw=document.getElementById('hsFeaturedWrap');
@@ -8207,22 +8254,6 @@ function renderHistoryStories(){
           <div style="height:15px;width:82%;border-radius:8px;background:#f4e8c8;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
         </div>
       </div>`).join('')}</div>`;
-    if(!_hsLoadingRequested && window.FB && typeof window.FB.ensureDBKeys === 'function'){
-      _hsLoadingRequested = true;
-      window.FB.ensureDBKeys(['settings','historyStories']).then(()=>{
-        _hsLoadingRequested = false;
-        if(document.getElementById('page-history-stories')?.classList.contains('active')){
-          renderHistoryStories();
-        }
-      }).catch(err=>{
-        _hsLoadingRequested = false;
-        console.warn('[history-stories] load failed:', err);
-        if(gw) gw.innerHTML = `<div class="hs-empty">
-          <div class="hs-empty-icon">📖</div>
-          <p>${lang==='th'?'โหลดข้อมูล History & Stories ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ':'Could not load History & Stories. Please refresh.'}</p>
-        </div>`;
-      });
-    }
     return;
   }
   const s  = db.settings||{};
@@ -8240,7 +8271,7 @@ function renderHistoryStories(){
     all.forEach(a=>{ const c=a.category||'guides-articles'; counts[c]=(counts[c]||0)+1; });
     chips.innerHTML = HS_CATEGORIES.map(c=>`
       <button class="hs-cat${_hsCat===c.id?' active':''}"
-        onclick="_hsCat='${c.id}';_hsQ='';document.getElementById('hsSearchInput').value='';renderHistoryStories()">
+        onclick="_hsCat='${c.id}';_hsQ='';_hsVisible=historyInitialLimit();document.getElementById('hsSearchInput').value='';renderHistoryStories()">
         ${c.icon} ${c.label}${c.id!=='all'&&counts[c.id]?` <span class="hs-cat-count">(${counts[c.id]})</span>`:''}
       </button>`).join('');
   }
@@ -8255,6 +8286,8 @@ function renderHistoryStories(){
 
   const featured = items.find(a=>a.featured);
   const rest     = items.filter(a=>a!==featured);
+  const visibleRest = rest.slice(0, _hsVisible);
+  const hasMore = rest.length > visibleRest.length;
 
   // Featured
   const fw = document.getElementById('hsFeaturedWrap');
@@ -8286,7 +8319,7 @@ function renderHistoryStories(){
           <div class="hs-section-line"></div>
         </div>
         <div class="hs-grid">
-          ${rest.map(a=>`
+          ${visibleRest.map(a=>`
             <div class="hs-card" onclick="openHsArticle(${a.id})">
               <div class="hs-card-img">
                 ${a.coverImage
@@ -8300,7 +8333,8 @@ function renderHistoryStories(){
                 <div class="hs-card-more">Read more →</div>
               </div>
             </div>`).join('')}
-        </div>`;
+        </div>
+        ${hasMore ? `<button class="hs-load-more" onclick="hsLoadMore()">${lang==='th'?'โหลดเพิ่ม':'Load more'}</button>` : ''}`;
       safeWatchImages(gw);
     } else if(!featured){
       gw.innerHTML = `<div class="hs-empty">
@@ -8316,6 +8350,7 @@ function renderHistoryStories(){
 
 function hsOnSearch(val){
   _hsQ = val;
+  _hsVisible = historyInitialLimit();
   renderHistoryStories();
 }
 
@@ -9394,6 +9429,7 @@ window.addEventListener('appinstalled',()=>{
   let scene, camera, renderer, phraGroup, halo, clock, canvas;
   let frontTex = null, backTex = null;
   let loadedGlbUrl = '';                         // remember what we loaded so we can detect changes
+  let initInFlight = null;
 
   function loadScriptOnce(src, test){
     if(test && test()) return Promise.resolve();
@@ -9441,12 +9477,13 @@ window.addEventListener('appinstalled',()=>{
 
   // Public entry point. Idempotent — safe to call on every settings change.
   window.initPhra3D = async function(){
+    if(initInFlight) return initInFlight;
     canvas = canvas || document.getElementById('phra3d');
     if(!canvas) return;
 
     // Wake the render loop in case we paused it on a previous page
     // (IntersectionObserver may still think the canvas is off-screen).
-    if(typeof window._resumePhraRender === 'function'){
+    if(document.body.classList.contains('is-home-page') && typeof window._resumePhraRender === 'function'){
       window._resumePhraRender();
     }
 
@@ -9454,6 +9491,14 @@ window.addEventListener('appinstalled',()=>{
     const wantTablet = !wantGlb && !!(window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG);
     const newMode    = wantGlb ? 'glb' : (wantTablet ? 'tablet' : '');
     if(!newMode){ return; }   // nothing to render — applySettings hid the block
+
+    const sameGlb = wantGlb && initialised && currentMode === 'glb' && loadedGlbUrl === window.PHRA_GLB;
+    const sameTablet = wantTablet && initialised && currentMode === 'tablet';
+    if(sameGlb || sameTablet){
+      return;
+    }
+
+    initInFlight = (async () => {
     if(!window.THREE || !window.THREE.GLTFLoader){
       await loadPhra3DLibs();
       if(!window.THREE) return;
@@ -9479,6 +9524,10 @@ window.addEventListener('appinstalled',()=>{
       loadGlbModel(window.PHRA_GLB);
       loadedGlbUrl = window.PHRA_GLB;
     }
+    })().finally(() => {
+      initInFlight = null;
+    });
+    return initInFlight;
   };
 
   // ──────────────────────────────────────────────────────────────────────
@@ -9933,6 +9982,7 @@ window.addEventListener('appinstalled',()=>{
     // take 50-200ms before the observer re-checks, during which the model
     // appears to "vanish". Calling _resumeRender() bypasses that wait.
     window._resumePhraRender = () => { canvasVisible = true; };
+    window._pausePhraRender = () => { canvasVisible = false; };
 
     clock = new THREE.Clock();
     let curFlip = 0;
