@@ -4673,6 +4673,182 @@
     .social-3d{width:172px !important;height:224px !important}
     .social-desc{max-height:104px !important}
   }
+
+  /* Mobile UX pass: larger 3D, redesigned compact trust/services, swipe news. */
+  @media(max-width:560px){
+    .social-home{
+      padding-bottom:calc(58px + env(safe-area-inset-bottom,0px)) !important;
+      background:linear-gradient(180deg,#100b04 0%,#090604 58%,#090604 100%) !important;
+    }
+    .social-cover{
+      padding:50px 16px 0 !important;
+      overflow:visible !important;
+    }
+    .social-profile-card{gap:4px !important}
+    .social-visual{
+      height:282px !important;
+      min-height:282px !important;
+      align-items:center !important;
+      margin:-2px 0 -6px !important;
+    }
+    .social-3d{
+      width:238px !important;
+      height:306px !important;
+      transform:rotate(6deg) translateY(24px) !important;
+      filter:drop-shadow(0 20px 42px rgba(0,0,0,.34)) !important;
+    }
+    .social-kicker{margin:2px 0 8px !important}
+    .social-title{font-size:34px !important;line-height:1 !important}
+    .social-desc{
+      max-height:92px !important;
+      font-size:12.5px !important;
+      line-height:1.42 !important;
+      color:rgba(255,244,212,.76) !important;
+      margin-top:8px !important;
+    }
+
+    .trust-wrap-outer{
+      max-width:calc(100% - 24px) !important;
+      margin:6px auto 0 !important;
+      padding:0 0 6px !important;
+    }
+    .trust-strip{
+      display:grid !important;
+      grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      gap:10px !important;
+      padding:10px !important;
+      min-height:0 !important;
+      border-radius:22px !important;
+      background:
+        radial-gradient(circle at 16% 0%,rgba(232,201,106,.18),transparent 36%),
+        rgba(32,24,16,.72) !important;
+      border:1px solid rgba(232,201,106,.22) !important;
+      box-shadow:0 16px 36px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.09) !important;
+      backdrop-filter:blur(18px) saturate(160%) !important;
+      -webkit-backdrop-filter:blur(18px) saturate(160%) !important;
+    }
+    .trust-strip-card{
+      min-height:62px !important;
+      padding:10px !important;
+      gap:9px !important;
+      border-radius:16px !important;
+      background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.025)) !important;
+      border:1px solid rgba(255,255,255,.08) !important;
+      display:flex !important;
+      align-items:center !important;
+    }
+    .trust-strip-card+.trust-strip-card::before{display:none !important}
+    .trust-strip-icon{
+      flex:0 0 34px !important;
+      width:34px !important;
+      height:34px !important;
+      border-radius:12px !important;
+      font-size:17px !important;
+      background:linear-gradient(145deg,#f0cf67,#9f7824) !important;
+      box-shadow:0 8px 18px rgba(0,0,0,.22) !important;
+    }
+    .trust-strip-text{min-width:0 !important}
+    .trust-strip-title{
+      font-size:12px !important;
+      line-height:1.12 !important;
+      color:#fff0b8 !important;
+    }
+    .trust-strip-desc,.trust-strip-stat{display:none !important}
+
+    #homeServicesSection{
+      padding:18px 14px 18px !important;
+      margin:0 !important;
+    }
+    #homeSections{
+      margin-top:-188px !important;
+      padding-bottom:0 !important;
+    }
+    #svcTitle{font-size:30px !important}
+    #svcCards{
+      grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      gap:10px !important;
+      max-width:100% !important;
+    }
+    .svc-card{
+      min-height:112px !important;
+      padding:14px 12px !important;
+      border-radius:16px !important;
+      gap:8px !important;
+    }
+    .svc-icon{
+      width:36px !important;
+      height:36px !important;
+      border-radius:11px !important;
+      margin:0 0 8px !important;
+      font-size:17px !important;
+    }
+    .svc-title{
+      font-size:13px !important;
+      line-height:1.18 !important;
+      margin-bottom:3px !important;
+    }
+    .svc-desc{
+      font-size:10.8px !important;
+      line-height:1.35 !important;
+      display:-webkit-box !important;
+      -webkit-line-clamp:2 !important;
+      line-clamp:2 !important;
+      -webkit-box-orient:vertical !important;
+      overflow:hidden !important;
+    }
+
+    .latest-updates-section{
+      padding:30px 0 42px !important;
+      overflow:hidden !important;
+    }
+    .latest-updates-head{margin-bottom:22px !important;padding:0 18px !important}
+    .latest-updates-title{font-size:34px !important}
+    .updates-slider-wrap{padding:0 !important;display:block !important}
+    .updates-slider-viewport{
+      overflow-x:auto !important;
+      overflow-y:hidden !important;
+      scroll-snap-type:x mandatory !important;
+      -webkit-overflow-scrolling:touch !important;
+      scrollbar-width:none !important;
+      padding:0 18px 10px !important;
+    }
+    .updates-slider-viewport::-webkit-scrollbar{display:none !important}
+    .updates-grid{
+      display:flex !important;
+      grid-template-columns:none !important;
+      gap:14px !important;
+      overflow:visible !important;
+      width:max-content !important;
+      padding:0 22vw 0 0 !important;
+      transform:none !important;
+      transition:none !important;
+      will-change:auto !important;
+    }
+    .updates-grid .update-card{
+      flex:0 0 82vw !important;
+      width:82vw !important;
+      max-width:330px !important;
+      min-width:0 !important;
+      min-height:0 !important;
+      scroll-snap-align:start !important;
+    }
+    .update-card-thumb{
+      min-height:170px !important;
+      aspect-ratio:16/10 !important;
+    }
+    .update-card-body{padding:18px !important}
+    .update-card-title{font-size:19px !important;margin-top:18px !important}
+    .update-card-text{font-size:13px !important;line-height:1.45 !important}
+    .updates-arrow{display:none !important}
+    .updates-dots{display:flex !important;margin-top:10px !important}
+  }
+
+  @media(max-width:380px){
+    .social-3d{width:220px !important;height:286px !important}
+    .social-visual{height:262px !important;min-height:262px !important}
+    #svcCards{gap:9px !important}
+    .svc-card{padding:12px 10px !important}
+  }
 </style>
 </head>
 <body>
