@@ -917,6 +917,114 @@
   }
   .svc-card:hover .svc-arrow{opacity:1;transform:translateX(0)}
 
+
+  /* ─── LATEST UPDATES — premium article card grid ─────────────────────── */
+  .latest-updates-section{
+    background:linear-gradient(180deg,#fdf8ef 0%,#fffcf5 100%);
+    padding:72px 24px 80px;
+    border-top:1px solid rgba(201,168,76,.1);
+  }
+  .latest-updates-inner{max-width:1180px;margin:0 auto}
+  .latest-updates-head{text-align:center;margin-bottom:48px}
+  .latest-updates-eyebrow{
+    font-size:10px;font-weight:700;letter-spacing:3.5px;
+    text-transform:uppercase;color:var(--gold-dark);margin-bottom:10px;
+  }
+  .latest-updates-title{
+    font-family:var(--font-display);font-size:34px;font-weight:700;
+    color:var(--text);margin-bottom:6px;
+  }
+  .latest-updates-head .gline{margin:14px auto}
+  .latest-updates-sub{
+    font-size:14.5px;color:var(--text-muted);max-width:520px;
+    margin:16px auto 0;line-height:1.7;
+  }
+
+  /* Grid */
+  .updates-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+  }
+  @media(max-width:1020px){.updates-grid{grid-template-columns:repeat(2,1fr);gap:20px}}
+  @media(max-width:620px){
+    .updates-grid{grid-template-columns:1fr;gap:16px}
+    .latest-updates-section{padding:52px 18px 60px}
+    .latest-updates-title{font-size:26px}
+  }
+
+  /* Article card */
+  .update-card{
+    background:#fff;
+    border:1px solid rgba(201,168,76,.18);
+    border-radius:20px;
+    overflow:hidden;
+    display:flex;flex-direction:column;
+    transition:transform .26s cubic-bezier(.22,1,.36,1), box-shadow .26s, border-color .26s;
+    box-shadow:0 4px 20px rgba(120,80,20,.07);
+    cursor:pointer;
+  }
+  .update-card:hover{
+    transform:translateY(-6px);
+    border-color:rgba(201,168,76,.36);
+    box-shadow:0 16px 44px rgba(120,80,20,.13);
+  }
+  .update-card-thumb{
+    width:100%;aspect-ratio:16/9;
+    background:linear-gradient(145deg,#f5e8c8,#ede0b0);
+    overflow:hidden;position:relative;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .update-card-thumb img{
+    width:100%;height:100%;object-fit:cover;
+    display:block;transition:transform .4s ease;
+  }
+  .update-card:hover .update-card-thumb img{transform:scale(1.04)}
+  .update-card-thumb-placeholder{
+    font-size:40px;opacity:.35;
+  }
+  .update-card-body{
+    padding:20px 22px 22px;
+    display:flex;flex-direction:column;flex:1;
+  }
+  .update-card-badge{
+    display:inline-block;
+    font-size:9.5px;font-weight:800;letter-spacing:1.5px;
+    text-transform:uppercase;padding:3px 10px;border-radius:99px;
+    margin-bottom:12px;width:fit-content;
+  }
+  .update-badge-default{background:rgba(201,168,76,.15);color:var(--gold-dark)}
+  .update-badge-casing{background:rgba(100,120,200,.12);color:#3a4fa0}
+  .update-badge-amulet{background:rgba(180,100,50,.12);color:#7a3e10}
+  .update-badge-project{background:rgba(40,140,80,.12);color:#185c30}
+  .update-badge-review{background:rgba(220,160,0,.12);color:#7a5800}
+  .update-badge-article{background:rgba(100,50,180,.12);color:#4a1a90}
+  .update-badge-announcement{background:rgba(200,50,50,.12);color:#8a1a1a}
+
+  .update-card-title{
+    font-family:var(--font-display);font-size:17px;font-weight:700;
+    color:var(--text);line-height:1.35;margin-bottom:8px;
+  }
+  .update-card-text{
+    font-size:13.5px;color:var(--text-muted);line-height:1.65;
+    flex:1;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .update-card-foot{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-top:16px;padding-top:14px;
+    border-top:1px solid rgba(201,168,76,.12);
+  }
+  .update-card-date{font-size:11.5px;color:var(--text-muted);font-weight:500}
+  .update-card-cta{
+    font-size:12.5px;font-weight:700;color:var(--gold-dark);
+    background:none;border:none;cursor:pointer;
+    display:flex;align-items:center;gap:4px;padding:0;
+    font-family:inherit;letter-spacing:.3px;
+    transition:color .2s;
+  }
+  .update-card-cta:hover{color:var(--text)}
+
   /* ─── SOCIAL CHANNELS — flat single row, no platform headings ───────── */
   .social-channels-section{
     padding:32px 20px 36px;
@@ -3348,50 +3456,29 @@
     </div>
   </section>
 
-  <!-- LATEST UPDATES / FEED — appears after services/featured/reviews -->
-  <div class="social-feed-wrap">
-    <div class="social-feed-label">
-      <span class="social-feed-label-line"></span>
-      <span class="social-feed-label-text">📰 Latest Updates</span>
-      <span class="social-feed-label-line"></span>
+  <!-- LATEST UPDATES — premium article card grid -->
+  <section class="latest-updates-section" id="latestUpdatesSection">
+    <div class="latest-updates-inner">
+      <div class="latest-updates-head">
+        <div class="latest-updates-eyebrow">✦ LATEST UPDATES ✦</div>
+        <h2 class="latest-updates-title">What's New</h2>
+        <div class="gline"></div>
+        <p class="latest-updates-sub">The latest from our shop — new amulets, casing styles, projects and announcements.</p>
+      </div>
+      <!-- socialMenu, socialShortcuts kept for functionality but hidden -->
+      <div id="socialMenu" style="display:none"></div>
+      <div id="socialShortcuts" style="display:none"></div>
+      <div id="socialMiniAvatar" style="display:none"></div>
+      <!-- The feed list rendered by renderSocialHomeFeed() -->
+      <div class="updates-grid" id="socialFeedList"></div>
+      <!-- Widgets kept for JS compatibility but hidden -->
+      <div id="socialPopular" style="display:none"></div>
+      <div id="socialPreview" style="display:none"></div>
+      <div id="socialTrust" style="display:none"></div>
     </div>
-    <div class="social-shell">
-      <aside class="social-panel social-left">
-        <div class="social-menu" id="socialMenu"></div>
-        <div class="social-help">
-          <div class="social-help-title">Need help choosing?</div>
-          <div class="social-help-text">Message us from any page for casing, amulet, payment, or shipping questions.</div>
-          <button class="social-action primary" style="width:100%;padding:10px 12px" onclick="goPage('contact')">Contact</button>
-        </div>
-      </aside>
-
-      <main class="social-main social-main-anchor" id="homeFeed">
-        <div class="social-composer">
-          <div class="social-composer-row">
-            <div class="social-mini-avatar" id="socialMiniAvatar">Y</div>
-            <button class="social-search" onclick="goPage('casing')">What are you looking for today?</button>
-          </div>
-          <div class="social-shortcuts" id="socialShortcuts"></div>
-        </div>
-        <div id="socialFeedList"></div>
-      </main>
-
-      <aside class="social-right">
-        <div class="social-panel">
-          <div class="social-widget-title">Popular Casing</div>
-          <div class="social-widget-list" id="socialPopular"></div>
-        </div>
-        <div class="social-panel">
-          <div class="social-widget-title">Quick Preview</div>
-          <div class="social-widget-list" id="socialPreview"></div>
-        </div>
-        <div class="social-panel">
-          <div class="social-widget-title">Trust</div>
-          <div class="social-widget-list" id="socialTrust"></div>
-        </div>
-      </aside>
-    </div>
-  </div>
+    <!-- homeFeed anchor kept for goPage('feed') scrolling -->
+    <div id="homeFeed" style="height:0;overflow:hidden"></div>
+  </section>
 
   <div class="social-home" style="display:none"><!-- placeholder to keep social-home close tag valid --></div>
 
@@ -4590,12 +4677,12 @@ function renderSocialHomeFeed(){
       return;
     }
     if(loadState.homeFeed === 'error'){
-      list.innerHTML=`<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'โหลด Feed ไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load feed. Please refresh.'}</article>`;
+      list.innerHTML=`<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'โหลดไม่สำเร็จ ลองรีเฟรชอีกครั้ง':'Could not load updates. Please refresh.'}</article>`;
     } else if(posts.length){
       list.innerHTML=posts.map(renderSocialPost).join('');
     } else {
       loadState.homeFeed='empty';
-      list.innerHTML=`<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'ยังไม่มีอัปเดตใน Feed':'No feed updates yet.'}</article>`;
+      list.innerHTML=`<article class="social-post" style="padding:24px;text-align:center;color:#765b27">${lang==='th'?'ยังไม่มีอัพเดท':'No updates yet.'}</article>`;
     }
     safeWatchImages(list);
   }
@@ -4603,33 +4690,27 @@ function renderSocialHomeFeed(){
 }
 
 function renderSocialPost(p){
-  const imgs=feedImages(p.imgs).slice(0,3);
-  const mediaClass=imgs.length===1?'one':imgs.length===2?'two':'three';
-  const logo=imageUrl(getDB().settings.logoIcon) || '/favicon/apple-touch-icon.png';
+  const imgs=feedImages(p.imgs);
+  const thumb=imgs[0];
   const badge=p.badge||(feedTypeMeta(p.type||'default').badge);
-  const badgeCls=p.badgeCls||(feedTypeMeta(p.type||'default').cls);
+  // Map badge text to CSS class
+  const typeMap={default:'default',casing:'casing',amulet:'amulet',project:'project',
+                 review:'review',article:'article',announcement:'announcement'};
+  const badgeType=typeMap[p.type||'default']||'default';
+  const thumbHtml=thumb
+    ? `<img loading="lazy" decoding="async" ${imgAttrs(thumb,'medium','(max-width:700px) 100vw, 400px')} alt="">`
+    : `<div class="update-card-thumb-placeholder">✦</div>`;
   return `
-    <article class="social-post">
-      <div class="feed-type-badge ${badgeCls}" style="margin:10px 14px 0">${badge}</div>
-      <div class="social-post-head">
-        <div class="social-mini-avatar"><img src="${escapeHtml(logo)}" alt=""></div>
-        <div>
-          <div class="social-post-name">YingyingyingSG</div>
-          <div class="social-post-meta">${escapeHtml(feedTimeLabel(p.ts))}</div>
+    <article class="update-card" onclick="${p.action}">
+      <div class="update-card-thumb">${thumbHtml}</div>
+      <div class="update-card-body">
+        <span class="update-card-badge update-badge-${badgeType}">${badge}</span>
+        <h3 class="update-card-title">${escapeHtml(p.title)}</h3>
+        ${p.text?`<p class="update-card-text">${escapeHtml(p.text)}</p>`:''}
+        <div class="update-card-foot">
+          <span class="update-card-date">${escapeHtml(feedTimeLabel(p.ts))}</span>
+          <button class="update-card-cta" onclick="${p.action}">Read more →</button>
         </div>
-      </div>
-      <div class="social-post-body">
-        <h3 class="social-post-title">${escapeHtml(p.title)}</h3>
-        ${p.text?`<p class="social-post-text">${escapeHtml(p.text)}</p>`:''}
-      </div>
-      ${imgs.length?`
-        <div class="social-post-media ${mediaClass}" onclick="${p.action}" style="cursor:pointer">
-          ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 680px')} alt="">`).join('')}
-        </div>
-      `:''}
-      <div class="social-post-actions">
-        <button class="feed-cta-btn" style="flex:1;border-radius:999px;padding:9px 14px;font-size:13px" onclick="${p.action}">${escapeHtml(p.cta||'View')} →</button>
-        <button class="feed-cta-btn sec" style="flex:1;border-radius:999px;padding:9px 14px;font-size:13px" onclick="copyFeedLink('${escapeHtml(p.type||'')}')" >↗ Share</button>
       </div>
     </article>
   `;

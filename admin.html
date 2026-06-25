@@ -1600,13 +1600,13 @@
 
       <!-- FEED POSTS -->
       <div class="tab-content" data-tab-content="feed" data-parent="home">
-        <h3 class="subsection-title">📰 Latest Updates Posts / Latest Updates</h3>
+        <h3 class="subsection-title">📰 Latest Updates</h3>
         <div class="subsection-sub">The feed shows on the homepage as "Latest Updates". Amulets, casing, and reviews are added automatically. Here you can add manual announcements or custom posts.</div>
         <h3 class="subsection-title" data-en="📰 Latest Updates Posts" data-th="📰 โพสต์ Feed">📰 Latest Updates Posts</h3>
         <div class="subsection-sub"
              data-en="Add pinned announcements or any shop update to the Facebook-style Feed page. Casing style updates are generated automatically from real casing photos."
              data-th="เพิ่มประกาศหรืออัปเดตร้านในหน้า Feed สไตล์ Facebook ส่วนอัปเดตกรอบจะสร้างจากรูปกรอบจริงอัตโนมัติ">
-          Add pinned announcements or any shop update to the Feed page.
+          Add pinned announcements or any shop update to the Latest Updates section.
         </div>
         <div class="form-card">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
@@ -4226,7 +4226,7 @@ function renderFeedPostList(posts){
   if(!list) return;
   const arr=Array.isArray(posts) ? posts : [];
   if(!arr.length){
-    list.innerHTML=`<div class="empty-state" style="padding:24px" data-en="No manual Feed posts yet. Automatic casing updates will still show from real casing photos." data-th="ยังไม่มีโพสต์ Feed ที่ลงเอง แต่อัปเดตกรอบจะยังแสดงจากรูปกรอบจริงอัตโนมัติ">${lang==='th'?'ยังไม่มีโพสต์ Feed ที่ลงเอง แต่อัปเดตกรอบจะยังแสดงจากรูปกรอบจริงอัตโนมัติ':'No manual Feed posts yet. Automatic casing updates will still show from real casing photos.'}</div>`;
+    list.innerHTML=`<div class="empty-state" style="padding:24px" data-en="No updates yet. Amulet, casing, and review updates appear automatically. Add custom announcements here." data-th="ยังไม่มีอัพเดทที่ลงเอง">${lang==='th'?'ยังไม่มีอัพเดทที่ลงเอง':'No updates yet. Amulet, casing, and review updates appear automatically. Add custom announcements here.'}</div>`;
     return;
   }
   list.innerHTML=arr.map((p,i)=>{
@@ -4337,7 +4337,7 @@ async function saveFeedPosts(){
     .slice(0,30)
     .map(p=>({...p, buttonTarget:p.buttonTarget === 'feed' ? 'home' : p.buttonTarget}));
   db.feedPosts=[...captureFeedPosts(), ...systemPosts].slice(0,80);
-  const ok=await persistDB(db, lang==='th' ? '✅ บันทึก Feed แล้ว' : '✅ Feed posts saved', {skipFeedUpdate:true});
+  const ok=await persistDB(db, lang==='th' ? '✅ บันทึกแล้ว' : '✅ Updates saved', {skipFeedUpdate:true});
   if(ok) loadFeedPosts();
 }
 
