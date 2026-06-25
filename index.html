@@ -4849,6 +4849,162 @@
     #svcCards{gap:9px !important}
     .svc-card{padding:12px 10px !important}
   }
+
+  /* Mobile correction pass: no 3D/text overlap, trust after copy, swipe reviews. */
+  @media(max-width:560px){
+    .social-cover{
+      padding:50px 16px 0 !important;
+      overflow:hidden !important;
+    }
+    .social-profile-card{
+      display:flex !important;
+      flex-direction:column !important;
+      gap:0 !important;
+    }
+    .social-visual{
+      order:1 !important;
+      height:310px !important;
+      min-height:310px !important;
+      margin:0 0 12px !important;
+      align-items:center !important;
+      overflow:hidden !important;
+    }
+    .social-3d{
+      width:240px !important;
+      height:310px !important;
+      transform:rotate(6deg) translateY(6px) !important;
+    }
+    .social-brand-block{
+      order:2 !important;
+      display:block !important;
+    }
+    .social-kicker{
+      margin:0 0 8px !important;
+      font-size:8.5px !important;
+      letter-spacing:2.2px !important;
+    }
+    .social-title{
+      font-size:33px !important;
+      line-height:1.02 !important;
+      max-width:100% !important;
+    }
+    .social-desc{
+      max-height:86px !important;
+      margin-top:8px !important;
+      font-size:12.4px !important;
+      line-height:1.42 !important;
+    }
+    .trust-wrap-outer{
+      margin:12px auto 0 !important;
+      padding-bottom:10px !important;
+    }
+    #homeSections{
+      margin-top:-138px !important;
+    }
+    #homeServicesSection{
+      padding-top:34px !important;
+    }
+
+    .home-reviews-section{
+      padding:30px 0 42px !important;
+      overflow:hidden !important;
+    }
+    .home-reviews-inner{
+      max-width:none !important;
+      padding:0 !important;
+    }
+    .home-reviews-head{
+      margin-bottom:22px !important;
+      padding:0 18px !important;
+      text-align:center !important;
+    }
+    #homeRevTitle{font-size:34px !important}
+    .rev-grid#homeRevGrid{
+      display:flex !important;
+      grid-template-columns:none !important;
+      gap:14px !important;
+      overflow-x:auto !important;
+      overflow-y:hidden !important;
+      scroll-snap-type:x mandatory !important;
+      -webkit-overflow-scrolling:touch !important;
+      scrollbar-width:none !important;
+      padding:0 22vw 10px 18px !important;
+      width:auto !important;
+    }
+    .rev-grid#homeRevGrid::-webkit-scrollbar{display:none !important}
+    .rev-grid#homeRevGrid .rev-card{
+      flex:0 0 82vw !important;
+      width:82vw !important;
+      max-width:330px !important;
+      min-height:190px !important;
+      scroll-snap-align:start !important;
+      padding:24px !important;
+    }
+  }
+
+  @media(max-width:380px){
+    .social-visual{height:292px !important;min-height:292px !important}
+    .social-3d{width:226px !important;height:292px !important}
+    .social-title{font-size:31px !important}
+  }
+
+  /* Casing style modal: match the new dark luxury UI. */
+  .modal-overlay.variant-open{
+    background:rgba(5,4,2,.78) !important;
+    backdrop-filter:blur(12px) saturate(140%) !important;
+    -webkit-backdrop-filter:blur(12px) saturate(140%) !important;
+  }
+  .modal.variant-modal{
+    background:
+      radial-gradient(circle at 22% 0%,rgba(201,168,76,.16),transparent 34%),
+      linear-gradient(160deg,rgba(34,25,15,.96),rgba(12,8,5,.98)) !important;
+    color:#fff4c8 !important;
+    border:1px solid rgba(232,201,106,.26) !important;
+    border-top-color:rgba(255,255,255,.18) !important;
+    box-shadow:0 28px 90px rgba(0,0,0,.56), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+  .modal.variant-modal .modal-head{
+    background:linear-gradient(180deg,rgba(24,17,9,.96),rgba(24,17,9,.76)) !important;
+    border-bottom:1px solid rgba(232,201,106,.18) !important;
+  }
+  .modal.variant-modal .modal-title,
+  .modal.variant-modal .modal-title-cat{
+    color:#f2df96 !important;
+  }
+  .modal.variant-modal .modal-title{font-size:24px !important}
+  .modal.variant-modal .variant-gallery{
+    background:transparent !important;
+  }
+  .modal.variant-modal .variant-photo{
+    background:rgba(255,255,255,.055) !important;
+    border:1px solid rgba(255,255,255,.1) !important;
+    box-shadow:0 10px 28px rgba(0,0,0,.28) !important;
+  }
+  .modal.variant-modal .modal-close{
+    background:rgba(255,255,255,.08) !important;
+    color:#f2df96 !important;
+    border-color:rgba(232,201,106,.28) !important;
+  }
+  @media(max-width:768px){
+    .modal.variant-modal{
+      border-radius:22px 22px 0 0 !important;
+      padding:0 !important;
+      max-height:92vh !important;
+      height:auto !important;
+    }
+    .modal.variant-modal .modal-head{
+      padding:18px 18px 14px !important;
+      margin:0 !important;
+      position:sticky !important;
+      top:0 !important;
+    }
+    .modal.variant-modal .variant-gallery{
+      padding:14px !important;
+      column-gap:10px !important;
+      flex:0 1 auto !important;
+      min-height:0 !important;
+    }
+  }
 </style>
 </head>
 <body>
