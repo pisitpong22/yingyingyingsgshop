@@ -4487,6 +4487,90 @@
     .ftype-grid{gap:10px !important}
     .ftype-body{padding:10px !important}
   }
+
+  /* Final visual corrections */
+  .logo-icon.has-image{
+    background:transparent !important;
+    box-shadow:0 0 16px rgba(201,168,76,.35) !important;
+  }
+  .logo-icon.has-image img{display:block !important}
+  .logo-icon.has-image::before{content:none !important}
+  .social-cover-bg{
+    display:block !important;
+    background-size:cover !important;
+    background-position:center !important;
+  }
+  .social-cover::before{
+    display:block !important;
+    background:linear-gradient(180deg,transparent 0%,rgba(7,5,2,.05) 42%,rgba(13,9,4,.82) 100%) !important;
+  }
+  .social-cover::after{display:block !important}
+  .update-card-thumb{
+    min-height:190px !important;
+    aspect-ratio:16/10 !important;
+    overflow:hidden !important;
+  }
+  .update-card-thumb img{
+    display:block !important;
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+  }
+  .update-card-thumb:has(img)::before{content:none !important;display:none !important}
+  .social-3d{
+    width:340px !important;
+    height:430px !important;
+    transform:rotate(7deg) translateY(6px) !important;
+  }
+  .social-3d::after{
+    content:'' !important;
+    display:block !important;
+    left:10% !important;
+    right:10% !important;
+    bottom:5% !important;
+    height:24% !important;
+    background:radial-gradient(ellipse,rgba(232,201,106,.28),transparent 68%) !important;
+    filter:blur(24px) !important;
+  }
+  .trust-strip-card{
+    transition:transform .22s ease, background .22s ease, box-shadow .22s ease, border-color .22s ease !important;
+    border-radius:18px !important;
+    isolation:isolate !important;
+  }
+  .trust-strip-card:hover,
+  .trust-strip-card:focus-visible,
+  .trust-strip-card.is-hovered{
+    transform:translateY(-3px) !important;
+    background:
+      radial-gradient(circle at 22% 18%,rgba(232,201,106,.22),transparent 44%),
+      linear-gradient(135deg,rgba(255,255,255,.16),rgba(255,255,255,.06)) !important;
+    box-shadow:0 16px 38px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.16) !important;
+  }
+  .trust-strip-icon{transition:transform .22s ease, box-shadow .22s ease, background .22s ease !important}
+  .trust-strip-card:hover .trust-strip-icon,
+  .trust-strip-card:focus-visible .trust-strip-icon,
+  .trust-strip-card.is-hovered .trust-strip-icon{
+    background:linear-gradient(145deg,#f2d474,#b88d2b) !important;
+    transform:scale(1.08) !important;
+    box-shadow:0 8px 20px rgba(201,168,76,.22) !important;
+  }
+
+  @media(min-width:901px) and (max-width:1180px){
+    .social-3d{width:300px !important;height:390px !important;transform:rotate(7deg) translateY(4px) !important}
+  }
+  @media(max-width:900px){
+    .social-3d{width:250px !important;height:320px !important;transform:rotate(6deg) !important}
+    .update-card-thumb{min-height:180px !important}
+  }
+  @media(max-width:560px){
+    .social-3d{width:205px !important;height:264px !important;transform:rotate(6deg) !important}
+    .social-visual{height:246px !important;min-height:246px !important}
+    .update-card-thumb{min-height:160px !important}
+  }
+  @media(max-width:380px){
+    .social-3d{width:182px !important;height:236px !important}
+    .social-visual{height:220px !important;min-height:220px !important}
+  }
 </style>
 </head>
 <body>
@@ -5466,6 +5550,12 @@ function renderTrustStrip(){
         <div class="trust-strip-desc">${escapeHtml(c.desc||'')}</div>
       </div>
     </div>`).join('');
+  el.querySelectorAll('.trust-strip-card').forEach(card => {
+    card.addEventListener('mouseenter', () => card.classList.add('is-hovered'));
+    card.addEventListener('mouseleave', () => card.classList.remove('is-hovered'));
+    card.addEventListener('focus', () => card.classList.add('is-hovered'));
+    card.addEventListener('blur', () => card.classList.remove('is-hovered'));
+  });
 }
 
 function applySettings(){
@@ -5748,7 +5838,13 @@ function renderSocialHomeBase(){
 
   const coverEl=document.getElementById('socialCoverBg');
   if(coverEl && cover){
-    coverEl.style.backgroundImage=`linear-gradient(90deg,rgba(6,4,1,.94),rgba(25,17,5,.62),rgba(6,4,1,.76)),url('${cover}')`;
+    coverEl.style.setProperty(
+      'background-image',
+      `linear-gradient(90deg,rgba(6,4,1,.86),rgba(25,17,5,.54),rgba(6,4,1,.7)),url('${cover}')`,
+      'important'
+    );
+  } else if(coverEl){
+    coverEl.style.removeProperty('background-image');
   }
   const avatar=document.getElementById('socialAvatarImg');
   if(avatar) avatar.src=logo;
