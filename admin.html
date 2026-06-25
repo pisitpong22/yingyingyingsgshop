@@ -1248,7 +1248,7 @@
       <div class="side-item" onclick="showPanel('home',this)" data-en="🏠 Homepage Editor" data-th="🏠 แก้ไขหน้าแรก">🏠 Homepage Editor</div>
       <div class="side-item" onclick="showPanel('store-pages',this)" data-en="📄 Store Pages" data-th="📄 หน้าร้าน">📄 Store Pages</div>
       <div class="side-item" onclick="showPanel('history-stories',this)" data-en="📖 History &amp; Stories" data-th="📖 ประวัติ &amp; เรื่องราว">📖 History &amp; Stories</div>
-      <div class="side-item" onclick="showPanel('home',this);showTab('home','feed')" data-en="📰 Feed / Latest Updates" data-th="📰 ฟีด / อัปเดตล่าสุด">📰 Feed / Latest Updates</div>
+      <div class="side-item" onclick="showPanel('home',this);showTab('home','feed')" data-en="📰 Latest Updates / Latest Updates" data-th="📰 ฟีด / อัปเดตล่าสุด">📰 Latest Updates / Latest Updates</div>
 
       <div class="side-div"></div>
 
@@ -1600,9 +1600,9 @@
 
       <!-- FEED POSTS -->
       <div class="tab-content" data-tab-content="feed" data-parent="home">
-        <h3 class="subsection-title">📰 Feed Posts / Latest Updates</h3>
+        <h3 class="subsection-title">📰 Latest Updates Posts / Latest Updates</h3>
         <div class="subsection-sub">The feed shows on the homepage as "Latest Updates". Amulets, casing, and reviews are added automatically. Here you can add manual announcements or custom posts.</div>
-        <h3 class="subsection-title" data-en="📰 Feed Posts" data-th="📰 โพสต์ Feed">📰 Feed Posts</h3>
+        <h3 class="subsection-title" data-en="📰 Latest Updates Posts" data-th="📰 โพสต์ Feed">📰 Latest Updates Posts</h3>
         <div class="subsection-sub"
              data-en="Add pinned announcements or any shop update to the Facebook-style Feed page. Casing style updates are generated automatically from real casing photos."
              data-th="เพิ่มประกาศหรืออัปเดตร้านในหน้า Feed สไตล์ Facebook ส่วนอัปเดตกรอบจะสร้างจากรูปกรอบจริงอัตโนมัติ">
@@ -2843,7 +2843,7 @@ function defaultSettings(){
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
     nav:[
       {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
-      {id:'feed',label:'Feed',visible:true,enabled:true,builtin:true},
+      {id:'feed',label:'Latest Updates',visible:true,enabled:true,builtin:true},
       {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
       {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
@@ -3039,7 +3039,7 @@ function applyDbMigrations(d){
   if(d.settings.nav && Array.isArray(d.settings.nav)){
     if(!d.settings.nav.find(n=>n.id==='feed')){
       const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
-      d.settings.nav.splice(homeIdx>=0?homeIdx+1:0,0,{id:'feed',label:'Feed',visible:true,enabled:true,builtin:true});
+      d.settings.nav.splice(homeIdx>=0?homeIdx+1:0,0,{id:'feed',label:'Latest Updates',visible:true,enabled:true,builtin:true});
     }
     if(!d.settings.nav.find(n=>n.id==='contact')){
       const casingIdx=d.settings.nav.findIndex(n=>n.id==='casing');
@@ -6858,7 +6858,7 @@ function buildCompositePanels(){
       {tab:'featured', en:'✨ Featured',          th:'✨ แนะนำ'},
       {tab:'social',   en:'📲 Social Channels',  th:'📲 โซเชียลมีเดีย'},
       {tab:'layout',   en:'📐 Layout & Sections', th:'📐 จัดเลย์เอาท์'},
-      {tab:'feed',     en:'📰 Feed Posts',        th:'📰 โพสต์ Feed'},
+      {tab:'feed',     en:'📰 Latest Updates Posts',        th:'📰 โพสต์ Feed'},
     ],
     store: [
       {tab:'branding', en:'🏷️ Branding & Logo', th:'🏷️ แบรนด์ & โลโก้'},
