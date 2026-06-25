@@ -5005,6 +5005,94 @@
       min-height:0 !important;
     }
   }
+
+  /* Final mobile spacing pass: keep trust below copy and give next sections air. */
+  @media(max-width:760px){
+    .social-cover{
+      min-height:auto !important;
+      padding-bottom:18px !important;
+    }
+    .social-content{
+      padding-bottom:0 !important;
+    }
+    .social-desc{
+      max-height:none !important;
+      overflow:visible !important;
+      display:block !important;
+      padding-bottom:12px !important;
+    }
+    .trust-wrap-outer{
+      margin:34px auto 0 !important;
+      padding-bottom:18px !important;
+      position:relative !important;
+      z-index:3 !important;
+    }
+    #homeSections{
+      margin-top:0 !important;
+    }
+    #homeServicesSection{
+      padding-top:44px !important;
+      margin-top:0 !important;
+    }
+  }
+
+  /* Desktop What's New: show 3 cards, then slide horizontally. */
+  @media(min-width:1021px){
+    .updates-slider-viewport{
+      overflow:hidden !important;
+    }
+    .updates-grid{
+      display:flex !important;
+      flex-wrap:nowrap !important;
+      gap:20px !important;
+    }
+    .updates-grid .update-card{
+      flex:0 0 calc((100% - 40px)/3) !important;
+      width:calc((100% - 40px)/3) !important;
+      max-width:none !important;
+    }
+  }
+
+  /* History & Stories mobile: keep loaded content visible and readable. */
+  @media(max-width:760px){
+    #page-history-stories.active,
+    #page-history-stories .content,
+    #hsPageWrap,
+    #hsFeaturedWrap,
+    #hsGridWrap{
+      display:block !important;
+      opacity:1 !important;
+      visibility:visible !important;
+      height:auto !important;
+      min-height:0 !important;
+      overflow:visible !important;
+    }
+    #page-history-stories .content{
+      padding:0 !important;
+    }
+    .hs-cats{
+      flex-wrap:nowrap !important;
+      overflow-x:auto !important;
+      padding:0 2px 8px !important;
+      margin-bottom:20px !important;
+      scrollbar-width:none !important;
+    }
+    .hs-cats::-webkit-scrollbar{display:none !important}
+    .hs-cat{flex:0 0 auto !important}
+    .hs-featured{
+      display:block !important;
+      margin-bottom:24px !important;
+    }
+    .hs-featured-img{max-height:none !important}
+    .hs-grid{
+      display:grid !important;
+      grid-template-columns:1fr !important;
+      gap:14px !important;
+    }
+    .hs-card{
+      display:flex !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -8099,6 +8187,7 @@ const HS_CATEGORIES = [
 
 let _hsCat = 'all';
 let _hsQ   = '';
+let _hsLoadingRequested = false;
 
 function hsCatLabel(id){ const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.label:(id||'Article'); }
 function hsCatIcon(id){  const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.icon:'📄'; }
@@ -8118,6 +8207,22 @@ function renderHistoryStories(){
           <div style="height:15px;width:82%;border-radius:8px;background:#f4e8c8;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
         </div>
       </div>`).join('')}</div>`;
+    if(!_hsLoadingRequested && window.FB && typeof window.FB.ensureDBKeys === 'function'){
+      _hsLoadingRequested = true;
+      window.FB.ensureDBKeys(['settings','historyStories']).then(()=>{
+        _hsLoadingRequested = false;
+        if(document.getElementById('page-history-stories')?.classList.contains('active')){
+          renderHistoryStories();
+        }
+      }).catch(err=>{
+        _hsLoadingRequested = false;
+        console.warn('[history-stories] load failed:', err);
+        if(gw) gw.innerHTML = `<div class="hs-empty">
+          <div class="hs-empty-icon">📖</div>
+          <p>${lang==='th'?'โหลดข้อมูล History & Stories ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ':'Could not load History & Stories. Please refresh.'}</p>
+        </div>`;
+      });
+    }
     return;
   }
   const s  = db.settings||{};
