@@ -165,23 +165,28 @@
   .topbar{display:none}
 
   nav{
-    position:fixed;top:16px;left:50%;transform:translateX(-50%);
+    position:fixed;top:14px;left:50%;transform:translateX(-50%);
     z-index:200;
-    width:calc(100% - 48px);
+    width:calc(100% - 32px);
     max-width:1100px;
-    background:rgba(255,255,255,0.15);
-    backdrop-filter:blur(20px) saturate(180%);
-    -webkit-backdrop-filter:blur(20px) saturate(180%);
-    border:1px solid rgba(201,168,76,0.3);
-    border-top:1px solid rgba(255,250,220,0.45);
+    background:rgba(255,252,240,.22);
+    backdrop-filter:blur(22px) saturate(180%);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    border:1px solid rgba(201,168,76,.3);
+    border-top:1px solid rgba(255,248,200,.45);
     border-radius:999px;
-    box-shadow:
-      0 8px 28px rgba(0,0,0,.14),
-      0 1px 0 rgba(255,250,220,.3) inset;
+    box-shadow:0 6px 24px rgba(0,0,0,.12),0 1px 0 rgba(255,248,220,.3) inset;
+    transition:background .3s,border-color .3s;
   }
-  .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 18px;height:58px;gap:12px}
+  /* Non-home (cream bg): cream pill */
+  body:not(.is-home-page) nav{
+    background:rgba(255,252,240,.78);
+    border-color:rgba(201,168,76,.28);
+    box-shadow:0 4px 18px rgba(120,80,20,.1),0 1px 0 rgba(255,250,220,.6) inset;
+  }
+  .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px;height:52px;gap:10px}
   .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
-  .logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
   .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
   .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
   .logo-text{color:#e8d070;font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 4px rgba(0,0,0,.6)}
@@ -2217,12 +2222,17 @@
     border-bottom:1px solid rgba(232,201,106,.18);
   }
   nav{
-    top:16px;
-    background:rgba(20,14,4,0.22);
-    border:1px solid rgba(201,168,76,.35);
-    box-shadow:0 8px 28px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,248,210,.18);
+    top:14px;
+    background:rgba(12,8,2,0.32);
+    border:1px solid rgba(201,168,76,.38);
+    box-shadow:0 6px 22px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,248,210,.2);
   }
-  .nav-inner{height:58px}
+  .nav-inner{height:48px}
+  nav{top:10px;width:calc(100% - 22px)}
+  .logo-icon{width:32px;height:32px;font-size:17px}
+  .logo-text{font-size:14px}
+  .logo-sub{display:none}
+  .nav-links a{padding:7px 11px;font-size:12.5px}
   .nav-links{
     background:transparent;
     border:none;
