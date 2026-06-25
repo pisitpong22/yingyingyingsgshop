@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap">
 <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
 <link rel="dns-prefetch" href="https://www.gstatic.com">
 <title id="pageTitle">Yingyingying Amulet</title>
@@ -2347,6 +2348,7 @@
     box-shadow:0 12px 34px rgba(97,65,14,.08);
   }
   .mobile-tabbar{display:none}
+  .mobile-ig-header{display:none}
 
   /* ─── LUXURY SOCIAL HOME ─────────────────────────────────────────────── */
   .legacy-home{display:none}
@@ -2980,40 +2982,46 @@
       background:linear-gradient(180deg,#090704 0,#151006 310px,#fff4dc 620px,#fff8e9 100%);
     }
     .topbar{display:none}
-    /* Design A: floating pill on mobile — same concept as desktop, smaller */
-    nav{
+    /* Mobile: hide floating pill nav, show IG-style script header instead */
+    nav{display:none}
+    .mobile-ig-header{
+      display:flex;
       position:fixed;
-      top:10px;
-      left:50%;
-      transform:translateX(-50%);
-      width:calc(100% - 20px);
-      max-width:100%;
-      border-radius:999px;
-      border:1px solid rgba(201,168,76,.38);
-      border-top:1px solid rgba(255,248,200,.45);
-      background:rgba(12,8,2,.35);
-      backdrop-filter:blur(20px) saturate(160%);
-      -webkit-backdrop-filter:blur(20px) saturate(160%);
-      box-shadow:0 4px 18px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,248,210,.15);
+      top:0;left:0;right:0;
       z-index:200;
+      height:52px;
+      align-items:center;
+      justify-content:center;
+      padding:0 16px;
+      /* Liquid glass — transparent, adapts to both dark and cream pages */
+      background:rgba(255,255,255,0.06);
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+      border-bottom:1px solid rgba(201,168,76,0.18);
     }
-    body:not(.is-home-page) nav{
-      background:rgba(255,252,240,.82);
-      border-color:rgba(201,168,76,.3);
-      box-shadow:0 3px 14px rgba(120,80,20,.1),inset 0 1px 0 rgba(255,250,220,.6);
+    /* On home (dark hero): lighter text */
+    body.is-home-page .mobile-ig-header{
+      background:rgba(10,6,2,0.18);
+      border-bottom-color:rgba(201,168,76,0.15);
     }
-    .nav-inner{
-      height:46px;
-      padding:0 8px 0 10px;
+    .mobile-ig-title{
+      font-family:'Dancing Script','Pacifico',var(--font-display),cursive;
+      font-size:26px;
+      font-weight:700;
+      letter-spacing:-0.5px;
+      background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      filter:drop-shadow(0 1px 3px rgba(0,0,0,0.35));
     }
-    .logo-icon{width:30px;height:30px;font-size:15px}
-    .logo-text{font-size:13px}
-    .logo-sub{display:none}
-    .nav-links{display:flex}
-    .nav-links a{padding:6px 10px;font-size:12px}
-    .menu-btn{display:none}
-    /* Push page content below the pill */
-    .page.active{padding-top:68px}
+    body:not(.is-home-page) .mobile-ig-title{
+      background:linear-gradient(135deg,#8a5e1a,#c9a84c,#8a5e1a);
+      -webkit-background-clip:text;
+      background-clip:text;
+      filter:drop-shadow(0 1px 2px rgba(255,255,255,0.4));
+    }
+    .page.active{padding-top:52px}
     #page-home.page.active{padding-top:0}
     .hero-wrap{
       border-bottom-left-radius:32px;
@@ -3110,21 +3118,28 @@
     .install-fab{bottom:calc(72px + env(safe-area-inset-bottom,0px));left:12px}
     .mobile-tabbar{
       position:fixed;
-      left:8px;
-      right:8px;
-      bottom:calc(8px + env(safe-area-inset-bottom,0px));
+      left:10px;
+      right:10px;
+      bottom:calc(10px + env(safe-area-inset-bottom,0px));
       z-index:300;
       display:flex;
-      gap:3px;
-      padding:5px;
-      border-radius:22px;
-      background:rgba(255,248,226,.78);
-      border:1px solid rgba(255,255,255,.46);
-      box-shadow:0 8px 28px rgba(37,24,6,.2), inset 0 1px 0 rgba(255,255,255,.65);
-      backdrop-filter:blur(22px) saturate(170%);
-      -webkit-backdrop-filter:blur(22px) saturate(170%);
+      gap:2px;
+      padding:4px;
+      border-radius:24px;
+      /* Lightweight liquid glass — no heavy shadow */
+      background:rgba(255,252,240,0.62);
+      border:1px solid rgba(255,255,255,.5);
+      border-top:1px solid rgba(255,248,200,.7);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
       overflow-x:auto;
       scrollbar-width:none;
+    }
+    /* On home (dark bg): darker tint */
+    body.is-home-page .mobile-tabbar{
+      background:rgba(20,14,4,0.45);
+      border-color:rgba(201,168,76,0.28);
+      border-top-color:rgba(201,168,76,0.35);
     }
     .mobile-tabbar::-webkit-scrollbar{display:none}
     .mobile-tab{
@@ -3149,9 +3164,8 @@
     }
     .mobile-tab-icon{font-size:17px;line-height:1}
     .mobile-tab.active{
-      background:linear-gradient(135deg,rgba(232,201,106,.95),rgba(201,168,76,.92));
+      background:linear-gradient(135deg,rgba(232,201,106,.9),rgba(201,168,76,.85));
       color:#140d04;
-      box-shadow:0 4px 14px rgba(139,105,20,.18);
     }
     .feed-page{padding:0 0 calc(74px + env(safe-area-inset-bottom,0px))}
     .feed-shell{max-width:none}
@@ -3190,6 +3204,10 @@
 </div>
 
 <div class="topbar" id="topbar"></div>
+
+<div class="mobile-ig-header" id="mobileIgHeader">
+  <span class="mobile-ig-title">YingyingyingSG</span>
+</div>
 
 <nav>
   <div class="nav-inner">
