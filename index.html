@@ -262,12 +262,11 @@
     overflow:hidden;
   }
   .hero{
-    min-height:100vh;
-    display:grid;grid-template-columns:1.05fr 1fr;
+    min-height:88vh;
+    display:grid;grid-template-columns:1fr 1fr;
     align-items:center;
-    gap:40px;
-    padding:0 60px;position:relative;
-    /* Constrain content on large/ultrawide screens */
+    gap:0;
+    padding:0 72px;position:relative;
     max-width:1400px;
     margin:0 auto;
   }
@@ -426,13 +425,19 @@
      from .hero (background, overlays) can blend onto the image inside. */
   .hero-3d{
     position:relative;
-    width:100%;height:80vh;max-height:680px;
+    width:100%;height:82vh;max-height:700px;
     z-index:10;
     isolation:isolate;
     display:flex;align-items:center;justify-content:center;
+    /* Tilt + float animation via CSS — supplements the JS idle anim */
+    animation:heroFloat 6s ease-in-out infinite;
+    transform-origin:center center;
   }
-  #phra3d{width:100%;height:100%;cursor:grab}
-  #phra3d:active{cursor:grabbing}
+  @keyframes heroFloat{
+    0%,100%{transform:translateY(0px) rotate(-4deg)}
+    50%{transform:translateY(-18px) rotate(-4deg)}
+  }
+  #phra3d{width:100%;height:100%;cursor:default}
   /* ─── HERO STILL IMAGE — absolute pass-through, zero interference ───
      Show the uploaded image EXACTLY. No filter, no shadow underneath
      that might overlap, no glow behind that might darken edges. */
@@ -8057,48 +8062,9 @@ window.addEventListener('appinstalled',()=>{
   //  Interaction + animation loop (mode-independent)
   // ──────────────────────────────────────────────────────────────────────
   function setupInteractionAndAnimation(){
-    let mouseX = 0, mouseY = 0, targetRotX = 0, targetRotY = 0, scrollOffset = 0;
-    window.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      if(rect.width === 0) return;
-      mouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouseY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-      targetRotY = mouseX * 0.5;
-      targetRotX = -mouseY * 0.25;
-    });
-
-    // ─── TOUCH ROTATION — only when actively dragging the canvas ───
-    // Previously we listened to touchmove on `window`, which meant that
-    // scrolling the page (which is a touchmove) was being interpreted as
-    // a drag-to-rotate. The model would tilt based on where the user's
-    // finger happened to be on the screen during scroll — leading to the
-    // model appearing upside-down/flipped after scrolling.
-    //
-    // Now we ONLY listen to touchmove that starts inside the canvas, and
-    // we reset the target rotation when the user lifts their finger so
-    // the model springs back to its resting position.
-    let isDraggingCanvas = false;
-    canvas.addEventListener('touchstart', (e) => {
-      isDraggingCanvas = true;
-    }, {passive: true});
-    canvas.addEventListener('touchmove', (e) => {
-      if(!isDraggingCanvas || !e.touches[0]) return;
-      const rect = canvas.getBoundingClientRect();
-      if(rect.width === 0) return;
-      mouseX = ((e.touches[0].clientX - rect.left) / rect.width) * 2 - 1;
-      mouseY = ((e.touches[0].clientY - rect.top) / rect.height) * 2 - 1;
-      targetRotY = mouseX * 0.5;
-      targetRotX = -mouseY * 0.25;
-    }, {passive: true});
-    const onTouchEnd = () => {
-      isDraggingCanvas = false;
-      // Spring back to resting position so the model returns upright
-      // instead of staying wherever the user dragged it to.
-      targetRotY = 0;
-      targetRotX = 0;
-    };
-    canvas.addEventListener('touchend', onTouchEnd, {passive: true});
-    canvas.addEventListener('touchcancel', onTouchEnd, {passive: true});
+    // Mouse/touch rotation DISABLED — model floats with idle animation only.
+    // CSS heroFloat handles the tilt+float; JS below adds subtle 3D bob.
+    const targetRotX = 0, targetRotY = 0, scrollOffset = 0;
 
     // tap-to-flip removed — the model just responds to drag/orbit now.
     let flipped = 0;
@@ -8107,17 +8073,7 @@ window.addEventListener('appinstalled',()=>{
     // We detect mobile via the same media query the rest of the CSS
     // uses — touch detection is unreliable on hybrid devices (iPad with
     // pencil, etc).
-    const enableScrollRot =
-      typeof window.matchMedia === 'function'
-        ? !window.matchMedia('(max-width: 900px)').matches &&
-          !window.matchMedia('(hover: none)').matches
-        : true;
-    console.log('[phra3d] scroll rotation enabled:', enableScrollRot,
-                'viewport:', window.innerWidth, 'x', window.innerHeight);
-    window.addEventListener('scroll', () => {
-      // Only update if scroll rotation is enabled — saves a tiny bit on mobile
-      if(enableScrollRot) scrollOffset = window.scrollY;
-    }, {passive: true});
+    const enableScrollRot = false; // disabled — floating animation only
 
     // ─── VISIBILITY-AWARE RENDERING (performance) ───
     // Pause the animation when the canvas scrolls off-screen, when the
@@ -8141,32 +8097,26 @@ window.addEventListener('appinstalled',()=>{
     window._resumePhraRender = () => { canvasVisible = true; };
 
     clock = new THREE.Clock();
-    let curRotY = 0, curRotX = 0, curFlip = 0;
+    let curFlip = 0;
     function animate(){
       if(!renderer) return;     // disposed
       requestAnimationFrame(animate);
       // Skip rendering when hidden — huge battery & CPU saver on mobile.
       if(!canvasVisible || document.hidden) return;
       const t = clock.getElapsedTime();
-      curRotY += (targetRotY - curRotY) * 0.05;
-      curRotX += (targetRotX - curRotX) * 0.05;
       curFlip += (flipped - curFlip) * 0.06;
-      // ─── Idle floating animation ───
-      // Gentle horizontal sway (head-turning), slight pitch oscillation,
-      // and a vertical "breathing" bob. These give the model a relaxed,
-      // floating-in-space feel without needing user input.
-      const idleY = Math.sin(t * 0.4) * 0.18;   // sway left-right ~10°
-      const idleX = Math.cos(t * 0.5) * 0.04;   // gentle nod
-      const scrollRot = enableScrollRot ? (scrollOffset * 0.0015) : 0;
+      // ─── Idle float animation (mouse rotation disabled) ───
+      // Permanent tilt: model faces slightly to the left (~20°).
+      // Gentle pitch bob gives a "levitating relic" feel.
+      const BASE_TILT_Y = -0.38;  // ~22° permanent left-facing tilt
+      const BASE_TILT_X =  0.08;  // slight upward cant
+      const idleX = Math.cos(t * 0.45) * 0.035;  // subtle nod
       if(phraGroup){
-        // Clamp Y rotation to ±0.8 rad (~±45°) so only the front 90° arc
-        // is visible. Trellis-generated 3D models often have broken back
-        // faces — clamping prevents users from seeing those flaws.
         const maxYaw = 0.8;
-        let yaw = curRotY + idleY + scrollRot + curFlip;
+        let yaw = BASE_TILT_Y;
         yaw = Math.max(-maxYaw, Math.min(maxYaw, yaw));
         const maxPitch = 0.3;
-        let pitch = curRotX + idleX;
+        let pitch = BASE_TILT_X + idleX;
         pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
         phraGroup.rotation.y = yaw;
         phraGroup.rotation.x = pitch;
