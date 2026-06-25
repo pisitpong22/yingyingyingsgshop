@@ -3040,6 +3040,7 @@
       min-height:280px;
       max-height:420px;
       margin:0 -6px 16px;
+      padding-top:52px; /* offset for fixed IG header */
     }
     .hero-inner{
       order:2;
@@ -4852,11 +4853,22 @@ async function goPage(name, opts={}){
   if(opts.updateUrl !== false) updatePageUrl(name);
   if(name==='home'){
     applySettings();
-    // Force-resume the 3D render loop — IntersectionObserver doesn't
-    // re-check immediately when the page becomes visible again.
-    if(typeof window._resumePhraRender === 'function'){
-      window._resumePhraRender();
-    }
+    // Force-resume the 3D render loop when returning to home page.
+    // If the WebGL context was lost while the canvas was display:none,
+    // fall back to full reinit via initPhra3D.
+    setTimeout(() => {
+      const canvas = document.getElementById('phra3d');
+      const hasContext = canvas && (
+        canvas.getContext('webgl2') || canvas.getContext('webgl')
+      );
+      if(typeof window._resumePhraRender === 'function'){
+        window._resumePhraRender();
+      }
+      // If canvas has no rendered content (pixel check) or context is lost, reinit
+      if(!hasContext || (canvas && canvas.width === 0)){
+        if(typeof window.initPhra3D === 'function') window.initPhra3D();
+      }
+    }, 60);
   }
 }
 
