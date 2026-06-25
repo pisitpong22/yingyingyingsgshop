@@ -617,7 +617,7 @@
     opacity:0;transition:opacity .6s;
     z-index:0;
   }
-  .hero-bg.show{opacity:.5}
+  .hero-bg.show{opacity:.7}
   .hero-bg-overlay{
     position:absolute;
     top:0;bottom:0;
@@ -1174,15 +1174,60 @@
   }
 
   /* Grid */
-  .updates-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:24px;
+  /* Slider wrapper */
+  .updates-slider-wrap{
+    position:relative;
+    display:flex;align-items:center;gap:0;
   }
-  @media(max-width:1020px){.updates-grid{grid-template-columns:repeat(2,1fr);gap:20px}}
+  .updates-slider-viewport{
+    overflow:hidden;width:100%;
+  }
+  .updates-grid{
+    display:flex;
+    gap:20px;
+    transition:transform .45s cubic-bezier(.22,1,.36,1);
+    will-change:transform;
+  }
+  .updates-grid .update-card{
+    flex:0 0 calc((100% - 40px)/3);
+    min-width:0;
+  }
+  /* Arrows */
+  .updates-arrow{
+    flex-shrink:0;
+    width:44px;height:44px;border-radius:50%;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);
+    color:#e8c96a;font-size:18px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:background .2s,border-color .2s;z-index:2;
+    backdrop-filter:blur(10px);
+  }
+  .updates-arrow:hover{background:rgba(201,168,76,.2);border-color:rgba(201,168,76,.4)}
+  .updates-arrow:disabled{opacity:.25;cursor:default}
+  .updates-arrow-left{margin-right:12px}
+  .updates-arrow-right{margin-left:12px}
+  /* Dots */
+  .updates-dots{
+    display:flex;gap:6px;justify-content:center;margin-top:20px;
+  }
+  .updates-dot{
+    width:6px;height:6px;border-radius:50%;
+    background:rgba(255,255,255,.2);cursor:pointer;transition:all .2s;
+  }
+  .updates-dot.on{background:#c9a84c;width:18px;border-radius:3px}
+  @media(max-width:1020px){
+    .updates-grid .update-card{flex:0 0 calc((100% - 20px)/2)}
+  }
   @media(max-width:620px){
-    .updates-grid{grid-template-columns:1fr;gap:16px}
-    .latest-updates-section{padding:52px 18px 60px}
+    .updates-arrow{display:none}
+    .updates-slider-viewport{overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .updates-slider-viewport::-webkit-scrollbar{display:none}
+    .updates-grid{flex-wrap:nowrap;transition:none}
+    .updates-grid .update-card{flex:0 0 80vw;scroll-snap-align:start}
+    .latest-updates-section{padding:52px 0 60px}
+    .latest-updates-inner{padding:0 18px}
+    .updates-slider-wrap{padding:0 18px}
     .latest-updates-title{font-size:26px}
   }
 
@@ -3714,26 +3759,21 @@
     border:none !important;
     box-shadow:none !important;
   }
-  .social-3d{width:360px !important;height:460px !important;position:relative !important;transform:rotate(-8deg) !important;filter:drop-shadow(0 40px 80px rgba(0,0,0,.5)) !important}
-  .social-3d canvas,.social-3d .hero-still-img{display:none !important}
-  .social-3d::before{
-    content:'';
-    position:absolute;inset:0;border-radius:30px;
-    background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.035));
-    border:1px solid rgba(255,255,255,.2);
-    backdrop-filter:blur(18px) saturate(150%);
-    -webkit-backdrop-filter:blur(18px) saturate(150%);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 30px 110px rgba(73,50,13,.35);
+  /* Real 3D canvas — remove Codex placeholder */
+  .social-3d{
+    width:100% !important;
+    height:100% !important;
+    position:relative !important;
+    animation:heroFloat 6s ease-in-out infinite;
+    transform-origin:center center;
   }
-  .social-3d::after{
-    content:'🏛️';
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:70px;filter:drop-shadow(0 0 22px rgba(228,208,132,.28));
-  }
+  .social-3d canvas,.social-3d .hero-still-img{display:block !important}
+  .social-3d::before{display:none !important}
+  .social-3d::after{content:none !important;display:none !important}
   .trust-wrap-outer{
-    max-width:calc(100% - 140px) !important;
-    margin:-106px auto 0 !important;
-    padding:0 0 54px !important;
+    max-width:1100px !important;
+    margin:0 auto !important;
+    padding:32px 24px 0 !important;
     position:relative;z-index:5;
   }
   .trust-strip{
@@ -4331,7 +4371,8 @@
           <div class="hero-3d social-3d">
             <canvas id="phra3d"></canvas>
           </div>
-          <div class="social-actions" id="socialActions"></div>
+          <!-- socialActions hidden — Explore Collection button removed -->
+        <div id="socialActions" style="display:none"></div>
         </div>
       </div>
       <div class="social-tabs" id="socialTabs"></div>
@@ -4417,8 +4458,15 @@
       <div id="socialMenu" style="display:none"></div>
       <div id="socialShortcuts" style="display:none"></div>
       <div id="socialMiniAvatar" style="display:none"></div>
-      <!-- The feed list rendered by renderSocialHomeFeed() -->
-      <div class="updates-grid" id="socialFeedList"></div>
+      <!-- Latest Updates slider — arrows desktop, swipe mobile -->
+      <div class="updates-slider-wrap">
+        <button class="updates-arrow updates-arrow-left" id="updatesArrowLeft" onclick="updatesSlide(-1)" aria-label="Previous">&#8592;</button>
+        <div class="updates-slider-viewport" id="updatesSliderViewport">
+          <div class="updates-grid" id="socialFeedList"></div>
+        </div>
+        <button class="updates-arrow updates-arrow-right" id="updatesArrowRight" onclick="updatesSlide(1)" aria-label="Next">&#8594;</button>
+      </div>
+      <div class="updates-dots" id="updatesDots"></div>
       <!-- Widgets kept for JS compatibility but hidden -->
       <div id="socialPopular" style="display:none"></div>
       <div id="socialPreview" style="display:none"></div>
@@ -5676,11 +5724,7 @@ function renderSocialHomeFeed(){
   const posts=balanced.slice(0,9);
   const list=document.getElementById('socialFeedList');
   if(list){
-    const fallbackPosts = [
-      {type:'casing',badge:'NEW CASING',title:'Waterproof Casing',text:'1 sample photo · From S$15-25',ts:Date.now()-2760000,action:`goPage('casing')`},
-      {type:'hs',badge:'MONK BIOGRAPHIES',title:'Luang Por Pae',text:'The revered abbot of Wat Pikun Thong, renowned for his wisdom and lifelong dedication to Buddhist teachings.',ts:Date.now()-68400000,action:`goPage('history-stories')`},
-      {type:'amulet',badge:'NEW AMULET',title:'Ah Fook Casing',text:'13 sample photos · From S$28-38',ts:Date.now()-86400000,action:`goPage('amulets')`}
-    ];
+    const fallbackPosts = [];  // No fake data — only show real Firestore content
     if(loadState.homeFeed === 'error'){
       list.innerHTML=fallbackPosts.map(renderSocialPost).join('');
     } else if(posts.length){
@@ -5692,6 +5736,8 @@ function renderSocialHomeFeed(){
     safeWatchImages(list);
   }
   renderSocialWidgets(posts);
+  // Init slider after cards are rendered
+  setTimeout(updatesSliderInit, 0);
 }
 
 function renderSocialPost(p){
@@ -9362,6 +9408,46 @@ window.addEventListener('appinstalled',()=>{
     window.addEventListener('load', ready);
   }
 })();
+
+// ── Latest Updates Slider ──────────────────────────────────
+let _updatesSlideIdx = 0;
+function updatesSlide(dir){
+  const grid = document.getElementById('socialFeedList');
+  const vp   = document.getElementById('updatesSliderViewport');
+  if(!grid || !vp) return;
+  const cards = grid.querySelectorAll('.update-card');
+  if(!cards.length) return;
+  const vw = vp.offsetWidth;
+  const gap = 20;
+  // cards visible at once
+  const cardW = cards[0].offsetWidth + gap;
+  const perPage = Math.max(1, Math.round(vw / cardW));
+  const total   = cards.length;
+  const maxIdx  = Math.max(0, total - perPage);
+  _updatesSlideIdx = Math.max(0, Math.min(maxIdx, _updatesSlideIdx + dir));
+  grid.style.transform = `translateX(-${_updatesSlideIdx * cardW}px)`;
+  // arrows
+  const lBtn = document.getElementById('updatesArrowLeft');
+  const rBtn = document.getElementById('updatesArrowRight');
+  if(lBtn) lBtn.disabled = _updatesSlideIdx === 0;
+  if(rBtn) rBtn.disabled = _updatesSlideIdx >= maxIdx;
+  // dots
+  _updatesRenderDots(total, perPage);
+}
+function _updatesRenderDots(total, perPage){
+  const el = document.getElementById('updatesDots');
+  if(!el) return;
+  const pages = Math.ceil(total / perPage);
+  el.innerHTML = Array.from({length:pages},(_,i)=>
+    `<div class="updates-dot${i===Math.floor(_updatesSlideIdx/(perPage||1))?' on':''}" onclick="updatesSlide(${(i*perPage)-_updatesSlideIdx})"></div>`
+  ).join('');
+}
+function updatesSliderInit(){
+  _updatesSlideIdx = 0;
+  const grid = document.getElementById('socialFeedList');
+  if(grid) grid.style.transform = '';
+  updatesSlide(0);
+}
 </script>
 
 </body>
