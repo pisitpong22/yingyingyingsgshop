@@ -877,15 +877,22 @@
   }
   /* Hint browser to skip layout for off-screen sections — paints faster */
   .home-section,
-  #page-amulets,#page-accessories,#page-casing,#page-projects,#page-reviews,
+  #page-amulets,#page-accessories,#page-projects,#page-reviews,
   #page-history-stories,#page-feed,#page-about,#page-contact,#page-payment,#page-reviews{
     content-visibility:auto;
     contain-intrinsic-size:auto 800px;
   }
   /* All non-home pages: warm cream luxury background */
-  #page-amulets,#page-accessories,#page-casing,#page-projects,#page-reviews,
+  #page-amulets,#page-accessories,#page-projects,#page-reviews,
   #page-history-stories,#page-feed,#page-about,#page-contact,#page-payment{
     background:linear-gradient(180deg,#f9edd0 0%,#fdf8ef 200px,#fdf8ef 100%);
+  }
+  /* Casing page: always dark luxury — never cream/white */
+  #page-casing{
+    background:
+      radial-gradient(circle at 20% 0%,rgba(201,168,76,.14),transparent 35%),
+      linear-gradient(180deg,#0d0a06 0%,#120d05 100%) !important;
+    min-height:100vh;
   }
   /* The hero is always visible — opt OUT so it never has to be re-painted */
   #page-home .hero-wrap{content-visibility:visible}
@@ -926,7 +933,7 @@
   }
   .ftype-banner{
     height:200px;
-    background:linear-gradient(145deg,#f0e4c0,#e8d0a0);
+    background:linear-gradient(145deg,#2d1e06,#12100a);
     display:flex;align-items:center;justify-content:center;
     position:relative;overflow:hidden;
     border-radius:14px 14px 0 0;
@@ -3621,6 +3628,11 @@
 
   /* ════ GLOBAL DARK THEME OVERRIDES ════ */
   .ftype-card{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.17)!important;box-shadow:0 6px 28px rgba(0,0,0,.32)!important}
+  @media(max-width:768px){
+    .var-card{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+    .ftype-card{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+    .casing-finder-panel{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+  }
   .ftype-card:hover{background:rgba(255,255,255,.09)!important;border-color:rgba(201,168,76,.45)!important;box-shadow:0 18px 52px rgba(0,0,0,.46)!important}
   .ftype-name{color:rgba(255,248,200,.9)!important}
   .ftype-desc,.ftype-sub{color:rgba(255,248,200,.45)!important}
@@ -7401,10 +7413,10 @@ function showGridSkeleton(gridId, count=8){
   if(!el || el.dataset._hasData) return;
   el.innerHTML = Array.from({length:count}, () => `
     <div class="card skeleton-card" aria-hidden="true" style="pointer-events:none;cursor:default">
-      <div class="card-img" style="background:linear-gradient(90deg,#f3ead0 0%,#fff8df 50%,#f3ead0 100%);background-size:200% 100%;animation:imgShimmer 1.3s ease-in-out infinite;aspect-ratio:1;border-radius:inherit"></div>
+      <div class="card-img" style="background:linear-gradient(90deg,#1e1407 0%,#2a1d0a 50%,#1e1407 100%);background-size:200% 100%;animation:imgShimmer 1.3s ease-in-out infinite;aspect-ratio:1;border-radius:inherit"></div>
       <div class="card-body" style="padding:14px">
-        <div style="height:16px;width:72%;border-radius:8px;background:#efe2bd;margin-bottom:10px;animation:imgShimmer 1.3s ease-in-out infinite;background-size:200% 100%"></div>
-        <div style="height:12px;width:48%;border-radius:8px;background:#f4e8c8;animation:imgShimmer 1.3s ease-in-out infinite;background-size:200% 100%"></div>
+        <div style="height:16px;width:72%;border-radius:8px;background:#2a1d0a;margin-bottom:10px;animation:imgShimmer 1.3s ease-in-out infinite;background-size:200% 100%"></div>
+        <div style="height:12px;width:48%;border-radius:8px;background:#1e1407;animation:imgShimmer 1.3s ease-in-out infinite;background-size:200% 100%"></div>
       </div>
     </div>`).join('');
 }
@@ -7424,11 +7436,11 @@ function renderCasingLoading(){
   if(grid){
     grid.innerHTML=Array.from({length:3},()=>`
       <div class="ftype-card" aria-hidden="true">
-        <div class="ftype-banner" style="background:linear-gradient(90deg,#f3ead0,#fff8df,#f3ead0);background-size:200% 100%;animation:imgShimmer 1.2s infinite"></div>
+        <div class="ftype-banner" style="background:linear-gradient(90deg,#1e1407,#2a1d0a,#1e1407);background-size:200% 100%;animation:imgShimmer 1.2s infinite"></div>
         <div class="ftype-body">
-          <div style="height:24px;width:68%;border-radius:8px;background:#efe2bd;margin-bottom:12px"></div>
-          <div style="height:14px;width:92%;border-radius:8px;background:#f4e8c8;margin-bottom:8px"></div>
-          <div style="height:14px;width:58%;border-radius:8px;background:#f4e8c8"></div>
+          <div style="height:24px;width:68%;border-radius:8px;background:#2a1d0a;margin-bottom:12px"></div>
+          <div style="height:14px;width:92%;border-radius:8px;background:#1e1407;margin-bottom:8px"></div>
+          <div style="height:14px;width:58%;border-radius:8px;background:#1e1407"></div>
         </div>
       </div>`).join('');
   }
@@ -7741,13 +7753,13 @@ function applyCasingStyleFilter(){
 }
 
 function variantCardHtml(ty, v, i){
-  // Use eager loading for all cards — browser fetches in DOM order naturally.
+  // First 8 cards: eager+fetchpriority (visible on open). Rest: lazy.
   // Do NOT pass through safeWatchImages/watchImage which would move src→data-src
-  // and cause blank white cards while waiting for IntersectionObserver.
+  // and cause blank cards while waiting for IntersectionObserver.
   return `
     <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img loading="eager" decoding="async" ${imgAttrs(v.imgs[0],'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
+        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(v.imgs[0],i<8?'medium':'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
