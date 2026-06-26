@@ -822,6 +822,35 @@
   .variant-order-num{font-size:11px;color:var(--text-muted);font-weight:700;min-width:22px}
   .thumb{width:42px;height:42px;border-radius:6px;object-fit:cover}
   .no-img{width:42px;height:42px;border-radius:6px;background:#f0e8d0;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .hs-cover-focus{
+    display:none;
+    margin-top:12px;
+    padding:14px;
+    border:1px solid rgba(201,168,76,.22);
+    border-radius:14px;
+    background:linear-gradient(145deg,rgba(255,248,220,.72),rgba(255,255,255,.88));
+  }
+  .hs-cover-focus.active{display:grid;grid-template-columns:minmax(220px,360px) 1fr;gap:16px;align-items:center}
+  .hs-cover-focus-preview{
+    aspect-ratio:16/9;
+    border-radius:12px;
+    overflow:hidden;
+    background:#1c1408;
+    border:1px solid rgba(201,168,76,.28);
+    box-shadow:0 8px 22px rgba(60,40,10,.12);
+  }
+  .hs-cover-focus-preview img{width:100%;height:100%;object-fit:cover;display:block}
+  .hs-cover-focus-controls{display:grid;gap:12px}
+  .hs-focus-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .hs-focus-title{font-size:13px;font-weight:800;color:var(--text)}
+  .hs-focus-hint{font-size:12px;color:var(--text-muted);line-height:1.45}
+  .hs-focus-row{display:grid;grid-template-columns:72px 1fr 42px;gap:10px;align-items:center}
+  .hs-focus-row label{font-size:12px;font-weight:800;color:var(--text-muted)}
+  .hs-focus-row input[type="range"]{width:100%;accent-color:var(--gold)}
+  .hs-focus-val{font-size:12px;color:var(--gold-dark);font-weight:800;text-align:right}
+  @media(max-width:760px){
+    .hs-cover-focus.active{grid-template-columns:1fr}
+  }
   .tag{background:rgba(201,168,76,.1);color:var(--gold-dark);font-size:12px;padding:3px 10px;border-radius:25px;border:1px solid rgba(201,168,76,.22);font-weight:500}
   .row-actions{display:flex;gap:6px;flex-wrap:wrap}
 
@@ -1906,6 +1935,28 @@
                 <div class="u-icon">🖼️</div><div class="u-text">Click or drag cover image</div>
               </div>
               <div class="prev-grid" id="hs_cover_p"></div>
+              <div class="hs-cover-focus" id="hs_cover_focus">
+                <div class="hs-cover-focus-preview"><img id="hs_cover_focus_img" src="" alt=""></div>
+                <div class="hs-cover-focus-controls">
+                  <div class="hs-focus-head">
+                    <div>
+                      <div class="hs-focus-title">Adjust card crop position</div>
+                      <div class="hs-focus-hint">Move the visible area so important faces stay inside article cards.</div>
+                    </div>
+                    <button type="button" class="btn-ol" style="padding:8px 12px;font-size:12px" onclick="hsResetCoverFocus()">Reset</button>
+                  </div>
+                  <div class="hs-focus-row">
+                    <label for="hs_cover_pos_x">Left / Right</label>
+                    <input type="range" id="hs_cover_pos_x" min="0" max="100" value="50" oninput="hsSetCoverFocus(this.value,null)">
+                    <span class="hs-focus-val" id="hs_cover_pos_x_val">50%</span>
+                  </div>
+                  <div class="hs-focus-row">
+                    <label for="hs_cover_pos_y">Up / Down</label>
+                    <input type="range" id="hs_cover_pos_y" min="0" max="100" value="50" oninput="hsSetCoverFocus(null,this.value)">
+                    <span class="hs-focus-val" id="hs_cover_pos_y_val">50%</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="fg full">
               <label class="fl">Gallery Images (optional)</label>
@@ -5568,6 +5619,54 @@ const HS_CAT_LABELS = {
 };
 
 let _hsEditId = null;
+let _hsCoverPosX = 50;
+let _hsCoverPosY = 50;
+
+function hsClampCoverPos(v){
+  const n = Number(v);
+  return Math.max(0, Math.min(100, Number.isFinite(n) ? n : 50));
+}
+
+function hsCoverObjectPosition(a){
+  const x = hsClampCoverPos(a && a.coverPositionX);
+  const y = hsClampCoverPos(a && a.coverPositionY);
+  return `${x}% ${y}%`;
+}
+
+function hsSetCoverFocus(x, y){
+  if(x !== null && x !== undefined) _hsCoverPosX = hsClampCoverPos(x);
+  if(y !== null && y !== undefined) _hsCoverPosY = hsClampCoverPos(y);
+  const xInput = document.getElementById('hs_cover_pos_x');
+  const yInput = document.getElementById('hs_cover_pos_y');
+  const xVal = document.getElementById('hs_cover_pos_x_val');
+  const yVal = document.getElementById('hs_cover_pos_y_val');
+  if(xInput) xInput.value = _hsCoverPosX;
+  if(yInput) yInput.value = _hsCoverPosY;
+  if(xVal) xVal.textContent = `${Math.round(_hsCoverPosX)}%`;
+  if(yVal) yVal.textContent = `${Math.round(_hsCoverPosY)}%`;
+  const img = document.getElementById('hs_cover_focus_img');
+  if(img) img.style.objectPosition = `${_hsCoverPosX}% ${_hsCoverPosY}%`;
+}
+
+function hsResetCoverFocus(){
+  hsSetCoverFocus(50, 50);
+}
+
+function hsRenderCoverFocus(){
+  const box = document.getElementById('hs_cover_focus');
+  const img = document.getElementById('hs_cover_focus_img');
+  if(!box || !img) return;
+  const cover = captureImgs('hs_cover')[0];
+  const src = safePreviewUrl(cover);
+  if(!src){
+    box.classList.remove('active');
+    img.removeAttribute('src');
+    return;
+  }
+  img.src = src;
+  box.classList.add('active');
+  hsSetCoverFocus(_hsCoverPosX, _hsCoverPosY);
+}
 
 // ─── STORE PAGES HUB ─────────────────────────────────────────────────
 function loadStorePages(){
@@ -5666,7 +5765,7 @@ function renderHsList(){
     </tr></thead>
     <tbody>${articles.map(a=>`
       <tr>
-        <td>${a.coverImage?`<img class="thumb" src="${imageUrl(a.coverImage,'thumb')}" alt="">`:`<div class="no-img">📖</div>`}</td>
+        <td>${a.coverImage?`<img class="thumb" src="${imageUrl(a.coverImage,'thumb')}" alt="" style="object-position:${hsCoverObjectPosition(a)}">`:`<div class="no-img">📖</div>`}</td>
         <td><strong>${escapeHtml(a.title||'')}</strong><br><small style="color:var(--text-muted)">${escapeHtml(a.slug||'')}</small></td>
         <td><span class="tag">${HS_CAT_LABELS[a.category]||a.category||'-'}</span></td>
         <td>${a.status==='draft'?'<span class="tag" style="background:#f5e8c8;color:#7a5c00">📝 Draft</span>':'<span class="tag" style="background:#e2f5e8;color:#176b37">✅ Published</span>'}</td>
@@ -5696,6 +5795,8 @@ function editHsArticle(id){
   document.getElementById('hs_seo_title').value  = a.seoTitle||'';
   document.getElementById('hs_seo_desc').value   = a.seoDescription||'';
   rteSetHtml('hs_content', a.content||'');
+  _hsCoverPosX = hsClampCoverPos(a.coverPositionX);
+  _hsCoverPosY = hsClampCoverPos(a.coverPositionY);
   tempImgs['hs_cover']   = a.coverImage ? [a.coverImage] : [];
   tempImgs['hs_gallery'] = Array.isArray(a.gallery) ? [...a.gallery] : [];
   renderPrev('hs_cover');
@@ -5716,6 +5817,8 @@ function cancelEditHs(){
   document.getElementById('hs_seo_title').value = '';
   document.getElementById('hs_seo_desc').value  = '';
   rteSetHtml('hs_content', '');
+  _hsCoverPosX = 50;
+  _hsCoverPosY = 50;
   tempImgs['hs_cover']   = [];
   tempImgs['hs_gallery'] = [];
   renderPrev('hs_cover');
@@ -5744,6 +5847,8 @@ async function saveHsArticle(){
     excerpt:     document.getElementById('hs_excerpt').value.trim(),
     content:     rteGetHtml('hs_content'),
     coverImage:  captureImgs('hs_cover')[0] || '',
+    coverPositionX: _hsCoverPosX,
+    coverPositionY: _hsCoverPosY,
     gallery:     captureImgs('hs_gallery'),
     featured:    document.getElementById('hs_featured').checked,
     status:      document.getElementById('hs_published').checked ? 'published' : 'draft',
@@ -6394,7 +6499,11 @@ function renderPrev(key){
   const el = document.getElementById(key + '_p');
   if(!el) return;
   const arr = tempImgs[key] || [];
-  if(!arr.length){ el.innerHTML = ''; return; }
+  if(!arr.length){
+    el.innerHTML = '';
+    if(key === 'hs_cover') hsRenderCoverFocus();
+    return;
+  }
   const last = arr.length - 1;
   el.innerHTML = arr.map((entry, i) => {
     // Normalise: legacy strings become a "done" object
@@ -6441,6 +6550,7 @@ function renderPrev(key){
       </div>`;
   }).join('');
   initPrevGridDrag(key);
+  if(key === 'hs_cover') hsRenderCoverFocus();
 }
 
 function escapeAttr(s){

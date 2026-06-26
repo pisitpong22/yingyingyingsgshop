@@ -459,6 +459,8 @@ function historySummaryFromArticle(a){
     category: a.category || 'guides-articles',
     excerpt: a.excerpt || '',
     coverImage: a.coverImage || '',
+    coverPositionX: a.coverPositionX,
+    coverPositionY: a.coverPositionY,
     featured: !!a.featured,
     status: a.status || 'published',
     createdAt: a.createdAt || 0,
