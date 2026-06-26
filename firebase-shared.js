@@ -466,19 +466,25 @@ function queueCasingTypeWrites(types, writes){
 
 function historySummaryFromArticle(a){
   if(!a) return null;
+  // Robust fallbacks for old documents that may not have all fields
+  const title = a.title || a.name || 'Untitled';
+  const coverImage = a.coverImage || a.imageUrl || a.image || a.thumbnail || '';
+  const rawText = (a.content || a.body || a.description || '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  const excerpt = a.excerpt || a.summary || a.shortContent || (rawText ? rawText.slice(0,150) : '');
+  const createdAt = a.createdAt || a.publishedAt || a.updatedAt || 0;
   return {
     id: a.id,
-    title: a.title || '',
+    title,
     slug: a.slug || '',
     category: a.category || 'guides-articles',
-    excerpt: a.excerpt || '',
-    coverImage: a.coverImage || '',
+    excerpt,
+    coverImage,
     coverPositionX: a.coverPositionX,
     coverPositionY: a.coverPositionY,
     featured: !!a.featured,
     status: a.status || 'published',
-    createdAt: a.createdAt || 0,
-    updatedAt: a.updatedAt || 0,
+    createdAt,
+    updatedAt: a.updatedAt || createdAt,
     _summaryOnly: true,
   };
 }
@@ -1627,31 +1633,40 @@ let _historyStoriesJsonCache = '';
 let _historySummaryCache = null;
 
 async function loadHistoryStoriesJson(){
-  if(_historyStoriesJsonCache) return _historyStoriesJsonCache;
+  if(_historyStoriesJsonCache && _historyStoriesJsonCache !== '[]') return _historyStoriesJsonCache;
   if(!_isReady) await _readyPromise;
-  if(Array.isArray(_db && _db.historyStories) && _loadedKeys.has('historyStories')){
+  // V2 path: stories stored in separate docs — use ensureDBKeys, not legacy chunks
+  const meta = _dbMeta || {};
+  if(meta._historyStoriesV2){
+    await ensureDBKeys(['historyStories']);
+    const stories = Array.isArray(_db && _db.historyStories) ? _db.historyStories : [];
+    if(stories.length){
+      _historyStoriesJsonCache = JSON.stringify(stories);
+      return _historyStoriesJsonCache;
+    }
+  }
+  if(Array.isArray(_db && _db.historyStories) && _loadedKeys.has('historyStories') && _db.historyStories.length){
     _historyStoriesJsonCache = JSON.stringify(_db.historyStories);
     return _historyStoriesJsonCache;
   }
-  const meta = _dbMeta || {};
   const count = Math.max(0, Number(meta._partCounts && meta._partCounts.historyStories) || 0);
-  if(!count){
-    _historyStoriesJsonCache = await loadLegacyHistoryChunks();
-    if(_historyStoriesJsonCache && _historyStoriesJsonCache !== '[]') return _historyStoriesJsonCache;
-    await ensureDBKeys(['historyStories']);
-    _historyStoriesJsonCache = JSON.stringify(Array.isArray(_db && _db.historyStories) ? _db.historyStories : []);
+  if(count){
+    const snaps = await Promise.all(
+      Array.from({ length: count }, (_, idx) => getDoc(dbChunkDoc('historyStories', idx)))
+    );
+    _historyStoriesJsonCache = snaps.map((snap, idx) => {
+      if(!snap.exists()) throw new Error(`Missing DB chunk: historyStories[${idx}]`);
+      return snap.data().json || '';
+    }).join('');
     return _historyStoriesJsonCache;
   }
-  const snaps = await Promise.all(
-    Array.from({ length: count }, (_, idx) => getDoc(dbChunkDoc('historyStories', idx)))
-  );
-  _historyStoriesJsonCache = snaps.map((snap, idx) => {
-    if(!snap.exists()){
-      throw new Error(`Missing DB chunk: historyStories[${idx}]`);
-    }
-    return snap.data().json || '';
-  }).join('');
-  return _historyStoriesJsonCache;
+  // Legacy: sequential chunk docs
+  const legacy = await loadLegacyHistoryChunks();
+  if(legacy && legacy !== '[]'){
+    _historyStoriesJsonCache = legacy;
+    return legacy;
+  }
+  return '[]';
 }
 
 async function loadLegacyHistoryChunks(){
@@ -1723,9 +1738,11 @@ function summarizeHistoryJson(json){
 }
 
 async function loadHistorySummaries(){
-  if(_historySummaryCache) return _historySummaryCache;
+  if(_historySummaryCache && _historySummaryCache.length) return _historySummaryCache;
+  console.log('[History] loadHistorySummaries called, V2:', !!(_dbMeta && _dbMeta._historyStoriesV2), 'storyIds:', (_dbMeta && _dbMeta._historyStoryIds)||[]);
   if(_dbMeta && _dbMeta._historyStoriesV2){
     const summaries = await loadHistorySummariesV2OrFallback(_dbMeta);
+    console.log('[History] V2 summaries loaded:', summaries.length, 'first:', summaries[0]);
     if(summaries.length){
       _historySummaryCache = summaries;
       if(_db) _db.historyStories = summaries;
@@ -1734,10 +1751,9 @@ async function loadHistorySummaries(){
   }
   const json = await loadHistoryStoriesJson();
   const summaries = summarizeHistoryJson(json);
+  console.log('[History] legacy summaries loaded:', summaries.length, 'first:', summaries[0]);
   if(summaries.length) _historySummaryCache = summaries;
-  if(_db){
-    _db.historyStories = summaries;
-  }
+  if(_db) _db.historyStories = summaries;
   return summaries;
 }
 

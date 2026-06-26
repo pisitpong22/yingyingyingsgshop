@@ -8452,33 +8452,39 @@ function legacyHistoryFromSettings(rawDb){
   }));
 }
 async function loadHistorySummariesForPage(){
-  const db = getDB();
-  if(Array.isArray(db.historyStories) && db.historyStories.length) return db.historyStories;
+  // Always try FB first — do not short-circuit with stale local cache
   if(window.FB && typeof window.FB.loadHistorySummaries === 'function'){
-    const summaries = await window.FB.loadHistorySummaries();
-    if(summaries && summaries.length){
-      db.historyStories = summaries;
-      return summaries;
+    try {
+      const summaries = await window.FB.loadHistorySummaries();
+      console.log('[History] loaded docs:', summaries ? summaries.length : 0);
+      if(summaries && summaries.length){
+        console.log('[History] mapped articles:', summaries.length, 'first:', summaries[0]);
+        const db = getDB();
+        db.historyStories = summaries;
+        return summaries;
+      }
+      console.warn('[History] loadHistorySummaries returned empty — trying ensureDBKeys fallback');
+    } catch(err){
+      console.warn('[History] loadHistorySummaries error:', err);
     }
   }
   if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
     await window.FB.ensureDBKeys(['historyStories']);
   }
   const raw = window.FB && typeof window.FB.getDB === 'function' ? window.FB.getDB() : null;
-  if(raw && Array.isArray(raw.historyStories) && raw.historyStories.length) return raw.historyStories;
+  const fromDB = raw && Array.isArray(raw.historyStories) ? raw.historyStories : [];
+  console.log('[History] ensureDBKeys result:', fromDB.length, 'first:', fromDB[0]);
+  if(fromDB.length){
+    const db = getDB();
+    db.historyStories = fromDB;
+    return fromDB;
+  }
   const legacy = legacyHistoryFromSettings(raw);
   if(legacy.length){
-    raw.historyStories = legacy;
+    if(raw) raw.historyStories = legacy;
     return legacy;
   }
-  if(window.FB && typeof window.FB.loadHistorySummaries === 'function'){
-    const summaries = await window.FB.loadHistorySummaries();
-    if(summaries && summaries.length){
-      const db = getDB();
-      db.historyStories = summaries;
-      return summaries;
-    }
-  }
+  console.warn('[History] no articles found — check Firestore docs and _historyStoryIds in app/db');
   return [];
 }
 
@@ -8500,10 +8506,10 @@ function renderHistoryStories(){
     }
     if(gw) gw.innerHTML=`<div class="hs-grid">${Array.from({length:4},()=>`
       <div class="hs-card skeleton-card" style="pointer-events:none;min-height:220px">
-        <div style="aspect-ratio:16/9;background:linear-gradient(90deg,#f3ead0,#fff8df,#f3ead0);background-size:200% 100%;animation:imgShimmer 1.3s infinite"></div>
+        <div style="aspect-ratio:16/9;background:linear-gradient(90deg,#1e1407,#2a1d0a,#1e1407);background-size:200% 100%;animation:imgShimmer 1.3s infinite"></div>
         <div style="padding:14px">
-          <div style="height:12px;width:55%;border-radius:8px;background:#efe2bd;margin-bottom:8px;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
-          <div style="height:15px;width:82%;border-radius:8px;background:#f4e8c8;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
+          <div style="height:12px;width:55%;border-radius:8px;background:#2a1d0a;margin-bottom:8px;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
+          <div style="height:15px;width:82%;border-radius:8px;background:#1e1407;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
         </div>
       </div>`).join('')}</div>`;
     return;
@@ -8514,7 +8520,9 @@ function renderHistoryStories(){
   if(el) el.textContent = s.sections?.hsTitle || '📖 History & Stories';
   if(de) de.textContent = s.sections?.hsDesc  || 'Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.';
 
-  const all = (db.historyStories||[]).filter(a=>a && a.status !== 'draft');
+  const _hsRaw = db.historyStories||[];
+  const all = _hsRaw.filter(a=>a && a.status !== 'draft');
+  console.log('[History] renderHistoryStories: raw='+_hsRaw.length+' after draft-filter='+all.length);
 
   // Category chips
   const chips = document.getElementById('hsCatChips');
