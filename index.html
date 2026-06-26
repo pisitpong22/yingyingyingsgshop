@@ -7741,10 +7741,13 @@ function applyCasingStyleFilter(){
 }
 
 function variantCardHtml(ty, v, i){
+  // Use eager loading for all cards — browser fetches in DOM order naturally.
+  // Do NOT pass through safeWatchImages/watchImage which would move src→data-src
+  // and cause blank white cards while waiting for IntersectionObserver.
   return `
     <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(v.imgs[0],i<4?'medium':'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
+        ${v.imgs&&v.imgs[0]?`<img loading="eager" decoding="async" ${imgAttrs(v.imgs[0],'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
@@ -7764,22 +7767,14 @@ function appendVariantCardsProgressively(grid, ty, vars, start, token){
     const empty=document.getElementById('casingStyleEmpty');
     if(empty) empty.insertAdjacentHTML('beforebegin', html);
     else grid.insertAdjacentHTML('beforeend', html);
-    safeWatchImages(grid);
-    // Force-load images already in viewport (IntersectionObserver may have been
-    // set up before these nodes existed)
-    grid.querySelectorAll('img[data-src]').forEach(img => {
-      const r = img.getBoundingClientRect();
-      if(r.top < window.innerHeight + 800){
-        img.src = img.dataset.src; img.removeAttribute('data-src');
-      } else if(_imgObserver){ _imgObserver.observe(img); }
-    });
+    // variantCardHtml uses eager loading — browser fetches in DOM order, no observer needed.
     applyCasingStyleFilter();
     if(end < vars.length){
       appendVariantCardsProgressively(grid, ty, vars, end, token);
     }
   };
-  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:800});
-  else setTimeout(run,50);
+  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:200});
+  else setTimeout(run,16);
 }
 
 function renderVariantsLoading(typeId){
@@ -7848,26 +7843,11 @@ function renderVariants(typeId){
   const initialCount = window.matchMedia && window.matchMedia('(max-width: 700px)').matches ? 24 : 36;
   const initial=vars.slice(0, initialCount);
   grid.innerHTML=initial.map((v,i)=>variantCardHtml(ty,v,i)).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
-  safeWatchImages(grid);
-  // Force-check IntersectionObserver for images now visible inside variant panel
-  // (observer may have been initialized before panel was shown)
-  setTimeout(()=>{
-    grid.querySelectorAll('img[data-src]').forEach(img=>{
-      if(_imgObserver) _imgObserver.unobserve(img);
-      const r=img.getBoundingClientRect();
-      if(r.top < window.innerHeight + 800){
-        if(img.dataset.src){ img.src=img.dataset.src; img.removeAttribute('data-src'); }
-      } else if(_imgObserver){ _imgObserver.observe(img); }
-    });
-  }, 50);
-  preloadImages(initial.map(v=>v.imgs&&v.imgs[0]).filter(Boolean).map(img=>imageUrl(img,'thumb')), 6);
+  // variantCardHtml uses eager loading — no safeWatchImages needed here.
   if(vars.length > initial.length){
     appendVariantCardsProgressively(grid, ty, vars, initial.length, token);
   }
   applyCasingStyleFilter();
-  // Attach scroll-based flush so fast scrolling doesn't leave blank cards.
-  // Re-attach each time renderVariants runs (new type opened).
-  _attachVariantScrollFlush(grid, token);
 }
 
 let _variantScrollFlushToken = 0;
