@@ -26,6 +26,15 @@
         ]
       },
       {
+        "source": "/firebase-shared.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
         "source": "**/*.@(js|css|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)",
         "headers": [
           {

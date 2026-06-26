@@ -158,10 +158,24 @@ function keysForStorePage(page){
     case 'projects':     return ['settings','projects'];
     case 'reviews':      return ['settings','reviews'];
     case 'history-stories': return ['settings','historyStories'];
-    case 'feed':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
-    case 'home':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'feed':         return ['settings','feedPosts','reviews','historyStories'];
+    case 'home':         return ['settings'];
     default:             return ['settings'];
   }
+}
+
+async function mapLimit(items, limit, mapper){
+  const list = Array.isArray(items) ? items : [];
+  const out = new Array(list.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(Math.max(1, limit || 1), list.length || 1) }, async () => {
+    while(next < list.length){
+      const idx = next++;
+      out[idx] = await mapper(list[idx], idx);
+    }
+  });
+  await Promise.all(workers);
+  return out;
 }
 
 function initialLoadKeys(){
@@ -700,60 +714,70 @@ async function loadSplitDB(meta, wantedKeys){
 
   await Promise.all(keys.map(async key => {
     if(!wanted.has(key)) return;
-    if(key === 'casingTypes' && meta._casingTypesV2){
-      out[key] = await loadCasingTypesV2(meta);
-      return;
-    }
-    if(key === 'historyStories' && meta._historyStoriesV2 && !IS_ADMIN_PAGE){
-      const summaries = await loadHistorySummariesV2(meta);
-      if(summaries.length){
-        out[key] = summaries;
-      } else {
-        const legacyJson = await loadLegacyHistoryChunks();
-        out[key] = summarizeHistoryJson(legacyJson);
+    try {
+      if(key === 'casingTypes' && meta._casingTypesV2){
+        out[key] = await loadCasingTypesV2(meta);
+        return;
       }
-      return;
-    }
-    if(key === 'historyStories' && meta._historyStoriesV2 && IS_ADMIN_PAGE){
-      out[key] = await loadHistoryStoriesFullV2(meta);
-      return;
-    }
-    if(DB_LAZY_ITEM_KEYS.has(key) && meta._lazyItemsV2 && !IS_ADMIN_PAGE){
-      out[key] = await loadLazyItemSummariesV2(meta, key);
-      return;
-    }
-    if(DB_LAZY_ITEM_KEYS.has(key) && meta._lazyItemsV2 && IS_ADMIN_PAGE){
-      out[key] = await loadLazyItemsFullV2(meta, key);
-      return;
-    }
+      if(key === 'historyStories' && meta._historyStoriesV2 && !IS_ADMIN_PAGE){
+        out[key] = await loadHistorySummariesV2OrFallback(meta);
+        return;
+      }
+      if(key === 'historyStories' && meta._historyStoriesV2 && IS_ADMIN_PAGE){
+        out[key] = await loadHistoryStoriesFullV2(meta);
+        return;
+      }
+      if(DB_LAZY_ITEM_KEYS.has(key) && meta._lazyItemsV2 && !IS_ADMIN_PAGE){
+        out[key] = await loadLazyItemSummariesV2(meta, key);
+        return;
+      }
+      if(DB_LAZY_ITEM_KEYS.has(key) && meta._lazyItemsV2 && IS_ADMIN_PAGE){
+        out[key] = await loadLazyItemsFullV2(meta, key);
+        return;
+      }
 
-    if(Array.isArray(itemIds[key])){
-      const snaps = await Promise.all(itemIds[key].map(itemId => getDoc(dbItemDoc(key, itemId))));
-      out[key] = snaps.map((snap, idx) => {
+      if(Array.isArray(itemIds[key])){
+        const snaps = await mapLimit(itemIds[key], 4, itemId => getDoc(dbItemDoc(key, itemId)));
+        out[key] = snaps.map((snap, idx) => {
+          if(!snap.exists()){
+            throw new Error(`Missing DB item: ${key}[${itemIds[key][idx]}]`);
+          }
+          return JSON.parse(snap.data().json || 'null');
+        }).filter(Boolean);
+        return;
+      }
+
+      const count = Math.max(0, Number(counts[key]) || 0);
+      if(!count){
+        out[key] = defaultDbValueForKey(key);
+        return;
+      }
+
+      const snaps = await mapLimit(
+        Array.from({ length: count }, (_, idx) => idx),
+        4,
+        idx => getDoc(dbChunkDoc(key, idx))
+      );
+      const json = snaps.map((snap, idx) => {
         if(!snap.exists()){
-          throw new Error(`Missing DB item: ${key}[${itemIds[key][idx]}]`);
+          throw new Error(`Missing DB chunk: ${key}[${idx}]`);
         }
-        return JSON.parse(snap.data().json || 'null');
-      }).filter(Boolean);
-      return;
-    }
-
-    const count = Math.max(0, Number(counts[key]) || 0);
-    if(!count){
-      out[key] = defaultDbValueForKey(key);
-      return;
-    }
-
-    const snaps = await Promise.all(
-      Array.from({ length: count }, (_, idx) => getDoc(dbChunkDoc(key, idx)))
-    );
-    const json = snaps.map((snap, idx) => {
-      if(!snap.exists()){
-        throw new Error(`Missing DB chunk: ${key}[${idx}]`);
+        return snap.data().json || '';
+      }).join('');
+      out[key] = JSON.parse(json || 'null') ?? defaultDbValueForKey(key);
+    } catch(err) {
+      console.warn(`[FB] load ${key} failed; using fallback value:`, err);
+      if(key === 'historyStories' && !IS_ADMIN_PAGE){
+        try {
+          const legacyJson = await loadLegacyHistoryChunks();
+          out[key] = summarizeHistoryJson(legacyJson);
+          return;
+        } catch(legacyErr) {
+          console.warn('[FB] history legacy fallback failed:', legacyErr);
+        }
       }
-      return snap.data().json || '';
-    }).join('');
-    out[key] = JSON.parse(json);
+      out[key] = defaultDbValueForKey(key);
+    }
   }));
 
   _dbPartCounts = { ...counts };
@@ -870,24 +894,62 @@ async function ensureCasingVariants(typeId, opts={}){
 
 async function loadHistorySummariesV2(meta){
   const storyIds = Array.isArray(meta._historyStoryIds) ? meta._historyStoryIds : [];
-  const summaries = await Promise.all(storyIds.map(async storyId => {
-    const snap = await getDoc(historyStorySummaryDoc(storyId));
-    if(!snap.exists()){
-      throw new Error(`Missing history summary: ${storyId}`);
+  const summaries = await mapLimit(storyIds, 4, async storyId => {
+    try {
+      const snap = await getDoc(historyStorySummaryDoc(storyId));
+      if(snap.exists()){
+        return JSON.parse(snap.data().json || 'null');
+      }
+      console.warn('[FB] missing history summary, reading full article:', storyId);
+    } catch(err) {
+      console.warn('[FB] history summary read failed, reading full article:', storyId, err);
     }
-    return JSON.parse(snap.data().json || 'null');
-  }));
+    try {
+      const full = JSON.parse(await readJsonRecord(
+        historyStoryDoc(storyId),
+        idx => historyStoryChunkDoc(storyId, idx),
+        `history story: ${storyId}`
+      ));
+      return historySummaryFromArticle(full);
+    } catch(err) {
+      console.warn('[FB] history full fallback failed:', storyId, err);
+      return null;
+    }
+  });
   return summaries.filter(Boolean);
+}
+
+async function loadHistorySummariesV2OrFallback(meta){
+  try {
+    const summaries = await loadHistorySummariesV2(meta);
+    if(summaries.length) return summaries;
+  } catch(err) {
+    console.warn('[FB] history V2 summaries failed:', err);
+  }
+  try {
+    const fullStories = await loadHistoryStoriesFullV2(meta);
+    const summaries = fullStories.map(historySummaryFromArticle).filter(Boolean);
+    if(summaries.length) return summaries;
+  } catch(err) {
+    console.warn('[FB] history V2 full summary fallback failed:', err);
+  }
+  const legacyJson = await loadLegacyHistoryChunks();
+  return summarizeHistoryJson(legacyJson);
 }
 
 async function loadHistoryStoriesFullV2(meta){
   const storyIds = Array.isArray(meta._historyStoryIds) ? meta._historyStoryIds : [];
-  const stories = await Promise.all(storyIds.map(async storyId => {
-    return JSON.parse(await readJsonRecord(
-      historyStoryDoc(storyId),
-      idx => historyStoryChunkDoc(storyId, idx),
-      `history story: ${storyId}`
-    ));
+  const stories = await mapLimit(storyIds, IS_ADMIN_PAGE ? 3 : 2, async storyId => {
+    try {
+      return JSON.parse(await readJsonRecord(
+        historyStoryDoc(storyId),
+        idx => historyStoryChunkDoc(storyId, idx),
+        `history story: ${storyId}`
+      ));
+    } catch(err) {
+      console.warn('[FB] history full story skipped:', storyId, err);
+      return null;
+    }
   }));
   return stories.filter(Boolean);
 }
@@ -895,26 +957,46 @@ async function loadHistoryStoriesFullV2(meta){
 async function loadLazyItemSummariesV2(meta, key){
   const idsMap = meta._lazyItemIds || {};
   const itemIds = Array.isArray(idsMap[key]) ? idsMap[key] : [];
-  const items = await Promise.all(itemIds.map(async itemId => {
-    const snap = await getDoc(lazyItemSummaryDoc(key, itemId));
-    if(!snap.exists()){
-      throw new Error(`Missing ${key} summary: ${itemId}`);
+  const items = await mapLimit(itemIds, 4, async itemId => {
+    try {
+      const snap = await getDoc(lazyItemSummaryDoc(key, itemId));
+      if(snap.exists()){
+        return JSON.parse(snap.data().json || 'null');
+      }
+      console.warn(`[FB] missing ${key} summary, reading full item:`, itemId);
+    } catch(err) {
+      console.warn(`[FB] ${key} summary read failed, reading full item:`, itemId, err);
     }
-    return JSON.parse(snap.data().json || 'null');
-  }));
+    try {
+      const full = JSON.parse(await readJsonRecord(
+        lazyItemDoc(key, itemId),
+        idx => lazyItemChunkDoc(key, itemId, idx),
+        `${key} item: ${itemId}`
+      ));
+      return lazyItemSummary(full);
+    } catch(err) {
+      console.warn(`[FB] ${key} full fallback failed:`, itemId, err);
+      return null;
+    }
+  });
   return items.filter(Boolean);
 }
 
 async function loadLazyItemsFullV2(meta, key){
   const idsMap = meta._lazyItemIds || {};
   const itemIds = Array.isArray(idsMap[key]) ? idsMap[key] : [];
-  const items = await Promise.all(itemIds.map(async itemId => {
-    return JSON.parse(await readJsonRecord(
-      lazyItemDoc(key, itemId),
-      idx => lazyItemChunkDoc(key, itemId, idx),
-      `${key} item: ${itemId}`
-    ));
-  }));
+  const items = await mapLimit(itemIds, IS_ADMIN_PAGE ? 3 : 2, async itemId => {
+    try {
+      return JSON.parse(await readJsonRecord(
+        lazyItemDoc(key, itemId),
+        idx => lazyItemChunkDoc(key, itemId, idx),
+        `${key} item: ${itemId}`
+      ));
+    } catch(err) {
+      console.warn(`[FB] ${key} full item skipped:`, itemId, err);
+      return null;
+    }
+  });
   return items.filter(Boolean);
 }
 
@@ -1641,7 +1723,7 @@ function summarizeHistoryJson(json){
 async function loadHistorySummaries(){
   if(_historySummaryCache) return _historySummaryCache;
   if(_dbMeta && _dbMeta._historyStoriesV2){
-    const summaries = await loadHistorySummariesV2(_dbMeta);
+    const summaries = await loadHistorySummariesV2OrFallback(_dbMeta);
     if(summaries.length){
       _historySummaryCache = summaries;
       if(_db) _db.historyStories = summaries;
@@ -1650,7 +1732,7 @@ async function loadHistorySummaries(){
   }
   const json = await loadHistoryStoriesJson();
   const summaries = summarizeHistoryJson(json);
-  _historySummaryCache = summaries;
+  if(summaries.length) _historySummaryCache = summaries;
   if(_db){
     _db.historyStories = summaries;
   }

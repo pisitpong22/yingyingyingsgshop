@@ -21,7 +21,7 @@
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
 <!-- Firebase shared module — provides window.FB API -->
-<script type="module" src="firebase-shared.js"></script>
+<script type="module" src="firebase-shared.js?v=20260626-mobile-history"></script>
 <script>
 // ───── DIAGNOSTIC: trace what causes "Unsafe attempt to load URL" errors ─────
 // This patches Image.src and CSS backgroundImage so we can see who's loading
@@ -6569,11 +6569,12 @@ function scheduleSocialHomeFeedLoad(){
   // onDBChange. Our onDBChange handler (below) calls renderSocialHomeFeed.
   // So we don't call renderSocialHomeFeed() here directly — we let the
   // event-driven onDBChange do it once data is actually in _db.
-  window.FB.ensureDBKeys(['settings','feedPosts','amulets','projects','reviews','casingTypes'])
+  window.FB.ensureDBKeys(['settings','feedPosts','reviews','historyStories'])
     .then(() => {
       loadState.homeFeed = 'loaded';
       // Render once immediately after keys are confirmed loaded
       renderSocialHomeFeed();
+      scheduleRicherHomeFeedLoad();
       scheduleSocialCasingPreviewLoad();
     })
     .catch(err => {
@@ -6583,6 +6584,32 @@ function scheduleSocialHomeFeedLoad(){
     .finally(() => {
       _socialHomeFeedLoading = false;
     });
+}
+
+let _richerHomeFeedQueued = false;
+function isMobilePerfMode(){
+  const mobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  return !!(mobile || (conn && (conn.saveData || /2g/i.test(conn.effectiveType || ''))));
+}
+
+function scheduleRicherHomeFeedLoad(){
+  if(_richerHomeFeedQueued || !window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
+  _richerHomeFeedQueued = true;
+  const run = () => {
+    window.FB.ensureDBKeys(['amulets','accessories','projects'])
+      .then(() => {
+        if(document.getElementById('page-home')?.classList.contains('active')) renderSocialHomeFeed();
+      })
+      .catch(err => console.warn('[home feed] rich product preview skipped:', err))
+      .finally(() => { _richerHomeFeedQueued = false; });
+  };
+  const delay = isMobilePerfMode() ? 5200 : 900;
+  if('requestIdleCallback' in window){
+    setTimeout(() => requestIdleCallback(run, {timeout:isMobilePerfMode()?7000:2500}), delay);
+  } else {
+    setTimeout(run, delay);
+  }
 }
 
 function scheduleSocialCasingPreviewLoad(){
@@ -6599,8 +6626,9 @@ function scheduleSocialCasingPreviewLoad(){
       _socialHomeCasingQueued=false;
     });
   };
-  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:3000});
-  else setTimeout(run,1800);
+  const delay = isMobilePerfMode() ? 7600 : 1800;
+  if('requestIdleCallback' in window) setTimeout(() => requestIdleCallback(run,{timeout:isMobilePerfMode()?9000:3000}), delay);
+  else setTimeout(run,delay);
 }
 
 function renderSocialHomeFeed(){
@@ -6859,7 +6887,7 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'feed': return ['feedPosts','reviews','historyStories'];
     case 'history-stories': return ['historyStories'];
     case 'home': return [];
     default: return [];
@@ -6974,14 +7002,15 @@ async function warmHomeData(){
   if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
   const run=async()=>{
     try {
-      await window.FB.ensureDBKeys(['settings','amulets','accessories','reviews','projects']);
+      await window.FB.ensureDBKeys(['settings','reviews','historyStories']);
       if(document.getElementById('page-home')?.classList.contains('active')) applySettings();
     } catch(err) {
       console.warn('[home] background data load failed:', err);
     }
   };
-  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:3500});
-  else setTimeout(run,1800);
+  const delay = isMobilePerfMode() ? 4200 : 1400;
+  if('requestIdleCallback' in window) setTimeout(() => requestIdleCallback(run,{timeout:isMobilePerfMode()?6000:3000}), delay);
+  else setTimeout(run,delay);
 }
 
 // ── CONTACT CLICK ── opens URL if set, otherwise shows toast
