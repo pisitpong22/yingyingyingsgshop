@@ -843,28 +843,9 @@
         is hidden by the now-opaque foreground image.
      This eliminates the "blank box" feeling on cold cache misses — users
      see the SHAPE of the image immediately, then the sharp version. */
-  img.is-loading{
-    opacity:0;
-    background:
-      linear-gradient(90deg,
-        rgba(201,168,76,.04) 0%,
-        rgba(232,201,106,.10) 50%,
-        rgba(201,168,76,.04) 100%),
-      linear-gradient(135deg, #1e1407 0%, #12100a 100%);
-    background-size:200% 100%, 100% 100%;
-    background-blend-mode:overlay, normal;
-    animation:imgShimmer 1.6s ease-in-out infinite;
-    min-height:60px;
-  }
-  /* When a blur preview is set, use it as the background instead of shimmer */
-  img.is-loading.has-blur{
-    background-image:var(--blur-preview, none);
-    background-size:cover;
-    background-position:center;
-    background-repeat:no-repeat;
-    animation:none;
-    filter:blur(0); /* the bitmap is already blurred */
-  }
+  /* is-loading no longer hides images — kept only for legacy compat */
+  img.is-loading{ min-height:0; }
+  img.is-loading.has-blur{ background-image:var(--blur-preview,none);background-size:cover;background-position:center; }
   img.is-loaded{
     opacity:1;
     transition:opacity .35s ease-out;
@@ -7241,17 +7222,18 @@ function renderFeatured(){
 }
 
 // ── BUILD CARD (shared) ──
-function buildCard(a,type,settings){
+function buildCard(a,type,settings,idx=99){
   const icon=type==='amulets'?'📿':'⛓️';
   const status=a.status||'available';
   const overlay=status==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:(status==='reserved'?`<div class="status-overlay reserved"><span>RESERVED</span></div>`:'');
   const pill=status==='sold'?`<div class="status-pill sold">SOLD</div>`:(status==='reserved'?`<div class="status-pill reserved">RESERVED</div>`:'');
   const priceHtml=a.hidePrice?`<div class="price-pm">${settings.contactPmText||'PM for price'}</div>`:`<div class="card-price">S$${Number(a.price||0).toLocaleString()}</div>`;
   const tag=type==='amulets'?(a.temple||a.cat):a.cat;
+  const eager = idx < 8;
   return `
     <div class="card" onclick="openProd('${type}',${a.id})">
-      <div class="card-img">
-        ${a.imgs&&a.imgs[0]?`<img loading="lazy" decoding="async" ${imgAttrs(a.imgs[0],'thumb','(max-width: 700px) 50vw, 360px')}>`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
+      <div class="card-img" style="contain:layout style">
+        ${a.imgs&&a.imgs[0]?`<img loading="${eager?'eager':'lazy'}" ${eager&&idx<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(a.imgs[0],'thumb','(max-width: 700px) 50vw, 360px')}>`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
         ${a.badge?`<div class="cbadge cbadge-gold">${a.badge}</div>`:''}
         ${pill}
         ${overlay}
@@ -7279,6 +7261,9 @@ function renderReviews(){
   if(trigger) trigger.textContent = lang==='th' ? trigger.getAttribute('data-th') : trigger.getAttribute('data-en');
   const grid=document.getElementById('revGrid');
   if(!r.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'ยังไม่มีรีวิว':'No reviews yet.'}</div>`;return;}
+  const _revKey=`${r.length}|${r[0]&&r[0].id}`;
+  if(grid.dataset.renderKey===_revKey && grid.children.length>0){ return; }
+  grid.dataset.renderKey=_revKey;
   grid.innerHTML=r.map(rv=>{
     const rating = rv.rating || 0;
     const starsHtml = rating > 0
@@ -7398,8 +7383,12 @@ function renderA(cat){
   const cnt=document.getElementById('aCount');
   if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'piece':'pieces'}${_aQuery?' for "'+_aQuery+'"':''}`:'';
   const visible=list.slice(0,_aVisible);
-  document.getElementById('aGrid').innerHTML=list.length
-    ? visible.map(a=>buildCard(a,'amulets',settings)).join('') + (list.length>_aVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreA()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_aVisible})</button></div>`:'')
+  const aGrid=document.getElementById('aGrid');
+  const _aKey=`${cat}|${_aQuery}|${sort}|${visible.length}`;
+  if(aGrid.dataset.renderKey===_aKey && aGrid.children.length>0){ return; }
+  aGrid.dataset.renderKey=_aKey;
+  aGrid.innerHTML=list.length
+    ? visible.map((a,i)=>buildCard(a,'amulets',settings,i)).join('') + (list.length>_aVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreA()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_aVisible})</button></div>`:'')
     : `<div class="empty-state" style="grid-column:1/-1">${_aQuery?'No items match "'+_aQuery+'".':'No items in this category.'}</div>`;
 }
 function loadMoreA(){_aVisible+=36;renderA(curAcat);}
@@ -7426,8 +7415,12 @@ function renderAc(cat){
   const cnt=document.getElementById('acCount');
   if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'item':'items'}${_acQuery?' for "'+_acQuery+'"':''}`:'';
   const visible=list.slice(0,_acVisible);
-  document.getElementById('acGrid').innerHTML=list.length
-    ? visible.map(a=>buildCard(a,'accessories',settings)).join('') + (list.length>_acVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreAc()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_acVisible})</button></div>`:'')
+  const acGrid=document.getElementById('acGrid');
+  const _acKey=`${cat}|${_acQuery}|${sort}|${visible.length}`;
+  if(acGrid.dataset.renderKey===_acKey && acGrid.children.length>0){ return; }
+  acGrid.dataset.renderKey=_acKey;
+  acGrid.innerHTML=list.length
+    ? visible.map((a,i)=>buildCard(a,'accessories',settings,i)).join('') + (list.length>_acVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreAc()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_acVisible})</button></div>`:'')
     : `<div class="empty-state" style="grid-column:1/-1">${_acQuery?'No items match "'+_acQuery+'".':'No items in this category.'}</div>`;
 }
 function loadMoreAc(){_acVisible+=36;renderAc(curAccat);}
@@ -9078,10 +9071,13 @@ function renderP(){
   if(!db.projects||!db.projects.length){grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">No projects yet.</div>`;return;}
   const sm={active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
   const sc={active:'s-active',done:'s-done',soon:'s-soon',open:'s-open'};
-  grid.innerHTML=db.projects.map(p=>`
+  const _pKey=`${db.projects.length}|${db.projects[0]&&db.projects[0].id}`;
+  if(grid.dataset.renderKey===_pKey && grid.children.length>0){ return; }
+  grid.dataset.renderKey=_pKey;
+  grid.innerHTML=db.projects.map((p,i)=>`
     <div class="proj-card" onclick="openProject(${p.id})">
-      <div class="proj-img">
-        ${p.imgs&&p.imgs[0]?`<img loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','(max-width: 700px) 100vw, 360px')}>`:'🎯'}
+      <div class="proj-img" style="contain:layout style">
+        ${p.imgs&&p.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(p.imgs[0],'thumb','(max-width: 700px) 100vw, 360px')}>`:'🎯'}
         ${p.imgs&&p.imgs.length>1?`<div class="proj-photo-count">📷 ${p.imgs.length}</div>`:''}
       </div>
       <div class="proj-body">
@@ -9457,35 +9453,15 @@ function watchImage(img){
     return;
   }
 
-  // Lazy images: defer the network request until observer fires
-  img.classList.add('is-loading');
-  img.addEventListener('load', () => {
-    if(img.naturalWidth > 0){
-      img.classList.remove('is-loading');
-      img.classList.add('is-loaded');
-    }
-  });
-  img.addEventListener('error', () => {
-    img.classList.remove('is-loading');
-    removeBrokenFeedImage(img);
-  });
-  if(_imgObserver && img.src){
-    // Move src → data-src so the network request waits for the observer
-    const realSrc = img.src;
-    img.removeAttribute('src');
-    img.dataset.src = realSrc;
-    if(img.getAttribute('srcset')){
-      img.dataset.srcset = img.getAttribute('srcset');
-      img.removeAttribute('srcset');
-    }
-    if(img.getAttribute('sizes')){
-      img.dataset.sizes = img.getAttribute('sizes');
-      img.removeAttribute('sizes');
-    }
-    _imgObserver.observe(img);
-  } else if(img.complete && img.naturalWidth > 0){
-    img.classList.remove('is-loading');
+  // Lazy images: let browser handle timing natively — never hide with opacity:0.
+  // is-loaded added on load for fade-in transition only.
+  if(img.complete && img.naturalWidth > 0){
     img.classList.add('is-loaded');
+  } else {
+    img.addEventListener('load', () => {
+      if(img.naturalWidth > 0) img.classList.add('is-loaded');
+    }, {once:true});
+    img.addEventListener('error', () => { removeBrokenFeedImage(img); }, {once:true});
   }
 }
 
