@@ -1269,7 +1269,8 @@ async function loadHistoryStoriesJson(){
   const meta = _dbMeta || {};
   const count = Math.max(0, Number(meta._partCounts && meta._partCounts.historyStories) || 0);
   if(!count){
-    _historyStoriesJsonCache = '[]';
+    await ensureDBKeys(['historyStories']);
+    _historyStoriesJsonCache = JSON.stringify(Array.isArray(_db && _db.historyStories) ? _db.historyStories : []);
     return _historyStoriesJsonCache;
   }
   const snaps = await Promise.all(

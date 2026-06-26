@@ -6805,12 +6805,15 @@ async function goPage(name, opts={}){
 
   if(name==='history-stories'){
     _hsVisible = historyInitialLimit();
+    _hsLoaded = false;
     renderHistoryStories();
     loadHistorySummariesForPage().then(()=>{
+      _hsLoaded = true;
       if(document.getElementById('page-history-stories')?.classList.contains('active')){
         renderHistoryStories();
       }
     }).catch(err=>{
+      _hsLoaded = true;
       console.warn('[history-stories] load failed:', err);
       const gw=document.getElementById('hsGridWrap');
       if(gw) gw.innerHTML = `<div class="hs-empty">
@@ -8224,6 +8227,7 @@ let _hsCat = 'all';
 let _hsQ   = '';
 let _hsLoadingRequested = false;
 let _hsVisible = 0;
+let _hsLoaded = false;
 
 function hsCatLabel(id){ const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.label:(id||'Article'); }
 function hsCatIcon(id){  const c=HS_CATEGORIES.find(x=>x.id===id); return c?c.icon:'📄'; }
@@ -8245,7 +8249,9 @@ async function loadHistorySummariesForPage(){
     db.historyStories = summaries;
     return summaries;
   }
-  await ensurePageData('history-stories');
+  if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
+    await window.FB.ensureDBKeys(['historyStories']);
+  }
   return getDB().historyStories || [];
 }
 
@@ -8257,6 +8263,13 @@ function renderHistoryStories(){
     const fw=document.getElementById('hsFeaturedWrap');
     const gw=document.getElementById('hsGridWrap');
     if(fw) fw.innerHTML='';
+    if(_hsLoaded){
+      if(gw) gw.innerHTML = `<div class="hs-empty">
+        <div class="hs-empty-icon">📖</div>
+        <p>${lang==='th'?'ยังไม่มีบทความ History & Stories หรือโหลดข้อมูลไม่สำเร็จ':'No History & Stories articles found yet.'}</p>
+      </div>`;
+      return;
+    }
     if(gw) gw.innerHTML=`<div class="hs-grid">${Array.from({length:4},()=>`
       <div class="hs-card skeleton-card" style="pointer-events:none;min-height:220px">
         <div style="aspect-ratio:16/9;background:linear-gradient(90deg,#f3ead0,#fff8df,#f3ead0);background-size:200% 100%;animation:imgShimmer 1.3s infinite"></div>
@@ -8372,7 +8385,9 @@ async function openHsArticle(id){
     a = await window.FB.loadHistoryArticle(id);
   }
   if(!a){
-    await ensurePageData('history-stories');
+    if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
+      await window.FB.ensureDBKeys(['historyStories']);
+    }
     a = (getDB().historyStories||[]).find(x=>String(x.id)===String(id));
   }
   if(!a) return;
