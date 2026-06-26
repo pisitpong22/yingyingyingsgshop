@@ -847,10 +847,10 @@
     opacity:0;
     background:
       linear-gradient(90deg,
-        rgba(201,168,76,.06) 0%,
-        rgba(232,201,106,.15) 50%,
-        rgba(201,168,76,.06) 100%),
-      linear-gradient(135deg, #f5edd5 0%, #ede5c5 100%);
+        rgba(201,168,76,.04) 0%,
+        rgba(232,201,106,.10) 50%,
+        rgba(201,168,76,.04) 100%),
+      linear-gradient(135deg, #1e1407 0%, #12100a 100%);
     background-size:200% 100%, 100% 100%;
     background-blend-mode:overlay, normal;
     animation:imgShimmer 1.6s ease-in-out infinite;
@@ -7865,6 +7865,36 @@ function renderVariants(typeId){
     appendVariantCardsProgressively(grid, ty, vars, initial.length, token);
   }
   applyCasingStyleFilter();
+  // Attach scroll-based flush so fast scrolling doesn't leave blank cards.
+  // Re-attach each time renderVariants runs (new type opened).
+  _attachVariantScrollFlush(grid, token);
+}
+
+let _variantScrollFlushToken = 0;
+function _attachVariantScrollFlush(grid, renderToken){
+  _variantScrollFlushToken = renderToken;
+  let _ticking = false;
+  const flush = () => {
+    if(!_ticking){
+      _ticking = true;
+      requestAnimationFrame(() => {
+        _ticking = false;
+        // Stop if a new type was opened
+        if(_variantScrollFlushToken !== renderToken) return;
+        grid.querySelectorAll('img[data-src]').forEach(img => {
+          const r = img.getBoundingClientRect();
+          if(r.top < window.innerHeight + 400 && r.bottom > -400){
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+            if(_imgObserver) _imgObserver.unobserve(img);
+          }
+        });
+      });
+    }
+  };
+  window.removeEventListener('scroll', window._variantScrollFlush);
+  window._variantScrollFlush = flush;
+  window.addEventListener('scroll', flush, {passive:true});
 }
 
 function variantPhotoHtml(img, i){
@@ -9321,7 +9351,7 @@ const _imgObserver = ('IntersectionObserver' in window)
         }
         obs.unobserve(img);
       });
-    }, { rootMargin: (window.matchMedia && window.matchMedia('(max-width: 700px)').matches) ? '450px 0px' : '900px 0px', threshold: 0.01 })
+    }, { rootMargin: (window.matchMedia && window.matchMedia('(max-width: 700px)').matches) ? '800px 0px' : '1200px 0px', threshold: 0 })
   : null;
 
 const _preloadedImages = new Set();
