@@ -660,7 +660,14 @@
     0%,100%{transform:translateY(0px) rotate(-4deg)}
     50%{transform:translateY(-18px) rotate(-4deg)}
   }
-  #phra3d{width:100%;height:100%;cursor:default}
+  #phra3d{
+    width:100%;height:100%;
+    cursor:grab;
+    pointer-events:auto;
+    position:relative;
+    z-index:20;
+    touch-action:none;
+  }
   /* ─── HERO STILL IMAGE — absolute pass-through, zero interference ───
      Show the uploaded image EXACTLY. No filter, no shadow underneath
      that might overlap, no glow behind that might darken edges. */
@@ -699,6 +706,7 @@
     top:50%;left:50%;transform:translate(-50%,-50%);
     background:radial-gradient(circle,rgba(201,168,76,.25) 0%,rgba(139,0,0,.08) 35%,transparent 70%);
     filter:blur(40px);z-index:0;animation:glowPulse 4s ease-in-out infinite;
+    pointer-events:none;
   }
   @keyframes glowPulse{0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
   /* sacred ring */
@@ -9981,11 +9989,87 @@ window.addEventListener('appinstalled',()=>{
   //  Interaction + animation loop (mode-independent)
   // ──────────────────────────────────────────────────────────────────────
   function setupInteractionAndAnimation(){
-    // Mouse/touch rotation DISABLED — model floats with idle animation only.
-    // CSS heroFloat handles the tilt+float; JS below adds subtle 3D bob.
-    const targetRotX = 0, targetRotY = 0, scrollOffset = 0;
+    const isMobile3D = () => window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
+    let targetRotX = 0;
+    let targetRotY = 0;
+    let currentRotX = 0;
+    let currentRotY = 0;
+    let targetSlideX = 0;
+    let currentSlideX = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startRotX = 0;
+    let startRotY = 0;
+    let startSlideX = 0;
+    const hitTarget = canvas.closest('.hero-3d') || canvas;
 
-    // tap-to-flip removed — the model just responds to drag/orbit now.
+    canvas.style.cursor = 'grab';
+    canvas.style.touchAction = isMobile3D() ? 'pan-y' : 'none';
+    hitTarget.style.pointerEvents = 'auto';
+    hitTarget.style.cursor = 'grab';
+    hitTarget.style.touchAction = isMobile3D() ? 'pan-y' : 'none';
+
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const pointFromEvent = (e) => {
+      const p = e.touches && e.touches[0] ? e.touches[0] : e;
+      return { x:p.clientX || 0, y:p.clientY || 0 };
+    };
+
+    function beginDrag(e){
+      dragging = true;
+      const p = pointFromEvent(e);
+      startX = p.x;
+      startY = p.y;
+      startRotX = targetRotX;
+      startRotY = targetRotY;
+      startSlideX = targetSlideX;
+      canvas.style.cursor = 'grabbing';
+      hitTarget.style.cursor = 'grabbing';
+      if(e.pointerId !== undefined && hitTarget.setPointerCapture){
+        try{ hitTarget.setPointerCapture(e.pointerId); }catch(err){}
+      }
+      if(!isMobile3D() && e.cancelable) e.preventDefault();
+    }
+
+    function moveDrag(e){
+      const p = pointFromEvent(e);
+      const dx = p.x - startX;
+      const dy = p.y - startY;
+      if(dragging){
+        targetSlideX = clamp(startSlideX + dx / Math.max(260, canvas.clientWidth) * 0.9, -0.45, 0.45);
+        if(e.cancelable) e.preventDefault();
+      } else if(!isMobile3D()){
+        const rect = canvas.getBoundingClientRect();
+        const nx = ((p.x - rect.left) / Math.max(1, rect.width) - 0.5) * 2;
+        targetSlideX = clamp(nx * 0.18, -0.24, 0.24);
+      }
+    }
+
+    function endDrag(){
+      dragging = false;
+      canvas.style.cursor = 'grab';
+      hitTarget.style.cursor = 'grab';
+      targetRotX = 0;
+      targetRotY = 0;
+      targetSlideX *= 0.7;
+    }
+
+    hitTarget.addEventListener('pointerdown', beginDrag);
+    hitTarget.addEventListener('pointermove', moveDrag);
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+    hitTarget.addEventListener('mousemove', moveDrag);
+    hitTarget.addEventListener('mousedown', beginDrag);
+    window.addEventListener('mouseup', endDrag);
+    hitTarget.addEventListener('mouseleave', () => {
+      if(!dragging){
+        targetRotX = 0;
+        targetRotY = 0;
+        targetSlideX = 0;
+      }
+    });
+
     let flipped = 0;
     // Scroll-linked rotation feels nice on desktop but on mobile it
     // leaves the model tilted/upside-down when scrolled back to top.
@@ -10025,23 +10109,26 @@ window.addEventListener('appinstalled',()=>{
       if(!canvasVisible || document.hidden) return;
       const t = clock.getElapsedTime();
       curFlip += (flipped - curFlip) * 0.06;
-      // ─── Idle float animation (mouse rotation disabled) ───
-      // Permanent tilt: model faces slightly to the left (~20°).
-      // Gentle pitch bob gives a "levitating relic" feel.
-      const BASE_TILT_Y = -0.38;  // ~22° permanent left-facing tilt
-      const BASE_TILT_X =  0.08;  // slight upward cant
+      // Front-facing model on all devices. Pointer interaction only slides it horizontally.
+      const mobile = isMobile3D();
+      const BASE_TILT_Y = 0;
+      const BASE_TILT_X = mobile ? 0.04 : 0.08;
       const idleX = Math.cos(t * 0.45) * 0.035;  // subtle nod
       if(phraGroup){
-        const maxYaw = 0.8;
-        let yaw = BASE_TILT_Y;
+        currentRotX += (targetRotX - currentRotX) * 0.12;
+        currentRotY += (targetRotY - currentRotY) * 0.12;
+        currentSlideX += (targetSlideX - currentSlideX) * 0.14;
+        const maxYaw = 0.08;
+        let yaw = BASE_TILT_Y + currentSlideX * 0.08;
         yaw = Math.max(-maxYaw, Math.min(maxYaw, yaw));
-        const maxPitch = 0.3;
+        const maxPitch = mobile ? 0.18 : 0.22;
         let pitch = BASE_TILT_X + idleX;
         pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
         phraGroup.rotation.y = yaw;
         phraGroup.rotation.x = pitch;
         // Floating bob — vertical motion synced to a slow breath rate
         phraGroup.position.y = Math.sin(t * 0.9) * 0.12;
+        phraGroup.position.x = currentSlideX;
       }
       renderer.render(scene, camera);
     }
