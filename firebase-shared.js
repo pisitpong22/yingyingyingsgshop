@@ -158,8 +158,8 @@ function keysForStorePage(page){
     case 'projects':     return ['settings','projects'];
     case 'reviews':      return ['settings','reviews'];
     case 'history-stories': return ['settings','historyStories'];
-    case 'feed':         return ['settings','feedPosts','reviews','historyStories'];
-    case 'home':         return ['settings'];
+    case 'feed':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'home':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
     default:             return ['settings'];
   }
 }
@@ -804,23 +804,25 @@ async function loadCasingTypesV2(meta){
 
   // Phase 1: load ALL type metadata in parallel (no variants yet)
   // This is fast — just one Firestore doc per type
-  const types = await Promise.all(typeIds.map(async typeId => {
-    const type = JSON.parse(await readJsonRecord(
-      casingTypeDoc(typeId),
-      idx => casingTypeChunkDoc(typeId, idx),
-      `casing type: ${typeId}`
-    ));
-    // Attach variant ID list so UI knows how many styles exist
-    const ids = Array.isArray(variantIds[typeId]) ? variantIds[typeId] : [];
-    type._variantIds = ids;
-    // Populate module-level cache so ensureCasingVariants can find IDs immediately
-    _casingVariantIds[String(typeId)] = ids;
-    // Set empty variants array — will be populated lazily when type is opened
-    if(!Array.isArray(type.variants)) type.variants = [];
-    return type;
-  }));
+  const types = await mapLimit(typeIds, 4, async typeId => {
+    try {
+      const type = JSON.parse(await readJsonRecord(
+        casingTypeDoc(typeId),
+        idx => casingTypeChunkDoc(typeId, idx),
+        `casing type: ${typeId}`
+      ));
+      const ids = Array.isArray(variantIds[typeId]) ? variantIds[typeId] : [];
+      type._variantIds = ids;
+      _casingVariantIds[String(typeId)] = ids;
+      if(!Array.isArray(type.variants)) type.variants = [];
+      return type;
+    } catch(err) {
+      console.warn('[FB] casing type skipped:', typeId, err);
+      return null;
+    }
+  });
 
-  return types;
+  return types.filter(Boolean);
 }
 
 // Phase 2: load variants for a specific casing type on-demand

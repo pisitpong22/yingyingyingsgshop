@@ -6194,6 +6194,13 @@ function renderTrustStrip(){
 
 function applySettings(){
   const db=getDB(); const s=db.settings;
+  db.amulets = Array.isArray(db.amulets) ? db.amulets : [];
+  db.accessories = Array.isArray(db.accessories) ? db.accessories : [];
+  db.projects = Array.isArray(db.projects) ? db.projects : [];
+  db.reviews = Array.isArray(db.reviews) ? db.reviews : [];
+  db.casingTypes = Array.isArray(db.casingTypes) ? db.casingTypes : [];
+  db.feedPosts = Array.isArray(db.feedPosts) ? db.feedPosts : [];
+  db.historyStories = Array.isArray(db.historyStories) ? db.historyStories : [];
   document.getElementById('pageTitle').textContent=(s.seo&&s.seo.title)||s.pageTitle||'Yingyingying Amulet';
   // Apply SEO meta tags from admin settings
   const _seo=s.seo||{};
@@ -6569,12 +6576,11 @@ function scheduleSocialHomeFeedLoad(){
   // onDBChange. Our onDBChange handler (below) calls renderSocialHomeFeed.
   // So we don't call renderSocialHomeFeed() here directly — we let the
   // event-driven onDBChange do it once data is actually in _db.
-  window.FB.ensureDBKeys(['settings','feedPosts','reviews','historyStories'])
+  window.FB.ensureDBKeys(['settings','feedPosts','amulets','projects','reviews','casingTypes'])
     .then(() => {
       loadState.homeFeed = 'loaded';
       // Render once immediately after keys are confirmed loaded
       renderSocialHomeFeed();
-      scheduleRicherHomeFeedLoad();
       scheduleSocialCasingPreviewLoad();
     })
     .catch(err => {
@@ -6586,30 +6592,10 @@ function scheduleSocialHomeFeedLoad(){
     });
 }
 
-let _richerHomeFeedQueued = false;
 function isMobilePerfMode(){
   const mobile = window.matchMedia && window.matchMedia('(max-width: 760px)').matches;
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   return !!(mobile || (conn && (conn.saveData || /2g/i.test(conn.effectiveType || ''))));
-}
-
-function scheduleRicherHomeFeedLoad(){
-  if(_richerHomeFeedQueued || !window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
-  _richerHomeFeedQueued = true;
-  const run = () => {
-    window.FB.ensureDBKeys(['amulets','accessories','projects'])
-      .then(() => {
-        if(document.getElementById('page-home')?.classList.contains('active')) renderSocialHomeFeed();
-      })
-      .catch(err => console.warn('[home feed] rich product preview skipped:', err))
-      .finally(() => { _richerHomeFeedQueued = false; });
-  };
-  const delay = isMobilePerfMode() ? 5200 : 900;
-  if('requestIdleCallback' in window){
-    setTimeout(() => requestIdleCallback(run, {timeout:isMobilePerfMode()?7000:2500}), delay);
-  } else {
-    setTimeout(run, delay);
-  }
 }
 
 function scheduleSocialCasingPreviewLoad(){
@@ -6887,7 +6873,7 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['feedPosts','reviews','historyStories'];
+    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes'];
     case 'history-stories': return ['historyStories'];
     case 'home': return [];
     default: return [];
@@ -7002,15 +6988,14 @@ async function warmHomeData(){
   if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
   const run=async()=>{
     try {
-      await window.FB.ensureDBKeys(['settings','reviews','historyStories']);
+      await window.FB.ensureDBKeys(['settings','amulets','accessories','reviews','projects']);
       if(document.getElementById('page-home')?.classList.contains('active')) applySettings();
     } catch(err) {
       console.warn('[home] background data load failed:', err);
     }
   };
-  const delay = isMobilePerfMode() ? 4200 : 1400;
-  if('requestIdleCallback' in window) setTimeout(() => requestIdleCallback(run,{timeout:isMobilePerfMode()?6000:3000}), delay);
-  else setTimeout(run,delay);
+  if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:3500});
+  else setTimeout(run,1800);
 }
 
 // ── CONTACT CLICK ── opens URL if set, otherwise shows toast
