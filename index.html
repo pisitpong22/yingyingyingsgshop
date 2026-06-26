@@ -8249,6 +8249,26 @@ function hsLoadMore(){
   _hsVisible += historyMoreStep();
   renderHistoryStories();
 }
+function legacyHistoryFromSettings(rawDb){
+  const oldHsPage = rawDb && rawDb.settings && Array.isArray(rawDb.settings.customPages)
+    ? rawDb.settings.customPages.find(p => p.id === 'history-stories')
+    : null;
+  if(!oldHsPage || !Array.isArray(oldHsPage.items) || !oldHsPage.items.length) return [];
+  return oldHsPage.items.map((it, idx) => ({
+    id: idx + 1,
+    title: it.title || '',
+    slug: (it.title || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''),
+    category: it.category || 'guides-articles',
+    excerpt: it.excerpt || '',
+    content: it.content || '',
+    coverImage: it.img || '',
+    gallery: [],
+    featured: !!it.featured,
+    status: it.status || 'published',
+    createdAt: it.createdAt || Date.now(),
+    updatedAt: it.updatedAt || Date.now(),
+  }));
+}
 async function loadHistorySummariesForPage(){
   const db = getDB();
   if(Array.isArray(db.historyStories) && db.historyStories.length) return db.historyStories;
@@ -8262,7 +8282,22 @@ async function loadHistorySummariesForPage(){
   if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
     await window.FB.ensureDBKeys(['historyStories']);
   }
-  return getDB().historyStories || [];
+  const raw = window.FB && typeof window.FB.getDB === 'function' ? window.FB.getDB() : null;
+  if(raw && Array.isArray(raw.historyStories) && raw.historyStories.length) return raw.historyStories;
+  const legacy = legacyHistoryFromSettings(raw);
+  if(legacy.length){
+    raw.historyStories = legacy;
+    return legacy;
+  }
+  if(window.FB && typeof window.FB.loadHistorySummaries === 'function'){
+    const summaries = await window.FB.loadHistorySummaries();
+    if(summaries && summaries.length){
+      const db = getDB();
+      db.historyStories = summaries;
+      return summaries;
+    }
+  }
+  return [];
 }
 
 function renderHistoryStories(){

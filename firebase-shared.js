@@ -129,6 +129,8 @@ let _casingTypeIds = [];
 let _casingTypeHashes = {};
 let _casingVariantIds = {};
 let _casingVariantHashes = {};
+let _historyStoryIds = [];
+let _historyStoryHashes = {};
 const IS_ADMIN_PAGE = /(^|\/)admin[^/]*\.html$/i.test(location.pathname);
 
 // ─── DB API ────────────────────────────────────────────────────────────────
@@ -178,6 +180,10 @@ async function saveDB(newDb){
       variantIds: {},
       variantHashes: {},
     };
+    let nextHistoryMeta = {
+      storyIds: [],
+      storyHashes: {},
+    };
     const writes = [];
 
     DB_SPLIT_KEYS.forEach(key => {
@@ -188,6 +194,16 @@ async function saveDB(newDb){
         nextItemIds[key] = [];
         nextItemHashes[key] = {};
         nextCasingMeta = casingMeta;
+        return;
+      }
+
+      if(key === 'historyStories'){
+        const historyMeta = queueHistoryStoryWrites(newDb && newDb[key], writes);
+        nextCounts[key] = 0;
+        nextHashes[key] = [];
+        nextItemIds[key] = [];
+        nextItemHashes[key] = {};
+        nextHistoryMeta = historyMeta;
         return;
       }
 
@@ -252,6 +268,9 @@ async function saveDB(newDb){
       _casingTypeHashes: nextCasingMeta.typeHashes,
       _casingVariantIds: nextCasingMeta.variantIds,
       _casingVariantHashes: nextCasingMeta.variantHashes,
+      _historyStoriesV2: true,
+      _historyStoryIds: nextHistoryMeta.storyIds,
+      _historyStoryHashes: nextHistoryMeta.storyHashes,
       _updatedAt: serverTimestamp(),
     }});
 
@@ -265,6 +284,8 @@ async function saveDB(newDb){
     _casingTypeHashes = nextCasingMeta.typeHashes;
     _casingVariantIds = nextCasingMeta.variantIds;
     _casingVariantHashes = nextCasingMeta.variantHashes;
+    _historyStoryIds = nextHistoryMeta.storyIds;
+    _historyStoryHashes = nextHistoryMeta.storyHashes;
   } catch(err){
     console.error('[FB] saveDB failed:', err);
     throw err;
@@ -306,6 +327,18 @@ function casingTypeChunkDoc(typeId, idx){
 
 function casingVariantChunkDoc(typeId, variantId, idx){
   return doc(fs, 'app', `dbcasing_variantchunk_${safeDocId(typeId)}_${safeDocId(variantId)}_${idx}`);
+}
+
+function historyStoryDoc(storyId){
+  return doc(fs, 'app', `dbhistory_story_${safeDocId(storyId)}`);
+}
+
+function historyStoryChunkDoc(storyId, idx){
+  return doc(fs, 'app', `dbhistory_storychunk_${safeDocId(storyId)}_${idx}`);
+}
+
+function historyStorySummaryDoc(storyId){
+  return doc(fs, 'app', `dbhistory_summary_${safeDocId(storyId)}`);
 }
 
 function queueCasingTypeWrites(types, writes){
@@ -361,6 +394,58 @@ function queueCasingTypeWrites(types, writes){
   // long tail of Firestore writes and hitting the queued-writes limit.
 
   return { typeIds, typeHashes, variantIds, variantHashes };
+}
+
+function historySummaryFromArticle(a){
+  if(!a) return null;
+  return {
+    id: a.id,
+    title: a.title || '',
+    slug: a.slug || '',
+    category: a.category || 'guides-articles',
+    excerpt: a.excerpt || '',
+    coverImage: a.coverImage || '',
+    featured: !!a.featured,
+    status: a.status || 'published',
+    createdAt: a.createdAt || 0,
+    updatedAt: a.updatedAt || 0,
+    _summaryOnly: true,
+  };
+}
+
+function queueHistoryStoryWrites(stories, writes){
+  const list = Array.isArray(stories) ? stories : [];
+  const storyIds = [];
+  const storyHashes = {};
+  const usedStoryIds = new Set();
+
+  list.forEach((story, idx) => {
+    const storyId = uniqueItemId(stableItemId(story, idx), usedStoryIds);
+    storyIds.push(storyId);
+
+    const full = { ...(story || {}) };
+    const fullJson = JSON.stringify(full);
+    const summaryJson = JSON.stringify(historySummaryFromArticle(full));
+    const hash = hashString(fullJson);
+    storyHashes[storyId] = hash;
+
+    if(_historyStoryHashes[storyId] !== hash){
+      queueJsonRecord(
+        writes,
+        historyStoryDoc(storyId),
+        fullJson,
+        { key:'historyStories', storyId },
+        chunkIdx => historyStoryChunkDoc(storyId, chunkIdx)
+      );
+      writes.push({
+        type:'set',
+        ref:historyStorySummaryDoc(storyId),
+        data:{ key:'historyStories', storyId, json:summaryJson },
+      });
+    }
+  });
+
+  return { storyIds, storyHashes };
 }
 
 function queueJsonRecord(writes, ref, json, baseData, chunkRefForIndex){
@@ -506,6 +591,14 @@ async function loadSplitDB(meta, wantedKeys){
       out[key] = await loadCasingTypesV2(meta);
       return;
     }
+    if(key === 'historyStories' && meta._historyStoriesV2 && !IS_ADMIN_PAGE){
+      out[key] = await loadHistorySummariesV2(meta);
+      return;
+    }
+    if(key === 'historyStories' && meta._historyStoriesV2 && IS_ADMIN_PAGE){
+      out[key] = await loadHistoryStoriesFullV2(meta);
+      return;
+    }
 
     if(Array.isArray(itemIds[key])){
       const snaps = await Promise.all(itemIds[key].map(itemId => getDoc(dbItemDoc(key, itemId))));
@@ -544,6 +637,8 @@ async function loadSplitDB(meta, wantedKeys){
   _casingTypeHashes = { ...(meta._casingTypeHashes || {}) };
   _casingVariantIds = { ...(meta._casingVariantIds || {}) };
   _casingVariantHashes = { ...(meta._casingVariantHashes || {}) };
+  _historyStoryIds = Array.isArray(meta._historyStoryIds) ? [...meta._historyStoryIds] : [];
+  _historyStoryHashes = { ...(meta._historyStoryHashes || {}) };
   return out;
 }
 
@@ -644,6 +739,29 @@ async function ensureCasingVariants(typeId, opts={}){
   notifyDBReady();
 }
 
+async function loadHistorySummariesV2(meta){
+  const storyIds = Array.isArray(meta._historyStoryIds) ? meta._historyStoryIds : [];
+  const summaries = await Promise.all(storyIds.map(async storyId => {
+    const snap = await getDoc(historyStorySummaryDoc(storyId));
+    if(!snap.exists()){
+      throw new Error(`Missing history summary: ${storyId}`);
+    }
+    return JSON.parse(snap.data().json || 'null');
+  }));
+  return summaries.filter(Boolean);
+}
+
+async function loadHistoryStoriesFullV2(meta){
+  const storyIds = Array.isArray(meta._historyStoryIds) ? meta._historyStoryIds : [];
+  const stories = await Promise.all(storyIds.map(async storyId => {
+    return JSON.parse(await readJsonRecord(
+      historyStoryDoc(storyId),
+      idx => historyStoryChunkDoc(storyId, idx),
+      `history story: ${storyId}`
+    ));
+  }));
+  return stories.filter(Boolean);
+}
 
 async function readJsonRecord(ref, chunkRefForIndex, label){
   const snap = await getDoc(ref);
@@ -704,6 +822,8 @@ onSnapshot(DB_DOC, async (snap) => {
       _loadedKeys = new Set();
       // Reset variant cache on DB reload so stale "not found" entries don't persist
       _casingVariantsLoaded.clear();
+      _historySummaryCache = null;
+      _historyStoriesJsonCache = '';
       if(data && data._splitVersion){
         const keys = initialLoadKeys();
         _db = await loadSplitDB(data, keys);
@@ -724,6 +844,10 @@ onSnapshot(DB_DOC, async (snap) => {
       _casingTypeHashes = {};
       _casingVariantIds = {};
       _casingVariantHashes = {};
+      _historyStoryIds = [];
+      _historyStoryHashes = {};
+      _historySummaryCache = null;
+      _historyStoriesJsonCache = '';
     }
     if(seq !== _snapshotSeq) return;
     notifyDBReady();
@@ -1328,25 +1452,14 @@ function stripHeavyHistoryFields(objJson){
     .replace(/"seoDescription"\s*:\s*"(?:\\.|[^"\\])*"/g, '"seoDescription":""');
 }
 
-function historySummaryFromArticle(a){
-  if(!a) return null;
-  return {
-    id: a.id,
-    title: a.title || '',
-    slug: a.slug || '',
-    category: a.category || 'guides-articles',
-    excerpt: a.excerpt || '',
-    coverImage: a.coverImage || '',
-    featured: !!a.featured,
-    status: a.status || 'published',
-    createdAt: a.createdAt || 0,
-    updatedAt: a.updatedAt || 0,
-    _summaryOnly: true,
-  };
-}
-
 async function loadHistorySummaries(){
   if(_historySummaryCache) return _historySummaryCache;
+  if(_dbMeta && _dbMeta._historyStoriesV2){
+    const summaries = await loadHistorySummariesV2(_dbMeta);
+    _historySummaryCache = summaries;
+    if(_db) _db.historyStories = summaries;
+    return summaries;
+  }
   const json = await loadHistoryStoriesJson();
   const summaries = [];
   forEachHistoryObject(json, objJson => {
@@ -1370,6 +1483,27 @@ async function loadHistoryArticle(id){
   if(Array.isArray(_db && _db.historyStories)){
     const loaded = _db.historyStories.find(a => String(a.id) === sid && !a._summaryOnly && a.content !== undefined);
     if(loaded) return loaded;
+  }
+  if(_dbMeta && _dbMeta._historyStoriesV2){
+    const storyIds = Array.isArray(_dbMeta._historyStoryIds) ? _dbMeta._historyStoryIds : [];
+    const storyId = storyIds.find(x => String(x) === sid) || sid;
+    try {
+      const foundV2 = JSON.parse(await readJsonRecord(
+        historyStoryDoc(storyId),
+        idx => historyStoryChunkDoc(storyId, idx),
+        `history story: ${storyId}`
+      ));
+      if(foundV2 && _db){
+        const list = Array.isArray(_db.historyStories) ? _db.historyStories.slice() : [];
+        const idx = list.findIndex(a => String(a.id) === sid || String(a.id) === String(foundV2.id));
+        if(idx >= 0) list[idx] = foundV2;
+        else list.push(foundV2);
+        _db.historyStories = list;
+      }
+      return foundV2;
+    } catch(err) {
+      console.warn('[FB] history V2 article load failed, falling back:', err);
+    }
   }
   const json = await loadHistoryStoriesJson();
   let found = null;
