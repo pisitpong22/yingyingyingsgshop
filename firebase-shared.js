@@ -109,6 +109,7 @@ let _isReady = false;
 const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews', 'feedPosts', 'historyStories'];
+const DB_LAZY_ITEM_KEYS = new Set(['amulets', 'accessories', 'projects']);
 // Keep every large collection chunked. A single casing type can grow past
 // Firestore's 1 MiB document limit when it contains many style/photo URLs.
 const DB_ITEM_KEYS = new Set([]);
@@ -131,6 +132,8 @@ let _casingVariantIds = {};
 let _casingVariantHashes = {};
 let _historyStoryIds = [];
 let _historyStoryHashes = {};
+let _lazyItemIds = {};
+let _lazyItemHashes = {};
 const IS_ADMIN_PAGE = /(^|\/)admin[^/]*\.html$/i.test(location.pathname);
 
 // ─── DB API ────────────────────────────────────────────────────────────────
@@ -184,6 +187,10 @@ async function saveDB(newDb){
       storyIds: [],
       storyHashes: {},
     };
+    let nextLazyItemMeta = {
+      itemIds: {},
+      itemHashes: {},
+    };
     const writes = [];
 
     DB_SPLIT_KEYS.forEach(key => {
@@ -198,12 +205,42 @@ async function saveDB(newDb){
       }
 
       if(key === 'historyStories'){
-        const historyMeta = queueHistoryStoryWrites(newDb && newDb[key], writes);
+        const incomingStories = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
+        if(!incomingStories.length && ((_historyStoryIds && _historyStoryIds.length) || (_dbPartCounts.historyStories > 0))){
+          nextCounts[key] = _dbPartCounts.historyStories || 0;
+          nextHashes[key] = _dbPartHashes.historyStories || [];
+          nextItemIds[key] = [];
+          nextItemHashes[key] = {};
+          nextHistoryMeta = { storyIds:[...(_historyStoryIds||[])], storyHashes:{...(_historyStoryHashes||{})} };
+          return;
+        }
+        const historyMeta = queueHistoryStoryWrites(incomingStories, writes);
         nextCounts[key] = 0;
         nextHashes[key] = [];
         nextItemIds[key] = [];
         nextItemHashes[key] = {};
         nextHistoryMeta = historyMeta;
+        return;
+      }
+
+      if(DB_LAZY_ITEM_KEYS.has(key)){
+        const incomingItems = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
+        if(!incomingItems.length && ((_lazyItemIds[key] && _lazyItemIds[key].length) || (_dbPartCounts[key] > 0))){
+          nextCounts[key] = _dbPartCounts[key] || 0;
+          nextHashes[key] = _dbPartHashes[key] || [];
+          nextItemIds[key] = [];
+          nextItemHashes[key] = {};
+          nextLazyItemMeta.itemIds[key] = [...((_lazyItemIds && _lazyItemIds[key]) || [])];
+          nextLazyItemMeta.itemHashes[key] = {...((_lazyItemHashes && _lazyItemHashes[key]) || {})};
+          return;
+        }
+        const itemMeta = queueLazyItemWrites(key, incomingItems, writes);
+        nextCounts[key] = 0;
+        nextHashes[key] = [];
+        nextItemIds[key] = [];
+        nextItemHashes[key] = {};
+        nextLazyItemMeta.itemIds[key] = itemMeta.itemIds;
+        nextLazyItemMeta.itemHashes[key] = itemMeta.itemHashes;
         return;
       }
 
@@ -271,6 +308,9 @@ async function saveDB(newDb){
       _historyStoriesV2: true,
       _historyStoryIds: nextHistoryMeta.storyIds,
       _historyStoryHashes: nextHistoryMeta.storyHashes,
+      _lazyItemsV2: true,
+      _lazyItemIds: nextLazyItemMeta.itemIds,
+      _lazyItemHashes: nextLazyItemMeta.itemHashes,
       _updatedAt: serverTimestamp(),
     }});
 
@@ -286,6 +326,8 @@ async function saveDB(newDb){
     _casingVariantHashes = nextCasingMeta.variantHashes;
     _historyStoryIds = nextHistoryMeta.storyIds;
     _historyStoryHashes = nextHistoryMeta.storyHashes;
+    _lazyItemIds = nextLazyItemMeta.itemIds;
+    _lazyItemHashes = nextLazyItemMeta.itemHashes;
   } catch(err){
     console.error('[FB] saveDB failed:', err);
     throw err;
@@ -339,6 +381,18 @@ function historyStoryChunkDoc(storyId, idx){
 
 function historyStorySummaryDoc(storyId){
   return doc(fs, 'app', `dbhistory_summary_${safeDocId(storyId)}`);
+}
+
+function lazyItemDoc(key, itemId){
+  return doc(fs, 'app', `dblazy_${safeDocId(key)}_${safeDocId(itemId)}`);
+}
+
+function lazyItemChunkDoc(key, itemId, idx){
+  return doc(fs, 'app', `dblazy_chunk_${safeDocId(key)}_${safeDocId(itemId)}_${idx}`);
+}
+
+function lazyItemSummaryDoc(key, itemId){
+  return doc(fs, 'app', `dblazy_summary_${safeDocId(key)}_${safeDocId(itemId)}`);
 }
 
 function queueCasingTypeWrites(types, writes){
@@ -446,6 +500,63 @@ function queueHistoryStoryWrites(stories, writes){
   });
 
   return { storyIds, storyHashes };
+}
+
+function lazyItemSummary(key, item){
+  const base = {
+    id: item && item.id,
+    name: item && item.name || '',
+    cat: item && item.cat || '',
+    desc: item && item.desc || '',
+    imgs: item && Array.isArray(item.imgs) && item.imgs[0] ? [item.imgs[0]] : [],
+    status: item && item.status || 'available',
+    badge: item && item.badge || '',
+    price: item && item.price || 0,
+    hidePrice: !!(item && item.hidePrice),
+    featured: !!(item && item.featured),
+    _summaryOnly: true,
+  };
+  if(key === 'amulets'){
+    base.temple = item && item.temple || '';
+    base.year = item && item.year || '';
+  }
+  if(key === 'projects'){
+    base.date = item && item.date || '';
+    base.status = item && item.status || 'active';
+  }
+  return base;
+}
+
+function queueLazyItemWrites(key, items, writes){
+  const list = Array.isArray(items) ? items : [];
+  const itemIds = [];
+  const itemHashes = {};
+  const usedIds = new Set();
+
+  list.forEach((item, idx) => {
+    const itemId = uniqueItemId(stableItemId(item, idx), usedIds);
+    itemIds.push(itemId);
+    const fullJson = JSON.stringify(item || {});
+    const summaryJson = JSON.stringify(lazyItemSummary(key, item || {}));
+    const hash = hashString(fullJson);
+    itemHashes[itemId] = hash;
+    if(!_lazyItemHashes[key] || _lazyItemHashes[key][itemId] !== hash){
+      queueJsonRecord(
+        writes,
+        lazyItemDoc(key, itemId),
+        fullJson,
+        { key, itemId },
+        chunkIdx => lazyItemChunkDoc(key, itemId, chunkIdx)
+      );
+      writes.push({
+        type:'set',
+        ref:lazyItemSummaryDoc(key, itemId),
+        data:{ key, itemId, json:summaryJson },
+      });
+    }
+  });
+
+  return { itemIds, itemHashes };
 }
 
 function queueJsonRecord(writes, ref, json, baseData, chunkRefForIndex){
@@ -592,11 +703,25 @@ async function loadSplitDB(meta, wantedKeys){
       return;
     }
     if(key === 'historyStories' && meta._historyStoriesV2 && !IS_ADMIN_PAGE){
-      out[key] = await loadHistorySummariesV2(meta);
+      const summaries = await loadHistorySummariesV2(meta);
+      if(summaries.length){
+        out[key] = summaries;
+      } else {
+        const legacyJson = await loadLegacyHistoryChunks();
+        out[key] = summarizeHistoryJson(legacyJson);
+      }
       return;
     }
     if(key === 'historyStories' && meta._historyStoriesV2 && IS_ADMIN_PAGE){
       out[key] = await loadHistoryStoriesFullV2(meta);
+      return;
+    }
+    if(DB_LAZY_ITEM_KEYS.has(key) && meta._lazyItemsV2 && !IS_ADMIN_PAGE){
+      out[key] = await loadLazyItemSummariesV2(meta, key);
+      return;
+    }
+    if(DB_LAZY_ITEM_KEYS.has(key) && meta._lazyItemsV2 && IS_ADMIN_PAGE){
+      out[key] = await loadLazyItemsFullV2(meta, key);
       return;
     }
 
@@ -639,6 +764,8 @@ async function loadSplitDB(meta, wantedKeys){
   _casingVariantHashes = { ...(meta._casingVariantHashes || {}) };
   _historyStoryIds = Array.isArray(meta._historyStoryIds) ? [...meta._historyStoryIds] : [];
   _historyStoryHashes = { ...(meta._historyStoryHashes || {}) };
+  _lazyItemIds = { ...(meta._lazyItemIds || {}) };
+  _lazyItemHashes = { ...(meta._lazyItemHashes || {}) };
   return out;
 }
 
@@ -763,6 +890,32 @@ async function loadHistoryStoriesFullV2(meta){
   return stories.filter(Boolean);
 }
 
+async function loadLazyItemSummariesV2(meta, key){
+  const idsMap = meta._lazyItemIds || {};
+  const itemIds = Array.isArray(idsMap[key]) ? idsMap[key] : [];
+  const items = await Promise.all(itemIds.map(async itemId => {
+    const snap = await getDoc(lazyItemSummaryDoc(key, itemId));
+    if(!snap.exists()){
+      throw new Error(`Missing ${key} summary: ${itemId}`);
+    }
+    return JSON.parse(snap.data().json || 'null');
+  }));
+  return items.filter(Boolean);
+}
+
+async function loadLazyItemsFullV2(meta, key){
+  const idsMap = meta._lazyItemIds || {};
+  const itemIds = Array.isArray(idsMap[key]) ? idsMap[key] : [];
+  const items = await Promise.all(itemIds.map(async itemId => {
+    return JSON.parse(await readJsonRecord(
+      lazyItemDoc(key, itemId),
+      idx => lazyItemChunkDoc(key, itemId, idx),
+      `${key} item: ${itemId}`
+    ));
+  }));
+  return items.filter(Boolean);
+}
+
 async function readJsonRecord(ref, chunkRefForIndex, label){
   const snap = await getDoc(ref);
   if(!snap.exists()){
@@ -824,6 +977,8 @@ onSnapshot(DB_DOC, async (snap) => {
       _casingVariantsLoaded.clear();
       _historySummaryCache = null;
       _historyStoriesJsonCache = '';
+      _lazyItemIds = {};
+      _lazyItemHashes = {};
       if(data && data._splitVersion){
         const keys = initialLoadKeys();
         _db = await loadSplitDB(data, keys);
@@ -846,6 +1001,8 @@ onSnapshot(DB_DOC, async (snap) => {
       _casingVariantHashes = {};
       _historyStoryIds = [];
       _historyStoryHashes = {};
+      _lazyItemIds = {};
+      _lazyItemHashes = {};
       _historySummaryCache = null;
       _historyStoriesJsonCache = '';
     }
@@ -1393,6 +1550,8 @@ async function loadHistoryStoriesJson(){
   const meta = _dbMeta || {};
   const count = Math.max(0, Number(meta._partCounts && meta._partCounts.historyStories) || 0);
   if(!count){
+    _historyStoriesJsonCache = await loadLegacyHistoryChunks();
+    if(_historyStoriesJsonCache && _historyStoriesJsonCache !== '[]') return _historyStoriesJsonCache;
     await ensureDBKeys(['historyStories']);
     _historyStoriesJsonCache = JSON.stringify(Array.isArray(_db && _db.historyStories) ? _db.historyStories : []);
     return _historyStoriesJsonCache;
@@ -1407,6 +1566,17 @@ async function loadHistoryStoriesJson(){
     return snap.data().json || '';
   }).join('');
   return _historyStoriesJsonCache;
+}
+
+async function loadLegacyHistoryChunks(){
+  let json = '';
+  for(let idx = 0; idx < 40; idx++){
+    const snap = await getDoc(dbChunkDoc('historyStories', idx));
+    if(!snap.exists()) break;
+    json += snap.data().json || '';
+    if(canParseJson(json)) return json;
+  }
+  return '[]';
 }
 
 function forEachHistoryObject(json, cb){
@@ -1452,15 +1622,7 @@ function stripHeavyHistoryFields(objJson){
     .replace(/"seoDescription"\s*:\s*"(?:\\.|[^"\\])*"/g, '"seoDescription":""');
 }
 
-async function loadHistorySummaries(){
-  if(_historySummaryCache) return _historySummaryCache;
-  if(_dbMeta && _dbMeta._historyStoriesV2){
-    const summaries = await loadHistorySummariesV2(_dbMeta);
-    _historySummaryCache = summaries;
-    if(_db) _db.historyStories = summaries;
-    return summaries;
-  }
-  const json = await loadHistoryStoriesJson();
+function summarizeHistoryJson(json){
   const summaries = [];
   forEachHistoryObject(json, objJson => {
     try {
@@ -1471,6 +1633,21 @@ async function loadHistorySummaries(){
       console.warn('[FB] history summary parse skipped:', err);
     }
   });
+  return summaries;
+}
+
+async function loadHistorySummaries(){
+  if(_historySummaryCache) return _historySummaryCache;
+  if(_dbMeta && _dbMeta._historyStoriesV2){
+    const summaries = await loadHistorySummariesV2(_dbMeta);
+    if(summaries.length){
+      _historySummaryCache = summaries;
+      if(_db) _db.historyStories = summaries;
+      return summaries;
+    }
+  }
+  const json = await loadHistoryStoriesJson();
+  const summaries = summarizeHistoryJson(json);
   _historySummaryCache = summaries;
   if(_db){
     _db.historyStories = summaries;
@@ -1529,11 +1706,45 @@ async function loadHistoryArticle(id){
   return found;
 }
 
+async function loadFullItem(key, id){
+  const allowed = DB_LAZY_ITEM_KEYS.has(key);
+  if(!allowed) return null;
+  const sid = String(id);
+  if(Array.isArray(_db && _db[key])){
+    const loaded = _db[key].find(item => String(item.id) === sid && !item._summaryOnly);
+    if(loaded) return loaded;
+  }
+  if(_dbMeta && _dbMeta._lazyItemsV2){
+    const ids = (_dbMeta._lazyItemIds && _dbMeta._lazyItemIds[key]) || [];
+    const itemId = ids.find(x => String(x) === sid) || sid;
+    try {
+      const full = JSON.parse(await readJsonRecord(
+        lazyItemDoc(key, itemId),
+        idx => lazyItemChunkDoc(key, itemId, idx),
+        `${key} item: ${itemId}`
+      ));
+      if(full && _db){
+        const list = Array.isArray(_db[key]) ? _db[key].slice() : [];
+        const idx = list.findIndex(item => String(item.id) === String(full.id) || String(item.id) === sid);
+        if(idx >= 0) list[idx] = full;
+        else list.push(full);
+        _db[key] = list;
+      }
+      return full;
+    } catch(err) {
+      console.warn(`[FB] ${key} V2 item load failed, falling back:`, err);
+    }
+  }
+  await ensureDBKeys([key]);
+  return (_db[key] || []).find(item => String(item.id) === sid) || null;
+}
+
 window.FB = {
   getDB, saveDB, onDBChange, ready,
   ensureDBKeys,
   loadHistorySummaries,
   loadHistoryArticle,
+  loadFullItem,
   uploadFile, uploadImageSet, deleteFile,
   signIn: signInUser,
   signOut: signOutUser,

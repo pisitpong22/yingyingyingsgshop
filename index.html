@@ -5117,6 +5117,94 @@
   .hs-load-more:hover{
     background:rgba(201,168,76,.22);
   }
+
+  /* Final review form theme: match the dark luxury UI. */
+  #reviewModal{
+    background:rgba(5,4,2,.78) !important;
+    backdrop-filter:blur(14px) saturate(145%) !important;
+    -webkit-backdrop-filter:blur(14px) saturate(145%) !important;
+  }
+  #reviewModal .modal{
+    background:
+      radial-gradient(circle at 18% 0%,rgba(201,168,76,.16),transparent 34%),
+      linear-gradient(160deg,rgba(34,25,15,.97),rgba(12,8,5,.99)) !important;
+    color:#fff4c8 !important;
+    border:1px solid rgba(232,201,106,.28) !important;
+    box-shadow:0 30px 90px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+  #reviewModal .modal-head{
+    border-bottom:1px solid rgba(232,201,106,.18) !important;
+  }
+  #reviewModal .modal-title,
+  #reviewModal .rf-label{
+    color:#f2df96 !important;
+  }
+  #reviewModal .modal-close{
+    background:rgba(255,255,255,.08) !important;
+    color:#f2df96 !important;
+    border:1px solid rgba(232,201,106,.24) !important;
+  }
+  #reviewModal .rf-input{
+    -webkit-text-fill-color:#fff4c8 !important;
+    caret-color:#f2df96 !important;
+    background:rgba(255,255,255,.075) !important;
+    border-color:rgba(232,201,106,.28) !important;
+    color:#fff4c8 !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.06) !important;
+  }
+  #reviewModal input,
+  #reviewModal textarea,
+  #reviewModal select{
+    background-color:rgba(255,255,255,.075) !important;
+    color:#fff4c8 !important;
+    -webkit-text-fill-color:#fff4c8 !important;
+  }
+  #reviewModal input:-webkit-autofill,
+  #reviewModal input:-webkit-autofill:hover,
+  #reviewModal input:-webkit-autofill:focus,
+  #reviewModal textarea:-webkit-autofill{
+    -webkit-box-shadow:0 0 0 1000px #1d150d inset !important;
+    box-shadow:0 0 0 1000px #1d150d inset !important;
+    -webkit-text-fill-color:#fff4c8 !important;
+    border-color:rgba(232,201,106,.42) !important;
+  }
+  #reviewModal .rf-input::placeholder{color:rgba(255,244,200,.38) !important}
+  #reviewModal .rf-input:focus{
+    border-color:rgba(232,201,106,.62) !important;
+    box-shadow:0 0 0 3px rgba(201,168,76,.16), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  }
+  #reviewModal .rf-upload,
+  #reviewModal .rf-checkbox{
+    background:rgba(255,255,255,.055) !important;
+    border-color:rgba(232,201,106,.24) !important;
+    color:rgba(255,244,200,.72) !important;
+  }
+  #reviewModal .rf-note{color:rgba(255,244,200,.46) !important}
+  #reviewModal .btn-ol{
+    background:rgba(255,255,255,.055) !important;
+    color:#f2df96 !important;
+    border-color:rgba(232,201,106,.32) !important;
+  }
+
+  /* Final Hero 3D sizing and bounded side rotation. */
+  @media(min-width:901px){
+    .social-profile-card{
+      grid-template-columns:minmax(0,.78fr) minmax(500px,.95fr) !important;
+    }
+    .social-visual{
+      min-height:620px !important;
+      height:620px !important;
+    }
+    .social-3d{
+      width:min(46vw,620px) !important;
+      height:620px !important;
+      transform:rotate(3deg) translateY(0) !important;
+    }
+  }
+  @media(min-width:901px) and (max-width:1180px){
+    .social-visual{min-height:500px !important;height:500px !important}
+    .social-3d{width:min(42vw,450px) !important;height:500px !important}
+  }
 </style>
 </head>
 <body>
@@ -10039,14 +10127,11 @@ window.addEventListener('appinstalled',()=>{
     let targetRotY = 0;
     let currentRotX = 0;
     let currentRotY = 0;
-    let targetSlideX = 0;
-    let currentSlideX = 0;
     let dragging = false;
     let startX = 0;
     let startY = 0;
     let startRotX = 0;
     let startRotY = 0;
-    let startSlideX = 0;
     const hitTarget = canvas.closest('.hero-3d') || canvas;
 
     canvas.style.cursor = 'grab';
@@ -10068,7 +10153,6 @@ window.addEventListener('appinstalled',()=>{
       startY = p.y;
       startRotX = targetRotX;
       startRotY = targetRotY;
-      startSlideX = targetSlideX;
       canvas.style.cursor = 'grabbing';
       hitTarget.style.cursor = 'grabbing';
       if(e.pointerId !== undefined && hitTarget.setPointerCapture){
@@ -10081,13 +10165,18 @@ window.addEventListener('appinstalled',()=>{
       const p = pointFromEvent(e);
       const dx = p.x - startX;
       const dy = p.y - startY;
+      const maxYaw = isMobile3D() ? 0.58 : 0.78;
+      const maxPitch = isMobile3D() ? 0.12 : 0.16;
       if(dragging){
-        targetSlideX = clamp(startSlideX + dx / Math.max(260, canvas.clientWidth) * 0.9, -0.45, 0.45);
+        targetRotY = clamp(startRotY + dx * 0.005, -maxYaw, maxYaw);
+        targetRotX = clamp(startRotX + dy * 0.0018, -maxPitch, maxPitch);
         if(e.cancelable) e.preventDefault();
       } else if(!isMobile3D()){
         const rect = canvas.getBoundingClientRect();
         const nx = ((p.x - rect.left) / Math.max(1, rect.width) - 0.5) * 2;
-        targetSlideX = clamp(nx * 0.18, -0.24, 0.24);
+        const ny = ((p.y - rect.top) / Math.max(1, rect.height) - 0.5) * 2;
+        targetRotY = clamp(nx * 0.5, -0.6, 0.6);
+        targetRotX = clamp(ny * 0.06, -0.09, 0.09);
       }
     }
 
@@ -10095,9 +10184,8 @@ window.addEventListener('appinstalled',()=>{
       dragging = false;
       canvas.style.cursor = 'grab';
       hitTarget.style.cursor = 'grab';
-      targetRotX = 0;
-      targetRotY = 0;
-      targetSlideX *= 0.7;
+      targetRotX *= 0.45;
+      targetRotY = clamp(targetRotY, isMobile3D() ? -0.48 : -0.62, isMobile3D() ? 0.48 : 0.62);
     }
 
     hitTarget.addEventListener('pointerdown', beginDrag);
@@ -10111,7 +10199,6 @@ window.addEventListener('appinstalled',()=>{
       if(!dragging){
         targetRotX = 0;
         targetRotY = 0;
-        targetSlideX = 0;
       }
     });
 
@@ -10154,7 +10241,8 @@ window.addEventListener('appinstalled',()=>{
       if(!canvasVisible || document.hidden) return;
       const t = clock.getElapsedTime();
       curFlip += (flipped - curFlip) * 0.06;
-      // Front-facing model on all devices. Pointer interaction only slides it horizontally.
+      // Front-facing model with bounded side rotation. It never turns far
+      // enough to reveal the back, but it still reacts naturally to drag/hover.
       const mobile = isMobile3D();
       const BASE_TILT_Y = 0;
       const BASE_TILT_X = mobile ? 0.04 : 0.08;
@@ -10162,18 +10250,17 @@ window.addEventListener('appinstalled',()=>{
       if(phraGroup){
         currentRotX += (targetRotX - currentRotX) * 0.12;
         currentRotY += (targetRotY - currentRotY) * 0.12;
-        currentSlideX += (targetSlideX - currentSlideX) * 0.14;
-        const maxYaw = 0.08;
-        let yaw = BASE_TILT_Y + currentSlideX * 0.08;
+        const maxYaw = mobile ? 0.58 : 0.78;
+        let yaw = BASE_TILT_Y + currentRotY;
         yaw = Math.max(-maxYaw, Math.min(maxYaw, yaw));
         const maxPitch = mobile ? 0.18 : 0.22;
-        let pitch = BASE_TILT_X + idleX;
+        let pitch = BASE_TILT_X + idleX + currentRotX;
         pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
         phraGroup.rotation.y = yaw;
         phraGroup.rotation.x = pitch;
         // Floating bob — vertical motion synced to a slow breath rate
         phraGroup.position.y = Math.sin(t * 0.9) * 0.12;
-        phraGroup.position.x = currentSlideX;
+        phraGroup.position.x = currentRotY * 0.08;
       }
       renderer.render(scene, camera);
     }
