@@ -887,13 +887,7 @@
   #page-history-stories,#page-feed,#page-about,#page-contact,#page-payment{
     background:linear-gradient(180deg,#f9edd0 0%,#fdf8ef 200px,#fdf8ef 100%);
   }
-  /* Casing page: always dark luxury — never cream/white */
-  #page-casing{
-    background:
-      radial-gradient(circle at 20% 0%,rgba(201,168,76,.14),transparent 35%),
-      linear-gradient(180deg,#0d0a06 0%,#120d05 100%) !important;
-    min-height:100vh;
-  }
+
   /* The hero is always visible — opt OUT so it never has to be re-painted */
   #page-home .hero-wrap{content-visibility:visible}
   .card-ph{display:flex;flex-direction:column;align-items:center;gap:7px;color:#a0845a}
@@ -5216,6 +5210,23 @@
   @media(min-width:901px) and (max-width:1180px){
     .social-visual{min-height:500px !important;height:500px !important}
     .social-3d{width:min(42vw,450px) !important;height:500px !important}
+  }
+
+  /* ═══ CASING PAGE: ALWAYS DARK — MUST BE LAST, HIGHEST SPECIFICITY ═══ */
+  #page-casing.page,
+  #page-casing.page.active{
+    background:
+      radial-gradient(ellipse at 24% 16%,rgba(201,168,76,.16),transparent 38%),
+      radial-gradient(ellipse at 78% 68%,rgba(120,60,180,.08),transparent 42%),
+      linear-gradient(135deg,#0d0a06 0%,#1a1208 44%,#0f0c08 100%) !important;
+    background-color:#0d0a06 !important;
+    min-height:100vh !important;
+  }
+  #page-casing .content,
+  #page-casing .casing-finder-layout,
+  #page-casing .casing-results-panel,
+  #page-casing .var-grid{
+    background-color:transparent !important;
   }
 </style>
 </head>
