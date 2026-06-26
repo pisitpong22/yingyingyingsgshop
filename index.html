@@ -7458,13 +7458,8 @@ function renderCasingTypes(){
   // 1920px and re-encodes to WebP q85, so they're already CDN-friendly.
   const bannerify = (url) => imageUrl(url,'medium');
   grid.innerHTML=types.map((ty,i)=>{
-    const count=(ty.variants||[]).length;
     const sampleCount=(ty.sampleImgs||[]).length;
-    // Types with no styles but with sample images: show sample count + sample label
-    const useSamples = count===0 && sampleCount>0;
-    const badge = useSamples
-      ? `${sampleCount} ${sampleCount===1?(lang==='th'?'ตัวอย่าง':'sample'):(lang==='th'?'ตัวอย่าง':'samples')}`
-      : `${count} ${count===1?'style':'styles'}`;
+    const useSamples = (ty.variants||[]).length===0 && sampleCount>0;
     const cta = useSamples
       ? (lang==='th'?'ดูตัวอย่าง →':'View Samples →')
       : (lang==='th'?'ดูแบบ →':'View Styles →');
@@ -7472,7 +7467,6 @@ function renderCasingTypes(){
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-banner">
         ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(ty.bannerImg,'medium','(max-width: 700px) 100vw, 420px')}>`:`<span class="ftype-icon-bg">🪬</span>`}
-        <div class="ftype-count">${badge}</div>
       </div>
 	      <div class="ftype-body">
 	        <div class="ftype-name">${ty.name}</div>
@@ -7771,6 +7765,14 @@ function appendVariantCardsProgressively(grid, ty, vars, start, token){
     if(empty) empty.insertAdjacentHTML('beforebegin', html);
     else grid.insertAdjacentHTML('beforeend', html);
     safeWatchImages(grid);
+    // Force-load images already in viewport (IntersectionObserver may have been
+    // set up before these nodes existed)
+    grid.querySelectorAll('img[data-src]').forEach(img => {
+      const r = img.getBoundingClientRect();
+      if(r.top < window.innerHeight + 800){
+        img.src = img.dataset.src; img.removeAttribute('data-src');
+      } else if(_imgObserver){ _imgObserver.observe(img); }
+    });
     applyCasingStyleFilter();
     if(end < vars.length){
       appendVariantCardsProgressively(grid, ty, vars, end, token);
