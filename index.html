@@ -9376,20 +9376,15 @@ function watchImage(img){
   // Direct Firebase Storage URLs are already optimised at upload time
   // (capped 1920px, WebP q85). No on-the-fly resize needed.
 
-  // Eager (above-the-fold) images: keep native loading, just listen for load
+  // Eager images: just add is-loaded when ready, never hide with opacity:0
   if(img.getAttribute('loading') !== 'lazy'){
     if(img.complete && img.naturalWidth > 0){
       img.classList.add('is-loaded');
     } else {
-      img.classList.add('is-loading');
       img.addEventListener('load', () => {
-        img.classList.remove('is-loading');
         img.classList.add('is-loaded');
       }, {once:true});
-      img.addEventListener('error', () => {
-        img.classList.remove('is-loading');
-        removeBrokenFeedImage(img);
-      }, {once:true});
+      // No is-loading class — eager images should never be hidden while loading
     }
     return;
   }
