@@ -931,6 +931,7 @@
     display:flex;align-items:center;justify-content:center;
     position:relative;overflow:hidden;
     border-radius:14px 14px 0 0;
+    contain:layout style;
   }
   .ftype-banner img{width:100%;height:100%;object-fit:cover}
   .ftype-icon-bg{font-size:80px;opacity:.6}
@@ -1971,6 +1972,7 @@
     display:flex;align-items:center;justify-content:center;font-size:50px;
     position:relative;overflow:hidden;
     border-radius:14px 14px 0 0;
+    contain:layout style;
   }
   .var-img img{width:100%;height:100%;object-fit:cover}
   .var-img-count{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.6);color:white;font-size:11px;font-weight:600;padding:3px 9px;border-radius:25px;backdrop-filter:blur(6px)}
@@ -5228,6 +5230,27 @@
   #page-casing .var-grid{
     background-color:transparent !important;
   }
+  /* Disable content-visibility for all casing elements — prevents repaint lag on scroll */
+  #page-casing,
+  #page-casing *,
+  .casing-finder-layout,
+  .casing-results-panel,
+  .var-grid,
+  .var-card,
+  .ftype-card{
+    content-visibility:visible !important;
+    contain-intrinsic-size:none !important;
+  }
+  /* Mobile: remove heavy backdrop-filter for smooth scroll */
+  @media(max-width:768px){
+    #page-casing .var-card,
+    #page-casing .ftype-card,
+    #page-casing .casing-finder-panel{
+      backdrop-filter:none !important;
+      -webkit-backdrop-filter:none !important;
+      box-shadow:0 10px 24px rgba(0,0,0,.28) !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -7414,6 +7437,10 @@ function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(
 let _casingStyleQuery = '';
 let _casingStyleMode = 'all';
 let _variantRenderToken = 0;
+// Cache of already-loaded casing thumbnail URLs — prevents shimmer from showing again
+const loadedCasingImages = new Set();
+function markCasingImageLoaded(url){ if(url) loadedCasingImages.add(url); }
+function isCasingImageLoaded(url){ return url && loadedCasingImages.has(url); }
 let _modalGalleryToken = 0;
 
 // ─── SKELETON HELPERS ────────────────────────────────────────────────
@@ -7764,13 +7791,19 @@ function applyCasingStyleFilter(){
 }
 
 function variantCardHtml(ty, v, i){
-  // First 8 cards: eager+fetchpriority (visible on open). Rest: lazy.
-  // Do NOT pass through safeWatchImages/watchImage which would move src→data-src
-  // and cause blank cards while waiting for IntersectionObserver.
+  // First 8: eager+fetchpriority. Rest: lazy.
+  // Never pass through watchImage — it moves src→data-src causing blank cards.
+  const imgUrl = v.imgs&&v.imgs[0] ? imageUrl(v.imgs[0], i<8?'medium':'thumb') : '';
+  const alreadyLoaded = isCasingImageLoaded(imgUrl);
+  // onload: mark this URL so we never show shimmer for it again
+  const onload = imgUrl ? `onload="markCasingImageLoaded('${imgUrl.replace(/'/g,"\'")}')"` : '';
+  const imgTag = imgUrl
+    ? `<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async"${alreadyLoaded?' class="is-loaded"':''} ${onload} src="${escapeHtml(imgUrl)}">`
+    : '🪬';
   return `
     <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
-      <div class="var-img">
-        ${v.imgs&&v.imgs[0]?`<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(v.imgs[0],i<8?'medium':'thumb','(max-width: 700px) 50vw, 320px')}>`:'🪬'}
+      <div class="var-img" style="contain:layout style;aspect-ratio:1">
+        ${imgTag}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
@@ -7790,7 +7823,8 @@ function appendVariantCardsProgressively(grid, ty, vars, start, token){
     const empty=document.getElementById('casingStyleEmpty');
     if(empty) empty.insertAdjacentHTML('beforebegin', html);
     else grid.insertAdjacentHTML('beforeend', html);
-    // variantCardHtml uses eager loading — browser fetches in DOM order, no observer needed.
+    // Update rendered count so skip-rebuild guard stays accurate
+    grid.dataset.renderedCount = String(end);
     applyCasingStyleFilter();
     if(end < vars.length){
       appendVariantCardsProgressively(grid, ty, vars, end, token);
@@ -7862,11 +7896,22 @@ function renderVariants(typeId){
     return;
   }
   setupCasingStyleTools(vars);
+  // Guard: if this type's cards are already in DOM and count matches, skip rebuild.
+  // Only rebuild when typeId changes, data changes, or grid is empty.
+  const existingCards = grid.querySelectorAll('.var-card[data-style-id]');
+  const _renderedTypeId = grid.dataset.renderedTypeId;
+  const _renderedCount  = Number(grid.dataset.renderedCount || 0);
+  if(String(_renderedTypeId) === String(ty.id) && _renderedCount >= vars.length && existingCards.length >= Math.min(vars.length, _renderedCount)){
+    // Already rendered — just re-apply filter in case search/sort changed
+    applyCasingStyleFilter();
+    return;
+  }
   const token=++_variantRenderToken;
   const initialCount = window.matchMedia && window.matchMedia('(max-width: 700px)').matches ? 24 : 36;
   const initial=vars.slice(0, initialCount);
   grid.innerHTML=initial.map((v,i)=>variantCardHtml(ty,v,i)).join('') + `<div class="casing-style-empty" id="casingStyleEmpty" style="display:none">${lang==='th'?'ไม่พบแบบที่ค้นหา':'No styles match your search.'}</div>`;
-  // variantCardHtml uses eager loading — no safeWatchImages needed here.
+  grid.dataset.renderedTypeId  = String(ty.id);
+  grid.dataset.renderedCount   = String(initial.length);
   if(vars.length > initial.length){
     appendVariantCardsProgressively(grid, ty, vars, initial.length, token);
   }
@@ -9532,9 +9577,16 @@ async function bootIndex(){
         const page=active ? active.id.replace(/^page-/,'') : pageFromUrl() || 'home';
         if(page==='casing'){
           if(curCasingType){
-            // Re-open with full reload so ensureCasingVariants runs fresh
-            // (covers type edit + variant updates from admin without refresh)
-            openCasingType(curCasingType, {scroll:false}).catch(()=>{});
+            // Only re-open if variants count changed (admin edit) — skip if same
+            const _db2 = window.FB ? window.FB.getDB() : {};
+            const _ty2 = (_db2.casingTypes||[]).find(t=>String(t.id)===String(curCasingType));
+            const _grid = document.getElementById('vGrid');
+            const _rendered = Number(_grid ? _grid.dataset.renderedCount : 0);
+            const _current = (_ty2&&_ty2.variants) ? _ty2.variants.length : 0;
+            if(_current !== _rendered){
+              openCasingType(curCasingType, {scroll:false}).catch(()=>{});
+            }
+            // else: same data, DOM is fine — no rebuild needed
           } else {
             renderCasingTypes();
           }
