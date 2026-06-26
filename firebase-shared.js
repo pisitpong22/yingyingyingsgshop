@@ -152,9 +152,9 @@ function keysForStorePage(page){
     case 'casing':       return ['settings','casingTypes'];
     case 'projects':     return ['settings','projects'];
     case 'reviews':      return ['settings','reviews'];
-    case 'history-stories': return ['settings','historyStories'];
-    case 'feed':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
-    case 'home':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
+    case 'history-stories': return ['settings'];
+    case 'feed':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'home':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
     default:             return ['settings'];
   }
 }
@@ -1256,9 +1256,149 @@ async function hsDeleteArticle(id){
   await window.FB.saveDB(db);
 }
 
+let _historyStoriesJsonCache = '';
+let _historySummaryCache = null;
+
+async function loadHistoryStoriesJson(){
+  if(_historyStoriesJsonCache) return _historyStoriesJsonCache;
+  if(!_isReady) await _readyPromise;
+  if(Array.isArray(_db && _db.historyStories) && _loadedKeys.has('historyStories')){
+    _historyStoriesJsonCache = JSON.stringify(_db.historyStories);
+    return _historyStoriesJsonCache;
+  }
+  const meta = _dbMeta || {};
+  const count = Math.max(0, Number(meta._partCounts && meta._partCounts.historyStories) || 0);
+  if(!count){
+    _historyStoriesJsonCache = '[]';
+    return _historyStoriesJsonCache;
+  }
+  const snaps = await Promise.all(
+    Array.from({ length: count }, (_, idx) => getDoc(dbChunkDoc('historyStories', idx)))
+  );
+  _historyStoriesJsonCache = snaps.map((snap, idx) => {
+    if(!snap.exists()){
+      throw new Error(`Missing DB chunk: historyStories[${idx}]`);
+    }
+    return snap.data().json || '';
+  }).join('');
+  return _historyStoriesJsonCache;
+}
+
+function forEachHistoryObject(json, cb){
+  let inString = false;
+  let escape = false;
+  let depth = 0;
+  let start = -1;
+  for(let i=0;i<json.length;i++){
+    const ch = json[i];
+    if(inString){
+      if(escape){
+        escape = false;
+      } else if(ch === '\\'){
+        escape = true;
+      } else if(ch === '"'){
+        inString = false;
+      }
+      continue;
+    }
+    if(ch === '"'){
+      inString = true;
+      continue;
+    }
+    if(ch === '{'){
+      if(depth === 0) start = i;
+      depth++;
+      continue;
+    }
+    if(ch === '}'){
+      depth--;
+      if(depth === 0 && start >= 0){
+        if(cb(json.slice(start, i + 1)) === false) return;
+        start = -1;
+      }
+    }
+  }
+}
+
+function stripHeavyHistoryFields(objJson){
+  return objJson
+    .replace(/"content"\s*:\s*"(?:\\.|[^"\\])*"/g, '"content":""')
+    .replace(/"gallery"\s*:\s*\[(?:\\.|[^\]])*?\]/g, '"gallery":[]')
+    .replace(/"seoDescription"\s*:\s*"(?:\\.|[^"\\])*"/g, '"seoDescription":""');
+}
+
+function historySummaryFromArticle(a){
+  if(!a) return null;
+  return {
+    id: a.id,
+    title: a.title || '',
+    slug: a.slug || '',
+    category: a.category || 'guides-articles',
+    excerpt: a.excerpt || '',
+    coverImage: a.coverImage || '',
+    featured: !!a.featured,
+    status: a.status || 'published',
+    createdAt: a.createdAt || 0,
+    updatedAt: a.updatedAt || 0,
+    _summaryOnly: true,
+  };
+}
+
+async function loadHistorySummaries(){
+  if(_historySummaryCache) return _historySummaryCache;
+  const json = await loadHistoryStoriesJson();
+  const summaries = [];
+  forEachHistoryObject(json, objJson => {
+    try {
+      const item = JSON.parse(stripHeavyHistoryFields(objJson));
+      const summary = historySummaryFromArticle(item);
+      if(summary) summaries.push(summary);
+    } catch(err) {
+      console.warn('[FB] history summary parse skipped:', err);
+    }
+  });
+  _historySummaryCache = summaries;
+  if(_db){
+    _db.historyStories = summaries;
+  }
+  return summaries;
+}
+
+async function loadHistoryArticle(id){
+  const sid = String(id);
+  if(Array.isArray(_db && _db.historyStories)){
+    const loaded = _db.historyStories.find(a => String(a.id) === sid && !a._summaryOnly && a.content !== undefined);
+    if(loaded) return loaded;
+  }
+  const json = await loadHistoryStoriesJson();
+  let found = null;
+  forEachHistoryObject(json, objJson => {
+    if(!new RegExp(`"id"\\s*:\\s*"?${sid}"?`).test(objJson)) return;
+    try {
+      const item = JSON.parse(objJson);
+      if(String(item.id) === sid){
+        found = item;
+        return false;
+      }
+    } catch(err) {
+      console.warn('[FB] history article parse failed:', err);
+    }
+  });
+  if(found && _db){
+    const list = Array.isArray(_db.historyStories) ? _db.historyStories.slice() : [];
+    const idx = list.findIndex(a => String(a.id) === sid);
+    if(idx >= 0) list[idx] = found;
+    else list.push(found);
+    _db.historyStories = list;
+  }
+  return found;
+}
+
 window.FB = {
   getDB, saveDB, onDBChange, ready,
   ensureDBKeys,
+  loadHistorySummaries,
+  loadHistoryArticle,
   uploadFile, uploadImageSet, deleteFile,
   signIn: signInUser,
   signOut: signOutUser,

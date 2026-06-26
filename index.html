@@ -6473,7 +6473,7 @@ function scheduleSocialHomeFeedLoad(){
   // onDBChange. Our onDBChange handler (below) calls renderSocialHomeFeed.
   // So we don't call renderSocialHomeFeed() here directly — we let the
   // event-driven onDBChange do it once data is actually in _db.
-  window.FB.ensureDBKeys(['settings','feedPosts','amulets','projects','reviews','casingTypes','historyStories'])
+  window.FB.ensureDBKeys(['settings','feedPosts','amulets','projects','reviews','casingTypes'])
     .then(() => {
       loadState.homeFeed = 'loaded';
       // Render once immediately after keys are confirmed loaded
@@ -6763,8 +6763,8 @@ function dataKeysForPage(name){
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes','historyStories'];
-    case 'history-stories': return ['historyStories'];
+    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'history-stories': return [];
     case 'home': return [];
     default: return [];
   }
@@ -6806,7 +6806,7 @@ async function goPage(name, opts={}){
   if(name==='history-stories'){
     _hsVisible = historyInitialLimit();
     renderHistoryStories();
-    ensurePageData(name).then(()=>{
+    loadHistorySummariesForPage().then(()=>{
       if(document.getElementById('page-history-stories')?.classList.contains('active')){
         renderHistoryStories();
       }
@@ -8237,6 +8237,17 @@ function hsLoadMore(){
   _hsVisible += historyMoreStep();
   renderHistoryStories();
 }
+async function loadHistorySummariesForPage(){
+  const db = getDB();
+  if(Array.isArray(db.historyStories) && db.historyStories.length) return db.historyStories;
+  if(window.FB && typeof window.FB.loadHistorySummaries === 'function'){
+    const summaries = await window.FB.loadHistorySummaries();
+    db.historyStories = summaries;
+    return summaries;
+  }
+  await ensurePageData('history-stories');
+  return getDB().historyStories || [];
+}
 
 function renderHistoryStories(){
   const db = getDB();
@@ -8355,12 +8366,15 @@ function hsOnSearch(val){
 }
 
 async function openHsArticle(id){
-  // Ensure historyStories is loaded (may not be if clicking from home feed)
-  if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
-    await window.FB.ensureDBKeys(['historyStories']);
-  }
   const db = getDB();
-  const a  = (db.historyStories||[]).find(x=>String(x.id)===String(id));
+  let a  = (db.historyStories||[]).find(x=>String(x.id)===String(id) && !x._summaryOnly);
+  if(!a && window.FB && typeof window.FB.loadHistoryArticle === 'function'){
+    a = await window.FB.loadHistoryArticle(id);
+  }
+  if(!a){
+    await ensurePageData('history-stories');
+    a = (getDB().historyStories||[]).find(x=>String(x.id)===String(id));
+  }
   if(!a) return;
   // Related articles (same category, excluding current)
   const related = (db.historyStories||[])
@@ -8658,7 +8672,7 @@ function buildHistoryStoriesFeedPosts(db){
       title:a.title||'Article',
       text:a.excerpt||'Read more about this article.',
       imgs:feedImages([...(a.coverImage?[a.coverImage]:[]),...(a.gallery||[])]),
-      action:`(async()=>{if(window.FB)await window.FB.ensureDBKeys(['historyStories']);openHsArticle(${a.id})})()`,
+      action:`openHsArticle(${a.id})`,
       cta:'Read Article',
       pinned:false,
       ts:Number(a.updatedAt||a.createdAt||0)||0,
