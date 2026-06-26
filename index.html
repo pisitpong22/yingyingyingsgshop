@@ -372,7 +372,7 @@
     transition:opacity .35s ease-out;
     pointer-events:auto;
   }
-  body .fb-splash{display:none !important}
+  html.fb-ready body .fb-splash.is-removed{display:none !important}
   html:not(.fb-ready) .nav-links,
   html:not(.fb-ready) .topbar,
   html:not(.fb-ready) .home-section{visibility:visible !important}
@@ -5123,7 +5123,7 @@
 
 <div class="fb-splash" id="fbSplash">
   <div class="fb-splash-inner">
-    <div class="fb-splash-logo"><img loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
+    <div class="fb-splash-logo"><img loading="eager" fetchpriority="high" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
     <div class="fb-splash-dots"><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span></div>
   </div>
 </div>
@@ -8907,9 +8907,14 @@ function renderP(){
     </div>`).join('');
 }
 
-function openProject(id){
+async function openProject(id){
   const db=getDB();
-  const p=db.projects.find(x=>x.id===id);if(!p)return;
+  let p=db.projects.find(x=>String(x.id)===String(id) && !x._summaryOnly);
+  if(!p && window.FB && typeof window.FB.loadFullItem === 'function'){
+    p = await window.FB.loadFullItem('projects', id);
+  }
+  if(!p) p=db.projects.find(x=>String(x.id)===String(id));
+  if(!p)return;
   const sm={active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
   const sc={active:'s-active',done:'s-done',soon:'s-soon',open:'s-open'};
   const imgs=p.imgs||[];
@@ -8936,9 +8941,14 @@ function openProject(id){
   document.getElementById('modal').classList.add('open');
 }
 
-function openProd(type,id){
+async function openProd(type,id){
   const db=getDB();const s=db.settings;
-  const item=db[type].find(i=>i.id===id);if(!item)return;
+  let item=db[type].find(i=>String(i.id)===String(id) && !i._summaryOnly);
+  if(!item && window.FB && typeof window.FB.loadFullItem === 'function'){
+    item = await window.FB.loadFullItem(type, id);
+  }
+  if(!item) item=db[type].find(i=>String(i.id)===String(id));
+  if(!item)return;
   window._prodImages = item.imgs || [];
   const icon=type==='amulets'?'📿':'⛓️';
   const status=item.status||'available';
@@ -9354,7 +9364,7 @@ async function bootIndex(){
     document.documentElement.classList.add('fb-ready');
     setTimeout(() => {
       const s = document.getElementById('fbSplash');
-      if(s) s.remove();
+      if(s){ s.classList.add('is-removed'); s.remove(); }
     }, 400);
     applySettings();
     goPageFromUrl().catch(() => renderSocialHomeFeed());
@@ -9368,7 +9378,7 @@ async function bootIndex(){
   document.documentElement.classList.add('fb-ready');
   setTimeout(() => {
     const s = document.getElementById('fbSplash');
-    if(s) s.remove();
+    if(s){ s.classList.add('is-removed'); s.remove(); }
   }, 400);
   goPageFromUrl();
   warmHomeData();
