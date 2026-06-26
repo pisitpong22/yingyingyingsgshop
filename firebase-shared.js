@@ -152,7 +152,7 @@ function keysForStorePage(page){
     case 'casing':       return ['settings','casingTypes'];
     case 'projects':     return ['settings','projects'];
     case 'reviews':      return ['settings','reviews'];
-    case 'history-stories': return ['settings'];
+    case 'history-stories': return ['settings','historyStories'];
     case 'feed':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
     case 'home':         return ['settings','feedPosts','amulets','projects','reviews','casingTypes'];
     default:             return ['settings'];

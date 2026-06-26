@@ -6764,7 +6764,7 @@ function dataKeysForPage(name){
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
     case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes'];
-    case 'history-stories': return [];
+    case 'history-stories': return ['historyStories'];
     case 'home': return [];
     default: return [];
   }
@@ -8246,8 +8246,10 @@ async function loadHistorySummariesForPage(){
   if(Array.isArray(db.historyStories) && db.historyStories.length) return db.historyStories;
   if(window.FB && typeof window.FB.loadHistorySummaries === 'function'){
     const summaries = await window.FB.loadHistorySummaries();
-    db.historyStories = summaries;
-    return summaries;
+    if(summaries && summaries.length){
+      db.historyStories = summaries;
+      return summaries;
+    }
   }
   if(window.FB && typeof window.FB.ensureDBKeys === 'function'){
     await window.FB.ensureDBKeys(['historyStories']);
@@ -8267,6 +8269,7 @@ function renderHistoryStories(){
       if(gw) gw.innerHTML = `<div class="hs-empty">
         <div class="hs-empty-icon">📖</div>
         <p>${lang==='th'?'ยังไม่มีบทความ History & Stories หรือโหลดข้อมูลไม่สำเร็จ':'No History & Stories articles found yet.'}</p>
+        <button class="hs-load-more" onclick="_hsLoaded=false;loadHistorySummariesForPage().then(()=>{_hsLoaded=true;renderHistoryStories()}).catch(()=>{_hsLoaded=true;renderHistoryStories()})">${lang==='th'?'ลองโหลดอีกครั้ง':'Retry loading'}</button>
       </div>`;
       return;
     }
