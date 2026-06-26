@@ -952,7 +952,7 @@ async function loadHistoryStoriesFullV2(meta){
       console.warn('[FB] history full story skipped:', storyId, err);
       return null;
     }
-  }));
+  });
   return stories.filter(Boolean);
 }
 
