@@ -6255,16 +6255,6 @@ function applySettings(){
   let visibleNav=(s.nav||[])
     .filter(n=>n.visible !== false && n.enabled !== false && preferredNav.includes(n.id))
     .sort((a,b)=>preferredNav.indexOf(a.id)-preferredNav.indexOf(b.id));
-  const fallbackNav = [
-    {id:'home',label:'Home'},
-    {id:'casing',label:'Casing Service'},
-    {id:'reviews',label:'Reviews'},
-    {id:'history-stories',label:'History & Stories'}
-  ];
-  if(visibleNav.length < 4){
-    const byId = Object.fromEntries(visibleNav.map(n => [n.id, n]));
-    visibleNav = fallbackNav.map(n => byId[n.id] || n);
-  }
   document.getElementById('navLinks').innerHTML=visibleNav.map(n=>`<li><a id="nav-${n.id}" onclick="goPage('${n.id}')">${n.label}</a></li>`).join('');
   const tabbar=document.getElementById('mobileTabbar');
   if(tabbar){
