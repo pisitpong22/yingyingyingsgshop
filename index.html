@@ -1820,11 +1820,11 @@
   .var-img img{width:100%;height:100%;object-fit:cover}
   .var-img-count{position:absolute;bottom:32px;left:7px;z-index:2;background:rgba(0,0,0,.58);color:rgba(210,190,145,.85);font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px}
   .var-price-badge{position:absolute;top:8px;right:8px;z-index:2;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px;letter-spacing:.2px}
-  .var-overlay{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:8px 8px 9px;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 60%,transparent 100%)}
-  .var-overlay-name{font-family:var(--font-display);font-size:12px;font-weight:700;color:#e8c96a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,.8)}
-  .var-overlay-hint{font-size:10px;color:rgba(201,168,76,.75);display:block;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-  .var-body{display:none}
-  .var-name,.var-hint{display:none}
+  .var-overlay{display:none}
+  .var-body{padding:9px 10px 10px;border-top:1px solid rgba(201,168,76,.09)}
+  .var-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:rgba(225,205,165,.92);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .var-hint{font-size:10.5px;color:rgba(201,168,76,.65);font-weight:600;opacity:.85;transition:opacity .2s}
+  .var-card:hover .var-hint{opacity:1}
 
   .proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .proj-card{background:#120e05;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid rgba(201,168,76,.16);border-radius:16px;overflow:hidden;transition:transform .2s,border-color .2s,background .2s;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3)}
@@ -7778,7 +7778,10 @@ function variantCardHtml(ty, v, i){
         ${imgTag}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
-        <div class="var-overlay"><span class="var-overlay-name">${v.name}</span><span class="var-overlay-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</span></div>
+      </div>
+      <div class="var-body">
+        <div class="var-name">${v.name}</div>
+        <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
       </div>
     </div>`;
 }
