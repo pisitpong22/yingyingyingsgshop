@@ -1491,6 +1491,39 @@
     .hs-grid{grid-template-columns:1fr}
   }
 
+  /* ─── HS ARTICLE INLINE PAGE ─── */
+  .hs-back-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:9px 18px;border-radius:30px;border:1px solid rgba(201,168,76,.3);
+    background:rgba(201,168,76,.08);color:var(--gold-dark);
+    font-size:13px;font-weight:600;cursor:pointer;
+    transition:background .2s,border-color .2s;margin-bottom:24px;
+  }
+  .hs-back-btn:hover{background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.5)}
+  .hs-article-page{max-width:760px;margin:0 auto;padding:8px 0 40px}
+  .hs-article-cover{border-radius:16px;overflow:hidden;margin-bottom:24px;max-height:420px}
+  .hs-article-cover img{width:100%;height:100%;object-fit:cover;display:block;max-height:420px}
+  .hs-article-meta{margin-bottom:14px}
+  .hs-article-title{
+    font-family:var(--font-display,'Noto Serif',serif);
+    font-size:clamp(24px,4vw,38px);font-weight:800;
+    color:rgba(245,228,185,.97);line-height:1.15;
+    margin:0 0 12px;letter-spacing:-.3px;
+  }
+  .hs-article-excerpt{
+    font-size:15px;color:var(--text-muted);font-style:italic;
+    margin:0 0 20px;line-height:1.7;
+  }
+  .hs-article-gem-row{display:flex;align-items:center;gap:10px;margin:20px 0 24px}
+  .hs-article-body{max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+  .hs-article-related{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+  .hs-article-related-title{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:14px}
+  @media(max-width:600px){
+    .hs-article-page{padding:0 0 32px}
+    .hs-article-cover{border-radius:10px;max-height:240px}
+    .hs-article-cover img{max-height:240px}
+  }
+
   /* ─── CUSTOM PAGE CONTENT ───
      Style the rich-text content of admin-created custom pages so it looks
      polished by default — no matter what HTML the admin's RTE produces. */
@@ -1953,7 +1986,7 @@
   @keyframes rtPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes rtBounce{0%{transform:scale(0) rotate(-15deg)}60%{transform:scale(1.2) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
   @media(max-width:520px){.rt-card{padding:36px 24px}.rt-msg{font-size:18px}.rt-icon{font-size:54px}}
-  .modal{background:linear-gradient(160deg,#fffef9 0%,#fdf6e3 55%,#f8ecd0 100%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid rgba(201,168,76,.35);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.9);position:relative}
+  .modal{background:linear-gradient(160deg,rgba(22,15,5,.97) 0%,rgba(18,12,3,.98) 55%,rgba(14,9,2,1) 100%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid rgba(201,168,76,.25);border-top:1.5px solid rgba(201,168,76,.45);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.7),inset 0 1px 0 rgba(201,168,76,.12);position:relative;color:var(--text)}
   @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
   .modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);gap:16px}
   .modal-title-wrap{flex:1}
@@ -5559,12 +5592,20 @@
 
 <!-- HISTORY & STORIES -->
 <div id="page-history-stories" class="page">
-  <div class="sec-head">
-    <h2 id="hsPageTitle">📖 History & Stories</h2>
-    <div class="gline"></div>
-    <p id="hsPageDesc">Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.</p>
+  <div class="sec-head casing-sec-head-i">
+    <div class="csh-glass-card">
+      <div class="csh-glass-shimmer"></div>
+      <div class="csh-eyebrow" data-en="Knowledge & Heritage" data-th="ความรู้และมรดกวัฒนธรรม">Knowledge & Heritage</div>
+      <div class="csh-left">
+        <h2 id="hsPageTitle" class="csh-title">📖 History & Stories</h2>
+      </div>
+      <div class="csh-gem-row"><div class="csh-gem"></div><div class="csh-gem-line"></div></div>
+      <div class="csh-right"><p id="hsPageDesc" class="csh-desc">Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.</p></div>
+    </div>
   </div>
   <div class="content">
+    <!-- Article detail view (replaces modal) -->
+    <div id="hsArticleView" style="display:none"></div>
     <div class="hs-wrap" id="hsPageWrap">
       <!-- Search + filter -->
       <div class="hs-search-wrap">
@@ -6913,6 +6954,8 @@ async function goPage(name, opts={}){
   // Show the page immediately with skeleton placeholders.
   // Data loads in background — render fires once data arrives.
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  // Reset history article view when leaving
+  if(typeof closeHsArticle === 'function') closeHsArticle();
   const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
   setActiveNav(name);
   window.scrollTo(0,0);
@@ -6926,9 +6969,20 @@ async function goPage(name, opts={}){
   if(name==='reviews')  showGridSkeleton('revGrid',6);
 
   if(name==='history-stories'){
+    // Show skeleton immediately
+    const gw=document.getElementById('hsGridWrap');
+    const fw=document.getElementById('hsFeaturedWrap');
+    if(fw) fw.innerHTML='';
+    if(gw) gw.innerHTML=`<div class="hs-grid">${Array.from({length:4},()=>`
+      <div class="hs-card skeleton-card" style="pointer-events:none;min-height:220px">
+        <div style="aspect-ratio:16/9;background:linear-gradient(90deg,#1e1407,#2a1d0a,#1e1407);background-size:200% 100%;animation:imgShimmer 1.3s infinite"></div>
+        <div style="padding:14px">
+          <div style="height:12px;width:55%;border-radius:8px;background:#2a1d0a;margin-bottom:8px;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
+          <div style="height:15px;width:82%;border-radius:8px;background:#1e1407;animation:imgShimmer 1.3s infinite;background-size:200% 100%"></div>
+        </div>
+      </div>`).join('')}</div>`;
     _hsVisible = historyInitialLimit();
     _hsLoaded = false;
-    renderHistoryStories();
     loadHistorySummariesForPage().then(()=>{
       _hsLoaded = true;
       if(document.getElementById('page-history-stories')?.classList.contains('active')){
@@ -8673,40 +8727,63 @@ async function openHsArticle(id){
     a = (getDB().historyStories||[]).find(x=>String(x.id)===String(id));
   }
   if(!a) return;
-  // Related articles (same category, excluding current)
-  const related = (db.historyStories||[])
+  const related = (getDB().historyStories||[])
     .filter(x=>x.id!==a.id && x.status!=='draft' && x.category===a.category)
     .slice(0,3);
-  document.getElementById('modalContent').innerHTML = `
-    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
-      <div class="modal-title-wrap">
-        <div class="hs-badge" style="margin-bottom:10px">${hsCatIcon(a.category)} ${hsCatLabel(a.category)}</div>
-        <div class="modal-title" style="font-size:22px;line-height:1.25">${escapeHtml(a.title||'')}</div>
-        ${a.excerpt?`<p style="font-size:14px;color:var(--text-muted);margin:8px 0 0;font-style:italic">${escapeHtml(a.excerpt)}</p>`:''}
+  const wrap = document.getElementById('hsPageWrap');
+  const view = document.getElementById('hsArticleView');
+  if(!wrap||!view) return;
+  // Scroll to top of page
+  const pg = document.getElementById('page-history-stories');
+  if(pg) pg.scrollTop = 0;
+  wrap.style.display = 'none';
+  view.style.display = 'block';
+  view.innerHTML = `
+    <div class="hs-article-page">
+      <button class="hs-back-btn" onclick="closeHsArticle()">← Back</button>
+      ${a.coverImage?`<div class="hs-article-cover"><img ${imgAttrs(a.coverImage,'medium','min(100vw,700px)')} alt="" style="${hsCoverStyle(a)}"></div>`:''}
+      <div class="hs-article-meta">
+        <div class="hs-badge">${hsCatIcon(a.category)} ${hsCatLabel(a.category)}</div>
       </div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h1 class="hs-article-title">${escapeHtml(a.title||'')}</h1>
+      ${a.excerpt?`<p class="hs-article-excerpt">${escapeHtml(a.excerpt)}</p>`:''}
+      <div class="hs-article-gem-row"><div class="csh-gem"></div><div class="csh-gem-line"></div></div>
+      <div class="custom-page-content hs-article-body">
+        ${a.content||'<p style="color:var(--text-muted);font-style:italic">No content yet.</p>'}
+      </div>
+      ${related.length?`
+        <div class="hs-article-related">
+          <div class="hs-article-related-title">Related Articles</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${related.map(r=>`
+              <div onclick="openHsArticle(${r.id})"
+                style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;border:1px solid rgba(201,168,76,.2);background:rgba(201,168,76,.07);cursor:pointer">
+                <div style="font-size:22px;flex-shrink:0">${hsCatIcon(r.category)}</div>
+                <div>
+                  <div style="font-weight:600;font-size:14px;color:var(--text)">${escapeHtml(r.title||'')}</div>
+                  ${r.excerpt?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${escapeHtml(r.excerpt.slice(0,80))}…</div>`:''}
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+      <button class="hs-back-btn" onclick="closeHsArticle()" style="margin-top:32px">← Back to Articles</button>
     </div>
-    ${a.coverImage?`<div style="margin-bottom:22px"><img ${imgAttrs(a.coverImage,'medium','min(100vw,700px)')} alt="" style="width:100%;max-height:400px;object-fit:cover;${hsCoverStyle(a)};border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12)"></div>`:''}
-    <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">
-      ${a.content||'<p style="color:var(--text-muted);font-style:italic">No content yet.</p>'}
-    </div>
-    ${related.length?`
-      <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--border)">
-        <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold-dark);margin-bottom:14px">Related Articles</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${related.map(r=>`
-            <div onclick="closeModal();setTimeout(()=>openHsArticle(${r.id}),80)"
-              style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid rgba(201,168,76,.2);background:rgba(255,249,238,.5);cursor:pointer">
-              <div style="font-size:22px;flex-shrink:0">${hsCatIcon(r.category)}</div>
-              <div>
-                <div style="font-weight:600;font-size:14px;color:var(--text)">${escapeHtml(r.title||'')}</div>
-                ${r.excerpt?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">${escapeHtml(r.excerpt.slice(0,80))}…</div>`:''}
-              </div>
-            </div>`).join('')}
-        </div>
-      </div>` : ''}
   `;
-  openModal('article');
+  safeWatchImages(view);
+}
+
+function closeHsArticle(){
+  const wrap = document.getElementById('hsPageWrap');
+  const view = document.getElementById('hsArticleView');
+  if(wrap) wrap.style.display = '';
+  if(view){ view.style.display = 'none'; view.innerHTML = ''; }
+  const pg = document.getElementById('page-history-stories');
+  if(pg) pg.scrollTop = 0;
+}
+
+async function navigateToHsArticle(id){
+  await goPage('history-stories');
+  openHsArticle(id);
 }
 
 // ─── SOCIAL CHANNELS ────────────────────────────────────────────────────────
@@ -8969,7 +9046,7 @@ function buildHistoryStoriesFeedPosts(db){
       title:a.title||'Article',
       text:a.excerpt||'Read more about this article.',
       imgs:feedImages([...(a.coverImage?[a.coverImage]:[]),...(a.gallery||[])]),
-      action:`openHsArticle(${a.id})`,
+      action:`navigateToHsArticle(${a.id})`,
       cta:'Read Article',
       pinned:false,
       ts:Number(a.updatedAt||a.createdAt||0)||0,
