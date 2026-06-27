@@ -952,6 +952,14 @@
   .ftype-from{color:rgba(155,135,95,.7);font-size:12px}
   .ftype-from strong{color:rgba(201,168,76,.9);font-size:17px;font-family:var(--font-display)}
   .ftype-arrow{color:rgba(201,168,76,.8);font-weight:700;font-size:14px}
+  /* J-style ftype additions */
+  .ftype-shimmer{position:absolute;top:0;left:0;right:0;height:1.5px;z-index:2;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(201,168,76,.55) 30%,rgba(240,217,138,.88) 50%,rgba(201,168,76,.55) 70%,transparent)}
+  .ftype-eyebrow{font-size:8.5px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.45);margin-bottom:6px;font-weight:600}
+  .ftype-time{font-size:11px;color:rgba(155,130,75,.7);margin-bottom:8px}
+  .ftype-from-label{font-size:10px;color:rgba(155,135,95,.6);letter-spacing:.3px;display:block;margin-bottom:1px}
+  .ftype-from strong{color:rgba(201,168,76,.92);font-size:17px;font-family:var(--font-display);font-weight:800}
+  /* ftype-grid — tighter gap */
+  .ftype-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
   .var-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.09)}
@@ -2179,14 +2187,16 @@
     .card-price{font-size:18px}
 
     /* Compact casing-type cards for 2-column mobile layout */
-    .ftype-banner{height:120px}
+    .ftype-banner{height:130px}
     .ftype-icon-bg{font-size:48px}
     .ftype-count{font-size:10px;padding:2px 8px;top:8px;right:8px}
-    .ftype-body{padding:12px 14px}
-    .ftype-name{font-size:14.5px;margin-bottom:5px;line-height:1.25}
+    .ftype-body{padding:11px 13px}
+    .ftype-eyebrow{font-size:7.5px;margin-bottom:4px}
+    .ftype-name{font-size:14px;margin-bottom:4px;line-height:1.25}
+    .ftype-time{font-size:10px;margin-bottom:6px}
     .ftype-desc{
-      font-size:11.5px;line-height:1.5;margin-bottom:10px;
-      -webkit-line-clamp:3;line-clamp:3;
+      font-size:11px;line-height:1.5;margin-bottom:8px;
+      -webkit-line-clamp:2;line-clamp:2;
     }
     .ftype-cta{padding-top:10px;flex-wrap:wrap;gap:6px}
     .ftype-from{font-size:10px}
@@ -3462,13 +3472,7 @@
   }
 
   /* ════ GLOBAL DARK THEME OVERRIDES ════ */
-  .ftype-card{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.17)!important;box-shadow:0 6px 28px rgba(0,0,0,.32)!important}
-  @media(max-width:768px){
-    .var-card{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
-    .ftype-card{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
-    .casing-finder-panel{backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
-  }
-  .ftype-card:hover{background:rgba(255,255,255,.09)!important;border-color:rgba(201,168,76,.45)!important;box-shadow:0 18px 52px rgba(0,0,0,.46)!important}
+  /* ftype-card dark editorial — overrides handled in design section below */
   .ftype-name{color:rgba(240,225,185,.95)!important}
   .ftype-desc,.ftype-sub{color:rgba(255,248,200,.45)!important}
   .ftype-price{color:#c9a84c!important}
@@ -7384,17 +7388,23 @@ function renderCasingTypes(){
     const cta = useSamples
       ? (lang==='th'?'ดูตัวอย่าง →':'View Samples →')
       : (lang==='th'?'ดูแบบ →':'View Styles →');
+    const styleCount = (ty.variants||[]).length || sampleCount;
+    const timeframe = casingTimeframeText(ty.desc);
     return `
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
+      <div class="ftype-shimmer"></div>
       <div class="ftype-banner">
-        ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(ty.bannerImg,'medium','(max-width: 700px) 100vw, 420px')}>`:`<span class="ftype-icon-bg">🪬</span>`}
+        ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(ty.bannerImg,'medium','(max-width: 700px) 100vw, 420px')}>`:``}
+        ${styleCount>0?`<div class="ftype-count">${styleCount} ${useSamples?(lang==='th'?'ตัวอย่าง':'samples'):(lang==='th'?'แบบ':'styles')}</div>`:''}
       </div>
-	      <div class="ftype-body">
-	        <div class="ftype-name">${ty.name}</div>
-	        <div class="ftype-desc">${ty.desc || ''}</div>
-	        <div class="ftype-cta">
-	          ${ty.priceRange?`<div class="ftype-from">Price<br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from">Price<br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
-	          <div class="ftype-arrow">${cta}</div>
+      <div class="ftype-body">
+        <div class="ftype-eyebrow">${lang==='th'?'บริการกรอบพระ':'Premium Casing'}</div>
+        <div class="ftype-name">${ty.name}</div>
+        <div class="ftype-desc">${casingDescWithoutTimeframe(ty.desc||'')}</div>
+        ${timeframe?`<div class="ftype-time">⏱ ${timeframe}</div>`:''}
+        <div class="ftype-cta">
+          ${ty.priceRange?`<div class="ftype-from"><span class="ftype-from-label">Price</span><br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from"><span class="ftype-from-label">Price</span><br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
+          <div class="ftype-arrow">${cta}</div>
         </div>
       </div>
     </div>`;
