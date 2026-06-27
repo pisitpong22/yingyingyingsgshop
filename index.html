@@ -2032,17 +2032,17 @@
     overflow-y:auto;
     overscroll-behavior:contain;
   }
-  .variant-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .variant-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
   .variant-photo{
     display:block;width:100%;padding:0;border:0;text-align:inherit;
-    border-radius:14px;overflow:hidden;
+    border-radius:0;overflow:hidden;
     background:#2d1e06;cursor:zoom-in;
-    transition:transform .2s, box-shadow .2s;
-    aspect-ratio:9/16;
+    transition:opacity .18s;
+    aspect-ratio:1/1;
   }
-  .variant-photo:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+  .variant-photo:hover{opacity:.85;transform:none;box-shadow:none}
   .variant-photo img{width:100%;height:100%;display:block;object-fit:cover}
-  @media(max-width:520px){.variant-gallery{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.variant-gallery{grid-template-columns:repeat(3,1fr)}}
 
   /* LIGHTBOX */
   #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:600;align-items:center;justify-content:center;padding:24px;animation:lbFade .25s ease}
@@ -2256,14 +2256,14 @@
       flex:1;
       overflow-y:auto;
       display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:10px;
-      padding:12px 14px 18px;
+      grid-template-columns:repeat(3,1fr);
+      gap:0;
+      padding:0;
       -webkit-overflow-scrolling:touch;
     }
     .modal.variant-modal .variant-photo{
-      border-radius:16px;
-      box-shadow:0 4px 14px rgba(0,0,0,.12);
+      border-radius:0;
+      box-shadow:none;
     }
     .modal.variant-modal .modal-close{display:none}
     .modal-mobile-close{
@@ -4836,9 +4836,9 @@
     background:transparent !important;
   }
   .modal.variant-modal .variant-photo{
-    background:rgba(255,255,255,.055) !important;
-    border:1px solid rgba(255,255,255,.1) !important;
-    box-shadow:0 10px 28px rgba(0,0,0,.28) !important;
+    background:#2d1e06 !important;
+    border:none !important;
+    box-shadow:none !important;
   }
   .modal.variant-modal .modal-close{
     background:rgba(255,255,255,.08) !important;
@@ -4859,8 +4859,8 @@
       top:0 !important;
     }
     .modal.variant-modal .variant-gallery{
-      padding:14px !important;
-      gap:10px !important;
+      padding:0 !important;
+      gap:0 !important;
       flex:0 1 auto !important;
       min-height:0 !important;
     }
