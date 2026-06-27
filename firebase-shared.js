@@ -1288,11 +1288,11 @@ async function _drawWatermarkOnCtx(ctx, w, h){
   ctx.font         = `${fontSize}px Allura`;
   ctx.textAlign    = 'right';
   ctx.textBaseline = 'middle';
-  ctx.shadowColor   = 'rgba(0,0,0,0.20)';
+  ctx.shadowColor   = 'rgba(0,0,0,0.45)';
   ctx.shadowBlur    = Math.max(2, Math.round(fontSize * 0.12));
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 0;
-  ctx.globalAlpha  = 0.28;
+  ctx.globalAlpha  = 0.52;
   ctx.fillStyle    = '#ffffff';
   ctx.fillText('YingYingYingSG', 0, 0);
   ctx.restore();
