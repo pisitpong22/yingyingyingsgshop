@@ -7359,6 +7359,8 @@ function renderCasingTypes(){
   const db=getDB();
   document.getElementById('casingTypes').style.display='block';
   document.getElementById('casingVariants').style.display='none';
+  const _sh=document.querySelector('#page-casing .sec-head');
+  if(_sh) _sh.style.display='';
   const types=db.casingTypes||[];
   const grid=document.getElementById('cTypeGrid');
   if(!types.length){
@@ -7739,6 +7741,8 @@ function renderVariants(typeId){
   if(!ty){curCasingType=null;renderCasingTypes();return;}
   document.getElementById('casingTypes').style.display='none';
   document.getElementById('casingVariants').style.display='block';
+  const _secHead=document.querySelector('#page-casing .sec-head');
+  if(_secHead) _secHead.style.display='none';
   document.getElementById('vCrumb').innerHTML=`
       <a onclick="curCasingType=null;renderCasingTypes()">All Casing Types</a>
       <span class="crumb-sep">▸</span>
@@ -7746,16 +7750,10 @@ function renderVariants(typeId){
 
   // ── Hero header ──
   const _hero = document.getElementById('ctypeHero');
-  // background image
-  if(ty.bannerImg){
-    _hero.style.backgroundImage = `url(${JSON.stringify(imageUrl(ty.bannerImg,'medium'))})`;
-    _hero.classList.remove('ctype-hero-nobg');
-    _hero.classList.add('ctype-hero-withbg');
-  } else {
-    _hero.style.backgroundImage = '';
-    _hero.classList.remove('ctype-hero-withbg');
-    _hero.classList.add('ctype-hero-nobg');
-  }
+  // No background image — always use gradient
+  _hero.style.backgroundImage = '';
+  _hero.classList.remove('ctype-hero-withbg');
+  _hero.classList.add('ctype-hero-nobg');
   // name
   const _titleEl = document.getElementById('vTitle');
   if(_titleEl) _titleEl.textContent = ty.name || '';
