@@ -957,7 +957,7 @@
   /* ftype-grid defined above */
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
-  .var-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.09)}
+  .var-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(201,168,76,.09)}
   /* fallback for tiny screens handled in mobile override */
   /* ───── CASING TYPE DETAIL PAGE ───── */
   .casing-detail-head{
@@ -2050,7 +2050,7 @@
   #lightbox.lb-loading #lbImgWrap::before,
   #lightbox.lb-error #lbImgWrap::before{content:'Loading image...';position:absolute;color:#f5e7b4;font-weight:800;letter-spacing:.3px}
   #lightbox.lb-error #lbImgWrap::before{content:'Could not load image';color:#ffdfdf}
-  #lbClose{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:2}
+  #lbClose{position:fixed;top:18px;right:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:601}
   #lbClose:hover{background:rgba(255,255,255,.2);transform:scale(1.05)}
   #lbPrev,#lbNext{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:white;width:50px;height:50px;border-radius:50%;font-size:32px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .2s;z-index:2;font-family:'Inter',sans-serif;padding:0}
   #lbPrev{left:18px}
