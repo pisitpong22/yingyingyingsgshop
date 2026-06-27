@@ -1991,6 +1991,8 @@
     display:flex;
     flex-direction:column;
     overflow:hidden;
+    max-height:90vh;
+    padding:0;
   }
   .modal.variant-modal .modal-close{
     position:absolute;
@@ -2025,12 +2027,15 @@
     top:0;
     z-index:5;
     background:transparent;
+    padding:20px 24px 16px;
+    flex-shrink:0;
   }
   .modal.variant-modal .variant-gallery{
     flex:1;
     min-height:0;
     overflow-y:auto;
     overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
   }
   .variant-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
   .variant-photo{
@@ -4851,19 +4856,21 @@
       border-radius:22px 22px 0 0 !important;
       padding:0 !important;
       max-height:92vh !important;
-      height:auto !important;
+      height:92vh !important;
     }
     .modal.variant-modal .modal-head{
       padding:18px 18px 14px !important;
       margin:0 !important;
       position:sticky !important;
       top:0 !important;
+      flex-shrink:0 !important;
     }
     .modal.variant-modal .variant-gallery{
       padding:0 !important;
       gap:0 !important;
-      flex:0 1 auto !important;
+      flex:1 !important;
       min-height:0 !important;
+      overflow-y:auto !important;
     }
   }
 
@@ -8005,7 +8012,7 @@ function openVariant(typeId,varId){
   const thumbify = (url) => imageUrl(url,'medium');
   document.getElementById('modalContent').innerHTML=`
     <button class="modal-mobile-close" onclick="closeModal()" aria-label="Close">×</button>
-    <div class="modal-head" style="padding-bottom:12px;margin-bottom:16px">
+    <div class="modal-head" style="padding-bottom:12px">
       <div class="modal-title-wrap">
         <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
           <div class="modal-title" style="font-size:24px">${v.name}</div>
