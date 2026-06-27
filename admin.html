@@ -7815,6 +7815,18 @@ async function startWatermarkMigration(){
     });
   });
 
+  // Reviews
+  (db.reviews || []).forEach((rv, ri) => {
+    (rv.imgs || []).forEach((img, ii) => {
+      pushSlot(
+        () => rawUrl((db.reviews[ri].imgs||[])[ii]),
+        (u) => { if(db.reviews[ri]?.imgs) db.reviews[ri].imgs[ii] = u; },
+        () => (db.reviews[ri].imgs||[])[ii],
+        (meta) => { if(db.reviews[ri]?.imgs) db.reviews[ri].imgs[ii] = meta; }
+      );
+    });
+  });
+
   // Filter: only slots with an HTTP URL (skip blanks / data URIs)
   const toProcess = slots.filter(s => /^https?:\/\//i.test(s.getUrl()));
   const total = toProcess.length;
