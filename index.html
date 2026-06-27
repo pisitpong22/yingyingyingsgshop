@@ -1825,7 +1825,7 @@
   .var-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:rgba(225,205,165,.92);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .var-hint{font-size:10.5px;color:rgba(201,168,76,.65);font-weight:600;opacity:.85;transition:opacity .2s}
   .var-card:hover .var-hint{opacity:1}
-  .var-card--sample .var-img{aspect-ratio:1/1}
+  .var-card--sample .var-img{aspect-ratio:3/4}
   .var-card--sample .var-img img{object-fit:cover}
   .var-grid--sample{grid-template-columns:repeat(3,1fr) !important;gap:0 !important}
 
@@ -2043,7 +2043,7 @@
     border-radius:0;overflow:hidden;
     background:#2d1e06;cursor:zoom-in;
     transition:opacity .18s;
-    aspect-ratio:1/1;
+    aspect-ratio:3/4;
   }
   .variant-photo:hover{opacity:.85;transform:none;box-shadow:none}
   .variant-photo img{width:100%;height:100%;display:block;object-fit:cover}
@@ -7923,7 +7923,7 @@ function renderVariants(typeId){
       window._lbImages=samples;
       grid.classList.add('var-grid--sample');
       grid.innerHTML=samples.map((img,i)=>`
-        <div class="var-card var-card--sample" onclick="openLightbox(${i})">
+        <div class="var-card var-card--sample" onclick="openLightbox(${i},this)">
           <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<3?'medium':'thumb','(max-width: 700px) 50vw, 320px')}></div>
         </div>`).join('');
       preloadImages(samples.map(img=>imageUrl(img,'thumb')), 6);
