@@ -957,7 +957,7 @@
   /* ftype-grid defined above */
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
-  .var-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.09)}
+  .var-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:#0d0a06}
   /* fallback for tiny screens handled in mobile override */
   /* ───── CASING TYPE DETAIL PAGE ───── */
   .casing-detail-head{
@@ -1801,13 +1801,14 @@
     .casing-style-count{font-size:12px}
   }
   .var-card{
-    background:#120e05;
+    background:#0d0a06;
     border:none;
     border-radius:0;
     overflow:hidden;cursor:pointer;
-    transition:background .18s;
+    transition:opacity .18s;
+    position:relative;
   }
-  .var-card:hover{background:#1a1508}
+  .var-card:hover{opacity:.88}
   .var-img{
     width:100%;aspect-ratio:9/16;
     background:linear-gradient(155deg,#1e1508,#0d0a06);
@@ -1815,14 +1816,14 @@
     position:relative;overflow:hidden;
     contain:layout style;
   }
-  .var-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(10,8,3,.72) 0%,transparent 50%);pointer-events:none}
+  .var-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 45%);pointer-events:none}
   .var-img img{width:100%;height:100%;object-fit:cover}
-  .var-img-count{position:absolute;bottom:7px;left:7px;z-index:1;background:rgba(0,0,0,.58);color:rgba(210,190,145,.85);font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px}
-  .var-price-badge{position:absolute;top:8px;right:8px;z-index:1;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px;letter-spacing:.2px}
-  .var-body{padding:9px 10px 10px;border-top:1px solid rgba(201,168,76,.09)}
-  .var-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:rgba(225,205,165,.92);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .var-hint{font-size:10.5px;color:rgba(201,168,76,.65);font-weight:600;opacity:.85;transition:opacity .2s}
-  .var-card:hover .var-hint{opacity:1}
+  .var-img-count{position:absolute;bottom:32px;left:7px;z-index:2;background:rgba(0,0,0,.58);color:rgba(210,190,145,.85);font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px}
+  .var-price-badge{position:absolute;top:8px;right:8px;z-index:2;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px;letter-spacing:.2px}
+  .var-overlay{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:6px 8px 7px;pointer-events:none}
+  .var-overlay-name{font-family:var(--font-display);font-size:12px;font-weight:700;color:rgba(232,201,106,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .var-body{display:none}
+  .var-name,.var-hint{display:none}
 
   .proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .proj-card{background:#120e05;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid rgba(201,168,76,.16);border-radius:16px;overflow:hidden;transition:transform .2s,border-color .2s,background .2s;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3)}
@@ -1948,7 +1949,7 @@
   @keyframes rtPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes rtBounce{0%{transform:scale(0) rotate(-15deg)}60%{transform:scale(1.2) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
   @media(max-width:520px){.rt-card{padding:36px 24px}.rt-msg{font-size:18px}.rt-icon{font-size:54px}}
-  .modal{background:linear-gradient(160deg,#fffef9 0%,#fdf6e3 55%,#f8ecd0 100%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid rgba(201,168,76,.35);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.9)}
+  .modal{background:linear-gradient(160deg,#fffef9 0%,#fdf6e3 55%,#f8ecd0 100%);border-radius:20px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;padding:32px;border:1px solid rgba(201,168,76,.35);animation:slideUp .3s ease;box-shadow:0 30px 90px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.9);position:relative}
   @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
   .modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);gap:16px}
   .modal-title-wrap{flex:1}
@@ -1988,27 +1989,28 @@
     overflow:hidden;
   }
   .modal.variant-modal .modal-close{
-    position:fixed;
-    right:20px;
-    top:20px;
+    position:absolute;
+    right:16px;
+    top:16px;
     width:36px;
     height:36px;
     border-radius:50%;
     background:rgba(18,16,10,.88);
     backdrop-filter:blur(10px);
     -webkit-backdrop-filter:blur(10px);
-    color:rgba(232,201,106,.85);
+    color:rgba(232,201,106,.9);
     font-size:16px;
     display:flex;
     align-items:center;
     justify-content:center;
     border:1px solid rgba(201,168,76,.3);
     box-shadow:0 4px 16px rgba(0,0,0,.4);
-    z-index:650;
+    z-index:10;
     line-height:0;
     padding:0;
     cursor:pointer;
     transition:background .2s,color .2s;
+    flex-shrink:0;
   }
   .modal.variant-modal .modal-close:hover{
     background:rgba(40,28,8,.92);
@@ -7771,14 +7773,11 @@ function variantCardHtml(ty, v, i){
     : '🪬';
   return `
     <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
-      <div class="var-img" style="contain:layout style;aspect-ratio:1">
+      <div class="var-img" style="contain:layout style;aspect-ratio:9/16">
         ${imgTag}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
-      </div>
-      <div class="var-body">
-        <div class="var-name">${v.name}</div>
-        <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
+        <div class="var-overlay"><span class="var-overlay-name">${v.name}</span></div>
       </div>
     </div>`;
 }
