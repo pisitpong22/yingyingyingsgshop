@@ -1244,6 +1244,94 @@ window._rewriteLegacyImageUrl = (url) => url;
 //   - Keeps aspect ratio
 //   - Caps longest side at MAX_DIM
 //   - Output: WebP at QUALITY (PNG with transparency uses 'image/png' instead)
+// ─── WATERMARK ────────────────────────────────────────────────────────────────
+// Loads Allura from Google Fonts once, then draws a semi-transparent text
+// watermark at middle-right on any canvas context.
+// All measurements scale proportionally with image width.
+
+let _alluraLoaded = false;
+async function _ensureAlluraFont(){
+  if(_alluraLoaded) return;
+  if(document.fonts && document.fonts.check && document.fonts.check('12px Allura')) {
+    _alluraLoaded = true; return;
+  }
+  if(!document.querySelector('link[href*="Allura"]')){
+    await new Promise((res, rej) => {
+      const lnk = document.createElement('link');
+      lnk.rel = 'stylesheet';
+      lnk.href = 'https://fonts.googleapis.com/css2?family=Allura&display=swap';
+      lnk.onload = res; lnk.onerror = rej;
+      document.head.appendChild(lnk);
+    });
+  }
+  if(document.fonts && document.fonts.load){
+    await Promise.race([
+      document.fonts.load('48px Allura'),
+      new Promise(r => setTimeout(r, 4000)),
+    ]);
+  } else {
+    await new Promise(r => setTimeout(r, 800));
+  }
+  _alluraLoaded = true;
+}
+
+// Draw watermark onto an existing 2D canvas context (w × h are canvas dimensions)
+async function _drawWatermarkOnCtx(ctx, w, h){
+  await _ensureAlluraFont();
+  const fontSize  = Math.round(w * 0.048);
+  const rightEdge = Math.round(w * 0.03);
+  const rad       = (-10 * Math.PI) / 180;
+
+  ctx.save();
+  ctx.translate(w - rightEdge, h / 2);
+  ctx.rotate(rad);
+  ctx.font         = `${fontSize}px Allura`;
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor   = 'rgba(0,0,0,0.20)';
+  ctx.shadowBlur    = Math.max(2, Math.round(fontSize * 0.12));
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  ctx.globalAlpha  = 0.28;
+  ctx.fillStyle    = '#ffffff';
+  ctx.fillText('YingYingYingSG', 0, 0);
+  ctx.restore();
+}
+
+// Public: apply watermark to a Blob, returns JPEG Blob at 90% quality.
+// Used by the migration tool and exposed as FB.applyWatermark.
+async function applyWatermark(blob){
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+  } catch(_) {
+    bitmap = await new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.src = url;
+    });
+  }
+  const w = bitmap.width  || bitmap.naturalWidth;
+  const h = bitmap.height || bitmap.naturalHeight;
+  const canvas = document.createElement('canvas');
+  canvas.width  = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  await _drawWatermarkOnCtx(ctx, w, h);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(b => {
+      if(b) resolve(b);
+      else   reject(new Error('applyWatermark: canvas.toBlob failed'));
+    }, 'image/jpeg', 0.90);
+  });
+}
+// ─── END WATERMARK ────────────────────────────────────────────────────────────
+
 async function optimiseImage(blob, maxDim=1920){
   const MAX_DIM = maxDim;     // longest side
   const QUALITY = 0.85;       // 0–1; 0.85 looks identical to humans for most photos
@@ -1353,6 +1441,10 @@ async function optimiseImage(blob, maxDim=1920){
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(bitmap, 0, 0, dstW, dstH);
+
+  // ── Watermark (applied to every product image at upload time) ──
+  try { await _drawWatermarkOnCtx(ctx, dstW, dstH); }
+  catch(e){ console.warn('[FB] watermark failed, continuing without:', e); }
 
   // PNG with transparency? Keep PNG to avoid alpha loss
   const hasAlpha = blob.type === 'image/png' || blob.type === 'image/gif';
@@ -1847,7 +1939,7 @@ window.FB = {
   loadHistorySummaries,
   loadHistoryArticle,
   loadFullItem,
-  uploadFile, uploadImageSet, deleteFile,
+  uploadFile, uploadImageSet, deleteFile, applyWatermark,
   signIn: signInUser,
   signOut: signOutUser,
   onAuthChange,

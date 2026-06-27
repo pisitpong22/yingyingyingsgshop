@@ -2356,6 +2356,46 @@
         <!-- Advanced tab -->
         <div class="tab-content" data-tab-content="advanced" data-parent="settings">
 
+          <!-- WATERMARK MIGRATION -->
+          <div class="form-card" style="margin-bottom:18px">
+            <div class="form-section-title">🖼️ Apply Watermark to Existing Images</div>
+            <div class="form-section-desc">
+              Scans all product images (amulets, accessories, casing banners, samples, variant photos) and applies the <em>YingYingYingSG</em> watermark. Images already watermarked are skipped automatically — safe to run multiple times.
+            </div>
+            <div style="margin:14px 0 0;padding:16px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.18);border-radius:12px">
+              <div id="wmMigStatus" style="display:none">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                  <div id="wmMigSpinner" style="width:18px;height:18px;border:2.5px solid rgba(201,168,76,.3);border-top-color:#c9a84c;border-radius:50%;animation:piSpin 0.8s linear infinite;flex-shrink:0"></div>
+                  <div id="wmMigCurrentLabel" style="font-size:12px;color:var(--text-muted);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Preparing…</div>
+                </div>
+                <div style="height:6px;background:rgba(201,168,76,.12);border-radius:3px;margin-bottom:10px;overflow:hidden">
+                  <div id="wmMigBar" style="height:100%;width:0%;background:linear-gradient(90deg,#c9a84c,#e8c96a);border-radius:3px;transition:width .3s"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+                  <div style="text-align:center">
+                    <div id="wmStatTotal" style="font-size:17px;font-weight:700;color:rgba(230,210,165,.9)">0</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Total</div>
+                  </div>
+                  <div style="text-align:center">
+                    <div id="wmStatDone" style="font-size:17px;font-weight:700;color:#4caf50">0</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Done</div>
+                  </div>
+                  <div style="text-align:center">
+                    <div id="wmStatSkip" style="font-size:17px;font-weight:700;color:rgba(201,168,76,.7)">0</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Skipped</div>
+                  </div>
+                  <div style="text-align:center">
+                    <div id="wmStatFail" style="font-size:17px;font-weight:700;color:#e57373">0</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Failed</div>
+                  </div>
+                </div>
+                <div id="wmMigErrors" style="display:none;max-height:140px;overflow-y:auto;font-size:11px;color:#e57373;background:rgba(200,50,50,.07);border:1px solid rgba(200,50,50,.18);border-radius:8px;padding:10px;margin-top:4px;line-height:1.7"></div>
+              </div>
+              <div id="wmMigResult" style="display:none;margin-bottom:10px;font-size:13px;font-weight:600;color:#4caf50"></div>
+              <button class="btn-gold" id="wmMigBtn" onclick="startWatermarkMigration()">🖼️ Apply Watermark to Existing Images</button>
+            </div>
+          </div>
+
           <!-- SAFE: Reset Casing Styles Only -->
           <div class="form-card" style="border-color:rgba(200,100,0,.2);margin-bottom:18px">
             <div class="form-section-title" style="color:#b35200">🪬 Reset Casing Styles</div>
@@ -7639,6 +7679,254 @@ function auditInlineHandlers(){
   else console.log('[ADMIN AUDIT] ✅ All inline handler functions exist');
 }
 setTimeout(auditInlineHandlers, 1000); // run after page initialises
+
+// ─── WATERMARK MIGRATION ────────────────────────────────────────────────────
+// Collects every image URL from the live _db, applies FB.applyWatermark to
+// each one that hasn't been processed yet (watermarked !== true), uploads
+// the result to Firebase Storage, and writes the new URL + metadata back to
+// Firestore via FB.saveDB.
+//
+// Progress is tracked in _db directly so the migration is resumable — any
+// image with watermarked:true is skipped on the next run.
+
+async function startWatermarkMigration(){
+  const confirmed = confirm(
+    '⚠️ Watermark Migration\n\n' +
+    'This will:\n' +
+    '• Scan ALL product images in Firestore\n' +
+    '• Apply the YingYingYingSG watermark to each un-watermarked image\n' +
+    '• Upload the new image to Firebase Storage\n' +
+    '• Update the image URL in Firestore\n\n' +
+    'Already-watermarked images are skipped.\n' +
+    'Safe to run multiple times.\n\n' +
+    'Continue?'
+  );
+  if(!confirmed) return;
+
+  const btn = document.getElementById('wmMigBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Running…';
+
+  const statusEl  = document.getElementById('wmMigStatus');
+  const resultEl  = document.getElementById('wmMigResult');
+  const errorsEl  = document.getElementById('wmMigErrors');
+  const barEl     = document.getElementById('wmMigBar');
+  const labelEl   = document.getElementById('wmMigCurrentLabel');
+  const spinnerEl = document.getElementById('wmMigSpinner');
+
+  statusEl.style.display = 'block';
+  resultEl.style.display = 'none';
+  errorsEl.style.display = 'none';
+  errorsEl.innerHTML = '';
+
+  const setStats = (total, done, skip, fail) => {
+    document.getElementById('wmStatTotal').textContent = total;
+    document.getElementById('wmStatDone').textContent  = done;
+    document.getElementById('wmStatSkip').textContent  = skip;
+    document.getElementById('wmStatFail').textContent  = fail;
+    barEl.style.width = total > 0 ? ((done + skip + fail) / total * 100).toFixed(1) + '%' : '0%';
+  };
+
+  // ── Collect all image slots from the live DB ──────────────────────────────
+  // Each entry: { get(), set(url), meta() } where:
+  //   get()     → current url string or falsy
+  //   set(url)  → writes new url into _db (in memory; saved via FB.saveDB at end)
+  //   meta()    → returns the metadata object that holds watermarked/originalImageUrl etc.
+  //   setMeta() → writes watermark metadata fields
+
+  const db = getDB();
+  const slots = [];
+
+  function pushSlot(getUrl, setUrl, getMeta, setMeta){
+    slots.push({ getUrl, setUrl, getMeta, setMeta });
+  }
+
+  // Helper: normalise URL string out of string | imageSet object
+  function rawUrl(img){
+    if(!img) return '';
+    if(typeof img === 'string') return img;
+    return img.url || img.medium || img.thumb || '';
+  }
+
+  // Amulets
+  (db.amulets || []).forEach((item, ai) => {
+    (item.imgs || []).forEach((img, ii) => {
+      pushSlot(
+        () => rawUrl((db.amulets[ai].imgs||[])[ii]),
+        (u) => { if(db.amulets[ai] && db.amulets[ai].imgs) db.amulets[ai].imgs[ii] = u; },
+        () => (db.amulets[ai].imgs||[])[ii],
+        (meta) => { if(db.amulets[ai] && db.amulets[ai].imgs){ db.amulets[ai].imgs[ii] = meta; } }
+      );
+    });
+  });
+
+  // Accessories
+  (db.accessories || []).forEach((item, ai) => {
+    (item.imgs || []).forEach((img, ii) => {
+      pushSlot(
+        () => rawUrl((db.accessories[ai].imgs||[])[ii]),
+        (u) => { if(db.accessories[ai] && db.accessories[ai].imgs) db.accessories[ai].imgs[ii] = u; },
+        () => (db.accessories[ai].imgs||[])[ii],
+        (meta) => { if(db.accessories[ai] && db.accessories[ai].imgs){ db.accessories[ai].imgs[ii] = meta; } }
+      );
+    });
+  });
+
+  // Casing types — bannerImg + sampleImgs
+  (db.casingTypes || []).forEach((ty, ti) => {
+    if(ty.bannerImg){
+      pushSlot(
+        () => rawUrl(db.casingTypes[ti].bannerImg),
+        (u) => { db.casingTypes[ti].bannerImg = u; },
+        () => db.casingTypes[ti].bannerImg,
+        (meta) => { db.casingTypes[ti].bannerImg = meta; }
+      );
+    }
+    (ty.sampleImgs || []).forEach((img, ii) => {
+      pushSlot(
+        () => rawUrl((db.casingTypes[ti].sampleImgs||[])[ii]),
+        (u) => { if(db.casingTypes[ti].sampleImgs) db.casingTypes[ti].sampleImgs[ii] = u; },
+        () => (db.casingTypes[ti].sampleImgs||[])[ii],
+        (meta) => { if(db.casingTypes[ti].sampleImgs) db.casingTypes[ti].sampleImgs[ii] = meta; }
+      );
+    });
+    // Casing variant imgs
+    (ty.variants || []).forEach((v, vi) => {
+      (v.imgs || []).forEach((img, ii) => {
+        pushSlot(
+          () => rawUrl(((db.casingTypes[ti].variants||[])[vi]||{}).imgs?.[ii]),
+          (u) => { if(db.casingTypes[ti].variants?.[vi]?.imgs) db.casingTypes[ti].variants[vi].imgs[ii] = u; },
+          () => ((db.casingTypes[ti].variants||[])[vi]?.imgs||[])[ii],
+          (meta) => { if(db.casingTypes[ti].variants?.[vi]?.imgs) db.casingTypes[ti].variants[vi].imgs[ii] = meta; }
+        );
+      });
+    });
+  });
+
+  // Feed posts
+  (db.feedPosts || []).forEach((post, pi) => {
+    (post.imgs || []).forEach((img, ii) => {
+      pushSlot(
+        () => rawUrl((db.feedPosts[pi].imgs||[])[ii]),
+        (u) => { if(db.feedPosts[pi]?.imgs) db.feedPosts[pi].imgs[ii] = u; },
+        () => (db.feedPosts[pi].imgs||[])[ii],
+        (meta) => { if(db.feedPosts[pi]?.imgs) db.feedPosts[pi].imgs[ii] = meta; }
+      );
+    });
+  });
+
+  // Filter: only slots with an HTTP URL (skip blanks / data URIs)
+  const toProcess = slots.filter(s => /^https?:\/\//i.test(s.getUrl()));
+  const total = toProcess.length;
+  let done = 0, skip = 0, fail = 0;
+  const errors = [];
+
+  setStats(total, done, skip, fail);
+  labelEl.textContent = `Found ${total} images…`;
+
+  if(total === 0){
+    spinnerEl.style.display = 'none';
+    labelEl.textContent = 'No images found in database.';
+    btn.disabled = false;
+    btn.textContent = '🖼️ Apply Watermark to Existing Images';
+    return;
+  }
+
+  // ── Process each slot ──────────────────────────────────────────────────────
+  for(let i = 0; i < toProcess.length; i++){
+    const slot = toProcess[i];
+    const currentVal = slot.getMeta();
+    const url = slot.getUrl();
+
+    // Skip if already watermarked
+    if(currentVal && typeof currentVal === 'object' && currentVal.watermarked === true){
+      skip++;
+      setStats(total, done, skip, fail);
+      continue;
+    }
+    if(typeof currentVal === 'string' && currentVal.includes('/watermarked/')){
+      // Legacy path-based skip guard
+      skip++;
+      setStats(total, done, skip, fail);
+      continue;
+    }
+
+    const shortUrl = url.length > 60 ? '…' + url.slice(-57) : url;
+    labelEl.textContent = `[${i+1}/${total}] ${shortUrl}`;
+
+    try {
+      // Fetch current image as blob
+      const resp = await fetch(url, { mode: 'cors' });
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const srcBlob = await resp.blob();
+
+      // Apply watermark
+      const wmBlob = await FB.applyWatermark(srcBlob);
+
+      // Use FB.uploadFile — firebase-shared handles storage path internally
+      const ts   = Date.now();
+      const rand = Math.random().toString(36).slice(2, 7);
+      const wmFile = new File([wmBlob], `${ts}-${rand}.jpg`, { type: 'image/jpeg' });
+      // Override path by passing the hint; firebase-shared will prefix uploads/
+      // We upload directly via the internal uploadBlob path via FB.uploadFile
+      const newUrl = await FB.uploadFile(wmFile, `watermarked-${ts}-${rand}`);
+
+      // Write metadata back into _db in memory
+      slot.setMeta({
+        url: newUrl,
+        watermarked: true,
+        watermarkedAt: new Date().toISOString(),
+        originalImageUrl: url,
+        watermarkedImageUrl: newUrl,
+      });
+
+      done++;
+    } catch(err){
+      console.error('[WM Migration] failed:', url, err);
+      errors.push(`[${i+1}] ${shortUrl} — ${err.message || err}`);
+      fail++;
+    }
+
+    setStats(total, done, skip, fail);
+
+    // Save to Firestore every 10 images to checkpoint progress
+    if((done + fail) % 10 === 0 || i === toProcess.length - 1){
+      try {
+        labelEl.textContent = 'Saving to Firestore…';
+        await saveDB(getDB());
+      } catch(e){
+        console.warn('[WM Migration] checkpoint save failed:', e);
+      }
+    }
+  }
+
+  // Final save
+  try {
+    labelEl.textContent = 'Final save…';
+    await saveDB(getDB());
+  } catch(e){
+    console.warn('[WM Migration] final save failed:', e);
+  }
+
+  // ── Done ──────────────────────────────────────────────────────────────────
+  spinnerEl.style.display = 'none';
+  labelEl.textContent = 'Complete.';
+  barEl.style.width = '100%';
+
+  resultEl.style.display = 'block';
+  resultEl.textContent = `✅ Migration complete — ${done} watermarked, ${skip} skipped, ${fail} failed.`;
+  resultEl.style.color = fail > 0 ? '#e57373' : '#4caf50';
+
+  if(errors.length){
+    errorsEl.style.display = 'block';
+    errorsEl.innerHTML = '<strong>Failed images:</strong><br>' + errors.map(e => escapeHtml(e)).join('<br>');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🖼️ Apply Watermark to Existing Images';
+  showToast(`Watermark migration done: ${done} done, ${skip} skipped, ${fail} failed`);
+}
+// ─── END WATERMARK MIGRATION ────────────────────────────────────────────────
 
 </script>
 </body>
