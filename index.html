@@ -2036,8 +2036,9 @@
     overflow-y:auto;
     overscroll-behavior:contain;
     -webkit-overflow-scrolling:touch;
+    align-content:start;
   }
-  .variant-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+  .variant-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:0;align-content:start}
   .variant-photo{
     display:block;width:100%;padding:0;border:0;text-align:inherit;
     border-radius:0;overflow:hidden;
@@ -2264,6 +2265,7 @@
       grid-template-columns:repeat(3,1fr);
       gap:0;
       padding:0;
+      align-content:start;
       -webkit-overflow-scrolling:touch;
     }
     .modal.variant-modal .variant-photo{
@@ -4871,6 +4873,7 @@
       flex:1 !important;
       min-height:0 !important;
       overflow-y:auto !important;
+      align-content:start !important;
     }
   }
 
