@@ -951,7 +951,7 @@
   .ftype-arrow{color:var(--gold-dark);font-weight:700;font-size:14px}
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
-  .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+  .var-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
   /* ───── CASING TYPE DETAIL PAGE ───── */
   .casing-detail-head{
     margin:14px 0 36px;
@@ -1709,223 +1709,85 @@
     border-radius:14px;
     background:rgba(255,249,238,.45);
   }
-  .casing-finder-layout{
-    display:grid;
-    grid-template-columns:minmax(280px,330px) minmax(0,1fr);
-    gap:28px;
-    align-items:start;
+  /* ── NEW CASING HERO LAYOUT ── */
+  .casing-finder-layout{display:block}
+  .casing-finder-panel{display:none}
+  /* ── CASING HERO CSS ── */
+  .ctype-hero{
+    position:relative;overflow:hidden;
+    border-radius:18px;margin-bottom:16px;
+    border:1px solid rgba(201,168,76,.2);
   }
-  .casing-finder-panel{
-    position:sticky;
-    top:86px;
-    /* Liquid glass — cream base, gold accents */
+  .ctype-hero-inner{position:relative;z-index:1;padding:20px 22px 18px}
+  .ctype-hero-nobg .ctype-hero-inner{
     background:
-      radial-gradient(circle at 20% 0%,rgba(201,168,76,.09),transparent 40%),
-      rgba(255,252,240,.85);
-    backdrop-filter:blur(20px) saturate(150%);
-    -webkit-backdrop-filter:blur(20px) saturate(150%);
-    color:var(--text);
-    border:1px solid rgba(201,168,76,.28);
-    border-top:2px solid rgba(201,168,76,.4);
-    border-radius:20px;
-    padding:24px;
-    box-shadow:
-      0 12px 40px rgba(120,80,20,.1),
-      0 1px 0 rgba(255,255,255,.95) inset;
+      radial-gradient(ellipse 110% 160% at 50% -20%,rgba(201,168,76,.22),transparent 55%),
+      radial-gradient(ellipse 60% 80% at 8% 70%,rgba(100,60,0,.15),transparent 50%),
+      linear-gradient(175deg,#1c1508 0%,#0d0a06 60%);
   }
-  .casing-finder-panel .crumb{margin-bottom:16px;color:var(--text-muted);font-size:12.5px}
-  .casing-finder-panel .crumb a{color:var(--gold-dark);font-weight:600}
-  .casing-finder-panel .crumb-cur{color:var(--text);font-weight:700}
-  .casing-finder-panel .casing-detail-title-row{display:block;margin-bottom:14px}
-  .casing-finder-panel .casing-detail-title{
-    font-family:var(--font-display);
-    background:linear-gradient(135deg,#a07828,#c9a84c);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    font-size:28px;line-height:1.1;margin-bottom:10px;font-weight:800;
+  .ctype-hero-withbg .ctype-hero-inner{
+    background:linear-gradient(to bottom,rgba(13,10,6,.32) 0%,rgba(13,10,6,.72) 55%,rgba(13,10,6,.93) 100%);
   }
-  .casing-finder-panel .casing-detail-price-badge{
-    background:rgba(201,168,76,.1);
-    border-color:rgba(201,168,76,.3);
-    box-shadow:none;
+  .ctype-hero-withbg{background-size:cover;background-position:center}
+  .ctype-hero::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1.5px;z-index:2;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,.55) 30%,rgba(240,217,138,.88) 50%,rgba(201,168,76,.55) 70%,transparent);
   }
-  .casing-finder-panel .cd-price-chip-label{color:var(--gold-dark)}
-  .casing-finder-panel .cd-price-chip-value{color:var(--gold-dark)}
-  .casing-finder-panel .casing-detail-desc{
-    background:rgba(255,252,240,.5);
-    border-color:rgba(201,168,76,.2);
-    border-left:3px solid var(--gold);
-    color:var(--text-muted);
-    box-shadow:none;
-    padding:14px 16px;
-    margin:16px 0;
-    border-radius:0 10px 10px 0;
+  .ctype-hero .crumb{font-size:9.5px;color:rgba(201,168,76,.45);margin-bottom:11px;letter-spacing:.3px}
+  .ctype-hero .crumb a{color:rgba(201,168,76,.7);cursor:pointer}
+  .ctype-hero-eyebrow{font-size:8.5px;letter-spacing:3.5px;text-transform:uppercase;color:rgba(201,168,76,.5);margin-bottom:7px;font-weight:600}
+  .ctype-hero-name-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+  .ctype-hero-name{font-family:var(--font-display);font-size:22px;font-weight:900;color:rgba(245,230,190,.97);letter-spacing:-.3px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .ctype-hero-name-th{font-size:12px;color:rgba(201,168,76,.65);letter-spacing:.8px;font-weight:400;white-space:nowrap}
+  .ctype-hero-divider{width:36px;height:1.5px;margin:10px 0;background:linear-gradient(90deg,rgba(201,168,76,.9),transparent)}
+  .ctype-hero-stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ctype-hero-stat{display:flex;flex-direction:column;gap:1px}
+  .ctype-hero-stat-key{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(201,168,76,.4);font-weight:600}
+  .ctype-hero-stat-val{font-size:13px;font-weight:700;color:rgba(230,210,165,.9)}
+  .ctype-hero-sep{width:1px;height:26px;background:rgba(201,168,76,.2);align-self:center;margin:0 2px}
+  .ctype-hero-desc-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+  .ctype-hero-desc-txt{font-size:11px;color:rgba(155,135,95,.8);line-height:1.65;flex:1;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .ctype-hero-read-more{flex-shrink:0;white-space:nowrap;font-size:10px;color:rgba(201,168,76,.65);border:1px solid rgba(201,168,76,.24);padding:3px 9px;border-radius:12px;cursor:pointer;background:transparent}
+  .ctype-hero-desc-full{display:none;font-size:11px;color:rgba(155,135,95,.8);line-height:1.7;margin-top:8px}
+  .ctype-hero-desc-full.open{display:block}
+  .ctype-toolbar{
+    padding:10px 14px;
+    background:rgba(0,0,0,.28);
+    border-top:1px solid rgba(201,168,76,.12);
+    display:flex;flex-direction:column;gap:7px;
   }
-  .casing-finder-panel .casing-detail-desc strong,
-  .casing-finder-panel .casing-detail-desc b{color:var(--text);font-weight:700}
-  .casing-finder-panel .casing-timeframe{
-    background:linear-gradient(135deg,rgba(255,228,106,.3),rgba(201,168,76,.15));
-    color:var(--gold-dark);
-    border-color:rgba(201,168,76,.3);
-    box-shadow:none;
-    font-weight:700;
+  .ctype-search{
+    display:flex;align-items:center;gap:9px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.26);
+    border-radius:30px;padding:7px 14px;
   }
-  .finder-kicker{
-    font-size:11px;
-    letter-spacing:1.8px;
-    text-transform:uppercase;
-    color:var(--gold-dark);
-    font-weight:800;
-    margin:4px 0 10px;
-  }
-	  .casing-finder-panel .casing-style-tools{
-	    margin:18px 0 0;
-	    padding:0;
-	    background:transparent;
-	    border:0;
-	    box-shadow:none;
-	    backdrop-filter:none;
-	    -webkit-backdrop-filter:none;
-	  }
-  .casing-quick-heading{
-    margin:0 0 10px;
-    font-size:12px;
-    letter-spacing:1.2px;
-    text-transform:uppercase;
-    font-weight:900;
-    color:#8d6f18;
-  }
-  .casing-style-chip[data-style-chip="popular"]{
-    background:linear-gradient(135deg,rgba(255,227,123,.18),rgba(214,173,51,.12));
-    border-color:rgba(232,201,106,.55);
-  }
-  .casing-finder-panel .search-input{
-    background:rgba(255,252,240,.7);
-    border-color:rgba(201,168,76,.25);
-    color:var(--text);
-  }
-  .casing-finder-panel .search-input::placeholder{color:#b8a07a}
-  .casing-finder-panel .search-input-wrap::before{opacity:.6;color:var(--gold-dark)}
-  .casing-finder-panel .casing-style-strip{
-    flex-direction:column;
-    max-height:330px;
-    overflow-y:auto;
-    overflow-x:hidden;
-    padding:2px 2px 4px;
-  }
-  .casing-finder-panel .casing-style-chip{
-    width:100%;
-    justify-content:space-between;
-    max-width:none;
-    background:rgba(255,252,240,.6);
-    border-color:rgba(201,168,76,.2);
-    color:#eadba8;
-  }
-  .casing-finder-panel .casing-style-chip .chip-price{color:#d6bd63}
-  .casing-finder-panel .casing-style-chip:hover,
-  .casing-finder-panel .casing-style-chip.active{
-    background:linear-gradient(135deg,var(--gold-light),var(--gold));
-    color:var(--deep);
-    border-color:var(--gold);
-  }
+  .ctype-search-icon{font-size:13px;color:rgba(201,168,76,.5);flex-shrink:0}
+  .ctype-search input{flex:1;background:transparent;border:none;outline:none;font-size:12px;color:rgba(230,210,165,.9);font-family:var(--font-sans)}
+  .ctype-search input::placeholder{color:rgba(150,120,60,.38)}
+  .ctype-search .search-clear{background:transparent;border:none;color:rgba(160,130,70,.5);font-size:13px;cursor:pointer;padding:0 2px;line-height:1}
+  .ctype-toolbar .casing-style-strip{flex-direction:row !important;max-height:none !important;overflow-x:auto !important;overflow-y:hidden !important;padding:0 !important;gap:5px}
+  .ctype-toolbar .casing-style-chip{width:auto !important;max-width:none !important;justify-content:flex-start !important;flex-shrink:0;background:rgba(255,255,255,.04) !important;border-color:rgba(255,255,255,.09) !important;color:rgba(165,140,85,.65) !important}
+  .ctype-toolbar .casing-style-chip.active,.ctype-toolbar .casing-style-chip:hover{background:linear-gradient(135deg,rgba(201,168,76,.22),rgba(201,168,76,.1)) !important;border-color:rgba(201,168,76,.5) !important;color:rgba(240,217,138,.95) !important}
+  .ctype-results{padding:4px 2px 6px;font-size:9.5px;color:rgba(155,125,60,.4);letter-spacing:.8px}
+  .casing-quick-heading{display:none}
+  .casing-quick-strip{display:none}
+  .finder-kicker{display:none}
+  .casing-style-chip[data-style-chip="popular"]{background:linear-gradient(135deg,rgba(255,227,123,.18),rgba(214,173,51,.12)) !important;border-color:rgba(232,201,106,.55) !important}
   .casing-results-panel{min-width:0}
-  .casing-quick-strip{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
-    gap:12px;
-    margin-bottom:20px;
-  }
-  .casing-quick-card{
-    min-height:88px;
-    border:1px solid rgba(201,168,76,.34);
-    border-radius:14px;
-    padding:12px;
-    background:linear-gradient(135deg,rgba(255,253,247,.86),rgba(255,240,194,.72));
-    box-shadow:0 8px 24px rgba(139,105,20,.09);
-    cursor:pointer;
-    display:flex;
-    flex-direction:column;
-    justify-content:flex-end;
-    gap:4px;
-    transition:transform .2s,border-color .2s,box-shadow .2s;
-  }
-  .casing-quick-card:hover{
-    transform:translateY(-2px);
-    border-color:var(--gold);
-    box-shadow:0 12px 30px rgba(139,105,20,.15);
-  }
-  .casing-quick-name{
-    font-family:var(--font-display);
-    font-weight:700;
-    color:var(--text);
-    font-size:15px;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-  }
-  .casing-quick-meta{font-size:12px;color:var(--gold-dark);font-weight:700}
 
   @media(max-width:780px){
     .casing-finder-layout{display:block}
-    .casing-finder-panel{
-      position:static;
-      padding:18px;
-      border-radius:16px;
-      margin-bottom:18px;
-    }
-	    .casing-detail-head{margin-bottom:24px}
-	    .casing-detail-title{font-size:24px}
-	    .casing-finder-panel .casing-detail-title{font-size:26px}
-	    .casing-detail-price-badge{padding:5px 12px}
-	    .cd-price-chip-value{font-size:15px}
-	    .cd-price-chip-label{font-size:9.5px;letter-spacing:1px}
-	    .casing-detail-desc{font-size:14px;padding:16px 18px}
-	    .casing-finder-panel .casing-detail-desc{display:none}
-	    .casing-timeframe{
-	      width:100%;
-	      justify-content:center;
-	      margin:4px 0 12px;
-	      padding:10px 12px;
-	      font-size:12.5px;
-	      text-align:center;
-	    }
-	    .cd-side-card{padding:16px 20px}
-    .cd-side-value{font-size:24px}
     .var-grid-title{font-size:17px}
-    .casing-style-tools{
-      position:sticky;top:74px;z-index:20;
-      margin:0 -2px 18px;
-      padding:12px;
-      border-radius:14px;
-    }
-    .casing-finder-panel .casing-style-tools{
-      position:sticky;
-      top:64px;
-      margin:16px -10px -2px;
-      padding:12px;
-      background:rgba(18,16,10,.94);
-      border:1px solid rgba(201,168,76,.24);
-      border-radius:14px;
-      backdrop-filter:blur(14px);
-      -webkit-backdrop-filter:blur(14px);
-    }
-    .casing-finder-panel .casing-style-strip{
-      flex-direction:row;
-      max-height:none;
-      overflow-x:auto;
-      overflow-y:hidden;
-    }
-    .casing-finder-panel .casing-style-chip{
-      width:auto;
-      max-width:180px;
-      justify-content:flex-start;
-    }
-    .casing-quick-strip{
-      display:flex;
-      overflow-x:auto;
-      gap:10px;
-      margin:2px 0 18px;
-      padding-bottom:6px;
-      -webkit-overflow-scrolling:touch;
+    /* hero compact on mobile */
+    .ctype-hero-inner{padding:14px 14px 12px}
+    .ctype-hero-name{font-size:18px}
+    .ctype-hero-stat-val{font-size:12px}
+    /* toolbar sticky on mobile */
+    .ctype-toolbar{
+      position:sticky;top:64px;z-index:20;
+      background:rgba(13,10,6,.94);
+      border-top:1px solid rgba(201,168,76,.2);
+      backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     }
     .casing-quick-card{flex:0 0 116px;min-height:78px;padding:10px}
     .casing-style-chip{font-size:12px;padding:7px 11px;max-width:180px}
@@ -3615,7 +3477,7 @@
   .ftype-desc,.ftype-sub{color:rgba(255,248,200,.45)!important}
   .ftype-price{color:#c9a84c!important}
   .ftype-badge{background:rgba(201,168,76,.18)!important;color:#e8c96a!important}
-  .casing-finder-panel{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.18)!important;box-shadow:0 8px 32px rgba(0,0,0,.3)!important}
+  /* casing-finder-panel hidden in new hero layout — no override needed */
   .prod-card{background:rgba(255,255,255,.06)!important;backdrop-filter:blur(14px)!important;-webkit-backdrop-filter:blur(14px)!important;border:1px solid rgba(255,255,255,.1)!important;border-top:1px solid rgba(255,255,255,.16)!important;box-shadow:0 4px 20px rgba(0,0,0,.28)!important}
   .prod-name{color:rgba(255,248,200,.9)!important}
   .prod-sub,.prod-desc{color:rgba(255,248,200,.45)!important}
@@ -5530,27 +5392,43 @@
     <div id="casingTypes"><div class="ftype-grid" id="cTypeGrid"></div></div>
     <div id="casingVariants" style="display:none">
       <div class="casing-finder-layout">
-        <aside class="casing-finder-panel">
-          <div class="crumb" id="vCrumb"></div>
-	          <div class="casing-detail-title-row">
-	            <h3 class="casing-detail-title" id="vTitle"></h3>
-	            <div class="casing-detail-price-badge" id="vSide"></div>
-	          </div>
-	          <div class="casing-timeframe" id="vTimeframe"></div>
-	          <div class="casing-detail-desc" id="vDesc"></div>
-          <div class="casing-style-tools" id="casingStyleTools" style="display:none">
-            <div class="finder-kicker" data-en="Find your casing style" data-th="ค้นหาแบบกรอบ">Find your casing style</div>
-            <div class="search-input-wrap casing-search-wrap">
-              <input class="search-input" id="casingStyleSearch" oninput="filterCasingStyles()" placeholder="Search style, color, price...">
+        <!-- HERO HEADER -->
+        <div class="ctype-hero ctype-hero-nobg" id="ctypeHero">
+          <div class="ctype-hero-inner">
+            <div class="crumb" id="vCrumb"></div>
+            <div class="ctype-hero-eyebrow" data-en="Premium Casing Collection" data-th="คอลเลคชั่นกรอบพระพรีเมี่ยม">Premium Casing Collection</div>
+            <div class="ctype-hero-name-row">
+              <span class="ctype-hero-name" id="vTitle"></span>
+              <span class="ctype-hero-name-th" id="vTitleTh"></span>
+            </div>
+            <div class="ctype-hero-divider"></div>
+            <div class="ctype-hero-stats" id="vHeroStats"></div>
+            <div class="ctype-hero-desc-row" id="vDescRow" style="display:none">
+              <div class="ctype-hero-desc-txt" id="vDescSnippet"></div>
+              <button class="ctype-hero-read-more" id="vReadMore" onclick="toggleCtypeDesc()">อ่านเพิ่ม ▾</button>
+            </div>
+            <div class="ctype-hero-desc-full" id="vDescFull"></div>
+          </div>
+          <!-- search + chip toolbar inside hero -->
+          <div class="ctype-toolbar" id="casingStyleTools" style="display:none">
+            <div class="ctype-search">
+              <span class="ctype-search-icon">🔍</span>
+              <input id="casingStyleSearch" oninput="filterCasingStyles()" placeholder="Search style, color, price...">
               <button class="search-clear" id="casingStyleSearchClear" onclick="clearCasingStyleSearch()" aria-label="Clear">✕</button>
             </div>
             <div class="casing-style-strip" id="casingStyleStrip"></div>
-            <div class="result-count casing-style-count" id="casingStyleCount"></div>
+            <div class="ctype-results result-count casing-style-count" id="casingStyleCount"></div>
           </div>
-	        </aside>
-	        <section class="casing-results-panel">
-	          <div class="casing-quick-heading" id="casingQuickHeading">Popular Choices</div>
-	          <div class="casing-quick-strip" id="casingQuickStrip"></div>
+        </div>
+        <!-- hidden legacy elements kept for JS compatibility -->
+        <aside class="casing-finder-panel" style="display:none">
+          <div class="casing-detail-price-badge" id="vSide"></div>
+          <div class="casing-timeframe" id="vTimeframe"></div>
+          <div class="casing-detail-desc" id="vDesc"></div>
+        </aside>
+        <section class="casing-results-panel">
+          <div class="casing-quick-heading" id="casingQuickHeading" style="display:none">Popular Choices</div>
+          <div class="casing-quick-strip" id="casingQuickStrip" style="display:none"></div>
           <div class="var-grid-head">
             <h4 class="var-grid-title" data-en="Available Styles" data-th="แบบที่มีให้เลือก">Available Styles</h4>
             <div class="var-grid-line"></div>
@@ -7674,6 +7552,16 @@ function setupCasingStyleTools(vars){
   }
 }
 
+function toggleCtypeDesc(){
+  const full=document.getElementById('vDescFull');
+  const btn=document.getElementById('vReadMore');
+  const snip=document.getElementById('vDescRow');
+  if(!full) return;
+  const open=full.classList.toggle('open');
+  if(btn) btn.textContent=open ? (lang==='th'?'ย่อ ▴':'Less ▴') : (lang==='th'?'อ่านเพิ่ม ▾':'Read more ▾');
+  if(snip) snip.style.display=open?'none':'flex';
+}
+
 function filterCasingStyles(){
   const input=document.getElementById('casingStyleSearch');
   _casingStyleQuery=(input ? input.value : '').toLowerCase().trim();
@@ -7852,23 +7740,63 @@ function renderVariants(typeId){
   document.getElementById('casingTypes').style.display='none';
   document.getElementById('casingVariants').style.display='block';
   document.getElementById('vCrumb').innerHTML=`
-	    <a onclick="curCasingType=null;renderCasingTypes()">All Casing Types</a>
-	    <span class="crumb-sep">▸</span>
-	    <span class="crumb-cur">${ty.name}</span>`;
-	  const typePriceText=casingTypePriceText(ty);
-	  document.getElementById('vTitle').textContent=typePriceText ? `${ty.name} - ${typePriceText}` : ty.name;
-	  document.getElementById('vDesc').innerHTML = casingDescWithoutTimeframe(ty.desc || '');
-	  const sideEl = document.getElementById('vSide');
-	  if(sideEl){
-	    sideEl.innerHTML = '';
-	    sideEl.style.display = 'none';
-	  }
-	  const timeEl=document.getElementById('vTimeframe');
-	  if(timeEl){
-	    const timeframe=casingTimeframeText(ty.desc);
-	    timeEl.textContent = timeframe ? `⏱ ${timeframe}` : '';
-	    timeEl.style.display = timeframe ? 'inline-flex' : 'none';
-	  }
+      <a onclick="curCasingType=null;renderCasingTypes()">All Casing Types</a>
+      <span class="crumb-sep">▸</span>
+      <span class="crumb-cur">${ty.name}</span>`;
+
+  // ── Hero header ──
+  const _hero = document.getElementById('ctypeHero');
+  // background image
+  if(ty.bannerImg){
+    _hero.style.backgroundImage = `url(${JSON.stringify(imageUrl(ty.bannerImg,'medium'))})`;
+    _hero.classList.remove('ctype-hero-nobg');
+    _hero.classList.add('ctype-hero-withbg');
+  } else {
+    _hero.style.backgroundImage = '';
+    _hero.classList.remove('ctype-hero-withbg');
+    _hero.classList.add('ctype-hero-nobg');
+  }
+  // name
+  const _titleEl = document.getElementById('vTitle');
+  if(_titleEl) _titleEl.textContent = ty.name || '';
+  // thai subtitle (use nameLocal field if exists, else blank)
+  const _titleTh = document.getElementById('vTitleTh');
+  if(_titleTh) _titleTh.textContent = ty.nameLocal || '';
+  // stats row
+  const _statsEl = document.getElementById('vHeroStats');
+  if(_statsEl){
+    const _price = casingTypePriceText(ty);
+    const _time  = casingTimeframeText(ty.desc);
+    const _count = (ty.variants||[]).length;
+    const _sep   = '<div class="ctype-hero-sep"></div>';
+    let statsHtml = '';
+    if(_price) statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Price</div><div class="ctype-hero-stat-val">${_price}</div></div>`;
+    if(_price && _time) statsHtml += _sep;
+    if(_time)  statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Lead Time</div><div class="ctype-hero-stat-val">${_time}</div></div>`;
+    if(_count > 0 && (_price||_time)) statsHtml += _sep;
+    if(_count > 0) statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Styles</div><div class="ctype-hero-stat-val">${_count}</div></div>`;
+    _statsEl.innerHTML = statsHtml;
+  }
+  // desc
+  const _rawDesc = casingDescWithoutTimeframe(ty.desc || '');
+  const _descRow  = document.getElementById('vDescRow');
+  const _descSnip = document.getElementById('vDescSnippet');
+  const _descFull = document.getElementById('vDescFull');
+  const _readMore = document.getElementById('vReadMore');
+  if(_rawDesc && _rawDesc.replace(/<[^>]*>/g,'').trim()){
+    if(_descRow)  _descRow.style.display = 'flex';
+    if(_descSnip) _descSnip.innerHTML = _rawDesc;
+    if(_descFull) { _descFull.innerHTML = _rawDesc; _descFull.classList.remove('open'); }
+    if(_readMore) _readMore.textContent = lang==='th' ? 'อ่านเพิ่ม ▾' : 'Read more ▾';
+  } else {
+    if(_descRow) _descRow.style.display = 'none';
+  }
+  // legacy compat (hidden elements still need values for any other code)
+  document.getElementById('vDesc').innerHTML = _rawDesc;
+  const sideEl = document.getElementById('vSide');
+  if(sideEl){ sideEl.innerHTML = ''; sideEl.style.display = 'none'; }
+  const timeEl = document.getElementById('vTimeframe');
+  if(timeEl){ timeEl.textContent = ''; timeEl.style.display = 'none'; }
   const vars=ty.variants||[];
   const grid=document.getElementById('vGrid');
   if(!vars.length){
