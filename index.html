@@ -879,7 +879,7 @@
   .cat-tab{background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.18);color:rgba(165,140,85,.65);padding:7px 16px;border-radius:25px;font-size:13.5px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;font-weight:500}
   .cat-tab:hover,.cat-tab.active{background:rgba(201,168,76,.14);color:rgba(240,217,138,.95);border-color:rgba(201,168,76,.45);font-weight:700}
 
-  .ftype-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.09)}
+  .ftype-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.12)}
   .ftype-card{
     background:#120e05;
     border:none;
@@ -889,7 +889,7 @@
   }
   .ftype-card:hover{background:#1c1609}
   .ftype-banner{
-    height:210px;
+    aspect-ratio:4/3;
     background:linear-gradient(145deg,#2d1e06,#0d0a06);
     display:flex;align-items:center;justify-content:center;
     position:relative;overflow:hidden;
@@ -909,15 +909,16 @@
     border-radius:20px;border:1px solid rgba(201,168,76,.25);
     backdrop-filter:blur(6px);letter-spacing:.3px;
   }
-  .ftype-body{padding:14px 16px 16px;flex:1;display:flex;flex-direction:column;border-top:1px solid rgba(201,168,76,.1)}
+  .ftype-body{padding:12px 14px 14px;display:flex;flex-direction:column;border-top:1px solid rgba(201,168,76,.1)}
   .ftype-name{
-    font-family:var(--font-display);font-size:19px;font-weight:900;
-    margin-bottom:5px;color:rgba(245,230,190,.97);line-height:1.15;
+    font-family:var(--font-display);font-size:17px;font-weight:900;
+    margin-bottom:6px;color:rgba(245,230,190,.97);line-height:1.15;
     letter-spacing:-.2px;
   }
   .ftype-desc{
     color:rgba(150,130,90,.72);font-size:12px;line-height:1.6;
-    margin-bottom:8px;flex:0;
+    margin-bottom:6px;flex:0;
+    display:none;
   }
   .ftype-desc strong{font-weight:700;color:rgba(210,190,145,.85)}
   .ftype-desc em{font-style:italic}
@@ -943,15 +944,15 @@
   .casing-timeframe{margin:0 0 14px;font-size:13px}
   .ftype-timeframe:empty,
   .casing-timeframe:empty{display:none}
-  .ftype-divider{flex:1}
-  .ftype-cta{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid rgba(201,168,76,.12);margin-top:2px}
+  .ftype-divider{display:none}
+  .ftype-cta{display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(201,168,76,.12);margin-top:4px}
   .ftype-from{display:flex;flex-direction:column;gap:1px}
   .ftype-from-label{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(201,168,76,.4);font-weight:600}
   .ftype-from strong{color:rgba(201,168,76,.92);font-size:18px;font-family:var(--font-display);font-weight:800;line-height:1.1}
   .ftype-arrow{color:rgba(201,168,76,.75);font-weight:600;font-size:13px;white-space:nowrap}
   .ftype-shimmer{position:absolute;top:0;left:0;right:0;height:1.5px;z-index:2;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(201,168,76,.5) 30%,rgba(240,217,138,.85) 50%,rgba(201,168,76,.5) 70%,transparent)}
   .ftype-eyebrow{font-size:8px;letter-spacing:3.5px;text-transform:uppercase;color:rgba(201,168,76,.45);margin-bottom:5px;font-weight:600}
-  .ftype-time{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(150,125,75,.7);margin-bottom:8px;line-height:1.4}
+  .ftype-time{display:none}
   .ftype-time-icon{font-size:11px;flex-shrink:0}
   /* ftype-grid defined above */
 
@@ -2181,20 +2182,17 @@
     .card-price{font-size:18px}
 
     /* Compact casing-type cards for 2-column mobile layout */
-    .ftype-banner{height:130px}
+    .ftype-banner{aspect-ratio:4/3;height:auto}
     .ftype-icon-bg{font-size:48px}
     .ftype-count{font-size:10px;padding:2px 8px;top:8px;right:8px}
-    .ftype-body{padding:11px 13px}
+    .ftype-body{padding:10px 12px 12px}
     .ftype-eyebrow{font-size:7.5px;margin-bottom:4px}
-    .ftype-name{font-size:14px;margin-bottom:4px;line-height:1.25}
-    .ftype-time{font-size:10px;margin-bottom:6px}
-    .ftype-desc{
-      font-size:11px;line-height:1.5;margin-bottom:8px;
-      -webkit-line-clamp:2;line-clamp:2;
-    }
-    .ftype-cta{padding-top:8px;gap:4px}
-    .ftype-from strong{font-size:14px}
-    .ftype-arrow{font-size:11px}
+    .ftype-name{font-size:13px;margin-bottom:4px;line-height:1.2}
+    .ftype-time{display:none}
+    .ftype-desc{display:none}
+    .ftype-cta{padding-top:6px;gap:4px}
+    .ftype-from strong{font-size:13px}
+    .ftype-arrow{font-size:10.5px}
 
     .var-img{font-size:32px}
     .var-name{font-size:12px}
