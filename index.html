@@ -1825,6 +1825,9 @@
   .var-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:rgba(225,205,165,.92);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .var-hint{font-size:10.5px;color:rgba(201,168,76,.65);font-weight:600;opacity:.85;transition:opacity .2s}
   .var-card:hover .var-hint{opacity:1}
+  .var-card--sample .var-img{aspect-ratio:1/1}
+  .var-card--sample .var-img img{object-fit:cover}
+  .var-grid--sample{grid-template-columns:repeat(3,1fr) !important;gap:0 !important}
 
   .proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .proj-card{background:#120e05;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid rgba(201,168,76,.16);border-radius:16px;overflow:hidden;transition:transform .2s,border-color .2s,background .2s;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3)}
@@ -7937,17 +7940,20 @@ function renderVariants(typeId){
     const samples=(ty.sampleImgs&&ty.sampleImgs.length)?ty.sampleImgs : (ty.bannerImg?[ty.bannerImg]:[]);
     if(samples.length){
       window._lbImages=samples;
+      grid.classList.add('var-grid--sample');
       grid.innerHTML=samples.map((img,i)=>`
-        <div class="var-card" onclick="openLightbox(${i})">
+        <div class="var-card var-card--sample" onclick="openLightbox(${i})">
           <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<3?'medium':'thumb','(max-width: 700px) 50vw, 320px')}></div>
         </div>`).join('');
       preloadImages(samples.map(img=>imageUrl(img,'thumb')), 6);
     } else {
+      grid.classList.remove('var-grid--sample');
       grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'ยังไม่มีตัวอย่างสำหรับประเภทนี้':'No samples for this type yet.'}</div>`;
     }
     return;
   }
   setupCasingStyleTools(vars);
+  grid.classList.remove('var-grid--sample');
   // Guard: if this type's cards are already in DOM and count matches, skip rebuild.
   // Only rebuild when typeId changes, data changes, or grid is empty.
   const existingCards = grid.querySelectorAll('.var-card[data-style-id]');
