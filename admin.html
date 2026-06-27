@@ -7772,7 +7772,7 @@ async function startWatermarkMigration(){
     });
   });
 
-  // Casing types — bannerImg + sampleImgs
+  // Casing types — bannerImg + sampleImgs (sync, no lazy-load needed)
   (db.casingTypes || []).forEach((ty, ti) => {
     if(ty.bannerImg){
       pushSlot(
@@ -7790,18 +7790,27 @@ async function startWatermarkMigration(){
         (meta) => { if(db.casingTypes[ti].sampleImgs) db.casingTypes[ti].sampleImgs[ii] = meta; }
       );
     });
-    // Casing variant imgs
-    (ty.variants || []).forEach((v, vi) => {
+  });
+
+  // Casing variant imgs — must ensure each type's variants are loaded first
+  // because variants are lazy-loaded (Phase 1 deferred) and ty.variants may be []
+  labelEl.textContent = 'Loading casing styles…';
+  for(let ti = 0; ti < (db.casingTypes||[]).length; ti++){
+    const ty = db.casingTypes[ti];
+    if(!ty) continue;
+    try { await FB.ensureCasingVariants(ty.id); } catch(e){ /* skip if fails */ }
+    const freshTy = getDB().casingTypes?.[ti];
+    (freshTy?.variants || []).forEach((v, vi) => {
       (v.imgs || []).forEach((img, ii) => {
         pushSlot(
-          () => rawUrl(((db.casingTypes[ti].variants||[])[vi]||{}).imgs?.[ii]),
-          (u) => { if(db.casingTypes[ti].variants?.[vi]?.imgs) db.casingTypes[ti].variants[vi].imgs[ii] = u; },
-          () => ((db.casingTypes[ti].variants||[])[vi]?.imgs||[])[ii],
-          (meta) => { if(db.casingTypes[ti].variants?.[vi]?.imgs) db.casingTypes[ti].variants[vi].imgs[ii] = meta; }
+          () => rawUrl((getDB().casingTypes?.[ti]?.variants?.[vi]?.imgs||[])[ii]),
+          (u) => { const t=getDB().casingTypes?.[ti]; if(t?.variants?.[vi]?.imgs) t.variants[vi].imgs[ii] = u; },
+          () => (getDB().casingTypes?.[ti]?.variants?.[vi]?.imgs||[])[ii],
+          (meta) => { const t=getDB().casingTypes?.[ti]; if(t?.variants?.[vi]?.imgs) t.variants[vi].imgs[ii] = meta; }
         );
       });
     });
-  });
+  }
 
   // Feed posts
   (db.feedPosts || []).forEach((post, pi) => {
