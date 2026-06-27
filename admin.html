@@ -7904,21 +7904,11 @@ async function startWatermarkMigration(){
       done++;
     } catch(err){
       console.error('[WM Migration] failed:', url, err);
-      errors.push(`[${i+1}] ${shortUrl} — ${err.message || err}`);
+      errors.push(`[${i+1}] ${shortUrl} — ${err.message || String(err)}`);
       fail++;
     }
 
     setStats(total, done, skip, fail);
-
-    // Save to Firestore every 10 images to checkpoint progress
-    if((done + fail) % 10 === 0 || i === toProcess.length - 1){
-      try {
-        labelEl.textContent = 'Saving to Firestore…';
-        await saveDB(getDB());
-      } catch(e){
-        console.warn('[WM Migration] checkpoint save failed:', e);
-      }
-    }
   }
 
   // Final save

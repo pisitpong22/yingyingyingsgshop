@@ -1309,7 +1309,7 @@ async function applyWatermark(blob){
       const url = URL.createObjectURL(blob);
       const img = new Image();
       img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(new Error("Image load failed: " + (e?.message || "onerror"))); };
       img.src = url;
     });
   }
@@ -1408,7 +1408,7 @@ async function optimiseImage(blob, maxDim=1920){
       const url = URL.createObjectURL(blob);
       const img = new Image();
       img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(new Error("Image load failed: " + (e?.message || "onerror"))); };
       img.src = url;
     });
   }
