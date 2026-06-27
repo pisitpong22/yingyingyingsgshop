@@ -1816,12 +1816,13 @@
     position:relative;overflow:hidden;
     contain:layout style;
   }
-  .var-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 45%);pointer-events:none}
+  .var-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.15) 0%,transparent 40%);pointer-events:none}
   .var-img img{width:100%;height:100%;object-fit:cover}
   .var-img-count{position:absolute;bottom:32px;left:7px;z-index:2;background:rgba(0,0,0,.58);color:rgba(210,190,145,.85);font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px}
   .var-price-badge{position:absolute;top:8px;right:8px;z-index:2;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px;letter-spacing:.2px}
-  .var-overlay{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:6px 8px 7px;pointer-events:none}
-  .var-overlay-name{font-family:var(--font-display);font-size:12px;font-weight:700;color:rgba(232,201,106,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .var-overlay{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:8px 8px 9px;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 60%,transparent 100%)}
+  .var-overlay-name{font-family:var(--font-display);font-size:12px;font-weight:700;color:#e8c96a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-bottom:2px;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+  .var-overlay-hint{font-size:10px;color:rgba(201,168,76,.75);display:block;text-shadow:0 1px 3px rgba(0,0,0,.8)}
   .var-body{display:none}
   .var-name,.var-hint{display:none}
 
@@ -7777,7 +7778,7 @@ function variantCardHtml(ty, v, i){
         ${imgTag}
         ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
-        <div class="var-overlay"><span class="var-overlay-name">${v.name}</span></div>
+        <div class="var-overlay"><span class="var-overlay-name">${v.name}</span><span class="var-overlay-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</span></div>
       </div>
     </div>`;
 }
