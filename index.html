@@ -1990,7 +1990,8 @@
   .modal.variant-modal{
     display:flex;
     flex-direction:column;
-    overflow:hidden;
+    overflow-y:auto;
+    overflow-x:hidden;
     max-height:90vh;
     padding:0;
   }
@@ -2031,11 +2032,8 @@
     flex-shrink:0;
   }
   .modal.variant-modal .variant-gallery{
-    flex:1;
-    min-height:0;
-    overflow-y:auto;
-    overscroll-behavior:contain;
-    -webkit-overflow-scrolling:touch;
+    flex:none;
+    overflow:visible;
     align-content:start;
   }
   .variant-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:0;align-content:start}
@@ -2239,12 +2237,12 @@
     .modal{max-width:100%;max-height:96vh;border-radius:18px 18px 0 0;padding:22px 18px;animation:slideUpMobile .35s ease}
     .modal.variant-modal{
       width:min(100%,680px);
-      height:min(84vh,720px);
       max-height:84vh;
       padding:0;
       display:flex;
       flex-direction:column;
-      overflow:hidden;
+      overflow-y:auto;
+      overflow-x:hidden;
       border-radius:24px;
     }
     .modal.variant-modal .modal-head{
@@ -2259,14 +2257,13 @@
       border-bottom:1px solid rgba(201,168,76,.28);
     }
     .modal.variant-modal .variant-gallery{
-      flex:1;
-      overflow-y:auto;
+      flex:none;
+      overflow:visible;
       display:grid;
       grid-template-columns:repeat(3,1fr);
       gap:0;
       padding:0;
       align-content:start;
-      -webkit-overflow-scrolling:touch;
     }
     .modal.variant-modal .variant-photo{
       border-radius:0;
@@ -4858,7 +4855,8 @@
       border-radius:22px 22px 0 0 !important;
       padding:0 !important;
       max-height:92vh !important;
-      height:92vh !important;
+      overflow-y:auto !important;
+      overflow-x:hidden !important;
     }
     .modal.variant-modal .modal-head{
       padding:18px 18px 14px !important;
@@ -4870,9 +4868,8 @@
     .modal.variant-modal .variant-gallery{
       padding:0 !important;
       gap:0 !important;
-      flex:1 !important;
-      min-height:0 !important;
-      overflow-y:auto !important;
+      flex:none !important;
+      overflow:visible !important;
       align-content:start !important;
     }
   }
