@@ -914,19 +914,31 @@
   }
   .ftype-banner::after{
     content:'';position:absolute;inset:0;
-    background:linear-gradient(to top,rgba(10,8,3,.7) 0%,transparent 50%);
+    background:linear-gradient(to top,rgba(10,8,3,.85) 0%,rgba(10,8,3,.2) 55%,transparent 100%);
     pointer-events:none;
   }
   .ftype-banner img{width:100%;height:100%;object-fit:cover}
-  .ftype-icon-bg{font-size:80px;opacity:.5}
-  .ftype-count{position:absolute;top:12px;right:12px;z-index:1;background:rgba(0,0,0,.6);color:rgba(220,195,130,.9);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;backdrop-filter:blur(6px)}
-  .ftype-body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column;border-top:1px solid rgba(201,168,76,.1)}
-  .ftype-name{font-family:var(--font-display);font-size:18px;font-weight:800;margin-bottom:6px;color:rgba(240,225,185,.95)}
-  .ftype-desc{color:rgba(155,135,95,.75);font-size:13px;line-height:1.65;margin-bottom:12px;flex:1;display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  /* Allow inline formatting from the rich text editor to show through */
-  .ftype-desc strong{font-weight:700;color:rgba(220,200,155,.9)}
+  .ftype-icon-bg{font-size:80px;opacity:.35}
+  .ftype-count{
+    position:absolute;top:11px;right:11px;z-index:1;
+    background:rgba(0,0,0,.65);color:rgba(201,168,76,.9);
+    font-size:10.5px;font-weight:700;padding:3px 9px;
+    border-radius:20px;border:1px solid rgba(201,168,76,.25);
+    backdrop-filter:blur(6px);letter-spacing:.3px;
+  }
+  .ftype-body{padding:14px 16px 16px;flex:1;display:flex;flex-direction:column}
+  .ftype-name{
+    font-family:var(--font-display);font-size:19px;font-weight:900;
+    margin-bottom:5px;color:rgba(245,230,190,.97);line-height:1.15;
+    letter-spacing:-.2px;
+  }
+  .ftype-desc{
+    color:rgba(150,130,90,.72);font-size:12px;line-height:1.6;
+    margin-bottom:8px;flex:0;
+  }
+  .ftype-desc strong{font-weight:700;color:rgba(210,190,145,.85)}
   .ftype-desc em{font-style:italic}
-  .ftype-desc br{line-height:1.65}
+  .ftype-desc br{line-height:1.6}
   .ftype-timeframe,
   .casing-timeframe{
     display:inline-flex;
@@ -948,17 +960,16 @@
   .casing-timeframe{margin:0 0 14px;font-size:13px}
   .ftype-timeframe:empty,
   .casing-timeframe:empty{display:none}
-  .ftype-cta{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid rgba(201,168,76,.12)}
-  .ftype-from{color:rgba(155,135,95,.7);font-size:12px}
-  .ftype-from strong{color:rgba(201,168,76,.9);font-size:17px;font-family:var(--font-display)}
-  .ftype-arrow{color:rgba(201,168,76,.8);font-weight:700;font-size:14px}
-  /* J-style ftype additions */
-  .ftype-shimmer{position:absolute;top:0;left:0;right:0;height:1.5px;z-index:2;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(201,168,76,.55) 30%,rgba(240,217,138,.88) 50%,rgba(201,168,76,.55) 70%,transparent)}
-  .ftype-eyebrow{font-size:8.5px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.45);margin-bottom:6px;font-weight:600}
-  .ftype-time{font-size:11px;color:rgba(155,130,75,.7);margin-bottom:8px}
-  .ftype-from-label{font-size:10px;color:rgba(155,135,95,.6);letter-spacing:.3px;display:block;margin-bottom:1px}
-  .ftype-from strong{color:rgba(201,168,76,.92);font-size:17px;font-family:var(--font-display);font-weight:800}
-  /* ftype-grid — tighter gap */
+  .ftype-divider{flex:1}
+  .ftype-cta{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid rgba(201,168,76,.12);margin-top:2px}
+  .ftype-from{display:flex;flex-direction:column;gap:1px}
+  .ftype-from-label{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(201,168,76,.4);font-weight:600}
+  .ftype-from strong{color:rgba(201,168,76,.92);font-size:18px;font-family:var(--font-display);font-weight:800;line-height:1.1}
+  .ftype-arrow{color:rgba(201,168,76,.75);font-weight:600;font-size:13px;white-space:nowrap}
+  .ftype-shimmer{position:absolute;top:0;left:0;right:0;height:1.5px;z-index:2;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(201,168,76,.5) 30%,rgba(240,217,138,.85) 50%,rgba(201,168,76,.5) 70%,transparent)}
+  .ftype-eyebrow{font-size:8px;letter-spacing:3.5px;text-transform:uppercase;color:rgba(201,168,76,.45);margin-bottom:5px;font-weight:600}
+  .ftype-time{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(150,125,75,.7);margin-bottom:8px;line-height:1.4}
+  .ftype-time-icon{font-size:11px;flex-shrink:0}
   .ftype-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
@@ -2198,10 +2209,9 @@
       font-size:11px;line-height:1.5;margin-bottom:8px;
       -webkit-line-clamp:2;line-clamp:2;
     }
-    .ftype-cta{padding-top:10px;flex-wrap:wrap;gap:6px}
-    .ftype-from{font-size:10px}
+    .ftype-cta{padding-top:8px;gap:4px}
     .ftype-from strong{font-size:14px}
-    .ftype-arrow{font-size:11.5px}
+    .ftype-arrow{font-size:11px}
 
     .var-img{font-size:32px}
     .var-name{font-size:12px}
@@ -7390,6 +7400,9 @@ function renderCasingTypes(){
       : (lang==='th'?'ดูแบบ →':'View Styles →');
     const styleCount = (ty.variants||[]).length || sampleCount;
     const timeframe = casingTimeframeText(ty.desc);
+    // plain-text desc, strip timeframe sentences, max 80 chars
+    const descPlain = casingPlainText(casingDescWithoutTimeframe(ty.desc||''));
+    const descShort = descPlain.length > 80 ? descPlain.slice(0,78).replace(/\s\S+$/,'…') : descPlain;
     return `
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-shimmer"></div>
@@ -7400,10 +7413,11 @@ function renderCasingTypes(){
       <div class="ftype-body">
         <div class="ftype-eyebrow">${lang==='th'?'บริการกรอบพระ':'Premium Casing'}</div>
         <div class="ftype-name">${ty.name}</div>
-        <div class="ftype-desc">${casingDescWithoutTimeframe(ty.desc||'')}</div>
-        ${timeframe?`<div class="ftype-time">⏱ ${timeframe}</div>`:''}
+        ${descShort?`<div class="ftype-desc">${descShort}</div>`:''}
+        ${timeframe?`<div class="ftype-time"><span class="ftype-time-icon">⏱</span>${timeframe}</div>`:''}
+        <div class="ftype-divider"></div>
         <div class="ftype-cta">
-          ${ty.priceRange?`<div class="ftype-from"><span class="ftype-from-label">Price</span><br><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from"><span class="ftype-from-label">Price</span><br><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
+          ${ty.priceRange?`<div class="ftype-from"><span class="ftype-from-label">PRICE</span><strong>S$${ty.priceRange}</strong></div>`:(ty.price?`<div class="ftype-from"><span class="ftype-from-label">PRICE</span><strong>S$${Number(ty.price).toLocaleString()}</strong></div>`:'<div></div>')}
           <div class="ftype-arrow">${cta}</div>
         </div>
       </div>
