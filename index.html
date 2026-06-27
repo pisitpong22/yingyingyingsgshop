@@ -890,23 +890,17 @@
   .cat-tab{background:rgba(255,252,240,.7);border:1px solid rgba(201,168,76,.2);color:var(--text-muted);padding:8px 18px;border-radius:25px;font-size:14px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;font-weight:500}
   .cat-tab:hover,.cat-tab.active{background:linear-gradient(135deg,rgba(232,201,106,.25),rgba(201,168,76,.15));color:var(--gold-dark);border-color:rgba(201,168,76,.4);font-weight:700}
 
-  .ftype-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+  .ftype-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.09)}
   .ftype-card{
     background:#120e05;
-    border:1px solid rgba(201,168,76,.18);
-    border-radius:16px;overflow:hidden;cursor:pointer;
-    transition:transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s, border-color .22s, background .22s;
-    box-shadow:0 6px 24px rgba(0,0,0,.35);
+    border:none;
+    border-radius:0;overflow:hidden;cursor:pointer;
+    transition:background .18s;
     display:flex;flex-direction:column;position:relative;
   }
-  .ftype-card:hover{
-    transform:translateY(-4px);
-    border-color:rgba(201,168,76,.45);
-    background:#1a1508;
-    box-shadow:0 14px 40px rgba(0,0,0,.45),0 0 0 1px rgba(201,168,76,.15);
-  }
+  .ftype-card:hover{background:#1c1609}
   .ftype-banner{
-    height:200px;
+    height:210px;
     background:linear-gradient(145deg,#2d1e06,#0d0a06);
     display:flex;align-items:center;justify-content:center;
     position:relative;overflow:hidden;
@@ -926,7 +920,7 @@
     border-radius:20px;border:1px solid rgba(201,168,76,.25);
     backdrop-filter:blur(6px);letter-spacing:.3px;
   }
-  .ftype-body{padding:14px 16px 16px;flex:1;display:flex;flex-direction:column}
+  .ftype-body{padding:14px 16px 16px;flex:1;display:flex;flex-direction:column;border-top:1px solid rgba(201,168,76,.1)}
   .ftype-name{
     font-family:var(--font-display);font-size:19px;font-weight:900;
     margin-bottom:5px;color:rgba(245,230,190,.97);line-height:1.15;
@@ -970,7 +964,7 @@
   .ftype-eyebrow{font-size:8px;letter-spacing:3.5px;text-transform:uppercase;color:rgba(201,168,76,.45);margin-bottom:5px;font-weight:600}
   .ftype-time{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(150,125,75,.7);margin-bottom:8px;line-height:1.4}
   .ftype-time-icon{font-size:11px;flex-shrink:0}
-  .ftype-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  /* ftype-grid defined above */
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
   .var-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.09)}
@@ -2189,7 +2183,7 @@
     /* Casing types: 2 columns on mobile (was 1) — much faster to scan
        through 8+ casing types without scrolling for ages. */
     .card-grid,.proj-grid{grid-template-columns:1fr;gap:14px}
-    .ftype-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+    .ftype-grid{grid-template-columns:repeat(2,1fr);gap:1px}
     .var-grid{grid-template-columns:repeat(2,1fr);gap:1px}
     .card-img{height:200px}
     .card-body{padding:14px 16px 8px}
@@ -4077,8 +4071,8 @@
     color:rgba(255,248,220,.88) !important;
   }
   /* ftype-card & var-card: dark editorial — not glass */
-  .ftype-card{background:#120e05 !important;border:1px solid rgba(201,168,76,.18) !important;border-top-color:rgba(201,168,76,.22) !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;box-shadow:0 6px 24px rgba(0,0,0,.35) !important}
-  .ftype-card:hover{background:#1a1508 !important;border-color:rgba(201,168,76,.45) !important}
+  .ftype-card{background:#120e05 !important;border:none !important;border-radius:0 !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;box-shadow:none !important}
+  .ftype-card:hover{background:#1c1609 !important}
   .var-card{background:#120e05 !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;box-shadow:none !important}
   .var-card:hover{background:#1a1508 !important}
   .card:hover,
@@ -4177,12 +4171,12 @@
     .search-bar{display:grid !important;grid-template-columns:1fr !important}
     .search-input-wrap,.sort-select{min-width:0 !important;width:100% !important}
     .card-grid,.proj-grid,.rev-grid,.var-grid{grid-template-columns:1fr !important}
-    .ftype-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+    .ftype-grid{grid-template-columns:repeat(2,1fr) !important;gap:1px !important}
     .feed-shell{display:block !important}
     .feed-sidebar,.feed-right{display:none !important}
   }
   @media(max-width:560px){
-    .ftype-grid{grid-template-columns:1fr !important}
+    /* ftype-grid stays 2-col on small phones */
     .page:not(#page-home) .sec-head h2{font-size:34px !important}
   }
 
@@ -4334,7 +4328,7 @@
     }
     .trust-strip-title{font-size:12px !important}
     .trust-strip-desc{display:none !important}
-    .ftype-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:12px !important}
+    .ftype-grid{grid-template-columns:repeat(2,1fr) !important;gap:1px !important}
     .ftype-banner{height:112px !important}
     .ftype-body{padding:11px 12px !important}
     .ftype-name{font-size:13.5px !important;line-height:1.2 !important}
@@ -4355,7 +4349,7 @@
     .social-desc{max-height:168px !important}
     .social-visual{height:190px !important;min-height:190px !important}
     .social-3d{width:150px !important;height:194px !important}
-    .ftype-grid{gap:10px !important}
+    /* ftype-grid gap kept at 1px */
     .ftype-body{padding:10px !important}
   }
 
@@ -5085,6 +5079,12 @@
   #page-casing .var-grid{
     background-color:transparent !important;
   }
+  #page-casing .sec-head{
+    padding-top:28px !important;
+    padding-bottom:24px !important;
+    border-bottom:none !important;
+  }
+  #page-casing .sec-head::before{display:none !important}
   /* Disable content-visibility for all casing elements — prevents repaint lag on scroll */
   #page-casing,
   #page-casing *,
