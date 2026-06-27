@@ -5074,6 +5074,62 @@
     border-bottom:none !important;
   }
   #page-casing .sec-head::before{display:none !important}
+  .casing-sec-head-i{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:0 36px;
+    align-items:center;
+    padding:36px 32px 28px !important;
+    text-align:left !important;
+    border-right:none;
+    max-width:960px;
+    margin:0 auto;
+  }
+  .casing-sec-head-i .csh-left{
+    border-right:1px solid rgba(201,168,76,.18);
+    padding-right:36px;
+    align-self:stretch;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:14px;
+  }
+  .casing-sec-head-i .csh-title{
+    font-family:var(--font-display);
+    font-size:36px;
+    white-space:nowrap;
+    background:linear-gradient(135deg,#a07828,#c9a84c,#e8c96a);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    font-weight:800;
+    margin:0;
+  }
+  .casing-sec-head-i .csh-gem-row{display:flex;align-items:center;gap:8px}
+  .casing-sec-head-i .csh-gem{width:6px;height:6px;transform:rotate(45deg);background:rgba(201,168,76,.5);flex-shrink:0}
+  .casing-sec-head-i .csh-gem-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.3),transparent)}
+  .casing-sec-head-i .csh-right{display:flex;align-items:center}
+  .casing-sec-head-i .csh-desc{
+    color:rgba(180,150,90,.65);
+    font-size:13.5px;
+    line-height:1.85;
+    margin:0;
+    max-width:none;
+  }
+  .casing-sec-head-i .csh-desc b,
+  .casing-sec-head-i .csh-desc strong{color:rgba(201,168,76,.85);font-weight:500}
+  @media(max-width:600px){
+    .casing-sec-head-i{
+      grid-template-columns:1fr;
+      gap:16px 0;
+      padding:28px 20px 20px !important;
+    }
+    .casing-sec-head-i .csh-left{
+      border-right:none;
+      border-bottom:1px solid rgba(201,168,76,.15);
+      padding-right:0;
+      padding-bottom:16px;
+    }
+    .casing-sec-head-i .csh-title{font-size:28px;white-space:normal}
+  }
   /* Disable content-visibility for all casing elements — prevents repaint lag on scroll */
   #page-casing,
   #page-casing *,
@@ -5411,7 +5467,13 @@
 
 <!-- CASING (was frames) -->
 <div id="page-casing" class="page">
-  <div class="sec-head"><h2 id="casingTitle"></h2><div class="gline"></div><p id="casingDesc"></p></div>
+  <div class="sec-head casing-sec-head-i">
+    <div class="csh-left">
+      <h2 id="casingTitle" class="csh-title"></h2>
+      <div class="csh-gem-row"><div class="csh-gem"></div><div class="csh-gem-line"></div></div>
+    </div>
+    <div class="csh-right"><p id="casingDesc" class="csh-desc"></p></div>
+  </div>
   <div class="content">
     <div id="casingTypes"><div class="ftype-grid" id="cTypeGrid"></div></div>
     <div id="casingVariants" style="display:none">
