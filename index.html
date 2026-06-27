@@ -957,7 +957,7 @@
   /* ftype-grid defined above */
 
   /* SIMPLIFIED STYLE CARDS — name + image only */
-  .var-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(201,168,76,.09)}
+  .var-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.09)}
   /* fallback for tiny screens handled in mobile override */
   /* ───── CASING TYPE DETAIL PAGE ───── */
   .casing-detail-head{
@@ -4158,7 +4158,8 @@
     .page:not(#page-home) .sec-head h2{font-size:38px !important}
     .search-bar{display:grid !important;grid-template-columns:1fr !important}
     .search-input-wrap,.sort-select{min-width:0 !important;width:100% !important}
-    .card-grid,.proj-grid,.rev-grid,.var-grid{grid-template-columns:1fr !important}
+    .card-grid,.proj-grid,.rev-grid{grid-template-columns:1fr !important}
+    .var-grid{grid-template-columns:repeat(2,1fr) !important}
     .ftype-grid{grid-template-columns:repeat(2,1fr) !important;gap:1px !important}
     .feed-shell{display:block !important}
     .feed-sidebar,.feed-right{display:none !important}
