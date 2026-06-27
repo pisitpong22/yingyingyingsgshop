@@ -5078,60 +5078,96 @@
   }
   #page-casing .sec-head::before{display:none !important}
   .casing-sec-head-i{
-    display:grid;
-    grid-template-columns:auto 1fr;
-    gap:0 36px;
-    align-items:center;
-    padding:36px 32px 28px !important;
+    padding:28px 24px 20px !important;
     text-align:left !important;
     border-right:none;
     max-width:960px;
     margin:0 auto;
   }
+  .csh-glass-card{
+    position:relative;
+    background:rgba(255,255,255,.045);
+    border:1px solid rgba(201,168,76,.2);
+    border-top:1.5px solid rgba(201,168,76,.5);
+    border-radius:16px;
+    padding:22px 26px 20px;
+    overflow:hidden;
+  }
+  .csh-glass-card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,.65),transparent);
+  }
+  .csh-glass-shimmer{
+    position:absolute;top:0;right:0;
+    width:180px;height:180px;
+    background:radial-gradient(circle at 85% 0%,rgba(201,168,76,.09) 0%,transparent 70%);
+    pointer-events:none;
+  }
   .casing-sec-head-i .csh-left{
-    border-right:1px solid rgba(201,168,76,.18);
-    padding-right:36px;
-    align-self:stretch;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    gap:14px;
+    display:contents;
+  }
+  .casing-sec-head-i .csh-right{
+    display:contents;
+  }
+  .csh-eyebrow{
+    font-size:9px;letter-spacing:3px;text-transform:uppercase;
+    color:rgba(201,168,76,.5);margin-bottom:8px;font-weight:600;
   }
   .casing-sec-head-i .csh-title{
     font-family:var(--font-display);
-    font-size:36px;
+    font-size:34px;
     white-space:nowrap;
-    background:linear-gradient(135deg,#a07828,#c9a84c,#e8c96a);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    color:rgba(245,228,185,.97);
     font-weight:800;
     margin:0;
+    line-height:1.1;
+    letter-spacing:-.3px;
   }
-  .casing-sec-head-i .csh-gem-row{display:flex;align-items:center;gap:8px}
-  .casing-sec-head-i .csh-gem{width:6px;height:6px;transform:rotate(45deg);background:rgba(201,168,76,.5);flex-shrink:0}
-  .casing-sec-head-i .csh-gem-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.3),transparent)}
-  .casing-sec-head-i .csh-right{display:flex;align-items:center}
+  .casing-sec-head-i .csh-gem-row{display:flex;align-items:center;gap:10px;margin:14px 0 12px}
+  .casing-sec-head-i .csh-gem{width:5px;height:5px;transform:rotate(45deg);background:rgba(201,168,76,.6);flex-shrink:0}
+  .casing-sec-head-i .csh-gem-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.35),transparent)}
   .casing-sec-head-i .csh-desc{
-    color:rgba(180,150,90,.65);
-    font-size:13.5px;
-    line-height:1.85;
+    color:rgba(175,148,90,.7);
+    font-size:12px;
+    line-height:1.8;
     margin:0;
     max-width:none;
   }
   .casing-sec-head-i .csh-desc b,
   .casing-sec-head-i .csh-desc strong{color:rgba(201,168,76,.85);font-weight:500}
+  .csh-notice{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid rgba(201,168,76,.12);
+  }
+  .csh-notice-icon{
+    flex-shrink:0;
+    width:17px;height:17px;
+    border-radius:50%;
+    background:rgba(201,168,76,.11);
+    border:1px solid rgba(201,168,76,.28);
+    display:flex;align-items:center;justify-content:center;
+    font-style:normal;font-size:10px;font-weight:700;
+    color:rgba(201,168,76,.75);
+    margin-top:1px;
+  }
+  .csh-notice-txt{
+    font-size:11.5px;
+    line-height:1.75;
+    color:rgba(175,148,90,.68);
+  }
+  .csh-notice-txt strong{color:rgba(201,168,76,.82);font-weight:500}
   @media(max-width:600px){
     .casing-sec-head-i{
-      grid-template-columns:1fr;
-      gap:16px 0;
-      padding:28px 20px 20px !important;
+      padding:20px 16px 16px !important;
     }
-    .casing-sec-head-i .csh-left{
-      border-right:none;
-      border-bottom:1px solid rgba(201,168,76,.15);
-      padding-right:0;
-      padding-bottom:16px;
-    }
-    .casing-sec-head-i .csh-title{font-size:28px;white-space:normal}
+    .csh-glass-card{padding:18px 18px 16px}
+    .casing-sec-head-i .csh-title{font-size:26px;white-space:normal}
   }
   /* Disable content-visibility for all casing elements — prevents repaint lag on scroll */
   #page-casing,
@@ -5471,11 +5507,19 @@
 <!-- CASING (was frames) -->
 <div id="page-casing" class="page">
   <div class="sec-head casing-sec-head-i">
-    <div class="csh-left">
-      <h2 id="casingTitle" class="csh-title"></h2>
+    <div class="csh-glass-card">
+      <div class="csh-glass-shimmer"></div>
+      <div class="csh-eyebrow" data-en="Premium Casing Collection" data-th="คอลเลคชั่นกรอบพระพรีเมี่ยม">Premium Casing Collection</div>
+      <div class="csh-left">
+        <h2 id="casingTitle" class="csh-title"></h2>
+      </div>
       <div class="csh-gem-row"><div class="csh-gem"></div><div class="csh-gem-line"></div></div>
+      <div class="csh-right"><p id="casingDesc" class="csh-desc"></p></div>
+      <div class="csh-notice">
+        <i class="csh-notice-icon" aria-hidden="true">i</i>
+        <span class="csh-notice-txt" data-en="Updates are provided only after your casing is <strong>completed</strong>. Please refer to the estimated timeframe for your selected casing type. We'll <strong>notify you</strong> as soon as your casing is ready." data-th="อัปเดตจะแจ้งเมื่องาน<strong>เสร็จสมบูรณ์</strong>เท่านั้น กรุณาดูระยะเวลาประมาณการของกรอบที่เลือก เราจะ<strong>แจ้งให้ทราบ</strong>ทันทีเมื่อกรอบพระของท่านพร้อมแล้ว">Updates are provided only after your casing is <strong>completed</strong>. Please refer to the estimated timeframe for your selected casing type. We'll <strong>notify you</strong> as soon as your casing is ready.</span>
+      </div>
     </div>
-    <div class="csh-right"><p id="casingDesc" class="csh-desc"></p></div>
   </div>
   <div class="content">
     <div id="casingTypes"><div class="ftype-grid" id="cTypeGrid"></div></div>
