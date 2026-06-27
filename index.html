@@ -3723,9 +3723,9 @@
 
   /* ═══ REFERENCE SCREENSHOT FINAL TUNE ═══ */
   .social-cover{
-    min-height:980px !important;
-    padding-top:120px !important;
-    padding-bottom:210px !important;
+    min-height:auto !important;
+    padding-top:80px !important;
+    padding-bottom:80px !important;
   }
   .social-cover-bg{
     display:block !important;
@@ -3734,7 +3734,7 @@
       radial-gradient(ellipse at 75% 54%,rgba(78,47,18,.22),transparent 36%),
       linear-gradient(180deg,#130e06 0%,#0a0703 100%) !important;
   }
-  .social-profile-card{min-height:720px !important}
+  .social-profile-card{min-height:auto !important}
   .social-brand-block{
     display:flex !important;
     align-items:flex-start !important;
@@ -3814,25 +3814,39 @@
   .home-reviews-eyebrow{font-size:0 !important}
   #homeRevTitle{font-size:48px !important}
   @media(max-width:900px){
-    .social-cover{min-height:auto !important;padding:100px 24px 30px !important;align-items:flex-start !important}
+    .social-cover{min-height:auto !important;padding:0 0 30px !important;align-items:flex-start !important}
     .social-cover-bg{display:block !important}
     .social-profile-card{display:flex !important;flex-direction:column !important;gap:28px !important;min-height:auto !important}
-    .social-brand-block{
+    /* 3D อยู่บนสุด, text อยู่ใต้ */
+    .social-visual{
       order:1 !important;
       width:100% !important;
-      padding:0 !important;
+      height:56vw !important;
+      min-height:260px !important;
+      max-height:420px !important;
+    }
+    .social-3d{
+      width:100% !important;
+      height:56vw !important;
+      max-height:420px !important;
+      transform:none !important;
+    }
+    .social-brand-block{
+      order:2 !important;
+      width:100% !important;
+      padding:16px 20px 0 !important;
       border:none !important;
       background:transparent !important;
       box-shadow:none !important;
       backdrop-filter:none !important;
       -webkit-backdrop-filter:none !important;
+      align-items:flex-start !important;
     }
-    .social-kicker{font-size:12px !important;letter-spacing:4px !important;line-height:1.45 !important;margin-bottom:18px !important}
-    .social-title{font-size:54px !important;line-height:.98 !important}
-    .social-desc{font-size:17px !important;line-height:1.55 !important;margin-top:22px !important}
-    .social-visual{order:2 !important;width:100% !important;height:320px !important;min-height:320px !important}
+    .social-avatar{display:none !important}
+    .social-kicker{font-size:10px !important;letter-spacing:3px !important;line-height:1.5 !important;margin-bottom:10px !important}
+    .social-title{font-size:34px !important;line-height:1.05 !important}
+    .social-desc{font-size:14px !important;line-height:1.65 !important;margin-top:10px !important;color:rgba(255,242,186,.72) !important}
     .social-actions{display:none !important}
-    .social-3d{width:230px !important;height:300px !important;transform:rotate(-6deg) !important}
     .trust-wrap-outer{max-width:calc(100% - 28px) !important;margin:0 auto !important;padding-bottom:44px !important}
     .trust-strip{grid-template-columns:1fr !important;border-radius:22px !important;background:rgba(255,255,255,.13) !important}
     .trust-strip-card{padding:18px 24px !important}
