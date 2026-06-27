@@ -1294,7 +1294,7 @@ async function _drawWatermarkOnCtx(ctx, w, h){
   ctx.shadowOffsetY = 0;
   ctx.globalAlpha  = 0.52;
   ctx.fillStyle    = '#ffffff';
-  ctx.fillText('YingYingYingSG', 0, 0);
+  ctx.fillText('YingyingyingSG', 0, 0);
   ctx.restore();
 }
 
