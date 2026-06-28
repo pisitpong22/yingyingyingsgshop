@@ -2107,7 +2107,7 @@
   #lbPrev:hover,#lbNext:hover{background:rgba(255,255,255,.22);transform:translateY(-50%) scale(1.05)}
   #lbCounter{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:white;padding:6px 16px;border-radius:25px;font-size:13px;font-weight:500;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15)}
   #lbHint{position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.46);color:#fff4ce;padding:7px 14px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.2px;backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);pointer-events:none;white-space:nowrap}
-  @media(max-width:768px){
+  @media(max-width:900px){
     #lbClose{top:12px;right:12px;width:38px;height:38px;font-size:18px}
     #lbPrev,#lbNext{width:48px;height:48px;font-size:30px;background:rgba(255,255,255,.18)}
     #lbPrev{left:10px}#lbNext{right:10px}
@@ -2136,31 +2136,8 @@
   .mobile-overlay.open{display:block}
 
   /* TABLET */
-  @media(max-width:900px){
-    .nav-inner{padding:0 16px;height:44px}
-    body.is-home-page #navSpacer{height:0!important}
-    .logo-text{font-size:14px}
-    .logo-sub{display:none}
-    .content{padding:32px 16px}
-    .sec-head{padding:50px 16px 36px}
-    .sec-head h2{font-size:26px}
-    .hero{grid-template-columns:1fr;padding:0 32px;min-height:auto;gap:0}
-    .hero-3d{height:55vh;max-height:480px;order:1}
-    .hero-inner{order:2;padding:0 0 60px;text-align:center;max-width:100%}
-    .hero-title{font-size:42px !important}
-    .stat{text-align:center;padding-left:0}
-    .stat::before{display:none}
-    .hero-stats{margin:40px auto 0;max-width:100%}
-    .hero-btns{justify-content:center}
-    .hero-desc{margin:0 auto 30px}
-    .scroll-cue{display:none}
-    .about-banner{padding:50px 16px}
-    .about-banner h2{font-size:26px}
-    .trust-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;padding:0 16px;margin:30px auto}
-  }
-
   /* MOBILE */
-  @media(max-width:768px){
+  @media(max-width:900px){
     body{font-size:14px}
     .page.active{padding-top:0}
     #page-home.page.active{padding-top:0}
@@ -2520,7 +2497,7 @@
   .install-fab.show{display:flex}
 
   /* MOBILE adjustments for new features */
-  @media(max-width:768px){
+  @media(max-width:900px){
     .search-bar{flex-direction:column;gap:8px;margin-bottom:18px}
     .sort-select{width:100%}
     .featured-section{padding:40px 14px}
@@ -3045,7 +3022,7 @@
     .social-visual .social-actions{display:none}
   }
 
-  @media(max-width:768px){
+  @media(max-width:900px){
     .social-home{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
     .social-cover{padding:0 0 48px}
     .social-brand-block{padding:16px 18px 0}
@@ -3306,7 +3283,7 @@
     .contact-hero-card{position:relative;top:auto}
   }
 
-  @media(max-width:768px){
+  @media(max-width:900px){
     body{
       padding-bottom:calc(68px + env(safe-area-inset-bottom,0px));
       background:linear-gradient(180deg,#090704 0,#151006 310px,#fff4dc 620px,#fff8e9 100%);
@@ -3314,6 +3291,7 @@
     .topbar{display:none}
     /* Mobile: show nav (logo only), hide IG-style script header */
     nav{display:block;top:10px;width:calc(100% - 24px)}
+    .menu-btn{display:none !important}
     .nav-inner{height:40px;padding:0 10px 0 12px}
     .logo-icon{width:28px;height:28px;font-size:16px}
     .logo-text{font-family:'Dancing Script',cursive;font-size:22px;font-weight:700;letter-spacing:-0.3px;background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));text-shadow:none}
@@ -4899,7 +4877,7 @@
     color:#f2df96 !important;
     border-color:rgba(232,201,106,.28) !important;
   }
-  @media(max-width:768px){
+  @media(max-width:900px){
     .modal.variant-modal{
       border-radius:22px 22px 0 0 !important;
       padding:0 !important;
@@ -5228,7 +5206,7 @@
     contain-intrinsic-size:none !important;
   }
   /* Mobile: remove heavy backdrop-filter for smooth scroll */
-  @media(max-width:768px){
+  @media(max-width:900px){
     #page-casing .var-card,
     #page-casing .ftype-card,
     #page-casing .casing-finder-panel{
