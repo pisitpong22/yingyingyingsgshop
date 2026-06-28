@@ -1283,14 +1283,16 @@
       <!-- HOMEPAGE LAYOUT (section order) -->
       <div class="tab-content" data-tab-content="layout" data-parent="home">
         <h3 class="subsection-title">📐 Layout & Sections</h3>
-        <div class="subsection-sub">Control which sections appear on the homepage and in what order. Toggle off to hide a section (you can still edit its content here).</div>
-        <h3 class="subsection-title" data-en="🏠 Homepage Layout" data-th="🏠 จัดเลย์เอาท์หน้าแรก">🏠 Homepage Layout</h3>
-        <div class="subsection-sub" data-en-html="Drag the sections below to reorder how they appear on the homepage, or use the arrow buttons. Toggle a section off to hide it from the homepage (you can still edit its content from its own panel)." data-th-html="ลากส่วนต่างๆ ด้านล่างเพื่อจัดลำดับใหม่ในหน้าแรก หรือใช้ปุ่มลูกศร ปิดสวิตช์เพื่อซ่อนส่วนนั้นจากหน้าแรก (ยังแก้ไขเนื้อหาได้จาก panel ของส่วนนั้นๆ)">Drag sections to reorder. Toggle off to hide a section from the homepage.</div>
+        <div class="subsection-sub" data-en="Reorder or show/hide the two moveable sections on the homepage. Fixed sections (Hero, Trust bar, Social, Feed) always appear in their set positions." data-th="จัดลำดับหรือซ่อน/แสดง 2 ส่วนที่เลื่อนได้ในหน้าแรก ส่วนที่ตายตัว (Hero, Trust bar, โซเชียล, Feed) จะอยู่ตำแหน่งเดิมเสมอ">
+          Reorder or show/hide the moveable sections below. Other sections (Hero, Trust bar, Social Channels, Latest Updates) are fixed and always appear.
+        </div>
         <div class="form-card">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(201,168,76,.1);border-radius:8px;border-left:3px solid var(--gold)">
-            <span style="font-size:20px">⭐</span>
-            <div style="font-size:13px;color:var(--text-muted);line-height:1.55">
-              <strong style="color:var(--text)" data-en="Hero is always first" data-th="Hero อยู่บนสุดเสมอ">Hero is always first</strong> <span data-en="— the sections below appear under it." data-th="— ส่วนด้านล่างจะอยู่ใต้ Hero">— the sections below appear under it.</span>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(201,168,76,.08);border-radius:8px;border-left:3px solid var(--gold)">
+            <span style="font-size:16px">📌</span>
+            <div style="font-size:12.5px;color:var(--text-muted);line-height:1.6">
+              <strong style="color:var(--text)">Fixed order (not draggable):</strong> Hero → Trust bar → Service Cards*<br>
+              <strong style="color:var(--text)">Then below:</strong> Social Channels, Latest Updates<br>
+              <span style="font-size:11.5px">* You can reorder <strong>Reviews</strong> and <strong>Service Cards</strong> relative to each other, and toggle them on/off.</span>
             </div>
           </div>
           <div class="ho-list" id="homeOrderList"></div>
@@ -1315,43 +1317,41 @@
       <!-- SOCIAL CHANNELS -->
       <div class="tab-content" data-tab-content="social" data-parent="home">
         <h3 class="subsection-title">📲 Social Channels</h3>
-        <div class="subsection-sub">Add your social media accounts. You can add multiple accounts per platform (e.g. two Facebook pages). Enabled channels appear on the homepage.</div>
+        <div class="subsection-sub" data-en="Social channels shown on the homepage come from your Contact &amp; Social Links list — links with &quot;Show on homepage&quot; ticked." data-th="โซเชียลที่แสดงในหน้าแรกดึงมาจาก Contact &amp; Social Links — ติ๊ก &quot;แสดงในหน้าแรก&quot; ที่นั่นเลย">
+          Social channels shown on the homepage come from your <strong>Contact &amp; Social Links</strong> list — links with <strong>Show on homepage</strong> ticked.
+        </div>
 
-        <div class="form-card">
-          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;flex-shrink:0">
-              <input type="checkbox" id="sc_enabled" style="width:auto;accent-color:var(--gold-dark)">
-              Show Social Channels on homepage
-            </label>
-            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px">
-              <label class="fl" style="white-space:nowrap;margin:0;flex-shrink:0">Section label:</label>
-              <input class="fi" id="sc_title" placeholder="Follow Us" style="flex:1">
+        <div class="form-card" style="border-color:var(--border-strong)">
+          <div class="form-section-title">📲 Section Heading</div>
+          <div class="form-section-desc">Title shown above the social icons on the homepage.</div>
+          <div class="form-grid">
+            <div class="fg full" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <label class="switch-label">
+                <label class="switch"><input type="checkbox" id="sc_enabled"><span class="slider"></span></label>
+                <span data-en="Show Social Channels section on homepage" data-th="แสดงส่วนโซเชียลในหน้าแรก">Show Social Channels section on homepage</span>
+              </label>
             </div>
+            <div class="fg full">
+              <label class="fl" data-en="Section Title" data-th="ชื่อหัวข้อ">Section Title</label>
+              <input class="fi" id="sc_title" placeholder="Follow Us">
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <button class="btn-gold" onclick="saveSocialChannels()" data-en="💾 Save" data-th="💾 บันทึก">💾 Save</button>
           </div>
         </div>
 
         <div class="form-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div class="form-section-title" style="margin:0">Platform Links</div>
-              <div class="form-section-desc" style="margin:4px 0 0">Each row is one social account. Add multiple rows for the same platform.</div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
-              <select id="sc_add_platform" class="fi" style="padding:7px 10px;font-size:13px;width:auto;min-width:140px">
-                <option value="">Select platform…</option>
-              </select>
-              <button class="btn-sm" onclick="scAddChannel()" style="white-space:nowrap">+ Add</button>
-            </div>
+          <div class="form-section-title">🔗 Links shown on homepage</div>
+          <div class="form-section-desc" data-en="These are pulled from Payment &amp; Contact → Contact Links, filtered to those with &quot;Show on homepage&quot; enabled." data-th="ดึงมาจาก Payment &amp; Contact → Contact Links ที่ติ๊ก &quot;แสดงในหน้าแรก&quot;">
+            Pulled from <strong>Payment &amp; Contact → Contact Links</strong>, filtered to those with "Show on homepage" enabled.
           </div>
-          <div id="sc_channels_list">
-            <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">
-              Loading channels…
-            </div>
+          <div id="sc_home_preview" style="margin-top:8px"></div>
+          <div style="margin-top:16px">
+            <button class="btn-gold" onclick="showPanel('checkout',document.querySelector('.side-item[onclick*=checkout]'));showTab('checkout','contact')" data-en="✏️ Edit Contact &amp; Social Links" data-th="✏️ แก้ไข Contact &amp; Social Links">
+              ✏️ Edit Contact &amp; Social Links
+            </button>
           </div>
-        </div>
-
-        <div style="margin-top:20px">
-          <button class="btn-gold" onclick="saveSocialChannels()">💾 Save Social Channels</button>
         </div>
       </div>
 
@@ -2729,9 +2729,8 @@ function defaultSettings(){
     contactPmText:'PM for price',
     displayFont:'Noto Serif',
     homeOrder:[
-      {id:'reviews',  enabled:true, label:'Reviews preview'},
-      {id:'featured', enabled:true, label:'Featured items'},
-      {id:'services', enabled:true, label:'Service cards'},
+      {id:'reviews',  enabled:true, label:'Customer Reviews'},
+      {id:'services', enabled:true, label:'Service Cards'},
     ],
   };
 }
@@ -3814,14 +3813,12 @@ async function resetHeroVisuals(){
 // Icons for each known home section id
 const HOME_SECTION_ICONS = {
   reviews:  '🙏',
-  featured: '✨',
   services: '🎯',
 };
 // Default labels (used if entry.label is missing)
 const HOME_SECTION_LABELS = {
-  reviews:  {en:'Reviews preview',  th:'รีวิวลูกค้า'},
-  featured: {en:'Featured items',   th:'สินค้าแนะนำ'},
-  services: {en:'Service cards',    th:'การ์ดบริการ'},
+  reviews:  {en:'Customer Reviews', th:'รีวิวลูกค้า'},
+  services: {en:'Service Cards',    th:'การ์ดบริการ'},
 };
 
 // Working copy of the order array — admin edits this, then saveHomeOrder persists it.
@@ -5658,168 +5655,56 @@ const SC_ADMIN_PLATFORMS = [
 // ─── SOCIAL CHANNELS ADMIN — multi-entry per platform ────────────────────────
 // In-memory list of channel entries while editing.
 // Each entry: { uid, id (platform), name (optional label), url, enabled }
-let _scEntries = [];
-
-function scGenUid(){
-  return 'sc_' + Math.random().toString(36).slice(2,9);
-}
 
 function loadSocialChannels(){
   try {
     const db = getDB();
     const sc = (db && db.settings && db.settings.socialChannels) ? db.settings.socialChannels : {};
 
-    // Populate header fields
+    // Section toggle & title
     const enabledEl = document.getElementById('sc_enabled');
     if(enabledEl) enabledEl.checked = sc.enabled !== false;
     const titleEl = document.getElementById('sc_title');
     if(titleEl) titleEl.value = sc.title || 'Follow Us';
 
-    // Populate platform selector
-    const sel = document.getElementById('sc_add_platform');
-    if(sel && sel.options.length <= 1){
-      SC_ADMIN_PLATFORMS.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = p.icon + ' ' + p.label;
-        sel.appendChild(opt);
-      });
+    // Preview: contacts with showOnHome=true
+    const preview = document.getElementById('sc_home_preview');
+    if(preview){
+      const homeLinks = (db.settings.contacts||[]).filter(c => c.showOnHome && c.url && c.url.trim());
+      if(!homeLinks.length){
+        preview.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;border:1px dashed var(--border);border-radius:10px">
+          No links set to "Show on homepage" yet.<br>Click <strong>Edit Contact &amp; Social Links</strong> below and tick the homepage toggle on the links you want shown.
+        </div>`;
+      } else {
+        preview.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px">${
+          homeLinks.map(c => {
+            const pid = c.id || detectPlatform(c.url||'', c.label||'', c.icon||'');
+            const pCfg = SC_ADMIN_PLATFORMS.find(p=>p.id===pid);
+            const icon = pCfg ? pCfg.icon : (c.icon||'🔗');
+            const label = (c.label||'').trim() || (pCfg ? pCfg.label : 'Link');
+            return `<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface-3);border:1px solid var(--border-strong);border-radius:10px;font-size:13px">
+              <span style="font-size:18px">${icon}</span>
+              <span style="color:var(--text);font-weight:600">${escapeHtml(label)}</span>
+              <span style="color:var(--text-muted);font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.url)}</span>
+            </div>`;
+          }).join('')
+        }</div>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">${homeLinks.length} link${homeLinks.length!==1?'s':''} will appear in the Social Channels section.</div>`;
+      }
     }
-
-    // Load entries from DB — support both old (one-per-platform) and new (multi) schemas
-    const raw = Array.isArray(sc.channels) ? sc.channels : [];
-    _scEntries = raw.map(ch => ({
-      uid:     ch.uid || scGenUid(),
-      id:      ch.id || '',
-      name:    ch.name || '',
-      url:     ch.url  || '',
-      enabled: ch.enabled !== false,
-    }));
-
-    scRenderList();
   } catch(err){
     console.error('[admin] loadSocialChannels:', err);
-    const list = document.getElementById('sc_channels_list');
-    if(list) list.innerHTML = `<div style="color:#c0392b;padding:16px">Error: ${escapeHtml(String(err.message||err))}</div>`;
   }
-}
-
-let _scDragIdx = null;
-
-function scRenderList(){
-  const list = document.getElementById('sc_channels_list');
-  if(!list) return;
-
-  if(!_scEntries.length){
-    list.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;border:1px dashed var(--border);border-radius:10px;margin-top:8px">
-      No channels added yet.<br>Select a platform above and click <strong>+ Add</strong>.
-    </div>`;
-    return;
-  }
-
-  list.innerHTML = _scEntries.map((entry, idx) => {
-    const p = SC_ADMIN_PLATFORMS.find(x => x.id === entry.id) || {icon:'🔗', label:entry.id, placeholder:'https://'};
-    const checked = entry.enabled ? 'checked' : '';
-    return `
-    <div class="sc-row" data-sc-idx="${idx}"
-      draggable="true"
-      ondragstart="scDragStart(event,${idx})"
-      ondragover="scDragOver(event)"
-      ondragleave="scDragLeave(event)"
-      ondrop="scDrop(event,${idx})"
-      ondragend="scDragEnd()"
-      style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);cursor:grab;transition:background .15s">
-      <span class="variant-drag-handle" style="cursor:grab;color:var(--text-muted);font-size:18px;flex-shrink:0;user-select:none">⋮⋮</span>
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0">
-        <input type="checkbox" ${checked}
-          onchange="scUpdate(${idx},'enabled',this.checked)"
-          style="width:auto;accent-color:var(--gold-dark)">
-      </label>
-      <span style="font-size:18px;flex-shrink:0">${p.icon}</span>
-      <select class="fi" onchange="scUpdate(${idx},'id',this.value)"
-        style="font-size:13px;padding:7px 8px;width:auto;min-width:110px;flex-shrink:0">
-        ${SC_ADMIN_PLATFORMS.map(pl =>
-          `<option value="${pl.id}" ${pl.id===entry.id?'selected':''}>${pl.icon} ${pl.label}</option>`
-        ).join('')}
-      </select>
-      <input class="fi" placeholder="Label (optional)" value="${escapeHtml(entry.name)}"
-        oninput="scUpdate(${idx},'name',this.value)"
-        style="font-size:13px;padding:7px 8px;width:120px;flex-shrink:0">
-      <input class="fi" placeholder="${escapeHtml(p.placeholder)}" value="${escapeHtml(entry.url)}"
-        oninput="scUpdate(${idx},'url',this.value)"
-        style="font-size:13px;padding:7px 8px;flex:1;min-width:160px">
-      <button class="btn-del" style="flex-shrink:0;padding:5px 9px;font-size:12px" onclick="scRemove(${idx})">✕</button>
-    </div>`;
-  }).join('');
-}
-
-// Drag handlers for sc rows
-function scDragStart(e, idx){
-  _scDragIdx = idx;
-  e.currentTarget.style.opacity = '.45';
-  try{ e.dataTransfer.effectAllowed = 'move'; }catch(_){}
-}
-function scDragOver(e){
-  e.preventDefault();
-  e.currentTarget.style.background = 'rgba(201,168,76,.1)';
-}
-function scDragLeave(e){
-  e.currentTarget.style.background = '';
-}
-function scDrop(e, targetIdx){
-  e.preventDefault();
-  e.currentTarget.style.background = '';
-  if(_scDragIdx === null || _scDragIdx === targetIdx) return;
-  const [moved] = _scEntries.splice(_scDragIdx, 1);
-  _scEntries.splice(targetIdx, 0, moved);
-  _scDragIdx = null;
-  scRenderList();
-}
-function scDragEnd(){
-  _scDragIdx = null;
-  document.querySelectorAll('.sc-row').forEach(r => {
-    r.style.opacity = '';
-    r.style.background = '';
-  });
-}
-
-function scUpdate(idx, field, value){
-  if(_scEntries[idx]) _scEntries[idx][field] = value;
-}
-
-function scAddChannel(){
-  const sel = document.getElementById('sc_add_platform');
-  const platformId = sel ? sel.value : '';
-  if(!platformId){ showToast('Please select a platform first'); return; }
-  _scEntries.push({ uid:scGenUid(), id:platformId, name:'', url:'', enabled:true });
-  scRenderList();
-  // Scroll to new entry
-  const list = document.getElementById('sc_channels_list');
-  if(list) list.lastElementChild?.scrollIntoView({behavior:'smooth',block:'nearest'});
-  if(sel) sel.value = '';
-}
-
-function scRemove(idx){
-  _scEntries.splice(idx, 1);
-  scRenderList();
 }
 
 async function saveSocialChannels(){
-  // Capture latest field values before saving
-  // (oninput already kept _scEntries in sync, but double-check)
+  // Only saves section toggle + title.
+  // The actual links are managed in Payment & Contact → Contact Links (contacts[].showOnHome).
   const db = getDB();
   if(!db.settings.socialChannels) db.settings.socialChannels = {};
   const sc = db.settings.socialChannels;
-  sc.enabled  = !!(document.getElementById('sc_enabled')?.checked);
-  sc.title    = (document.getElementById('sc_title')?.value||'').trim() || 'Follow Us';
-  // Filter out entries with no URL
-  sc.channels = _scEntries.map(e => ({
-    uid:     e.uid,
-    id:      e.id,
-    name:    (e.name||'').trim(),
-    url:     (e.url||'').trim(),
-    enabled: !!e.enabled,
-  }));
+  sc.enabled = !!(document.getElementById('sc_enabled')?.checked);
+  sc.title   = (document.getElementById('sc_title')?.value||'').trim() || 'Follow Us';
   if(await persistDB(db, '✅ Social Channels saved')) refreshDynamic();
 }
 
