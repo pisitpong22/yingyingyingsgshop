@@ -787,7 +787,7 @@
   /* Large stat number style for trust cards */
   /* .trust-stat — see trust-card section */
 
-  .content{max-width:1200px;margin:auto;padding:48px 24px}
+  .content{max-width:1200px;margin:auto;padding:24px 24px}
 
   .crumb{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-muted);margin-bottom:24px;flex-wrap:wrap}
   .crumb a{color:var(--gold-dark);text-decoration:none;cursor:pointer;font-weight:600}
@@ -4019,7 +4019,7 @@
   /* ═══ SITEWIDE CONCEPT A / LIQUID GLASS ═══ */
   .page:not(#page-home){
     min-height:100vh !important;
-    padding:150px 20px 96px !important;
+    padding:24px 20px 80px !important;
     background:
       radial-gradient(ellipse at 24% 16%,rgba(201,168,76,.16),transparent 38%),
       radial-gradient(ellipse at 78% 68%,rgba(120,60,180,.08),transparent 42%),
@@ -4205,7 +4205,7 @@
     -webkit-backdrop-filter:blur(18px) saturate(150%) !important;
   }
   @media(max-width:900px){
-    .page:not(#page-home){padding:96px 16px 108px !important}
+    .page:not(#page-home){padding:16px 16px 80px !important}
     .page:not(#page-home) .sec-head{margin-bottom:28px !important}
     .page:not(#page-home) .sec-head h2{font-size:38px !important}
     .search-bar{display:grid !important;grid-template-columns:1fr !important}
@@ -6968,7 +6968,13 @@ async function goPage(name, opts={}){
   // Switch page (inactive pages are display:none; new page fades in via CSS animation)
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   if(typeof closeHsArticle === 'function') closeHsArticle();
-  const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
+  const pg=document.getElementById('page-'+name);
+  if(pg){
+    // Force animation re-trigger
+    pg.style.animation='none';
+    pg.classList.add('active');
+    requestAnimationFrame(()=>{ pg.style.animation=''; });
+  }
   setActiveNav(name);
   window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
