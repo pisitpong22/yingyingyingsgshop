@@ -1500,6 +1500,14 @@
     transition:background .2s,border-color .2s;margin-bottom:24px;
   }
   .hs-back-btn:hover{background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.5)}
+  /* Article view smooth transitions */
+  #hsPageWrap,#hsArticleView{
+    transition:opacity .28s ease, transform .28s ease;
+    will-change:opacity,transform;
+  }
+  #hsArticleView{display:block;opacity:0;pointer-events:none;transform:translateY(10px)}
+  #hsArticleView.hs-visible{opacity:1;pointer-events:auto;transform:translateY(0)}
+  #hsPageWrap.hs-hidden{opacity:0;pointer-events:none;transform:translateY(-6px)}
   .hs-article-page{max-width:760px;margin:0 auto;padding:8px 0 40px}
   .hs-article-cover{border-radius:16px;overflow:hidden;margin-bottom:24px;max-height:420px}
   .hs-article-cover img{width:100%;height:100%;object-fit:cover;display:block;max-height:420px}
@@ -4958,11 +4966,15 @@
   @media(max-width:760px){
     #page-history-stories.active,
     #page-history-stories .content,
-    #hsPageWrap,
     #hsFeaturedWrap,
     #hsGridWrap{
       display:block !important;
       opacity:1 !important;
+      visibility:visible !important;
+      height:auto !important;
+    }
+    #hsPageWrap{
+      display:block !important;
       visibility:visible !important;
       height:auto !important;
       min-height:0 !important;
@@ -5607,7 +5619,7 @@
   </div>
   <div class="content">
     <!-- Article detail view (replaces modal) -->
-    <div id="hsArticleView" style="display:none"></div>
+    <div id="hsArticleView"></div>
     <div class="hs-wrap" id="hsPageWrap">
       <!-- Search + filter -->
       <div class="hs-search-wrap">
@@ -8735,12 +8747,14 @@ async function openHsArticle(id){
   const wrap = document.getElementById('hsPageWrap');
   const view = document.getElementById('hsArticleView');
   if(!wrap||!view) return;
-  // Scroll to top of page
   const pg = document.getElementById('page-history-stories');
-  if(pg) pg.scrollTop = 0;
-  wrap.style.display = 'none';
-  view.style.display = 'block';
-  view.innerHTML = `
+  // Fade out list
+  wrap.classList.add('hs-hidden');
+  view.classList.remove('hs-visible');
+  setTimeout(()=>{
+    wrap.style.display = 'none';
+    if(pg) pg.scrollTop = 0;
+    view.innerHTML = `
     <div class="hs-article-page">
       <button class="hs-back-btn" onclick="closeHsArticle()">← Back</button>
       ${a.coverImage?`<div class="hs-article-cover"><img ${imgAttrs(a.coverImage,'medium','min(100vw,700px)')} alt="" style="${hsCoverStyle(a)}"></div>`:''}
@@ -8771,16 +8785,23 @@ async function openHsArticle(id){
       <button class="hs-back-btn" onclick="closeHsArticle()" style="margin-top:32px">← Back to Articles</button>
     </div>
   `;
-  safeWatchImages(view);
+    safeWatchImages(view);
+    // Fade in article
+    requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ view.classList.add('hs-visible'); }); });
+  }, 260);
 }
 
 function closeHsArticle(){
   const wrap = document.getElementById('hsPageWrap');
   const view = document.getElementById('hsArticleView');
-  if(wrap) wrap.style.display = '';
-  if(view){ view.style.display = 'none'; view.innerHTML = ''; }
-  const pg = document.getElementById('page-history-stories');
-  if(pg) pg.scrollTop = 0;
+  view.classList.remove('hs-visible');
+  setTimeout(()=>{
+    view.innerHTML = '';
+    wrap.style.display = '';
+    wrap.classList.remove('hs-hidden');
+    const pg = document.getElementById('page-history-stories');
+    if(pg) pg.scrollTop = 0;
+  }, 260);
 }
 
 async function navigateToHsArticle(id){
