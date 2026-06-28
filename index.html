@@ -5282,7 +5282,7 @@
     <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menu">☰</button>
   </div>
 </nav>
-<div id="navSpacer" style="height:0"></div>
+<div id="navSpacer" style="height:90px"></div>
 
 <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMenu()"></div>
 <div class="mobile-tabbar" id="mobileTabbar" aria-label="Mobile navigation"></div>
@@ -6969,6 +6969,10 @@ function setNavClearance(){
   if(b>0)spacer.style.height=(Math.round(b)+12)+'px';
 }
 window.addEventListener('resize',setNavClearance);
+// Run immediately and after layout settles
+setNavClearance();
+requestAnimationFrame(()=>{ setNavClearance(); });
+window.addEventListener('load',()=>{ setNavClearance(); });
 
 async function goPage(name, opts={}){
   if(name === 'feed'){
