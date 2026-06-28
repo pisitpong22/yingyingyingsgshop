@@ -599,6 +599,268 @@
     .panel-title{font-size:15px;flex-direction:column;align-items:stretch}
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE-FIRST IMPROVEMENTS — comprehensive touch-friendly overhaul
+     Target: phones 320px–480px. Makes every panel usable on mobile.
+     ═══════════════════════════════════════════════════════════════ */
+  /* ── FORM ACTION ROW — button group below forms ── */
+  .form-action-row{
+    margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  }
+  .form-action-row .btn-gold,.form-action-row .btn-ol{width:auto}
+  @media(max-width:600px){
+    .form-action-row{flex-direction:column;gap:8px}
+    .form-action-row .btn-gold,.form-action-row .btn-ol{width:100%;justify-content:center}
+  }
+
+    @media(max-width:600px){
+
+    /* ── LAYOUT & MAIN ── */
+    .admin-body{min-height:calc(100vh - 54px)}
+    .main{padding:14px 12px 80px} /* extra bottom so save-bar doesn't cover content */
+    .panel{padding-bottom:4px}
+
+    /* ── PANEL HEADER ── */
+    .panel-title{
+      font-size:17px;padding-bottom:12px;margin-bottom:10px;
+      flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap;
+    }
+    .panel-title .view-btn{
+      padding:6px 10px;font-size:12px;flex-shrink:0;margin-left:auto;
+    }
+    .panel-sub{font-size:12.5px;line-height:1.55;margin-bottom:14px}
+
+    /* ── FORM CARDS ── */
+    .form-card{padding:14px 12px;margin-bottom:14px;border-radius:10px}
+    .form-grid{grid-template-columns:1fr !important;gap:12px}
+    .fg.full{grid-column:auto !important} /* already 1 col, no need for span */
+    .form-section-title{font-size:13.5px;gap:6px;flex-wrap:wrap}
+    .form-section-desc{font-size:12px;margin-bottom:10px}
+
+    /* ── INPUTS — big tap targets (min 44px height) ── */
+    .fi,.fta,.fsel{
+      padding:11px 13px;font-size:15px;
+      min-height:44px;border-radius:9px;
+    }
+    .fta{min-height:80px;font-size:14px}
+    .fl{font-size:13px;margin-bottom:4px}
+    .fl-hint{font-size:11px}
+
+    /* ── CHECKBOXES & LABELS ── */
+    .fl input[type="checkbox"]{
+      width:20px !important;height:20px !important;
+      accent-color:var(--gold);flex-shrink:0;
+    }
+
+    /* ── BUTTONS — full width on mobile ── */
+    .btn-gold,.btn-ol{
+      width:100%;justify-content:center;
+      padding:13px 16px;font-size:14px;border-radius:10px;
+    }
+    .btn-del,.btn-edit{
+      padding:8px 12px;font-size:12.5px;border-radius:7px;
+    }
+    .btn-sm{padding:9px 14px;font-size:13px}
+    .btn-add{padding:12px 16px;font-size:13.5px;border-radius:10px}
+
+    /* Inline flex button groups — stack them */
+    div[style*="display:flex"][style*="gap:12px"]:has(.btn-gold),
+    div[style*="margin-top:20px"]{
+      flex-direction:column !important;gap:8px !important;
+    }
+
+    /* ── SAVE BAR ── */
+    .save-bar{
+      position:fixed;left:0;right:0;bottom:0;
+      margin:0;padding:12px 14px;
+      display:flex;flex-direction:row;gap:8px;
+      border-top:1px solid var(--border);
+      background:rgba(13,11,8,.97);
+      backdrop-filter:blur(16px);
+      z-index:200;
+    }
+    .save-bar button{flex:1;min-width:0;padding:12px 10px;font-size:13.5px}
+
+    /* ── DASHBOARD ── */
+    .dash-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+    .dash-card{padding:14px 11px;border-radius:11px}
+    .dash-icon{width:40px;height:40px;font-size:18px;margin-bottom:8px;border-radius:9px}
+    .dash-num{font-size:24px}
+    .dash-label{font-size:10.5px;letter-spacing:.3px}
+    .dash-link{font-size:11.5px;margin-top:10px;padding-top:10px}
+    .quick-edit-grid{
+      grid-template-columns:repeat(2,1fr) !important;
+      gap:8px;margin:14px 0 20px;
+    }
+    .quick-edit-card{padding:12px 10px;border-radius:11px}
+    .quick-edit-icon{width:30px;height:30px;font-size:16px;margin-bottom:7px}
+    .quick-edit-title{font-size:12.5px;margin-bottom:2px}
+    .quick-edit-sub{font-size:11px;line-height:1.35}
+
+    /* ── TABS ── */
+    .tab-bar{
+      gap:2px;padding:3px;margin:-2px 0 16px;
+      border-radius:10px;
+    }
+    .tab-btn{padding:9px 10px;font-size:12px;border-radius:7px;flex:none;min-width:fit-content}
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone{padding:22px 14px;border-radius:10px}
+    .u-icon{font-size:26px;margin-bottom:4px}
+    .u-text{font-size:13px}
+    .u-hint{font-size:11px}
+
+    /* ── IMAGE PREVIEWS ── */
+    .prev-grid{gap:8px}
+    .pi-thumb img{max-width:200px;max-height:130px}
+
+    /* ── RTE TOOLBAR — bigger touch targets ── */
+    .rte-toolbar{gap:1px;padding:5px 6px;flex-wrap:wrap}
+    .rte-btn{width:34px;height:32px;font-size:15px;border-radius:6px}
+    .rte-sep{margin:0 3px}
+    .rte-editor{padding:12px;font-size:14px;min-height:100px}
+    .rte-editor.rte-title-editor{font-size:14px;min-height:44px}
+
+    /* ── MODALS — full-screen bottom-sheet style ── */
+    .modal-overlay{
+      padding:0;
+      align-items:flex-end;
+    }
+    .modal{
+      max-width:100%;width:100%;
+      max-height:92dvh;
+      border-radius:18px 18px 0 0;
+      padding:20px 16px 32px;
+      /* subtle drag indicator at top */
+    }
+    .modal::before{
+      content:'';display:block;
+      width:36px;height:4px;
+      background:rgba(201,168,76,.3);
+      border-radius:2px;
+      margin:-8px auto 16px;
+    }
+    .modal-head{margin-bottom:14px;padding-bottom:12px}
+    .modal-title{font-size:16.5px}
+    .modal-close{width:36px;height:36px;font-size:18px}
+    .modal-actions{
+      position:sticky;bottom:0;left:0;right:0;
+      background:var(--surface-2);
+      margin:12px -16px -32px;
+      padding:12px 16px;
+      border-top:1px solid var(--border);
+      display:flex;flex-direction:row;gap:8px;
+    }
+    .modal-actions button{flex:1;padding:13px 10px;font-size:14px}
+
+    /* ── TABLES → CARD LIST on mobile ── */
+    /* Hide table headers, reformat rows as stacked cards */
+    .dtable{background:transparent;border:none;border-radius:0;box-shadow:none}
+    .dtable thead{display:none}
+    .dtable tbody{display:flex;flex-direction:column;gap:10px}
+    .dtable tr{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:0;
+      background:var(--surface-2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      align-items:center;
+    }
+    .dtable td{
+      padding:10px 12px;border-bottom:none;font-size:13px;
+    }
+    .dtable td:first-child{padding-left:12px}
+    .dtable td:last-child{padding-right:12px}
+    /* Action cell always right-side */
+    .dtable .row-actions{flex-wrap:nowrap;gap:5px}
+    .dtable .row-actions .btn-del,
+    .dtable .row-actions .btn-edit{padding:6px 10px;font-size:12px}
+
+    /* ── TYPE TILES ── */
+    .type-tile{padding:12px;border-radius:11px;margin-bottom:10px}
+    .type-tile-img{width:64px;height:64px;border-radius:9px;flex-shrink:0}
+    .type-tile-name{font-size:14.5px}
+    .type-tile-desc{font-size:12px;-webkit-line-clamp:2}
+    .type-tile-meta{font-size:11.5px}
+    .type-tile-actions{
+      flex-direction:row;flex-wrap:wrap;width:100%;gap:6px;
+      padding-top:10px;border-top:1px solid var(--border);
+    }
+    .type-tile-actions button{
+      flex:1;min-width:calc(50% - 4px);
+      padding:9px 6px;font-size:12.5px;
+    }
+    .type-tile-reorder{
+      position:absolute;top:8px;right:8px;
+      flex-direction:row;gap:4px;
+      background:rgba(13,11,8,.85);padding:3px;border-radius:7px;
+    }
+    .type-tile{position:relative;flex-wrap:wrap}
+
+    /* ── REVIEW ROWS ── */
+    .rep-row{padding:10px;border-radius:9px;gap:8px;flex-wrap:wrap}
+    .rep-fields{grid-template-columns:1fr;gap:8px}
+    .rep-handle{flex-direction:row;padding-top:0}
+    .rep-rm{padding:7px 12px;font-size:12.5px}
+
+    /* ── CRUMBS ── */
+    .a-crumb{font-size:12px;gap:6px;margin-bottom:14px}
+
+    /* ── SUB-TITLE ── */
+    .sub-title{font-size:14px;margin:18px 0 10px;padding-bottom:7px}
+
+    /* ── SWITCH ── */
+    .switch{width:46px;height:25px}
+    .slider:before{height:19px;width:19px}
+    .switch-label{font-size:13px;gap:10px}
+
+    /* ── TEAM ROWS ── */
+    .team-row{padding:12px;border-radius:10px}
+    .team-email{font-size:13px}
+    .team-actions{width:100%;justify-content:flex-end}
+
+    /* ── HO (HOME ORDER) ITEMS ── */
+    .ho-item{padding:11px 12px;border-radius:9px;gap:10px}
+    .ho-label{font-size:13.5px}
+    .ho-toggle{font-size:12.5px}
+
+    /* ── MATERIAL PICKER ── */
+    .material-options{grid-template-columns:repeat(2,1fr);gap:8px}
+    .material-opt-swatch{width:48px;height:48px}
+    .material-opt-name{font-size:12px}
+    .material-opt-desc{font-size:10px}
+
+    /* ── LAYOUT PICKER ── */
+    .layout-options{grid-template-columns:1fr;gap:8px}
+    .role-options{grid-template-columns:1fr;gap:8px}
+
+    /* ── PAGE INTRO CARD ── */
+    .page-intro-head{flex-direction:column;gap:8px}
+    .page-intro-badge{align-self:flex-start}
+    .page-intro-title{font-size:15px}
+    .page-intro-text{font-size:12px}
+
+    /* ── TOAST ── */
+    .toast{
+      left:12px;right:12px;bottom:80px;top:auto;
+      border-radius:10px;text-align:center;font-size:13px;
+    }
+
+    /* ── SIDEBAR items bigger ── */
+    .side-item{padding:12px 14px;font-size:14px;border-radius:9px;min-height:44px}
+    .sidebar-label{padding:14px 18px 6px;font-size:9.5px}
+  }
+
+  /* ── Extra small ── */
+  @media(max-width:360px){
+    .dash-grid{grid-template-columns:1fr}
+    .quick-edit-grid{grid-template-columns:1fr !important}
+    .modal{padding:16px 12px 28px}
+    .main{padding:12px 10px 80px}
+  }
+
 </style>
 </head>
 <body>
@@ -1282,7 +1544,7 @@
               <div class="prev-grid" id="a_imgs_p"></div>
             </div>
           </div>
-          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="form-action-row">
             <button class="btn-gold" id="a_save_btn" onclick="saveAmulet()" data-en="✅ Save Amulet" data-th="✅ บันทึก">✅ Save Amulet</button>
             <button class="btn-ol" id="a_cancel_btn" onclick="cancelEditAmulet()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
             <button class="btn-ol" onclick="cancelEditAmulet()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
@@ -1325,7 +1587,7 @@
               <div class="prev-grid" id="ac_imgs_p"></div>
             </div>
           </div>
-          <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="form-action-row">
             <button class="btn-gold" id="ac_save_btn" onclick="saveAccess()" data-en="✅ Save" data-th="✅ บันทึก">✅ Save</button>
             <button class="btn-ol" id="ac_cancel_btn" onclick="cancelEditAccess()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
             <button class="btn-ol" onclick="cancelEditAccess()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
@@ -2016,7 +2278,7 @@
     </div>
     <div class="form-grid">
       <div class="fg"><label class="fl" data-en="Menu Label *" data-th="ป้ายเมนู *">Menu Label *</label><input class="fi" id="cp_label"></div>
-      <div class="fg"><label class="fl" data-en="Page ID" data-th="ID หน้า">Page ID</label><input class="fi" id="cp_id" disabled style="background:#f0e8d0"></div>
+      <div class="fg"><label class="fl" data-en="Page ID" data-th="ID หน้า">Page ID</label><input class="fi" id="cp_id" disabled style="background:var(--surface-3);color:var(--text-muted)"></div>
       <div class="fg full"><label class="fl" data-en="Page Title" data-th="ชื่อหน้า">Page Title</label><input class="fi" id="cp_title"></div>
       <div class="fg full"><label class="fl" data-en="Subtitle / Description" data-th="คำโปรย / คำอธิบาย">Subtitle / Description</label><input class="fi" id="cp_desc"></div>
       <div class="fg full">
