@@ -3312,7 +3312,11 @@
     }
     .topbar{display:none}
     /* Mobile: show nav (logo only), hide IG-style script header */
-    nav{display:block}
+    nav{display:block;top:10px;width:calc(100% - 24px)}
+    .nav-inner{height:40px;padding:0 10px 0 12px}
+    .logo-icon{width:28px;height:28px;font-size:16px}
+    .logo-text{font-family:'Dancing Script',cursive;font-size:22px;font-weight:700;letter-spacing:-0.3px;background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));text-shadow:none}
+    .logo-sub{display:none}
     .mobile-ig-header{display:none !important}
     .nav-links{display:none !important}
     nav .hamburger, nav .nav-toggle{display:none !important}
@@ -3372,7 +3376,7 @@
       min-height:280px;
       max-height:420px;
       margin:0 -6px 16px;
-      padding-top:52px; /* offset for fixed IG header */
+      padding-top:44px; /* offset for nav bar */
     }
     .hero-inner{
       order:2;
