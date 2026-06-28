@@ -336,12 +336,12 @@
 
 
 
-  .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px;height:52px;gap:10px}
+  .nav-inner{max-width:100%;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px;height:44px;gap:10px}
   .logo{display:flex;align-items:center;gap:11px;cursor:pointer;flex-shrink:0}
-  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
+  .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
   .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
   .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
-  .logo-text{color:#e8d070;font-size:16px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .logo-text{color:#e8d070;font-size:14px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 4px rgba(0,0,0,.6)}
   .logo-sub{color:#c9a84c;font-size:10px;letter-spacing:2px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
   body:not(.is-home-page) .logo-text{color:#e8d070;text-shadow:0 1px 4px rgba(0,0,0,.6)}
   body:not(.is-home-page) .logo-sub{color:#c9a84c;text-shadow:none}
@@ -6972,6 +6972,10 @@ function setNavClearance(){
   const nav=document.querySelector('nav');
   const spacer=document.getElementById('navSpacer');
   if(!nav||!spacer)return;
+  // On home page: nav overlaps hero (liquid glass effect) — no spacer needed
+  const isHome=document.body.classList.contains('is-home-page')||
+    document.getElementById('page-home')?.classList.contains('active');
+  if(isHome){spacer.style.height='0px';return;}
   const b=nav.getBoundingClientRect().bottom;
   if(b>0)spacer.style.height=(Math.round(b)+12)+'px';
 }
@@ -7003,6 +7007,7 @@ async function goPage(name, opts={}){
     requestAnimationFrame(()=>{ pg.style.animation=''; });
   }
   setActiveNav(name);
+  setNavClearance(); // re-run after page switch so home spacer=0
   window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
   document.getElementById('mobileOverlay').classList.remove('open');
