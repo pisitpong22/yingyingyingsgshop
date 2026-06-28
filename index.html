@@ -3541,7 +3541,7 @@
   /* Services section centering */
   .home-services-section{background:transparent!important;padding:56px 24px!important}
   #svcCards{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:14px!important;margin:0 auto!important;max-width:1100px!important}
-  @media(max-width:900px){#svcCards{grid-template-columns:repeat(2,1fr)!important}}
+  @media(max-width:900px){#svcCards{grid-template-columns:1fr!important}}
   @media(max-width:500px){#svcCards{grid-template-columns:1fr!important}}
   /* ═══ FINAL REFERENCE MATCH OVERRIDE ═══ */
   :root{--ref-bg:#0b0703;--ref-panel:#211a11;--ref-panel-2:#17110b;--ref-line:rgba(255,255,255,.13);--ref-gold:#d0aa44;--ref-muted:rgba(222,211,166,.56)}
@@ -3983,13 +3983,13 @@
   @media(max-width:900px){
     #homeServicesSection{padding:48px 20px 42px !important}
     #svcTitle{font-size:34px !important}
-    #svcCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:12px !important}
-    .svc-card{min-height:158px !important;padding:20px 16px !important}
+    #svcCards{grid-template-columns:1fr !important;gap:12px !important}
+    .svc-card{min-height:auto !important;padding:20px 16px !important}
     .svc-desc{font-size:11.5px !important}
     #socialChannelsSection{padding-top:50px !important}
   }
   @media(max-width:560px){
-    #svcCards{grid-template-columns:1fr !important}
+    #svcCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
     .svc-card{min-height:132px !important}
     .social-channels-inner{border-radius:22px !important}
     .latest-updates-title,#homeRevTitle{font-size:38px !important}
