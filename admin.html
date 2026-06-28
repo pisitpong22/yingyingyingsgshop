@@ -1480,28 +1480,6 @@
       </div>
 
       <!-- FEATURED -->
-      <div class="tab-content" data-tab-content="featured" data-parent="home">
-        <h3 class="subsection-title">✨ Featured Products</h3>
-        <div class="subsection-sub">Highlighted amulets or products shown on the homepage. Items marked as Featured in Amulets or Casing appear here automatically if enabled.</div>
-        <h3 class="subsection-title" data-en="✨ Featured on Home" data-th="✨ แนะนำหน้าแรก">✨ Featured on Home</h3>
-        <div class="subsection-sub" data-en="Showcase highlighted pieces in a special section on the home page. Mark items as Featured in their detail page below." data-th="โชว์สินค้าแนะนำในส่วนพิเศษบนหน้าแรก เลือก ‘แสดง Featured’ ที่หน้าแก้ไขสินค้า">Showcase highlighted pieces on the home page.</div>
-        <div class="form-card">
-          <div class="form-grid">
-            <div class="fg full">
-              <label class="fl" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="feat_enabled" style="width:auto"> <span data-en="Enable Featured Section" data-th="เปิดส่วน Featured">Enable Featured Section</span></label>
-            </div>
-            <div class="fg full"><label class="fl" data-en="Section Title" data-th="ชื่อส่วน">Section Title</label><input class="fi" id="feat_title"></div>
-            <div class="fg full"><label class="fl" data-en="Subtitle" data-th="คำบรรยาย">Subtitle</label><input class="fi" id="feat_sub"></div>
-          </div>
-        </div>
-        <div class="form-card">
-          <div class="form-section-title" data-en="📌 Currently Featured" data-th="📌 รายการแนะนำตอนนี้">📌 Currently Featured</div>
-          <div class="form-section-desc" data-en="To add/remove: edit each amulet or accessory and toggle the 'Show as Featured' checkbox." data-th="เพิ่ม/ลบ: ไปแก้ไขสินค้าและติ๊ก ‘แสดง Featured’">To add/remove: edit each item and toggle the Featured checkbox.</div>
-          <div id="featList"></div>
-        </div>
-        <div class="save-bar"><button class="btn-gold" onclick="saveFeatured()" data-en="💾 Save Featured Section" data-th="💾 บันทึก">💾 Save Featured Section</button></div>
-      </div>
-
       <!-- AMULETS -->
       <!-- STORE PAGES HUB -->
       <div class="panel" id="panel-store-pages">
@@ -6730,13 +6708,12 @@ function buildCompositePanels(){
   // ─── Tab definitions: order + label per (parent, tabKey) ───
   const TAB_DEFS = {
     home: [
-      {tab:'hero',     en:'⭐ Hero',              th:'⭐ ส่วน Hero'},
-      {tab:'trust',    en:'🏆 Trust & Stats',     th:'🏆 ความน่าเชื่อถือ'},
-      {tab:'services', en:'🎯 Services',          th:'🎯 บริการ'},
-      {tab:'featured', en:'✨ Featured',          th:'✨ แนะนำ'},
-      {tab:'social',   en:'📲 Social Channels',  th:'📲 โซเชียลมีเดีย'},
-      {tab:'layout',   en:'📐 Layout & Sections', th:'📐 จัดเลย์เอาท์'},
-      {tab:'feed',     en:'📰 Latest Updates Posts',        th:'📰 โพสต์ Feed'},
+      {tab:'hero',     en:'⭐ Hero',           th:'⭐ ส่วน Hero'},
+      {tab:'trust',    en:'🏆 Trust',          th:'🏆 ความน่าเชื่อถือ'},
+      {tab:'services', en:'🎯 Services',       th:'🎯 บริการ'},
+      {tab:'social',   en:'📲 Social',         th:'📲 โซเชียล'},
+      {tab:'feed',     en:'📰 Latest Updates', th:'📰 อัปเดตล่าสุด'},
+      {tab:'layout',   en:'📐 Layout',         th:'📐 เลย์เอาท์'},
     ],
     store: [
       {tab:'branding', en:'🏷️ Branding & Logo', th:'🏷️ แบรนด์ & โลโก้'},
@@ -6756,8 +6733,8 @@ function buildCompositePanels(){
       en:'🏠 Homepage Editor',
       th:'🏠 แก้ไขหน้าแรก',
       sub:{
-        en:'Edit every section that appears on the homepage — hero banner, trust stats, service cards, featured items, layout, and feed posts.',
-        th:'แก้ไขทุกส่วนในหน้าแรก — แบนเนอร์ Hero, สถิติความน่าเชื่อถือ, การ์ดบริการ, สินค้าแนะนำ, เลย์เอาท์ และโพสต์ฟีด'
+        en:'Edit every section on the homepage — hero, trust, service cards, social channels, layout, and latest updates.',
+        th:'แก้ไขทุกส่วนในหน้าแรก — Hero, ความน่าเชื่อถือ, การ์ดบริการ, โซเชียล, เลย์เอาท์ และอัปเดตล่าสุด'
       }
     },
     store: {
