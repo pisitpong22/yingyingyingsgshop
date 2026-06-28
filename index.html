@@ -341,9 +341,9 @@
   .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 16px rgba(201,168,76,0.35);overflow:hidden;flex-shrink:0}
   .logo-icon img{width:100%;height:100%;object-fit:cover;display:block}
   .logo-icon.has-image{background:transparent;box-shadow:0 0 16px rgba(201,168,76,0.35)}
-  .logo-text{color:#e8d070;font-size:14px;font-weight:700;line-height:1.15;font-family:var(--font-display);text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .logo-text{font-family:'Dancing Script',cursive;font-size:24px;font-weight:700;line-height:1.15;letter-spacing:-0.3px;background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));text-shadow:none}
   .logo-sub{color:#c9a84c;font-size:10px;letter-spacing:2px;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-  body:not(.is-home-page) .logo-text{color:#e8d070;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  body:not(.is-home-page) .logo-text{filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5))}
   body:not(.is-home-page) .logo-sub{color:#c9a84c;text-shadow:none}
   .nav-links{display:flex;gap:2px;list-style:none;flex-wrap:wrap}
   /* Default (home — dark bg): gold text, dark shadow */
@@ -3565,7 +3565,7 @@
   .logo-icon{width:46px !important;height:46px !important;background:#c8a03a !important;color:#171006 !important;box-shadow:none !important}
   .logo-icon img{display:none !important}
   .logo-icon::before{content:'Y';font-weight:900;font-size:18px}
-  .logo-text{font-family:'DM Sans',sans-serif !important;color:#d8bd5d !important;font-size:18px !important;text-shadow:none !important}
+  .logo-text{font-family:'Dancing Script',cursive !important;font-size:26px !important;background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;text-shadow:none !important}
   @media(max-width:900px){
     nav{top:10px !important;width:calc(100% - 24px) !important;border-radius:999px !important}
     .nav-inner{height:36px !important;padding:0 10px 0 12px !important}
@@ -5774,7 +5774,7 @@ function defaultSettings(){
   return {
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
     logoIcon:'/favicon/apple-touch-icon.png',
-    logoText:'Yingyingying Amulet',
+    logoText:'YingyingyingSG',
     logoSub:'AUTHENTIC THAI AMULETS',
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
     nav:[
