@@ -6961,6 +6961,14 @@ async function ensurePageData(name){
   }
 }
 
+function setNavClearance(){
+  const nav=document.querySelector('nav');
+  if(!nav)return;
+  const b=nav.getBoundingClientRect().bottom;
+  if(b>0)document.documentElement.style.setProperty('--nav-clearance',(Math.round(b)+16)+'px');
+}
+window.addEventListener('resize',setNavClearance);
+
 async function goPage(name, opts={}){
   if(name === 'feed'){
     await goPage('home', {updateUrl: opts.updateUrl});
@@ -6971,6 +6979,7 @@ async function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
+  setNavClearance();
   // Switch page (inactive pages are display:none; new page fades in via CSS animation)
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   if(typeof closeHsArticle === 'function') closeHsArticle();
@@ -10756,17 +10765,6 @@ window.addEventListener('appinstalled',()=>{
   }
 })();
 
-// Nav clearance: measure real navbar bottom and set CSS var
-(function(){
-  function setNavClearance(){
-    const nav = document.querySelector('nav');
-    if(!nav) return;
-    const bottom = nav.getBoundingClientRect().bottom;
-    document.documentElement.style.setProperty('--nav-clearance', (Math.round(bottom)+16)+'px');
-  }
-  setNavClearance();
-  window.addEventListener('resize', setNavClearance);
-})();
 
 // ── Latest Updates Slider ──────────────────────────────────
 let _updatesSlideIdx = 0;
