@@ -3311,8 +3311,11 @@
       background:linear-gradient(180deg,#090704 0,#151006 310px,#fff4dc 620px,#fff8e9 100%);
     }
     .topbar{display:none}
-    /* Mobile: hide floating pill nav, show IG-style script header instead */
-    nav{display:none}
+    /* Mobile: show nav (logo only), hide IG-style script header */
+    nav{display:block}
+    .mobile-ig-header{display:none !important}
+    .nav-links{display:none !important}
+    nav .hamburger, nav .nav-toggle{display:none !important}
     .mobile-ig-header{
       display:flex;
       position:fixed;
