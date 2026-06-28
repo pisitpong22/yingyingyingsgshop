@@ -1529,20 +1529,20 @@
      polished by default — no matter what HTML the admin's RTE produces. */
   .custom-page-content{
     max-width:780px;margin:0 auto;
-    background:var(--glass-bg);
-    backdrop-filter:blur(var(--glass-blur)) saturate(180%);
-    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(180%);
-    border:1px solid var(--glass-border);
-    border-radius:18px;
-    padding:42px 48px;
-    color:var(--text);font-size:16px;line-height:1.85;
-    box-shadow:var(--glass-shadow),var(--glass-shadow-inner);
+    background:transparent;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    border:none;
+    border-radius:0;
+    padding:0;
+    color:rgba(220,205,175,.92);font-size:16px;line-height:1.9;
+    box-shadow:none;
   }
   .custom-page-content h1,
   .custom-page-content h2,
   .custom-page-content h3{
     font-family:var(--font-display);
-    color:var(--text);font-weight:700;
+    color:rgba(245,228,185,.97);font-weight:700;
     margin:1.4em 0 .6em;line-height:1.25;
   }
   .custom-page-content h1{font-size:28px}
@@ -1554,7 +1554,7 @@
   .custom-page-content p{margin:0 0 1em}
   .custom-page-content p:last-child{margin-bottom:0}
   .custom-page-content strong,
-  .custom-page-content b{font-weight:700;color:var(--text)}
+  .custom-page-content b{font-weight:700;color:rgba(240,210,140,.97)}
   .custom-page-content em,
   .custom-page-content i{font-style:italic}
   .custom-page-content ul,
