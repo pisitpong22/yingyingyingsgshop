@@ -5114,6 +5114,7 @@
   /* ═══ CASING PAGE: ALWAYS DARK — MUST BE LAST, HIGHEST SPECIFICITY ═══ */
   #page-casing.page,
   #page-casing.page.active{
+    padding-top:80px !important;
     background:
       radial-gradient(ellipse at 24% 16%,rgba(201,168,76,.16),transparent 38%),
       radial-gradient(ellipse at 78% 68%,rgba(120,60,180,.08),transparent 42%),
@@ -5135,6 +5136,11 @@
     border-bottom:none !important;
   }
   #page-casing .sec-head::before{display:none !important}
+  /* Ensure sec-head never overlaps navbar - add top spacing */
+  #page-casing > .sec-head,
+  #page-history-stories > .sec-head{
+    margin-top:0 !important;
+  }
   .casing-sec-head-i{
     padding:28px 24px 20px !important;
     text-align:left !important;
