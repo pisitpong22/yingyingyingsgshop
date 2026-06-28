@@ -356,10 +356,10 @@
   body:not(.is-home-page) .nav-links a:hover{color:#fffde0;background:rgba(201,168,76,.2);text-shadow:none}
   body:not(.is-home-page) .nav-links a.active{color:#1a0f00;text-shadow:none}
 
-  .page{display:block;padding-top:80px;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(10px);transition:opacity .26s ease,transform .26s ease,visibility 0s linear .26s}
-  .page.active{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0);transition:opacity .26s ease,transform .26s ease,visibility 0s linear 0s}
-  #page-home.page{padding-top:0}
-  #page-home.page.active{padding-top:0}
+  .page{display:none;padding-top:80px}
+  .page.active{display:block;padding-top:80px;animation:fadeUp .26s ease both}
+  #page-home.page,#page-home.page.active{padding-top:0}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
   /* ───── INITIAL LOAD SPLASH ─────
      Cover the screen with the brand colour until Firebase data arrives,
@@ -2161,8 +2161,8 @@
   /* MOBILE */
   @media(max-width:768px){
     body{font-size:14px}
-    .page{padding-top:66px}
-    #page-home.page{padding-top:0}
+    .page.active{padding-top:66px}
+    #page-home.page.active{padding-top:0}
     .topbar{font-size:11px;padding:6px 12px;letter-spacing:.5px}
     .nav-inner{height:52px;gap:8px}
     .logo-icon{width:34px;height:34px;font-size:17px}
@@ -3350,8 +3350,8 @@
       background-clip:text;
       filter:drop-shadow(0 1px 2px rgba(255,255,255,0.4));
     }
-    .page{padding-top:52px}
-    #page-home.page{padding-top:0}
+    .page.active{padding-top:52px}
+    #page-home.page.active{padding-top:0}
     .hero-wrap{
       border-bottom-left-radius:32px;
       border-bottom-right-radius:32px;
@@ -6965,21 +6965,12 @@ async function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
-  // Fade out current active page, then switch
-  const _prevPg=document.querySelector('.page.active');
-  const _doSwitch=()=>{
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    if(typeof closeHsArticle === 'function') closeHsArticle();
-    const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
-    setActiveNav(name);
-    window.scrollTo(0,0);
-  };
-  if(_prevPg && _prevPg.id!==('page-'+name)){
-    _prevPg.style.transition='opacity .18s ease,transform .18s ease,visibility 0s linear .18s';
-    _prevPg.style.opacity='0';
-    _prevPg.style.transform='translateY(-6px)';
-    setTimeout(()=>{ _prevPg.style.transition=''; _prevPg.style.opacity=''; _prevPg.style.transform=''; _doSwitch(); },180);
-  } else { _doSwitch(); }
+  // Switch page (inactive pages are display:none; new page fades in via CSS animation)
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  if(typeof closeHsArticle === 'function') closeHsArticle();
+  const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('active');
+  setActiveNav(name);
+  window.scrollTo(0,0);
   document.getElementById('navLinks').classList.remove('open');
   document.getElementById('mobileOverlay').classList.remove('open');
 
