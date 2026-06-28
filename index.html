@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- Speed up first byte to Firebase Storage / Google fonts by opening TCP
      + TLS connections immediately, in parallel with the HTML parse. -->
 <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
@@ -94,8 +94,10 @@
     color:var(--text);
     overflow-x:hidden;
     min-height:100vh;
+    min-height:100dvh;
     background-attachment:fixed;
     position:relative;
+    padding-bottom:env(safe-area-inset-bottom,0px);
   }
   /* Drifting glow orbs — pure CSS, no JS. Adds subtle motion that makes the
      glass blur effect look "alive". */
