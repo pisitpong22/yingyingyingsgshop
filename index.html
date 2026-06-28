@@ -356,8 +356,8 @@
   body:not(.is-home-page) .nav-links a:hover{color:#fffde0;background:rgba(201,168,76,.2);text-shadow:none}
   body:not(.is-home-page) .nav-links a.active{color:#1a0f00;text-shadow:none}
 
-  .page{display:none;padding-top:var(--nav-clearance,100px)}
-  .page.active{display:block;padding-top:var(--nav-clearance,100px);animation:fadeUp .26s ease both}
+  .page{display:none;padding-top:0}
+  .page.active{display:block;padding-top:0;animation:fadeUp .26s ease both}
   #page-home.page,#page-home.page.active{padding-top:0}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
@@ -2161,7 +2161,7 @@
   /* MOBILE */
   @media(max-width:768px){
     body{font-size:14px}
-    .page.active{padding-top:var(--nav-clearance,100px)}
+    .page.active{padding-top:0}
     #page-home.page.active{padding-top:0}
     .topbar{font-size:11px;padding:6px 12px;letter-spacing:.5px}
     .nav-inner{height:52px;gap:8px}
@@ -3350,7 +3350,7 @@
       background-clip:text;
       filter:drop-shadow(0 1px 2px rgba(255,255,255,0.4));
     }
-    .page.active{padding-top:var(--nav-clearance,100px)}
+    .page.active{padding-top:0}
     #page-home.page.active{padding-top:0}
     .hero-wrap{
       border-bottom-left-radius:32px;
@@ -4019,7 +4019,7 @@
   /* ═══ SITEWIDE CONCEPT A / LIQUID GLASS ═══ */
   .page:not(#page-home){
     min-height:100vh !important;
-    padding:var(--nav-clearance,100px) 20px 80px !important;
+    padding:0 20px 80px !important;
     background:
       radial-gradient(ellipse at 24% 16%,rgba(201,168,76,.16),transparent 38%),
       radial-gradient(ellipse at 78% 68%,rgba(120,60,180,.08),transparent 42%),
@@ -4205,7 +4205,7 @@
     -webkit-backdrop-filter:blur(18px) saturate(150%) !important;
   }
   @media(max-width:900px){
-    .page:not(#page-home){padding:var(--nav-clearance,100px) 16px 80px !important}
+    .page:not(#page-home){padding:0 16px 80px !important}
     .page:not(#page-home) .sec-head{margin-bottom:28px !important}
     .page:not(#page-home) .sec-head h2{font-size:38px !important}
     .search-bar{display:grid !important;grid-template-columns:1fr !important}
@@ -5114,7 +5114,6 @@
   /* ═══ CASING PAGE: ALWAYS DARK — MUST BE LAST, HIGHEST SPECIFICITY ═══ */
   #page-casing.page,
   #page-casing.page.active{
-    padding-top:var(--nav-clearance,100px) !important;
     background:
       radial-gradient(ellipse at 24% 16%,rgba(201,168,76,.16),transparent 38%),
       radial-gradient(ellipse at 78% 68%,rgba(120,60,180,.08),transparent 42%),
@@ -5283,6 +5282,7 @@
     <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menu">☰</button>
   </div>
 </nav>
+<div id="navSpacer" style="height:0"></div>
 
 <div class="mobile-overlay" id="mobileOverlay" onclick="toggleMenu()"></div>
 <div class="mobile-tabbar" id="mobileTabbar" aria-label="Mobile navigation"></div>
@@ -6963,9 +6963,10 @@ async function ensurePageData(name){
 
 function setNavClearance(){
   const nav=document.querySelector('nav');
-  if(!nav)return;
+  const spacer=document.getElementById('navSpacer');
+  if(!nav||!spacer)return;
   const b=nav.getBoundingClientRect().bottom;
-  if(b>0)document.documentElement.style.setProperty('--nav-clearance',(Math.round(b)+16)+'px');
+  if(b>0)spacer.style.height=(Math.round(b)+12)+'px';
 }
 window.addEventListener('resize',setNavClearance);
 
