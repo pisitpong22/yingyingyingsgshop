@@ -18,6 +18,9 @@
 <link rel="shortcut icon" href="/favicon/favicon.ico">
 <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="YYYSG">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0a06">
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=Sarabun:wght@300;400;500;600&family=Noto+Serif:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
 <!-- Firebase shared module — provides window.FB API -->
@@ -3442,10 +3445,10 @@
       gap:2px;
       padding:4px;
       border-radius:24px;
-      /* Lightweight liquid glass — no heavy shadow */
-      background:rgba(255,252,240,0.62);
-      border:1px solid rgba(255,255,255,.5);
-      border-top:1px solid rgba(255,248,200,.7);
+      /* Lightweight liquid glass — dark on all pages */
+      background:rgba(20,14,4,0.72);
+      border:1px solid rgba(201,168,76,0.28);
+      border-top:1px solid rgba(201,168,76,0.35);
       backdrop-filter:blur(16px);
       -webkit-backdrop-filter:blur(16px);
       overflow-x:auto;
@@ -3462,7 +3465,7 @@
       appearance:none;
       border:none;
       background:transparent;
-      color:#6e5420;
+      color:rgba(201,168,76,0.7);
       min-width:52px;
       flex:1 0 52px;
       height:44px;
