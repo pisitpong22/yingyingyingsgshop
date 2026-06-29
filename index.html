@@ -7087,9 +7087,7 @@ async function goPage(name, opts={}){
     _hsLoaded = false;
     loadHistorySummariesForPage().then(()=>{
       _hsLoaded = true;
-      if(document.getElementById('page-history-stories')?.classList.contains('active')){
-        renderHistoryStories();
-      }
+      renderHistoryStories();
     }).catch(err=>{
       _hsLoaded = true;
       console.warn('[history-stories] load failed:', err);
