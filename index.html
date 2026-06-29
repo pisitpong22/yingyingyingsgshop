@@ -5250,6 +5250,32 @@
   .card-price,.prod-price{color:rgba(201,168,76,.92) !important}
   .card-foot{border-top-color:rgba(201,168,76,.1) !important}
   .card-img{background:linear-gradient(145deg,#2d1e06,#0d0a06) !important;border-radius:0 !important}
+
+  /* ── Mobile/Tablet: full-width flush nav bar (fixes white browser chrome) ── */
+  @media(max-width:1024px){
+    nav{
+      top:0 !important;
+      left:0 !important;
+      right:0 !important;
+      transform:none !important;
+      width:100% !important;
+      max-width:none !important;
+      border-radius:0 !important;
+      border-left:none !important;
+      border-right:none !important;
+      border-top:none !important;
+      border-bottom:1px solid rgba(201,168,76,.22) !important;
+      background:rgba(13,10,6,0.96) !important;
+      backdrop-filter:blur(20px) saturate(160%) !important;
+      -webkit-backdrop-filter:blur(20px) saturate(160%) !important;
+      box-shadow:0 2px 16px rgba(0,0,0,.4) !important;
+      padding-top:env(safe-area-inset-top,0px) !important;
+    }
+    .nav-inner{
+      padding-left:max(16px, env(safe-area-inset-left,0px)) !important;
+      padding-right:max(16px, env(safe-area-inset-right,0px)) !important;
+    }
+  }
 </style>
 </head>
 <body>
