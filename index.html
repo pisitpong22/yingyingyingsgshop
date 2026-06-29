@@ -5135,6 +5135,22 @@
     .social-3d{width:min(42vw,450px) !important;height:500px !important}
   }
 
+  /* ═══ CASING PANEL TRANSITIONS ═══ */
+  #casingTypes, #casingVariants{
+    transition: opacity .32s cubic-bezier(.16,1,.3,1), transform .32s cubic-bezier(.16,1,.3,1);
+    will-change: opacity, transform;
+  }
+  #casingTypes.casing-panel-out, #casingVariants.casing-panel-out{
+    opacity:0; transform:translateY(12px) scale(.995); pointer-events:none;
+  }
+  #casingTypes.casing-panel-in, #casingVariants.casing-panel-in{
+    animation: casingPanelIn .38s cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes casingPanelIn{
+    from{opacity:0;transform:translateY(16px) scale(.993)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+
   /* ═══ CASING PAGE: ALWAYS DARK — MUST BE LAST, HIGHEST SPECIFICITY ═══ */
   #page-casing.page,
   #page-casing.page.active{
@@ -7616,10 +7632,36 @@ function renderCasingLoading(){
   }
 }
 
+function casingPanelSwitch(showId, hideId, callback){
+  const showEl = document.getElementById(showId);
+  const hideEl = document.getElementById(hideId);
+  if(!showEl) return;
+  if(hideEl && hideEl.style.display !== 'none'){
+    hideEl.classList.add('casing-panel-out');
+    setTimeout(()=>{
+      hideEl.classList.remove('casing-panel-out');
+      hideEl.style.display = 'none';
+      showEl.style.display = 'block';
+      showEl.classList.remove('casing-panel-in');
+      void showEl.offsetWidth; // reflow
+      showEl.classList.add('casing-panel-in');
+      if(callback) callback();
+      setTimeout(()=>showEl.classList.remove('casing-panel-in'), 400);
+    }, 280);
+  } else {
+    if(hideEl) hideEl.style.display = 'none';
+    showEl.style.display = 'block';
+    showEl.classList.remove('casing-panel-in');
+    void showEl.offsetWidth;
+    showEl.classList.add('casing-panel-in');
+    if(callback) callback();
+    setTimeout(()=>showEl.classList.remove('casing-panel-in'), 400);
+  }
+}
+
 function renderCasingTypes(){
   const db=getDB();
-  document.getElementById('casingTypes').style.display='block';
-  document.getElementById('casingVariants').style.display='none';
+  casingPanelSwitch('casingTypes','casingVariants');
   const _sh=document.querySelector('#page-casing .sec-head');
   if(_sh) _sh.style.display='';
   const types=db.casingTypes||[];
@@ -7991,9 +8033,7 @@ function appendVariantCardsProgressively(grid, ty, vars, start, token){
 function renderVariantsLoading(typeId){
   const db=getDB();
   const ty=(db.casingTypes||[]).find(t=>String(t.id)===String(typeId));
-  document.getElementById('casingTypes').style.display='none';
-  const vw=document.getElementById('casingVariants');
-  if(vw) vw.style.display='block';
+  casingPanelSwitch('casingVariants','casingTypes');
   const g=document.getElementById('varGrid');
   if(!g) return;
   // Show type header immediately
@@ -8010,8 +8050,7 @@ function renderVariants(typeId){
   const db=getDB();
   const ty=(db.casingTypes||[]).find(x=>String(x.id)===String(typeId));
   if(!ty){curCasingType=null;renderCasingTypes();return;}
-  document.getElementById('casingTypes').style.display='none';
-  document.getElementById('casingVariants').style.display='block';
+  casingPanelSwitch('casingVariants','casingTypes');
   const _secHead=document.querySelector('#page-casing .sec-head');
   if(_secHead) _secHead.style.display='none';
   document.getElementById('vCrumb').innerHTML=`
