@@ -374,9 +374,12 @@
   body:not(.is-home-page) .nav-links a.active{color:#1a0f00;background:linear-gradient(135deg,#f0d278,#c9a84c,#b8922e);box-shadow:0 2px 18px rgba(201,168,76,.5),0 1px 0 rgba(255,248,200,.35) inset;text-shadow:none}
 
   .page{display:none;padding-top:0}
-  .page.active{display:block;padding-top:0;animation:fadeUp .26s ease both}
+  .page{will-change:opacity,transform;}
+  .page.active{display:block;padding-top:0;animation:pgIn .42s cubic-bezier(.16,1,.3,1) both}
+  .page.page-leaving{animation:pgOut .22s cubic-bezier(.4,0,1,1) both;pointer-events:none}
   #page-home.page,#page-home.page.active{padding-top:0}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pgIn{from{opacity:0;transform:translateY(18px) scale(.992)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes pgOut{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-10px) scale(.996)}}
 
   /* ───── INITIAL LOAD SPLASH ─────
      Cover the screen with the brand colour until Firebase data arrives,
@@ -7036,27 +7039,36 @@ async function goPage(name, opts={}){
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
   setNavClearance();
-  // Switch page (inactive pages are display:none; new page fades in via CSS animation)
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  if(typeof closeHsArticle === 'function') closeHsArticle();
-  const pg=document.getElementById('page-'+name);
-  if(pg){
+  // Switch page with luxury transition: exit current → enter next
+  const currentPg = document.querySelector('.page.active');
+  const pg = document.getElementById('page-'+name);
+  if(!pg) return;
+
+  const doSwitch = () => {
+    document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.classList.remove('page-leaving');});
+    if(typeof closeHsArticle === 'function') closeHsArticle();
     // Force animation re-trigger
     pg.style.animation='none';
     pg.classList.add('active');
     requestAnimationFrame(()=>{ pg.style.animation=''; });
-  }
-  setActiveNav(name);
-  setNavClearance(); // re-run after page switch so home spacer=0
-  window.scrollTo(0,0);
-  document.getElementById('navLinks').classList.remove('open');
-  document.getElementById('mobileOverlay').classList.remove('open');
+    setActiveNav(name);
+    setNavClearance();
+    window.scrollTo(0,0);
+    document.getElementById('navLinks').classList.remove('open');
+    document.getElementById('mobileOverlay').classList.remove('open');
+    // Show skeletons immediately for pages that have them
+    if(name==='amulets')  showGridSkeleton('aGrid',12);
+    if(name==='accessories') showGridSkeleton('acGrid',12);
+    if(name==='projects') showGridSkeleton('pGrid',8);
+    if(name==='reviews')  showGridSkeleton('revGrid',6);
+  };
 
-  // Show skeletons immediately for pages that have them
-  if(name==='amulets')  showGridSkeleton('aGrid',12);
-  if(name==='accessories') showGridSkeleton('acGrid',12);
-  if(name==='projects') showGridSkeleton('pGrid',8);
-  if(name==='reviews')  showGridSkeleton('revGrid',6);
+  if(currentPg && currentPg !== pg){
+    currentPg.classList.add('page-leaving');
+    setTimeout(doSwitch, 210);
+  } else {
+    doSwitch();
+  }
 
   if(name==='history-stories'){
     // Show skeleton immediately
