@@ -669,7 +669,7 @@
      from .hero (background, overlays) can blend onto the image inside. */
   .hero-3d{
     position:relative;
-    width:100%;height:82vh;max-height:700px;
+    width:100%;height:88vh;max-height:760px;
     z-index:10;
     isolation:isolate;
     display:flex;align-items:center;justify-content:center;
@@ -678,8 +678,8 @@
     transform-origin:center center;
   }
   @keyframes heroFloat{
-    0%,100%{transform:translateY(0px) rotate(-4deg)}
-    50%{transform:translateY(-18px) rotate(-4deg)}
+    0%,100%{transform:translateY(0px)}
+    50%{transform:translateY(-18px)}
   }
   #phra3d{
     width:100%;height:100%;
@@ -1896,7 +1896,7 @@
   .var-hint{font-size:10.5px;color:rgba(201,168,76,.65);font-weight:600;opacity:.85;transition:opacity .2s}
   .var-card:hover .var-hint{opacity:1}
   .var-card--sample .var-img{aspect-ratio:3/4}
-  .var-card--sample .var-img img{object-fit:contain}
+  .var-card--sample .var-img img{object-fit:cover}
   .var-grid--sample{grid-template-columns:repeat(3,1fr) !important;gap:0 !important}
 
   .proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
@@ -3387,9 +3387,9 @@
     .hero-3d{
       display:flex !important;
       order:1;
-      height:40svh;
-      min-height:280px;
-      max-height:420px;
+      height:46svh;
+      min-height:320px;
+      max-height:480px;
       margin:0 -6px 16px;
       padding-top:44px; /* offset for nav bar */
     }
@@ -3588,7 +3588,7 @@
       linear-gradient(180deg,#0d0a06 0%,#0a0603 56%,#10080c 100%) !important;
   }
   body::before,body::after{display:none !important}
-  @media(min-width:1025px){
+  @media(min-width:1000px){
   nav{
     top:14px !important;
     left:50% !important;
@@ -3650,8 +3650,9 @@
   .social-brand-block .social-avatar{display:none !important}
   .social-kicker{
     background:none !important;border:none !important;padding:0 !important;
-    color:rgba(208,170,68,.88) !important;font-size:14px !important;font-weight:800 !important;
-    letter-spacing:6px !important;text-transform:uppercase !important;margin-bottom:30px !important;
+    color:rgba(232,201,106,.95) !important;font-size:15px !important;font-weight:800 !important;
+    letter-spacing:5px !important;text-transform:uppercase !important;margin-bottom:30px !important;
+    text-shadow:0 2px 10px rgba(0,0,0,.55) !important;
   }
   .social-title{
     font-family:var(--font-display) !important;
@@ -3659,16 +3660,16 @@
     font-size:clamp(68px,6vw,92px) !important;
     line-height:1.02 !important;
     color:#fffaf0 !important;
-    text-shadow:none !important;
+    text-shadow:0 4px 24px rgba(0,0,0,.45) !important;
   }
   .social-title::first-letter{color:#fffaf0}
   .social-desc{
     max-width:650px !important;
     margin-top:36px !important;
-    color:rgba(226,218,190,.62) !important;
-    font-size:21px !important;
-    line-height:1.55 !important;
-    text-shadow:none !important;
+    color:rgba(238,231,206,.82) !important;
+    font-size:19px !important;
+    line-height:1.75 !important;
+    text-shadow:0 2px 14px rgba(0,0,0,.5) !important;
   }
   .social-actions{
     display:flex !important;
@@ -3744,7 +3745,7 @@
   .social-channels-head h2{font-family:'DM Sans',sans-serif !important;font-size:22px !important;color:rgba(238,226,174,.9) !important}
   .social-channels-head p{font-size:16px !important;color:rgba(218,205,156,.52) !important}
   .sc-head-divider,.sc-sparkle{display:none !important}
-  #scGrid{display:flex !important;justify-content:flex-start !important;gap:30px !important}
+  #scGrid{display:flex !important;justify-content:flex-start !important;flex-wrap:wrap !important;row-gap:18px !important;gap:22px 30px !important}
   .sc-item{width:74px !important;color:rgba(218,205,156,.5) !important}
   .sc-circle{width:58px !important;height:58px !important;background:rgba(255,255,255,.08) !important;border:1px solid rgba(255,255,255,.15) !important;box-shadow:none !important}
   .sc-name{font-size:12px !important;line-height:1.1 !important;color:rgba(218,205,156,.5) !important}
@@ -3781,7 +3782,7 @@
   .rev-loc,.rev-date{color:rgba(218,205,156,.42) !important}
 
   @media(max-width:999px){
-    nav{width:calc(100% - 24px) !important;top:12px !important}.nav-links{display:none !important}
+    .nav-links{display:none !important}
     .social-cover{padding:110px 24px 40px !important;min-height:auto !important}
     .social-profile-card{grid-template-columns:1fr !important;min-height:auto !important;gap:26px !important}
     .social-title{font-size:52px !important}.social-desc{font-size:17px !important}.social-visual{height:330px !important;min-height:330px !important}.social-3d{width:250px !important;height:310px !important}
@@ -3913,9 +3914,9 @@
       align-items:flex-start !important;
     }
     .social-avatar{display:none !important}
-    .social-kicker{font-size:10px !important;letter-spacing:3px !important;line-height:1.5 !important;margin-bottom:10px !important}
-    .social-title{font-size:34px !important;line-height:1.05 !important}
-    .social-desc{font-size:14px !important;line-height:1.65 !important;margin-top:10px !important;color:rgba(255,242,186,.72) !important}
+    .social-kicker{font-size:11.5px !important;letter-spacing:2.5px !important;line-height:1.5 !important;margin-bottom:12px !important;color:rgba(232,201,106,.95) !important}
+    .social-title{font-size:38px !important;line-height:1.08 !important}
+    .social-desc{font-size:16px !important;line-height:1.7 !important;margin-top:12px !important;color:rgba(238,231,206,.82) !important}
     .social-actions{display:none !important}
     .trust-wrap-outer{max-width:calc(100% - 28px) !important;margin:0 auto !important;padding-bottom:44px !important}
     .trust-strip{grid-template-columns:1fr !important;border-radius:22px !important;background:rgba(255,255,255,.13) !important}
@@ -4015,7 +4016,6 @@
   }
   .svc-arrow,.svc-stat{display:none !important}
   @media(min-width:901px) and (max-width:1180px){
-    nav{width:calc(100% - 32px) !important}
     .social-cover{min-height:860px !important;padding:112px 42px 170px !important}
     .social-profile-card{grid-template-columns:minmax(0,1fr) 360px !important;gap:34px !important;min-height:620px !important}
     .social-title{font-size:clamp(58px,7vw,78px) !important}
@@ -4024,7 +4024,9 @@
     .trust-wrap-outer{max-width:calc(100% - 64px) !important;margin:-202px auto 0 !important}
     .trust-strip-card{padding:18px 18px !important}
     #svcCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
-    .social-channels-inner{max-width:1100px !important}
+    .social-channels-inner{max-width:1100px !important;grid-template-columns:1fr !important;padding:32px 28px !important;text-align:center !important}
+    .social-channels-head{text-align:center !important;padding-left:0 !important;margin-bottom:20px !important}
+    #scGrid{justify-content:center !important}
     .updates-grid,.rev-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
   }
   @media(max-width:900px){
@@ -10565,14 +10567,18 @@ window.addEventListener('appinstalled',()=>{
       targetRotY = clamp(targetRotY, isMobile3D() ? -0.48 : -0.62, isMobile3D() ? 0.48 : 0.62);
     }
 
+    // Drag/hover still STARTS on the 3D box (so clicking elsewhere on the
+    // page doesn't grab the model), but tracking is bound to the whole
+    // window — otherwise rotation stops the instant the cursor crosses the
+    // edge of the (fairly small) hero-3d box, which felt broken.
     hitTarget.addEventListener('pointerdown', beginDrag);
-    hitTarget.addEventListener('pointermove', moveDrag);
+    window.addEventListener('pointermove', moveDrag);
     window.addEventListener('pointerup', endDrag);
     window.addEventListener('pointercancel', endDrag);
-    hitTarget.addEventListener('mousemove', moveDrag);
+    window.addEventListener('mousemove', moveDrag);
     hitTarget.addEventListener('mousedown', beginDrag);
     window.addEventListener('mouseup', endDrag);
-    hitTarget.addEventListener('mouseleave', () => {
+    document.addEventListener('mouseleave', () => {
       if(!dragging){
         targetRotX = 0;
         targetRotY = 0;
@@ -10622,7 +10628,7 @@ window.addEventListener('appinstalled',()=>{
       // enough to reveal the back, but it still reacts naturally to drag/hover.
       const mobile = isMobile3D();
       const BASE_TILT_Y = 0;
-      const BASE_TILT_X = mobile ? 0.04 : 0.08;
+      const BASE_TILT_X = 0;
       const idleX = Math.cos(t * 0.45) * 0.035;  // subtle nod
       if(phraGroup){
         currentRotX += (targetRotX - currentRotX) * 0.12;
