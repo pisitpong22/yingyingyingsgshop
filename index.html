@@ -3735,7 +3735,7 @@
   .social-channels-section{order:1 !important;padding:76px 0 66px !important;background:transparent !important;border:none !important}
   .latest-updates-section{order:2 !important;padding:70px 0 68px !important;background:transparent !important;border:none !important}
   #homeReviewsSection{order:3 !important;display:block !important;padding:70px 0 110px !important;background:transparent !important}
-  .social-channels-inner,.latest-updates-inner,.home-reviews-inner{max-width:1320px !important;margin:0 auto !important;padding:0 24px !important}
+  .social-channels-inner,.latest-updates-inner,.home-reviews-inner{max-width:1100px !important;margin:0 auto !important;padding:0 24px !important}
   .social-channels-inner{
     min-height:150px;border-radius:28px;background:rgba(255,255,255,.055);
     border:1px solid rgba(255,255,255,.12);display:grid;grid-template-columns:350px minmax(0,1fr);align-items:center;
@@ -5180,9 +5180,12 @@
     padding-left:0 !important;
     padding-right:0 !important;
   }
+  #page-casing > .content{
+    padding-top:8px !important;
+  }
   #page-casing .sec-head{
-    padding-top:28px !important;
-    padding-bottom:24px !important;
+    padding-top:20px !important;
+    padding-bottom:10px !important;
     border-bottom:none !important;
   }
   #page-casing .sec-head::before{display:none !important}
@@ -5200,7 +5203,7 @@
   }
   .csh-glass-card{
     position:relative;
-    background:rgba(255,255,255,.045);
+    background:rgba(13,10,6,.55);
     border:1px solid rgba(201,168,76,.2);
     border-top:1.5px solid rgba(201,168,76,.5);
     border-radius:16px;
@@ -7157,14 +7160,13 @@ async function goPage(name, opts={}){
     // fall back to full reinit via initPhra3D.
     setTimeout(() => {
       const canvas = document.getElementById('phra3d');
-      const hasContext = canvas && (
-        canvas.getContext('webgl2') || canvas.getContext('webgl')
-      );
+      const gl = canvas && (canvas.getContext('webgl2') || canvas.getContext('webgl'));
+      const contextLost = !!(gl && gl.isContextLost && gl.isContextLost());
       if(typeof window._resumePhraRender === 'function'){
         window._resumePhraRender();
       }
       // If canvas has no rendered content (pixel check) or context is lost, reinit
-      if(!hasContext || (canvas && canvas.width === 0)){
+      if(!gl || contextLost || (canvas && canvas.width === 0)){
         if(typeof window.initPhra3D === 'function') window.initPhra3D();
       }
     }, 60);
@@ -10091,6 +10093,22 @@ window.addEventListener('appinstalled',()=>{
     camera.position.set(0, 0, 7);
 
     renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
+    // ─── Recover from lost WebGL context ───
+    // Browsers can silently drop a canvas's GL context — most often when
+    // it's been hidden (page.display:none while browsing another page)
+    // for a while, or under memory pressure on mobile. Without handling
+    // this, the model just goes blank forever after navigating away and
+    // back, because the renderer/scene objects still "exist" but no
+    // longer draw anything. Rebuilding the whole scene on restore fixes it.
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      initialised = false;
+    }, false);
+    canvas.addEventListener('webglcontextrestored', () => {
+      initialised = false;
+      currentMode = '';
+      if(typeof window.initPhra3D === 'function') window.initPhra3D();
+    }, false);
     // ─── Cap pixel ratio for performance ───
     // Full retina (DPR 3) on a phone means 9x the pixels to render every
     // frame. That's heavy on a WebGL scene with envMaps. Cap at 2 on
