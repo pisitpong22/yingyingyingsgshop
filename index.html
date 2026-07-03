@@ -1813,11 +1813,12 @@
   .ctype-hero-stat-key{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(201,168,76,.4);font-weight:600}
   .ctype-hero-stat-val{font-size:13px;font-weight:700;color:rgba(230,210,165,.9)}
   .ctype-hero-sep{width:1px;height:26px;background:rgba(201,168,76,.2);align-self:center;margin:0 2px}
-  .ctype-hero-stat-lead{flex-direction:row;align-items:center;gap:7px;background:linear-gradient(135deg,rgba(201,168,76,.2),rgba(201,168,76,.07));border:1px solid rgba(201,168,76,.55);border-radius:10px;padding:5px 13px 5px 10px;box-shadow:0 0 0 1px rgba(201,168,76,.08),0 2px 12px rgba(201,168,76,.15);animation:leadStatGlow 2.6s ease-in-out infinite}
-  .ctype-hero-stat-lead .ctype-hero-stat-key{color:rgba(240,217,138,.8)}
-  .ctype-hero-stat-lead .ctype-hero-stat-val{color:#f4dd96;font-size:13.5px}
-  .ctype-hero-stat-lead-icon{font-size:14px;line-height:1;flex-shrink:0}
-  @keyframes leadStatGlow{0%,100%{box-shadow:0 0 0 1px rgba(201,168,76,.08),0 2px 12px rgba(201,168,76,.15)}50%{box-shadow:0 0 0 1px rgba(201,168,76,.18),0 2px 18px rgba(201,168,76,.32)}}
+  .ctype-hero-leadtime{display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;background:linear-gradient(135deg,rgba(255,165,60,.16),rgba(201,168,76,.08));border:1.5px solid rgba(255,180,70,.6);border-radius:10px;padding:9px 13px;box-shadow:0 0 0 1px rgba(255,165,60,.1),0 3px 14px rgba(255,140,40,.18);animation:leadStatGlow 2.2s ease-in-out infinite}
+  .ctype-hero-leadtime-icon{font-size:17px;line-height:1;flex-shrink:0;filter:drop-shadow(0 0 4px rgba(255,165,60,.5))}
+  .ctype-hero-leadtime-txt{display:flex;flex-direction:column;gap:1px;line-height:1.25}
+  .ctype-hero-leadtime-key{font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,200,120,.85);font-weight:700}
+  .ctype-hero-leadtime-val{font-size:13px;font-weight:800;color:#ffdca6}
+  @keyframes leadStatGlow{0%,100%{box-shadow:0 0 0 1px rgba(255,165,60,.1),0 3px 14px rgba(255,140,40,.18)}50%{box-shadow:0 0 0 1px rgba(255,165,60,.22),0 3px 22px rgba(255,140,40,.4)}}
   .ctype-hero-desc-row{display:flex;align-items:center;gap:10px;margin-top:10px}
   .ctype-hero-desc-txt{font-size:11px;color:rgba(155,135,95,.8);line-height:1.65;flex:1;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
   .ctype-hero-read-more{flex-shrink:0;white-space:nowrap;font-size:10px;color:rgba(201,168,76,.65);border:1px solid rgba(201,168,76,.24);padding:3px 9px;border-radius:12px;cursor:pointer;background:transparent}
@@ -1855,6 +1856,9 @@
     .ctype-hero-inner{padding:14px 14px 12px}
     .ctype-hero-name{font-size:18px}
     .ctype-hero-stat-val{font-size:12px}
+    .ctype-hero-leadtime{padding:8px 11px;gap:8px}
+    .ctype-hero-leadtime-icon{font-size:15px}
+    .ctype-hero-leadtime-val{font-size:12px}
     /* toolbar sticky on mobile */
     .ctype-toolbar{
       position:sticky;top:64px;z-index:20;
@@ -5645,6 +5649,7 @@
             </div>
             <div class="ctype-hero-divider"></div>
             <div class="ctype-hero-stats" id="vHeroStats"></div>
+            <div class="ctype-hero-leadtime" id="vLeadTimeBanner" style="display:none"></div>
             <div class="ctype-hero-desc-row" id="vDescRow" style="display:none">
               <div class="ctype-hero-desc-txt" id="vDescSnippet"></div>
               <button class="ctype-hero-read-more" id="vReadMore" onclick="toggleCtypeDesc()">อ่านเพิ่ม ▾</button>
@@ -8084,11 +8089,20 @@ function renderVariants(typeId){
     const _sep   = '<div class="ctype-hero-sep"></div>';
     let statsHtml = '';
     if(_price) statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Price</div><div class="ctype-hero-stat-val">${_price}</div></div>`;
-    if(_price && _time) statsHtml += _sep;
-    if(_time)  statsHtml += `<div class="ctype-hero-stat ctype-hero-stat-lead"><span class="ctype-hero-stat-lead-icon">⏱️</span><div><div class="ctype-hero-stat-key">Lead Time</div><div class="ctype-hero-stat-val">${_time}</div></div></div>`;
-    if(_count > 0 && (_price||_time)) statsHtml += _sep;
+    if(_price && _count > 0) statsHtml += _sep;
     if(_count > 0) statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Styles</div><div class="ctype-hero-stat-val">${_count}</div></div>`;
     _statsEl.innerHTML = statsHtml;
+    // lead-time alert banner (standalone, full-width, always own row)
+    const _leadEl = document.getElementById('vLeadTimeBanner');
+    if(_leadEl){
+      if(_time){
+        _leadEl.style.display = 'flex';
+        _leadEl.innerHTML = `<span class="ctype-hero-leadtime-icon">⚠️</span><div class="ctype-hero-leadtime-txt"><span class="ctype-hero-leadtime-key">${lang==='th'?'ระยะเวลาทำ':'Lead Time'}</span><span class="ctype-hero-leadtime-val">${_time}</span></div>`;
+      } else {
+        _leadEl.style.display = 'none';
+        _leadEl.innerHTML = '';
+      }
+    }
   }
   // desc
   const _rawDesc = casingDescWithoutTimeframe(ty.desc || '');
