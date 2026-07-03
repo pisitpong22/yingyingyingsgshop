@@ -1813,6 +1813,11 @@
   .ctype-hero-stat-key{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(201,168,76,.4);font-weight:600}
   .ctype-hero-stat-val{font-size:13px;font-weight:700;color:rgba(230,210,165,.9)}
   .ctype-hero-sep{width:1px;height:26px;background:rgba(201,168,76,.2);align-self:center;margin:0 2px}
+  .ctype-hero-stat-lead{flex-direction:row;align-items:center;gap:7px;background:linear-gradient(135deg,rgba(201,168,76,.2),rgba(201,168,76,.07));border:1px solid rgba(201,168,76,.55);border-radius:10px;padding:5px 13px 5px 10px;box-shadow:0 0 0 1px rgba(201,168,76,.08),0 2px 12px rgba(201,168,76,.15);animation:leadStatGlow 2.6s ease-in-out infinite}
+  .ctype-hero-stat-lead .ctype-hero-stat-key{color:rgba(240,217,138,.8)}
+  .ctype-hero-stat-lead .ctype-hero-stat-val{color:#f4dd96;font-size:13.5px}
+  .ctype-hero-stat-lead-icon{font-size:14px;line-height:1;flex-shrink:0}
+  @keyframes leadStatGlow{0%,100%{box-shadow:0 0 0 1px rgba(201,168,76,.08),0 2px 12px rgba(201,168,76,.15)}50%{box-shadow:0 0 0 1px rgba(201,168,76,.18),0 2px 18px rgba(201,168,76,.32)}}
   .ctype-hero-desc-row{display:flex;align-items:center;gap:10px;margin-top:10px}
   .ctype-hero-desc-txt{font-size:11px;color:rgba(155,135,95,.8);line-height:1.65;flex:1;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
   .ctype-hero-read-more{flex-shrink:0;white-space:nowrap;font-size:10px;color:rgba(201,168,76,.65);border:1px solid rgba(201,168,76,.24);padding:3px 9px;border-radius:12px;cursor:pointer;background:transparent}
@@ -8080,7 +8085,7 @@ function renderVariants(typeId){
     let statsHtml = '';
     if(_price) statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Price</div><div class="ctype-hero-stat-val">${_price}</div></div>`;
     if(_price && _time) statsHtml += _sep;
-    if(_time)  statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Lead Time</div><div class="ctype-hero-stat-val">${_time}</div></div>`;
+    if(_time)  statsHtml += `<div class="ctype-hero-stat ctype-hero-stat-lead"><span class="ctype-hero-stat-lead-icon">⏱️</span><div><div class="ctype-hero-stat-key">Lead Time</div><div class="ctype-hero-stat-val">${_time}</div></div></div>`;
     if(_count > 0 && (_price||_time)) statsHtml += _sep;
     if(_count > 0) statsHtml += `<div class="ctype-hero-stat"><div class="ctype-hero-stat-key">Styles</div><div class="ctype-hero-stat-val">${_count}</div></div>`;
     _statsEl.innerHTML = statsHtml;
