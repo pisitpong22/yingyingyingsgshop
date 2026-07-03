@@ -5162,14 +5162,15 @@
     to{opacity:1;transform:translateY(0) scale(1)}
   }
 
-  /* ═══ CASING PAGE: ALWAYS DARK — MUST BE LAST, HIGHEST SPECIFICITY ═══ */
+  /* Casing page: no separate background layer — let body's dark gradient
+     show straight through, exactly like every other non-home page
+     (history, amulets, projects, accessories). A second background layer
+     here was what caused the visible seam under the navbar: it was
+     positioned relative to this element's own (tall) box while body's
+     gradient is viewport-fixed, so the two never lined up. */
   #page-casing.page,
   #page-casing.page.active{
-    background:
-      radial-gradient(ellipse at 24% 16%,rgba(201,168,76,.16),transparent 38%),
-      radial-gradient(ellipse at 78% 68%,rgba(120,60,180,.08),transparent 42%),
-      linear-gradient(135deg,#0d0a06 0%,#1a1208 44%,#0f0c08 100%) !important;
-    background-color:#0d0a06 !important;
+    background:transparent !important;
     min-height:100vh !important;
   }
   #page-casing .content,
