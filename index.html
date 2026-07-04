@@ -9974,6 +9974,7 @@ window.addEventListener('appinstalled',()=>{
   let frontTex = null, backTex = null;
   let loadedGlbUrl = '';                         // remember what we loaded so we can detect changes
   let initInFlight = null;
+  let phraResizeObserver = null;                 // watches #phra3d for the 0×0 → real-size jump
 
   function loadScriptOnce(src, test){
     if(test && test()) return Promise.resolve();
@@ -10125,6 +10126,16 @@ window.addEventListener('appinstalled',()=>{
     function resize(){
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
+      // The canvas sits inside a `.page` that is `display:none` while not
+      // the active page. If a customer opens a direct link to e.g. /casing
+      // and never visits /home first, this scene gets built while the home
+      // page (and canvas) is 0×0. Setting camera.aspect = 0/0 (NaN) here
+      // would permanently break the projection matrix — even after the
+      // canvas later gets real dimensions, nothing re-runs this math, so
+      // the model would render blank forever. Skipping the 0-size case
+      // avoids poisoning the camera; the ResizeObserver below re-fires
+      // this function once the canvas actually has a size.
+      if(w === 0 || h === 0) return;
       if(canvas.width !== w * window.devicePixelRatio || canvas.height !== h * window.devicePixelRatio){
         renderer.setSize(w, h, false);
         camera.aspect = w/h;
@@ -10133,6 +10144,16 @@ window.addEventListener('appinstalled',()=>{
     }
     resize();
     window.addEventListener('resize', resize);
+    // Switching pages toggles `display:none/block` via a CSS class — that
+    // doesn't fire a window 'resize' event. ResizeObserver does fire when
+    // the canvas's box goes from 0×0 (hidden page) to its real size
+    // (page became active), which is exactly the moment we need to redo
+    // the sizing math above. This is what makes the hero recover when a
+    // customer lands on a non-home page first, then navigates to Home.
+    if('ResizeObserver' in window){
+      phraResizeObserver = new ResizeObserver(() => resize());
+      phraResizeObserver.observe(canvas);
+    }
 
     phraGroup = new THREE.Group();
     scene.add(phraGroup);
@@ -10218,6 +10239,7 @@ window.addEventListener('appinstalled',()=>{
   }
 
   function disposeScene(){
+    if(phraResizeObserver){ phraResizeObserver.disconnect(); phraResizeObserver = null; }
     if(renderer) renderer.dispose();
     if(scene){
       scene.traverse(obj => {
