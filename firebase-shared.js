@@ -447,10 +447,14 @@ function queueCasingTypeWrites(types, writes){
           queueJsonRecord(writes, casingVariantDoc(typeId, variantId), variantJson, { key: 'casingTypes', typeId, variantId }, idx => casingVariantChunkDoc(typeId, variantId, idx));
         }
       });
-    } else if(_casingVariantIds[typeId] && _casingVariantIds[typeId].length > 0){
-      // variants array is empty (Phase 1 deferred load) but we KNOW variants exist
-      // in Firestore from the cached _casingVariantIds — preserve them, do NOT write []
-      // This prevents saveType (which runs without loading variants) from wiping variant index
+    } else if(_casingVariantIds[typeId] && _casingVariantIds[typeId].length > 0 && !_casingVariantsLoaded.has(String(typeId))){
+      // variants array is empty AND we never actually loaded them for this type
+      // (Phase 1 deferred load) — but we KNOW variants exist in Firestore from the
+      // cached _casingVariantIds — preserve them, do NOT write [].
+      // This prevents saveType (which runs without loading variants) from wiping variant index.
+      // IMPORTANT: if _casingVariantsLoaded HAS this type, variants were fully loaded
+      // and the user genuinely deleted all of them — do NOT preserve in that case,
+      // or deleting the last remaining style becomes impossible (silently restored).
       variantIds[typeId] = _casingVariantIds[typeId];
       variantHashes[typeId] = (_casingVariantHashes[typeId]) || {};
       console.log('[FB] preserving', variantIds[typeId].length, 'existing variant IDs for type', typeId, '(variants not loaded yet)');
