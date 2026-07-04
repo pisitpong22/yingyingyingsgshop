@@ -1326,18 +1326,21 @@
     border-top:1px solid rgba(201,168,76,.12);
     border-bottom:1px solid rgba(201,168,76,.1);
   }
-  .social-channels-inner{max-width:920px;margin:0 auto}
+  .social-channels-wrap{max-width:920px;margin:0 auto}
 
   /* Header */
-  .social-channels-head{text-align:center;margin-bottom:24px}
+  .social-channels-head{text-align:center;margin-bottom:28px}
+  .sc-eyebrow{
+    font-size:10px;font-weight:700;letter-spacing:3.5px;
+    text-transform:uppercase;color:var(--gold-dark);margin-bottom:10px;
+  }
   .social-channels-head h2{
-    font-family:var(--font-display);font-size:24px;font-weight:900;
+    font-family:var(--font-display);font-size:28px;font-weight:700;
     color:var(--text);margin:0;letter-spacing:-.2px;
-    display:flex;align-items:center;justify-content:center;gap:10px;
   }
   .sc-sparkle{color:var(--gold);font-size:17px;opacity:.75}
-  .social-channels-head p{font-size:13px;color:var(--text-muted);margin:8px 0 0;line-height:1.5}
-  .sc-head-divider{width:36px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:8px auto 0;border-radius:2px}
+  .social-channels-head p{font-size:13.5px;color:var(--text-muted);margin:14px auto 0;max-width:420px;line-height:1.6}
+  .sc-head-divider{width:36px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:14px auto 0;border-radius:2px}
 
   /* Flat grid — desktop: 8 per row, mobile: 4 per row */
   #scGrid{
@@ -3736,24 +3739,26 @@
   .social-channels-section{order:1 !important;padding:76px 0 66px !important;background:transparent !important;border:none !important}
   .latest-updates-section{order:2 !important;padding:70px 0 68px !important;background:transparent !important;border:none !important}
   #homeReviewsSection{order:3 !important;display:block !important;padding:70px 0 110px !important;background:transparent !important}
-  .social-channels-inner,.latest-updates-inner,.home-reviews-inner{max-width:1100px !important;margin:0 auto !important;padding:0 24px !important}
+  .social-channels-wrap,.latest-updates-inner,.home-reviews-inner{max-width:1100px !important;margin:0 auto !important;padding:0 24px !important}
   .social-channels-inner{
-    min-height:150px;border-radius:28px;background:rgba(255,255,255,.055);
-    border:1px solid rgba(255,255,255,.12);display:grid;grid-template-columns:350px minmax(0,1fr);align-items:center;
+    border-radius:28px;background:rgba(255,255,255,.055);
+    border:1px solid rgba(255,255,255,.12);padding:32px 30px !important;
     box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
   }
-  .social-channels-head{text-align:left !important;margin:0 !important;padding-left:18px !important}
-  .social-channels-head h2{font-family:'DM Sans',sans-serif !important;font-size:22px !important;color:rgba(238,226,174,.9) !important}
-  .social-channels-head p{font-size:16px !important;color:rgba(218,205,156,.52) !important}
-  .sc-head-divider,.sc-sparkle{display:none !important}
-  #scGrid{display:flex !important;justify-content:flex-start !important;flex-wrap:wrap !important;row-gap:18px !important;gap:22px 30px !important}
-  .sc-item{width:74px !important;color:rgba(218,205,156,.5) !important}
-  .sc-circle{width:58px !important;height:58px !important;background:rgba(255,255,255,.08) !important;border:1px solid rgba(255,255,255,.15) !important;box-shadow:none !important}
+  .social-channels-head{text-align:center !important;margin:0 0 40px !important;padding-left:0 !important}
+  .sc-eyebrow{display:block !important;color:var(--ref-gold) !important;letter-spacing:6px !important;font-size:12px !important;font-weight:800 !important;margin-bottom:14px !important}
+  .social-channels-head h2{font-family:'Cormorant Garamond',var(--font-display),serif !important;font-size:38px !important;font-weight:600 !important;color:#fff !important}
+  .social-channels-head p{font-size:15px !important;color:rgba(218,205,156,.52) !important;max-width:460px !important;margin:14px auto 0 !important}
+  .sc-head-divider{display:block !important;background:linear-gradient(90deg,transparent,var(--ref-gold),transparent) !important;margin:16px auto 0 !important}
+  .sc-sparkle{display:none !important}
+  #scGrid{display:flex !important;justify-content:center !important;flex-wrap:wrap !important;row-gap:20px !important;gap:24px 34px !important}
+  .sc-item{width:78px !important;color:rgba(218,205,156,.5) !important}
+  .sc-circle{width:60px !important;height:60px !important;background:rgba(255,255,255,.08) !important;border:1px solid rgba(255,255,255,.15) !important;box-shadow:none !important}
   .sc-name{font-size:12px !important;line-height:1.1 !important;color:rgba(218,205,156,.5) !important}
 
   .latest-updates-head,.home-reviews-head{text-align:center !important;margin-bottom:56px !important}
   .latest-updates-eyebrow,.home-reviews-eyebrow{display:block !important;color:var(--ref-gold) !important;letter-spacing:8px !important;font-size:13px !important;font-weight:800 !important}
-  .latest-updates-title,#homeRevTitle{font-family:var(--font-display) !important;font-size:48px !important;color:#fffaf0 !important;margin-top:24px !important}
+  .latest-updates-title,#homeRevTitle{font-family:'Cormorant Garamond',var(--font-display),serif !important;font-size:38px !important;font-weight:600 !important;color:#fff !important;margin-top:24px !important}
   .latest-updates-head .gline,.latest-updates-sub,.home-reviews-head .gline,.home-reviews-head p,.home-reviews-cta{display:none !important}
   .updates-grid{display:grid !important;grid-template-columns:repeat(3,minmax(0,1fr)) !important;gap:26px !important;overflow:visible !important;padding:0 !important}
   .update-card{
@@ -3789,7 +3794,7 @@
     .social-title{font-size:52px !important}.social-desc{font-size:17px !important}.social-visual{height:330px !important;min-height:330px !important}.social-3d{width:250px !important;height:310px !important}
     .trust-wrap-outer{max-width:calc(100% - 24px) !important;margin:0 auto !important;padding-bottom:32px !important}
     .trust-strip{grid-template-columns:1fr !important}.trust-strip-card+.trust-strip-card::before{display:none !important}
-    .social-channels-inner{grid-template-columns:1fr !important;padding:24px !important}.social-channels-head{text-align:center !important;padding-left:0 !important}#scGrid{justify-content:center !important;flex-wrap:wrap !important}
+    .social-channels-wrap{padding:0 18px !important}.social-channels-inner{padding:24px 18px !important}.social-channels-head{text-align:center !important;padding-left:0 !important;margin-bottom:28px !important}#scGrid{justify-content:center !important;flex-wrap:wrap !important}
     .updates-grid,.rev-grid{grid-template-columns:1fr !important}
   }
 
@@ -3883,7 +3888,7 @@
   .home-reviews-section{display:block !important}
   .home-reviews-eyebrow::before{content:'✦ CUSTOMER REVIEWS ✦';font-size:13px;color:var(--ref-gold);letter-spacing:8px}
   .home-reviews-eyebrow{font-size:0 !important}
-  #homeRevTitle{font-size:48px !important}
+  #homeRevTitle{font-size:38px !important}
   @media(max-width:999px){
     .social-cover{min-height:auto !important;padding:0 0 30px !important;align-items:flex-start !important}
     .social-cover-bg{display:block !important}
@@ -4023,8 +4028,8 @@
     .trust-wrap-outer{max-width:calc(100% - 64px) !important;margin:-202px auto 0 !important}
     .trust-strip-card{padding:18px 18px !important}
     #svcCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
-    .social-channels-inner{max-width:1100px !important;grid-template-columns:1fr !important;padding:32px 28px !important;text-align:center !important}
-    .social-channels-head{text-align:center !important;padding-left:0 !important;margin-bottom:20px !important}
+    .social-channels-wrap{max-width:1100px !important;padding:0 28px !important}
+    .social-channels-head{text-align:center !important;padding-left:0 !important;margin-bottom:28px !important}
     #scGrid{justify-content:center !important}
     .updates-grid,.rev-grid{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
   }
@@ -4695,7 +4700,7 @@
       margin-top:-188px !important;
       padding-bottom:0 !important;
     }
-    #svcTitle{font-size:30px !important}
+    #svcTitle{font-size:34px !important}
     #svcCards{
       grid-template-columns:repeat(2,minmax(0,1fr)) !important;
       gap:10px !important;
@@ -4850,6 +4855,7 @@
       text-align:center !important;
     }
     #homeRevTitle{font-size:34px !important}
+    .social-channels-head h2{font-size:34px !important}
     .rev-grid#homeRevGrid{
       display:flex !important;
       grid-template-columns:none !important;
@@ -5436,17 +5442,16 @@
 
   <!-- SOCIAL CHANNELS SECTION — grouped circular layout -->
   <section class="social-channels-section" id="socialChannelsSection" style="display:none">
-    <div class="social-channels-inner">
+    <div class="social-channels-wrap">
       <div class="social-channels-head">
-        <h2 id="scTitle">
-          <span class="sc-sparkle">✦</span>
-          Follow Us
-          <span class="sc-sparkle">✦</span>
-        </h2>
+        <div class="sc-eyebrow">✦ Stay Connected ✦</div>
+        <h2 id="scTitle">Follow Us</h2>
         <div class="sc-head-divider"></div>
         <p id="scSubtitle">Stay connected with our official pages &amp; social channels</p>
       </div>
-      <div id="scGrid"></div>
+      <div class="social-channels-inner">
+        <div id="scGrid"></div>
+      </div>
     </div>
   </section>
 
@@ -6475,9 +6480,11 @@ function applySettings(){
     }
   }
 
-  // NAV (built-in + custom pages) — order & visibility come straight from admin settings
+  // NAV (built-in + custom pages)
+  const preferredNav=['home','casing','reviews','history-stories'];
   let visibleNav=(s.nav||[])
-    .filter(n=>n.visible !== false && n.enabled !== false);
+    .filter(n=>n.visible !== false && n.enabled !== false && preferredNav.includes(n.id))
+    .sort((a,b)=>preferredNav.indexOf(a.id)-preferredNav.indexOf(b.id));
   document.getElementById('navLinks').innerHTML=visibleNav.map(n=>`<li><a id="nav-${n.id}" onclick="goPage('${n.id}')">${n.label}</a></li>`).join('');
   const tabbar=document.getElementById('mobileTabbar');
   if(tabbar){
@@ -9028,8 +9035,7 @@ function renderSocialChannels(){
 
   // Title
   const titleEl = document.getElementById('scTitle');
-  if(titleEl) titleEl.innerHTML =
-    `<span class="sc-sparkle">✦</span>${escapeHtml(sc.title||'Follow Us')}<span class="sc-sparkle">✦</span>`;
+  if(titleEl) titleEl.textContent = sc.title || 'Follow Us';
   const subEl = document.getElementById('scSubtitle');
   if(subEl) subEl.textContent = sc.subtitle || 'Stay connected with our official pages & social channels';
 
