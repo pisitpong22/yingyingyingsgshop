@@ -1122,6 +1122,8 @@
 
   /* ─── SERVICE CARDS ─────────────────────────────────────────────────────── */
   .svc-card{
+    position:relative;
+    overflow:hidden;
     background:rgba(255,255,255,.06);
     backdrop-filter:blur(16px) saturate(140%);
     -webkit-backdrop-filter:blur(16px) saturate(140%);
@@ -1139,6 +1141,22 @@
     background:rgba(255,255,255,.09);
     box-shadow:0 14px 40px rgba(0,0,0,.4);
   }
+  /* Optional per-card background photo — set via --svc-bg custom property so
+     it survives the !important background overrides elsewhere in this file
+     (those only target the `background` shorthand, not this custom prop). */
+  .svc-card::before{
+    content:'';
+    position:absolute;inset:0;
+    background-image:var(--svc-bg, none);
+    background-size:cover;
+    background-position:center;
+    opacity:.32;
+    transition:opacity .24s;
+    z-index:0;
+    pointer-events:none;
+  }
+  .svc-card:hover::before{opacity:.46}
+  .svc-card>.svc-icon,.svc-card>.svc-body{position:relative;z-index:1}
   .svc-icon{
     font-size:28px;flex-shrink:0;
     width:48px;height:48px;border-radius:12px;
@@ -5907,10 +5925,10 @@ function defaultSettings(){
     homeServices:{
       title:'Our Products & Services',
       cards:[
-        {icon:'📿',title:'Amulets',desc:'Sacred amulets in all categories — pong, metal, coins & more',target:'amulets'},
-        {icon:'⛓️',title:'Accessories',desc:'Chains, pendants, cases, pouches & complete accessories',target:'accessories'},
-        {icon:'🪬',title:'Casing Service',desc:'Waterproof, gold, silver & crystal casings — custom orders welcome',target:'casing'},
-        {icon:'🎯',title:'Special Projects',desc:'Commissioned projects, ceremonies & exclusive collections',target:'projects'},
+        {icon:'📿',title:'Amulets',desc:'Sacred amulets in all categories — pong, metal, coins & more',target:'amulets',bgImage:''},
+        {icon:'⛓️',title:'Accessories',desc:'Chains, pendants, cases, pouches & complete accessories',target:'accessories',bgImage:''},
+        {icon:'🪬',title:'Casing Service',desc:'Waterproof, gold, silver & crystal casings — custom orders welcome',target:'casing',bgImage:''},
+        {icon:'🎯',title:'Special Projects',desc:'Commissioned projects, ceremonies & exclusive collections',target:'projects',bgImage:''},
       ]
     },
     sections:{
@@ -6523,8 +6541,15 @@ function applySettings(){
     _svcEl.dataset.disabledByOrder = '0';
     _svcEl.style.display = '';
   }
-  document.getElementById('svcCards').innerHTML=(s.homeServices.cards||[]).map(c=>`
-    <div class="svc-card" onclick="goPage('${c.target}')" style="cursor:pointer">
+  const _svcValidTargets=new Set((db.settings.nav||[]).filter(n=>n.enabled).map(n=>n.id));
+  document.getElementById('svcCards').innerHTML=(s.homeServices.cards||[]).map(c=>{
+    // Defensive fallback: legacy/blank/removed targets silently did nothing on
+    // click (goPage() returns early if page-<target> doesn't exist). Fall back
+    // to 'home' so the card is always clickable.
+    const tgt=(c.target && _svcValidTargets.has(c.target))?c.target:'home';
+    const styleAttr=`cursor:pointer${c.bgImage?`;--svc-bg:url('${escapeHtml(c.bgImage)}')`:''}`;
+    return `
+    <div class="svc-card" onclick="goPage('${tgt}')" role="button" tabindex="0" style="${styleAttr}">
       <div class="svc-icon">${c.icon}</div>
       <div class="svc-body">
         ${c.stat?`<div class="svc-stat">${c.stat}</div>`:''}
@@ -6532,7 +6557,8 @@ function applySettings(){
         <div class="svc-desc">${c.desc}</div>
         <div class="svc-arrow">→</div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   const sec = s.sections || {};
   setRich('amuletsTitle', (sec.amulets||{}).title||'');

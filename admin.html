@@ -2673,10 +2673,10 @@ function defaultSettings(){
       ]
     },
     homeServices:{title:'Our Products & Services',cards:[
-      {icon:'📿',title:'Amulets',desc:'Sacred amulets in all categories',target:'amulets'},
-      {icon:'⛓️',title:'Accessories',desc:'Chains, pendants, cases & more',target:'accessories'},
-      {icon:'🪬',title:'Casing Service',desc:'Premium casings in many styles',target:'casing'},
-      {icon:'🎯',title:'Special Projects',desc:'Commissioned & exclusive',target:'projects'},
+      {icon:'📿',title:'Amulets',desc:'Sacred amulets in all categories',target:'amulets',bgImage:''},
+      {icon:'⛓️',title:'Accessories',desc:'Chains, pendants, cases & more',target:'accessories',bgImage:''},
+      {icon:'🪬',title:'Casing Service',desc:'Premium casings in many styles',target:'casing',bgImage:''},
+      {icon:'🎯',title:'Special Projects',desc:'Commissioned & exclusive',target:'projects',bgImage:''},
     ]},
     sections:{
       amulets:{title:'📿 Amulets',desc:'Authentic amulets, hand-selected and verified.'},
@@ -3969,6 +3969,7 @@ function renderSvcList(cards){
   const allTargets=getDB().settings.nav.filter(n=>n.enabled);
   document.getElementById('svcList').innerHTML=cards.map((c,i)=>{
     const opts=allTargets.map(n=>`<option value="${n.id}" ${c.target===n.id?'selected':''}>${n.label}</option>`).join('');
+    const bgKey=`sc_bg_${i}`;
     return `
     <div class="rep-row">
       <div class="rep-fields">
@@ -3976,10 +3977,24 @@ function renderSvcList(cards){
         <div class="fg"><label class="fl">${tr('title')}</label><input class="fi" data-sc-title="${i}" value="${c.title||''}"></div>
         <div class="fg" style="grid-column:span 2"><label class="fl">${tr('desc')}</label><input class="fi" data-sc-desc="${i}" value="${c.desc||''}"></div>
         <div class="fg"><label class="fl">${tr('linksTo')}</label><select class="fsel" data-sc-target="${i}">${opts}</select></div>
+        <div class="fg full">
+          <label class="fl" data-en="Background Image (optional)" data-th="รูปพื้นหลัง (ไม่บังคับ)">Background Image (optional)</label>
+          <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'${bgKey}',true)">
+            <input type="file" accept="image/*" onchange="handleSingleImg(event,'${bgKey}')">
+            <div class="u-icon">🖼️</div><div class="u-text" data-en="Click or drag an image" data-th="คลิกหรือลากรูป">Click or drag an image</div>
+          </div>
+          <div class="prev-grid" id="${bgKey}_p"></div>
+        </div>
       </div>
       <button class="rep-rm" onclick="rmSvcCard(${i})">✕</button>
     </div>
   `;}).join('');
+  cards.forEach((c,i)=>{
+    const bgKey=`sc_bg_${i}`;
+    tempImgs[bgKey]=c.bgImage?[c.bgImage]:[];
+    renderPrev(bgKey);
+  });
+  applyLang();
 }
 function captureSvc(){
   const cards=[];document.querySelectorAll('[data-sc-icon]').forEach(el=>{
@@ -3989,13 +4004,15 @@ function captureSvc(){
       title:document.querySelector(`[data-sc-title="${i}"]`).value,
       desc:document.querySelector(`[data-sc-desc="${i}"]`).value,
       target:document.querySelector(`[data-sc-target="${i}"]`).value,
+      bgImage:captureImgs(`sc_bg_${i}`)[0]||'',
     });
   });
   return cards;
 }
-function addSvcCard(){const cur=captureSvc();cur.push({icon:'✨',title:'New Service',desc:'Description',target:'home'});renderSvcList(cur);}
+function addSvcCard(){const cur=captureSvc();cur.push({icon:'✨',title:'New Service',desc:'Description',target:'home',bgImage:''});renderSvcList(cur);}
 function rmSvcCard(i){const cur=captureSvc();cur.splice(i,1);renderSvcList(cur);}
 async function saveServices(){
+  if(!ensureUploadsDone())return;
   const db=getDB();
   db.settings.homeServices.title=document.getElementById('svc_title').value;
   db.settings.homeServices.cards=captureSvc();
