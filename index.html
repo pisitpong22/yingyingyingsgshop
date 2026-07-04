@@ -10646,21 +10646,33 @@ window.addEventListener('appinstalled',()=>{
       const mobile = isMobile3D();
       const BASE_TILT_Y = 0;
       const BASE_TILT_X = 0;
-      const idleX = Math.cos(t * 0.45) * 0.035;  // subtle nod
+      // Idle "nod" is desktop-only now — on mobile it was stacking with the
+      // drag pitch to produce a visible tilt that never fully returns to
+      // straight. Mobile pitch is locked to 0 below.
+      const idleX = mobile ? 0 : Math.cos(t * 0.45) * 0.035;  // subtle nod
       if(phraGroup){
         currentRotX += (targetRotX - currentRotX) * 0.12;
         currentRotY += (targetRotY - currentRotY) * 0.12;
         const maxYaw = mobile ? 0.58 : 0.78;
         let yaw = BASE_TILT_Y + currentRotY;
         yaw = Math.max(-maxYaw, Math.min(maxYaw, yaw));
-        const maxPitch = mobile ? 0.18 : 0.22;
-        let pitch = BASE_TILT_X + idleX + currentRotX;
+        // Mobile: no pitch/tilt at all — model only turns left/right.
+        const maxPitch = mobile ? 0 : 0.22;
+        let pitch = mobile ? 0 : (BASE_TILT_X + idleX + currentRotX);
         pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
         phraGroup.rotation.y = yaw;
         phraGroup.rotation.x = pitch;
-        // Floating bob — vertical motion synced to a slow breath rate
-        phraGroup.position.y = Math.sin(t * 0.9) * 0.12;
-        phraGroup.position.x = currentRotY * 0.08;
+        // Vertical floating is handled entirely by the CSS heroFloat
+        // keyframes on .hero-3d. This JS bob duplicated that motion inside
+        // the (tightly-framed) camera view — the two combined pushed the
+        // statue's base past the frame edge at the low point of the float,
+        // which is why the bottom appeared to vanish. Removed; CSS alone
+        // now drives the float.
+        phraGroup.position.y = 0;
+        // Same reasoning for horizontal drift: keep the model centred on
+        // mobile instead of shifting with yaw, so it doesn't read as
+        // off-centre/"not straight".
+        phraGroup.position.x = mobile ? 0 : currentRotY * 0.08;
       }
       renderer.render(scene, camera);
     }
