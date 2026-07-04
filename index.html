@@ -6480,11 +6480,9 @@ function applySettings(){
     }
   }
 
-  // NAV (built-in + custom pages)
-  const preferredNav=['home','casing','reviews','history-stories'];
+  // NAV (built-in + custom pages) — order & visibility come straight from admin settings
   let visibleNav=(s.nav||[])
-    .filter(n=>n.visible !== false && n.enabled !== false && preferredNav.includes(n.id))
-    .sort((a,b)=>preferredNav.indexOf(a.id)-preferredNav.indexOf(b.id));
+    .filter(n=>n.visible !== false && n.enabled !== false);
   document.getElementById('navLinks').innerHTML=visibleNav.map(n=>`<li><a id="nav-${n.id}" onclick="goPage('${n.id}')">${n.label}</a></li>`).join('');
   const tabbar=document.getElementById('mobileTabbar');
   if(tabbar){
