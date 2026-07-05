@@ -534,6 +534,44 @@ function queueHistoryStoryWrites(stories, writes){
 }
 
 function lazyItemSummary(key, item){
+  if(key === 'products'){
+    // Products has its own schema (coverImg/category/stockStatus/etc) and
+    // its own renderer on both admin and storefront — it does NOT share
+    // field names with the legacy amulets/accessories summary shape below.
+    // Keep this summary lean (it's fetched before the full item loads) but
+    // include everything the shop grid needs to render/filter/sort without
+    // waiting for the full record: name, cover image, price, stock, and the
+    // filter fields (category/master/temple/material).
+    return {
+      id: item && item.id,
+      sku: item && item.sku || '',
+      name: item && item.name || '',
+      type: item && item.type || 'other',
+      category: item && item.category || '',
+      subCategory: item && item.subCategory || '',
+      shortDesc: item && item.shortDesc || '',
+      coverImg: item && item.coverImg
+        ? item.coverImg
+        : (item && Array.isArray(item.gallery) && item.gallery[0] ? item.gallery[0] : ''),
+      price: item && item.price || 0,
+      salePrice: item && item.salePrice != null ? item.salePrice : null,
+      discountLabel: item && item.discountLabel || '',
+      badgeText: item && item.badgeText || '',
+      stockStatus: item && item.stockStatus || 'in_stock',
+      allowCheckout: item ? item.allowCheckout !== false : true,
+      allowEnquiryOnly: !!(item && item.allowEnquiryOnly),
+      publishStatus: item && item.publishStatus || 'draft',
+      featured: !!(item && item.featured),
+      bestSeller: !!(item && item.bestSeller),
+      newArrival: !!(item && item.newArrival),
+      temple: item && item.temple || '',
+      master: item && item.master || '',
+      material: item && item.material || '',
+      createdAt: item && item.createdAt || 0,
+      updatedAt: item && item.updatedAt || 0,
+      _summaryOnly: true,
+    };
+  }
   const base = {
     id: item && item.id,
     name: item && item.name || '',
@@ -550,22 +588,6 @@ function lazyItemSummary(key, item){
   if(key === 'amulets'){
     base.temple = item && item.temple || '';
     base.year = item && item.year || '';
-  }
-  if(key === 'products'){
-    // Unified product schema uses different field names than the legacy
-    // amulets/accessories shape — remap onto the generic summary keys so
-    // any code that reads .cat/.desc/.imgs/.status/.badge/.hidePrice
-    // (feed cards, etc.) keeps working without knowing about `products`.
-    base.cat = item && item.category || '';
-    base.desc = item && (item.shortDesc || item.fullDesc) || '';
-    base.imgs = item && item.coverImg ? [item.coverImg]
-      : (item && Array.isArray(item.gallery) && item.gallery[0] ? [item.gallery[0]] : []);
-    base.status = item && item.stockStatus || 'in_stock';
-    base.badge = item && item.badgeText || '';
-    base.hidePrice = !!(item && item.allowEnquiryOnly);
-    base.price = item && (item.salePrice || item.price) || 0;
-    base.type = item && item.type || 'other';
-    base.publishStatus = item && item.publishStatus || 'draft';
   }
   if(key === 'projects'){
     base.date = item && item.date || '';
