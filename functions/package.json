@@ -1,0 +1,17 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions for yingyingyingsgshop — Stripe checkout + order creation",
+  "engines": { "node": "20" },
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "logs": "firebase functions:log",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^6.0.1",
+    "stripe": "^17.3.1"
+  },
+  "private": true
+}

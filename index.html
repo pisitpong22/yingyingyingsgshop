@@ -24,7 +24,9 @@
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=Sarabun:wght@300;400;500;600&family=Noto+Serif:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
 <!-- Firebase shared module — provides window.FB API -->
-<script type="module" src="firebase-shared.js?v=20260704a"></script>
+<script type="module" src="firebase-shared.js?v=20260705d"></script>
+<!-- Stripe.js — used on the Checkout page to securely collect card details -->
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 // ───── DIAGNOSTIC: trace what causes "Unsafe attempt to load URL" errors ─────
 // This patches Image.src and CSS backgroundImage so we can see who's loading
@@ -2480,6 +2482,49 @@
   .pay-qr{text-align:center;margin:18px 0}
   .pay-qr img{max-width:240px;border-radius:12px;border:2px solid var(--gold);box-shadow:0 8px 24px rgba(0,0,0,.1)}
   .pay-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+
+  /* CART BUTTON (nav) */
+  .cart-btn{position:relative;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold-light);width:38px;height:38px;border-radius:8px;cursor:pointer;font-size:17px;flex-shrink:0}
+  .cart-btn:hover{border-color:var(--gold);background:rgba(201,168,76,.08)}
+  .cart-badge{position:absolute;top:-6px;right:-6px;background:var(--gold);color:var(--deep);font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1}
+  .cart-badge.show{display:flex}
+
+  /* CART PAGE */
+  .cart-wrap{max-width:820px;margin:auto;padding:48px 24px}
+  .cart-item{display:flex;gap:16px;align-items:center;background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur-strong));-webkit-backdrop-filter:blur(var(--glass-blur-strong));border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px}
+  .cart-item-img{width:72px;height:72px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#1e1407;display:flex;align-items:center;justify-content:center}
+  .cart-item-img img{width:100%;height:100%;object-fit:cover}
+  .cart-item-body{flex:1;min-width:0}
+  .cart-item-name{font-weight:600;color:var(--text);font-size:15px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cart-item-cat{font-size:12px;color:var(--text-muted);margin-bottom:6px}
+  .cart-item-price{color:var(--gold-dark);font-weight:700;font-size:15px}
+  .cart-item-remove{background:transparent;border:1px solid rgba(220,53,69,.4);color:#e0748a;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:15px;flex-shrink:0}
+  .cart-item-remove:hover{background:rgba(220,53,69,.12);border-color:#e0748a}
+  .cart-summary{background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur-strong));-webkit-backdrop-filter:blur(var(--glass-blur-strong));border:2px solid var(--gold);border-radius:16px;padding:22px 24px;margin-top:20px}
+  .cart-summary-row{display:flex;justify-content:space-between;align-items:center;font-size:16px;color:var(--text);margin-bottom:16px}
+  .cart-summary-row strong{color:var(--gold-dark);font-size:20px}
+  .cart-empty{text-align:center;padding:60px 20px;color:var(--text-muted)}
+  .cart-empty-icon{font-size:44px;margin-bottom:14px}
+
+  /* LOGIN MODAL */
+  .login-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:var(--glass-bg-strong);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .login-btn:hover{border-color:var(--gold)}
+  .login-btn:disabled{opacity:.45;cursor:not-allowed}
+  .login-divider{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:12px;margin:2px 0}
+  .login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+  .login-input{width:100%;padding:11px 14px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:var(--text);font-size:14px;font-family:inherit}
+  .login-input:focus{outline:none;border-color:var(--gold)}
+  .acct-menu{position:absolute;top:100%;right:0;margin-top:8px;background:var(--glass-bg-strong);backdrop-filter:blur(var(--glass-blur-strong));border:1px solid var(--border);border-radius:12px;padding:8px;min-width:160px;display:none;z-index:50}
+  .acct-menu.open{display:block}
+  .acct-menu button{width:100%;text-align:left;padding:9px 12px;background:transparent;border:none;color:var(--text);font-size:13px;border-radius:8px;cursor:pointer;font-family:inherit}
+  .acct-menu button:hover{background:rgba(201,168,76,.1)}
+
+  /* CHECKOUT */
+  .co-form{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+  .co-form label{font-size:12px;color:var(--text-muted);margin-bottom:4px;display:block}
+  #stripeCardEl{padding:12px 14px;border-radius:9px;border:1px solid var(--border);background:rgba(255,255,255,.04)}
+  .co-success{text-align:center;padding:50px 20px}
+  .co-success-icon{font-size:52px;margin-bottom:16px}
 
   /* REVIEWS */
   .rev-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
@@ -5374,6 +5419,16 @@
       </div>
     </div>
     <ul class="nav-links" id="navLinks"></ul>
+    <div style="position:relative" id="acctWrap">
+      <button class="cart-btn" id="acctBtn" onclick="onAcctBtnClick()" aria-label="Account">👤</button>
+      <div class="acct-menu" id="acctMenu">
+        <button onclick="closeAcctMenu();goPage('orders')" data-en="Order History" data-th="ประวัติการสั่งซื้อ">Order History</button>
+        <button onclick="closeAcctMenu();doSignOut()" data-en="Sign out" data-th="ออกจากระบบ">Sign out</button>
+      </div>
+    </div>
+    <button class="cart-btn" id="cartBtn" onclick="goPage('cart')" aria-label="Cart">
+      🛒<span class="cart-badge" id="cartBadge">0</span>
+    </button>
     <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menu">☰</button>
   </div>
 </nav>
@@ -5593,15 +5648,20 @@
 </div>
 
 <!-- AMULETS -->
-<div id="page-amulets" class="page">
-  <div class="sec-head"><h2 id="amuletsTitle"></h2><div class="gline"></div><p id="amuletsDesc"></p></div>
+<div id="page-shop" class="page">
+  <div class="sec-head"><h2 id="shopTitle"></h2><div class="gline"></div><p id="shopDesc"></p></div>
   <div class="content">
+    <div class="cat-tabs" id="sTypeTabs">
+      <button class="cat-tab active" onclick="filterSType('all',this)" data-en="All" data-th="ทั้งหมด">All</button>
+      <button class="cat-tab" onclick="filterSType('amulets',this)" data-en="Amulets" data-th="พระเครื่อง">Amulets</button>
+      <button class="cat-tab" onclick="filterSType('accessories',this)" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</button>
+    </div>
     <div class="search-bar">
       <div class="search-input-wrap">
-        <input class="search-input" id="aSearch" oninput="searchA()" placeholder="">
-        <button class="search-clear" id="aSearchClear" onclick="clearSearchA()" aria-label="Clear">✕</button>
+        <input class="search-input" id="sSearch" oninput="searchS()" placeholder="">
+        <button class="search-clear" id="sSearchClear" onclick="clearSearchS()" aria-label="Clear">✕</button>
       </div>
-      <select class="sort-select" id="aSort" onchange="renderA(curAcat)">
+      <select class="sort-select" id="sSort" onchange="renderShop(curScat)">
         <option value="default">Sort: Default</option>
         <option value="price-asc">Price: Low to High</option>
         <option value="price-desc">Price: High to Low</option>
@@ -5610,31 +5670,9 @@
         <option value="year-asc">Year: Oldest</option>
       </select>
     </div>
-    <div class="cat-tabs" id="aTabs"></div>
-    <div class="result-count" id="aCount"></div>
-    <div class="card-grid" id="aGrid"></div>
-  </div>
-</div>
-
-<!-- ACCESSORIES -->
-<div id="page-accessories" class="page">
-  <div class="sec-head"><h2 id="accTitle"></h2><div class="gline"></div><p id="accDesc"></p></div>
-  <div class="content">
-    <div class="search-bar">
-      <div class="search-input-wrap">
-        <input class="search-input" id="acSearch" oninput="searchAc()" placeholder="">
-        <button class="search-clear" id="acSearchClear" onclick="clearSearchAc()" aria-label="Clear">✕</button>
-      </div>
-      <select class="sort-select" id="acSort" onchange="renderAc(curAccat)">
-        <option value="default">Sort: Default</option>
-        <option value="price-asc">Price: Low to High</option>
-        <option value="price-desc">Price: High to Low</option>
-        <option value="name">Name: A–Z</option>
-      </select>
-    </div>
-    <div class="cat-tabs" id="acTabs"></div>
-    <div class="result-count" id="acCount"></div>
-    <div class="card-grid" id="acGrid"></div>
+    <div class="cat-tabs" id="sTabs"></div>
+    <div class="result-count" id="sCount"></div>
+    <div class="card-grid" id="sGrid"></div>
   </div>
 </div>
 
@@ -5765,6 +5803,46 @@
   <div class="pay-wrap" id="payWrap"></div>
 </div>
 
+<!-- CART -->
+<div id="page-cart" class="page">
+  <div class="sec-head">
+    <h2>🛒 <span data-en="Your Cart" data-th="ตะกร้าสินค้า">Your Cart</span></h2>
+    <div class="gline"></div>
+  </div>
+  <div class="cart-wrap" id="cartWrap"></div>
+</div>
+
+<!-- CHECKOUT -->
+<div id="page-checkout" class="page">
+  <div class="sec-head">
+    <h2>✅ <span data-en="Checkout" data-th="ชำระเงิน">Checkout</span></h2>
+    <div class="gline"></div>
+  </div>
+  <div class="cart-wrap" id="checkoutWrap"></div>
+</div>
+
+<!-- ORDER HISTORY -->
+<div id="page-orders" class="page">
+  <div class="sec-head">
+    <h2>📦 <span data-en="Order History" data-th="ประวัติการสั่งซื้อ">Order History</span></h2>
+    <div class="gline"></div>
+  </div>
+  <div class="cart-wrap" id="ordersWrap"></div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal" onclick="if(event.target===this)closeLoginModal()">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head" style="padding-bottom:14px;margin-bottom:18px">
+      <div class="modal-title-wrap">
+        <div class="modal-title" data-en="Sign in" data-th="เข้าสู่ระบบ">Sign in</div>
+      </div>
+      <button class="modal-close" onclick="closeLoginModal()">✕</button>
+    </div>
+    <div id="loginModalBody" style="display:flex;flex-direction:column;gap:12px"></div>
+  </div>
+</div>
+
 <!-- CUSTOM PAGES (rendered dynamically) -->
 <div id="customPages"></div>
 
@@ -5857,7 +5935,7 @@
 
 <script>
 const DB_KEY = 'yyy_db';
-let curAcat='all', curAccat='all', curCasingType=null;
+let curCasingType=null;
 const loadState = {
   homeFeed: 'idle', // idle | loading | loaded | empty | error
   casing: 'idle',
@@ -5882,8 +5960,7 @@ function defaultSettings(){
     nav:[
       {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
       {id:'feed',label:'Feed',visible:true,enabled:true,builtin:true},
-      {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
-      {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
+      {id:'shop',label:'Shop',visible:true,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
       {id:'contact',label:'Contact',visible:true,enabled:true,builtin:true},
       {id:'projects',label:'Projects',visible:true,enabled:true,builtin:true},
@@ -5912,7 +5989,7 @@ function defaultSettings(){
       sub:'Authentic Thai Amulets · Curated with Expertise',
       desc:'Specialists in authentic Thai amulets, meticulously selected and verified.<br>Every piece guaranteed genuine — with professional casing service available.',
       buttons:[
-        {label:'📿 Browse Amulets',target:'amulets',style:'gold'},
+        {label:'📿 Browse Shop',target:'shop',style:'gold'},
         {label:'🪬 Casing Service',target:'casing',style:'outline'},
       ],
       stats:[
@@ -5925,15 +6002,13 @@ function defaultSettings(){
     homeServices:{
       title:'Our Products & Services',
       cards:[
-        {icon:'📿',title:'Amulets',desc:'Sacred amulets in all categories — pong, metal, coins & more',target:'amulets',bgImage:''},
-        {icon:'⛓️',title:'Accessories',desc:'Chains, pendants, cases, pouches & complete accessories',target:'accessories',bgImage:''},
+        {icon:'📿',title:'Shop',desc:'Sacred amulets, chains, pendants, cases & complete accessories',target:'shop',bgImage:''},
         {icon:'🪬',title:'Casing Service',desc:'Waterproof, gold, silver & crystal casings — custom orders welcome',target:'casing',bgImage:''},
         {icon:'🎯',title:'Special Projects',desc:'Commissioned projects, ceremonies & exclusive collections',target:'projects',bgImage:''},
       ]
     },
     sections:{
-      amulets:{title:'📿 Amulets',desc:'Authentic amulets, hand-selected and verified. Every piece guaranteed genuine.'},
-      accessories:{title:'⛓️ Accessories',desc:'Chains, pendants, cases and complete accessories for your amulets.'},
+      shop:{title:'📿 Shop',desc:'Authentic amulets, chains, pendants, cases and complete accessories — all hand-selected and verified.'},
       casing:{title:'🪬 Casing Service',desc:'Premium amulet casings in various styles. Browse by type, then choose your style.'},
       projects:{title:'🎯 Projects',desc:'Special commissioned projects and exclusive collections.'},
       about:{title:'About Yingyingying Amulet',desc:'We are a specialist amulet shop dedicated to authenticity and quality. Every piece carefully verified by experts. Professional casing service available for all amulet types.'},
@@ -6118,6 +6193,43 @@ function applyDbMigrations(d){
       const insertAt=revIdx>=0?revIdx+1:d.settings.nav.length;
       d.settings.nav.splice(insertAt,0,{id:'payment',label:'Payment',visible:true,enabled:true,builtin:true});
     }
+    // Merge legacy separate "Amulets" + "Accessories" nav entries into one
+    // combined "Shop" entry (single browsing page now covers both).
+    const amuletsNavIdx = d.settings.nav.findIndex(n=>n.id==='amulets');
+    if(amuletsNavIdx >= 0){
+      const old = d.settings.nav[amuletsNavIdx];
+      d.settings.nav[amuletsNavIdx] = { ...old, id:'shop', label: old.label==='Amulets' ? 'Shop' : old.label };
+    } else if(!d.settings.nav.find(n=>n.id==='shop')){
+      d.settings.nav.unshift({id:'shop',label:'Shop',visible:true,enabled:true,builtin:true});
+    }
+    d.settings.nav = d.settings.nav.filter(n=>n.id!=='accessories');
+  }
+  // Same merge for homepage hero buttons/stat-cards that used to link to the
+  // separate Amulets/Accessories pages — retarget to 'shop', and drop the
+  // second card/button if both existed (avoid two identical links).
+  if(d.settings.hero && Array.isArray(d.settings.hero.buttons)){
+    let sawShopTarget = false;
+    d.settings.hero.buttons = d.settings.hero.buttons
+      .map(b => (b && (b.target==='amulets'||b.target==='accessories')) ? { ...b, target:'shop' } : b)
+      .filter(b => {
+        if(b && b.target==='shop'){
+          if(sawShopTarget) return false;
+          sawShopTarget = true;
+        }
+        return true;
+      });
+  }
+  if(d.settings.homeServices && Array.isArray(d.settings.homeServices.cards)){
+    let sawShopCard = false;
+    d.settings.homeServices.cards = d.settings.homeServices.cards
+      .map(c => (c && (c.target==='amulets'||c.target==='accessories')) ? { ...c, target:'shop' } : c)
+      .filter(c => {
+        if(c && c.target==='shop'){
+          if(sawShopCard) return false;
+          sawShopCard = true;
+        }
+        return true;
+      });
   }
   ['amulets','accessories'].forEach(k=>{
     if(d[k])d[k].forEach(it=>{if(!it.status)it.status='available';if(it.hidePrice===undefined)it.hidePrice=false;if(!it.featured)it.featured=false;});
@@ -6561,10 +6673,8 @@ function applySettings(){
   }).join('');
 
   const sec = s.sections || {};
-  setRich('amuletsTitle', (sec.amulets||{}).title||'');
-  setRich('amuletsDesc',  (sec.amulets||{}).desc||'');
-  setRich('accTitle',     (sec.accessories||{}).title||'');
-  setRich('accDesc',      (sec.accessories||{}).desc||'');
+  setRich('shopTitle', (sec.shop||sec.amulets||{}).title||'');
+  setRich('shopDesc',  (sec.shop||sec.amulets||{}).desc||'');
   setRich('casingTitle',  (sec.casing||{}).title||'');
   setRich('casingDesc',   (sec.casing||{}).desc||'');
   setRich('projTitle',    (sec.projects||{}).title||'');
@@ -6686,7 +6796,7 @@ function renderSocialHomeBase(){
   }
   const shortcuts=document.getElementById('socialShortcuts');
   if(shortcuts){
-    const preferred=['amulets','casing','accessories','reviews'];
+    const preferred=['shop','casing','reviews'];
     const items=preferred.map(id=>visible.find(n=>n.id===id)).filter(Boolean);
     shortcuts.innerHTML=items.map(n=>`
       <button class="social-shortcut" onclick="goPage('${escapeHtml(n.id)}')">${navIcon(n.id)} ${escapeHtml(n.label)}</button>
@@ -6694,7 +6804,7 @@ function renderSocialHomeBase(){
   }
   const actions=document.getElementById('socialActions');
   if(actions){
-    actions.innerHTML=`<button class="social-action primary" onclick="goPage('amulets')">Explore Collection <span aria-hidden="true">→</span></button>`;
+    actions.innerHTML=`<button class="social-action primary" onclick="goPage('shop')">Explore Collection <span aria-hidden="true">→</span></button>`;
     const textCol = document.querySelector('.social-brand-block > div:not(.social-avatar)');
     if(textCol && actions.parentElement !== textCol){
       textCol.appendChild(actions);
@@ -6984,14 +7094,13 @@ function openCpItem(pageId, itemId){
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
 
-const PAGE_IDS = new Set(['home','feed','amulets','accessories','casing','contact','projects','reviews','payment','about','history-stories']);
+const PAGE_IDS = new Set(['home','feed','shop','casing','contact','projects','reviews','payment','cart','checkout','orders','about','history-stories']);
 
 function navIcon(id){
   return ({
     home:'⌂',
     feed:'▤',
-    amulets:'◉',
-    accessories:'✦',
+    shop:'◉',
     casing:'🪬',
     contact:'☎',
     projects:'◎',
@@ -7041,8 +7150,7 @@ function updatePageUrl(name){
 
 function dataKeysForPage(name){
   switch(name){
-    case 'amulets': return ['amulets'];
-    case 'accessories': return ['accessories'];
+    case 'shop': return ['amulets','accessories'];
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
@@ -7107,8 +7215,7 @@ async function goPage(name, opts={}){
     document.getElementById('navLinks').classList.remove('open');
     document.getElementById('mobileOverlay').classList.remove('open');
     // Show skeletons immediately for pages that have them
-    if(name==='amulets')  showGridSkeleton('aGrid',12);
-    if(name==='accessories') showGridSkeleton('acGrid',12);
+    if(name==='shop')     showGridSkeleton('sGrid',12);
     if(name==='projects') showGridSkeleton('pGrid',8);
     if(name==='reviews')  showGridSkeleton('revGrid',6);
   };
@@ -7150,8 +7257,7 @@ async function goPage(name, opts={}){
   } else if(name!=='casing'){
     await ensurePageData(name);
   }
-  if(name==='amulets'){curAcat='all';renderA('all');}
-  if(name==='accessories'){curAccat='all';renderAc('all');}
+  if(name==='shop'){curStype='all';curScat='all';renderShop('all');}
   if(name==='casing'){
     curCasingType=null;
     loadState.casing='loading';
@@ -7170,6 +7276,9 @@ async function goPage(name, opts={}){
   if(name==='projects')renderP();
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
+  if(name==='cart')renderCart();
+  if(name==='checkout')renderCheckout();
+  if(name==='orders')renderOrders();
   if(name==='contact')renderContactPage();
   if(opts.updateUrl !== false) updatePageUrl(name);
   if(name==='home'){
@@ -7434,7 +7543,10 @@ function buildCard(a,type,settings,idx=99){
       </div>
       <div class="card-foot">
         <span class="tag">${tag||a.cat||''}</span>
-        <button class="btn-sm" onclick="event.stopPropagation();openProd('${type}',${a.id})">Details</button>
+        <div style="display:flex;gap:6px">
+          ${(!a.hidePrice && status==='available')?`<button class="btn-sm" onclick="addToCart('${type}',${a.id},event)" title="${lang==='th'?'หยิบใส่ตะกร้า':'Add to cart'}">🛒</button>`:''}
+          <button class="btn-sm" onclick="event.stopPropagation();openProd('${type}',${a.id})">Details</button>
+        </div>
       </div>
     </div>`;
 }
@@ -7484,6 +7596,394 @@ function openReviewLightbox(reviewId,idx){
   window._lbImages=rv.imgs;openLightbox(idx);
 }
 
+// ── CART ──
+// Guest-device cart (no login system yet — see firebase-shared.js comment).
+// Each amulet/accessory is a unique physical piece, so the cart only tracks
+// presence/absence per item, not quantity.
+let _cartItems = [];
+let _cartUnsub = null;
+
+function initCartWatcher(){
+  if(!window.FB || typeof window.FB.onCartChange !== 'function') return;
+  if(_cartUnsub) return; // already watching
+  _cartUnsub = window.FB.onCartChange(items => {
+    _cartItems = items || [];
+    updateCartBadge();
+    if(document.getElementById('page-cart')?.classList.contains('active')) renderCart();
+  });
+}
+
+function updateCartBadge(){
+  const badge = document.getElementById('cartBadge');
+  if(!badge) return;
+  const n = _cartItems.length;
+  badge.textContent = n > 99 ? '99+' : String(n);
+  badge.classList.toggle('show', n > 0);
+}
+
+function isInCart(type, id){
+  return _cartItems.some(i => i.type===type && String(i.id)===String(id));
+}
+
+async function addToCart(type, id, ev){
+  if(ev) ev.stopPropagation();
+  if(!window.FB || typeof window.FB.cartAdd !== 'function') return;
+  const db = getDB();
+  const item = (db[type]||[]).find(i => String(i.id)===String(id));
+  if(!item) return;
+  if(item.status && item.status!=='available'){
+    showToast(lang==='th' ? 'สินค้านี้ไม่พร้อมจำหน่ายแล้ว' : 'This item is no longer available');
+    return;
+  }
+  _cartItems = await window.FB.cartAdd({type, id: item.id, name: item.name, price: item.price, imgs: item.imgs});
+  updateCartBadge();
+  showToast(lang==='th' ? 'เพิ่มลงตะกร้าแล้ว 🛒' : 'Added to cart 🛒');
+  if(document.getElementById('page-cart')?.classList.contains('active')) renderCart();
+  if(window._lastOpened && String(window._lastOpened.type)===String(type) && String(window._lastOpened.id)===String(id)) openProd(type,id);
+}
+
+async function removeFromCart(type, id){
+  if(!window.FB || typeof window.FB.cartRemove !== 'function') return;
+  _cartItems = await window.FB.cartRemove(type, id);
+  updateCartBadge();
+  if(document.getElementById('page-cart')?.classList.contains('active')) renderCart();
+  if(window._lastOpened && String(window._lastOpened.type)===String(type) && String(window._lastOpened.id)===String(id)) openProd(type,id);
+}
+
+function renderCart(){
+  const wrap = document.getElementById('cartWrap');
+  if(!wrap) return;
+  if(!_cartItems.length){
+    wrap.innerHTML = `
+      <div class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        <p>${lang==='th' ? 'ตะกร้าของคุณว่างเปล่า' : 'Your cart is empty'}</p>
+        <button class="btn-gold" style="margin-top:16px" onclick="goPage('shop')">${lang==='th' ? 'เลือกดูสินค้า' : 'Browse items'}</button>
+      </div>`;
+    return;
+  }
+  const total = _cartItems.reduce((sum,i) => sum + Number(i.price||0), 0);
+  wrap.innerHTML = `
+    ${_cartItems.map(i => `
+      <div class="cart-item">
+        <div class="cart-item-img">${i.img?`<img loading="lazy" src="${i.img}" alt="">`:'📿'}</div>
+        <div class="cart-item-body">
+          <div class="cart-item-name">${i.name||''}</div>
+          <div class="cart-item-cat">${i.type==='amulets'?(lang==='th'?'พระเครื่อง':'Amulet'):(lang==='th'?'อุปกรณ์เสริม':'Accessory')}</div>
+          <div class="cart-item-price">S$${Number(i.price||0).toLocaleString()}</div>
+        </div>
+        <button class="cart-item-remove" onclick="removeFromCart('${i.type}','${i.id}')" aria-label="Remove">✕</button>
+      </div>`).join('')}
+    <div class="cart-summary">
+      <div class="cart-summary-row">
+        <span>${lang==='th' ? 'ยอดรวม' : 'Total'} (${_cartItems.length} ${lang==='th' ? 'ชิ้น' : _cartItems.length===1?'item':'items'})</span>
+        <strong>S$${total.toLocaleString()}</strong>
+      </div>
+      <button class="btn-gold" style="width:100%" onclick="goPage('checkout')">${lang==='th' ? 'ดำเนินการสั่งซื้อ' : 'Checkout'}</button>
+    </div>`;
+}
+
+// ── LOGIN / ACCOUNT ──
+// STRIPE PUBLISHABLE KEY — this is the PUBLIC key (starts with pk_live_ or
+// pk_test_), safe to put in client code. This is NOT the secret key — the
+// secret key only ever goes into Cloud Functions config, never here.
+const STRIPE_PUBLISHABLE_KEY = 'pk_live_51S433cQxw0zRZ9VZU0JqU4DH0Na6laX1bfhzsPo00xdyOBcVg1uBUi9WkSoBCpa7NxamXKbiv43REj1VZeryUbCN008GwcRqJO'; // ← paste pk_live_/pk_test_ key here
+let _stripe = null;
+let _stripeCard = null;
+let _authUser = null;
+
+function initCustomerAuthWatcher(){
+  if(!window.FB || typeof window.FB.onAuthChange !== 'function') return;
+  window.FB.onAuthChange(user => {
+    _authUser = user;
+    updateAcctUI();
+    reinitCartWatcher();
+  });
+}
+
+function updateAcctUI(){
+  const btn = document.getElementById('acctBtn');
+  if(!btn) return;
+  btn.textContent = _authUser ? (_authUser.displayName ? _authUser.displayName[0].toUpperCase() : '👤') : '👤';
+  btn.title = _authUser ? (_authUser.displayName || _authUser.phoneNumber || _authUser.email || '') : (lang==='th'?'เข้าสู่ระบบ':'Sign in');
+}
+
+function onAcctBtnClick(){
+  if(!_authUser){ openLoginModal(); return; }
+  document.getElementById('acctMenu').classList.toggle('open');
+}
+function closeAcctMenu(){
+  document.getElementById('acctMenu').classList.remove('open');
+}
+document.addEventListener('click', ev => {
+  const wrap = document.getElementById('acctWrap');
+  if(wrap && !wrap.contains(ev.target)) closeAcctMenu();
+});
+async function doSignOut(){
+  await window.FB.customerSignOut();
+  showToast(lang==='th'?'ออกจากระบบแล้ว':'Signed out');
+  if(document.getElementById('page-orders')?.classList.contains('active')) goPage('home');
+}
+
+function orderStatusLabel(status){
+  const map = {
+    pending_payment: { th:'รอชำระเงิน', en:'Pending payment', color:'#c9a84c' },
+    paid: { th:'ชำระเงินแล้ว', en:'Paid', color:'#2ecc71' },
+    payment_failed: { th:'ชำระเงินไม่สำเร็จ', en:'Payment failed', color:'#e0748a' },
+  };
+  const m = map[status] || { th:status||'-', en:status||'-', color:'var(--text-muted)' };
+  return `<span style="color:${m.color};font-weight:700">${lang==='th'?m.th:m.en}</span>`;
+}
+
+async function renderOrders(){
+  const wrap = document.getElementById('ordersWrap');
+  if(!wrap) return;
+  if(!_authUser){
+    wrap.innerHTML = `
+      <div class="cart-empty">
+        <div class="cart-empty-icon">🔒</div>
+        <p>${lang==='th'?'เข้าสู่ระบบเพื่อดูประวัติการสั่งซื้อ':'Sign in to view your order history'}</p>
+        <button class="btn-gold" style="margin-top:16px" onclick="openLoginModal()">${lang==='th'?'เข้าสู่ระบบ':'Sign in'}</button>
+      </div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">⏳</div><p>${lang==='th'?'กำลังโหลด...':'Loading...'}</p></div>`;
+  const orders = await window.FB.getMyOrders();
+  if(!orders.length){
+    wrap.innerHTML = `
+      <div class="cart-empty">
+        <div class="cart-empty-icon">📦</div>
+        <p>${lang==='th'?'ยังไม่มีประวัติการสั่งซื้อ':'No orders yet'}</p>
+        <button class="btn-gold" style="margin-top:16px" onclick="goPage('shop')">${lang==='th'?'เลือกดูสินค้า':'Browse items'}</button>
+      </div>`;
+    return;
+  }
+  wrap.innerHTML = orders.map(o => {
+    const date = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toLocaleDateString(lang==='th'?'th-TH':'en-SG', {year:'numeric',month:'short',day:'numeric'}) : '';
+    return `
+    <div class="cart-item" style="align-items:flex-start;flex-direction:column;gap:10px">
+      <div style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:700;color:var(--text)">#${o.id.slice(0,8).toUpperCase()}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${date}</div>
+        </div>
+        ${orderStatusLabel(o.status)}
+      </div>
+      <div style="width:100%">
+        ${(o.items||[]).map(i => `<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px dashed var(--border)"><span>${i.name||''}</span><span>S$${Number(i.price||0).toLocaleString()}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;width:100%;font-weight:700;color:var(--gold-dark)">
+        <span>${lang==='th'?'ยอดรวม':'Total'}</span><span>S$${Number(o.total||0).toLocaleString()}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openLoginModal(){
+  _loginMode = 'signin'; // 'signin' | 'signup'
+  renderLoginModalBody();
+  document.getElementById('loginModal').classList.add('open');
+}
+function closeLoginModal(){
+  document.getElementById('loginModal').classList.remove('open');
+}
+let _loginMode = 'signin';
+function toggleLoginMode(){
+  _loginMode = _loginMode==='signin' ? 'signup' : 'signin';
+  renderLoginModalBody();
+}
+function renderLoginModalBody(){
+  const body = document.getElementById('loginModalBody');
+  const isSignup = _loginMode==='signup';
+  body.innerHTML = `
+    <button class="login-btn" onclick="loginGoogle()">🔵 ${lang==='th'?'เข้าสู่ระบบด้วย Google':'Continue with Google'}</button>
+    <button class="login-btn" onclick="loginFacebook()">📘 ${lang==='th'?'เข้าสู่ระบบด้วย Facebook':'Continue with Facebook'}</button>
+    <div class="login-divider">${lang==='th'?'หรือ':'or'}</div>
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">${lang==='th'?'อีเมล':'Email'}</label>
+      <input type="email" id="loginEmailInput" class="login-input" placeholder="you@example.com">
+    </div>
+    <div>
+      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">${lang==='th'?'รหัสผ่าน':'Password'}</label>
+      <input type="password" id="loginPasswordInput" class="login-input" placeholder="••••••••">
+    </div>
+    <button class="btn-gold" style="width:100%" onclick="${isSignup?'signupEmail()':'signinEmail()'}">${isSignup?(lang==='th'?'สร้างบัญชี':'Create account'):(lang==='th'?'เข้าสู่ระบบ':'Sign in')}</button>
+    <button class="login-btn" style="border:none;background:transparent;color:var(--text-muted);font-weight:400" onclick="toggleLoginMode()">${isSignup?(lang==='th'?'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ':'Already have an account? Sign in'):(lang==='th'?'ยังไม่มีบัญชี? สร้างบัญชีใหม่':"Don't have an account? Sign up")}</button>
+  `;
+}
+async function loginGoogle(){
+  try{
+    await window.FB.signInWithGoogle();
+    closeLoginModal();
+    showToast(lang==='th'?'เข้าสู่ระบบสำเร็จ':'Signed in');
+  }catch(err){
+    console.error('[login] google failed:', err);
+    showToast(lang==='th'?'เข้าสู่ระบบไม่สำเร็จ':'Sign-in failed');
+  }
+}
+async function loginFacebook(){
+  try{
+    await window.FB.signInWithFacebook();
+    closeLoginModal();
+    showToast(lang==='th'?'เข้าสู่ระบบสำเร็จ':'Signed in');
+  }catch(err){
+    console.error('[login] facebook failed:', err);
+    showToast(lang==='th'?'เข้าสู่ระบบไม่สำเร็จ':'Sign-in failed');
+  }
+}
+function getLoginEmailPassword(){
+  const email = (document.getElementById('loginEmailInput')||{}).value?.trim();
+  const password = (document.getElementById('loginPasswordInput')||{}).value||'';
+  if(!email || !password){
+    showToast(lang==='th'?'กรุณากรอกอีเมลและรหัสผ่าน':'Please enter email and password');
+    return null;
+  }
+  return { email, password };
+}
+async function signinEmail(){
+  const cred = getLoginEmailPassword();
+  if(!cred) return;
+  try{
+    await window.FB.customerSignInWithEmail(cred.email, cred.password);
+    closeLoginModal();
+    showToast(lang==='th'?'เข้าสู่ระบบสำเร็จ':'Signed in');
+  }catch(err){
+    console.error('[login] email sign-in failed:', err);
+    showToast(lang==='th'?'อีเมลหรือรหัสผ่านไม่ถูกต้อง':'Incorrect email or password');
+  }
+}
+async function signupEmail(){
+  const cred = getLoginEmailPassword();
+  if(!cred) return;
+  if(cred.password.length < 6){
+    showToast(lang==='th'?'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร':'Password must be at least 6 characters');
+    return;
+  }
+  try{
+    await window.FB.customerSignUpWithEmail(cred.email, cred.password);
+    closeLoginModal();
+    showToast(lang==='th'?'สร้างบัญชีสำเร็จ':'Account created');
+  }catch(err){
+    console.error('[login] email sign-up failed:', err);
+    const msg = err && err.code==='auth/email-already-in-use'
+      ? (lang==='th'?'อีเมลนี้ถูกใช้ไปแล้ว':'This email is already in use')
+      : (lang==='th'?'สร้างบัญชีไม่สำเร็จ':'Could not create account');
+    showToast(msg);
+  }
+}
+
+// Cart watcher needs to re-bind when auth state flips (cart doc key changes
+// from guestId to uid, or back). See firebase-shared.js cartKey().
+function reinitCartWatcher(){
+  if(_cartUnsub){ _cartUnsub(); _cartUnsub = null; }
+  initCartWatcher();
+}
+
+// ── CHECKOUT ──
+function renderCheckout(){
+  const wrap = document.getElementById('checkoutWrap');
+  if(!wrap) return;
+  if(!_cartItems.length){
+    goPage('cart');
+    return;
+  }
+  const total = _cartItems.reduce((sum,i) => sum + Number(i.price||0), 0);
+  wrap.innerHTML = `
+    <div class="co-form">
+      <div>
+        <label>${lang==='th'?'ชื่อผู้รับ':'Recipient name'}</label>
+        <input type="text" id="coName" class="login-input" value="${_authUser&&_authUser.displayName||''}">
+      </div>
+      <div>
+        <label>${lang==='th'?'เบอร์โทร':'Phone number'}</label>
+        <input type="tel" id="coPhone" class="login-input" value="${_authUser&&_authUser.phoneNumber||''}" placeholder="+6591234567">
+      </div>
+      <div>
+        <label>${lang==='th'?'ที่อยู่จัดส่ง':'Shipping address'}</label>
+        <textarea id="coAddress" class="login-input" rows="3"></textarea>
+      </div>
+      <div>
+        <label>${lang==='th'?'หมายเหตุ (ถ้ามี)':'Order notes (optional)'}</label>
+        <textarea id="coNotes" class="login-input" rows="2"></textarea>
+      </div>
+      <div>
+        <label>${lang==='th'?'บัตรเครดิต/เดบิต':'Card details'}</label>
+        <div id="stripeCardEl"></div>
+        <div id="stripeCardError" style="color:#e0748a;font-size:12px;margin-top:6px"></div>
+      </div>
+    </div>
+    <div class="cart-summary">
+      <div class="cart-summary-row">
+        <span>${lang==='th'?'ยอดชำระ':'Amount to pay'}</span>
+        <strong>S$${total.toLocaleString()}</strong>
+      </div>
+      <button class="btn-gold" style="width:100%" id="payBtn" onclick="submitPayment()">${lang==='th'?`ชำระเงิน S$${total.toLocaleString()}`:`Pay S$${total.toLocaleString()}`}</button>
+    </div>`;
+  mountStripeCard();
+}
+
+function mountStripeCard(){
+  if(!STRIPE_PUBLISHABLE_KEY){
+    document.getElementById('stripeCardEl').innerHTML = `<div style="color:var(--text-muted);font-size:13px">${lang==='th'?'ยังไม่ได้ตั้งค่า Stripe publishable key':'Stripe publishable key not configured yet'}</div>`;
+    return;
+  }
+  if(!window.Stripe){
+    document.getElementById('stripeCardEl').innerHTML = `<div style="color:var(--text-muted);font-size:13px">Stripe.js failed to load</div>`;
+    return;
+  }
+  if(!_stripe) _stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+  const elements = _stripe.elements();
+  _stripeCard = elements.create('card');
+  _stripeCard.mount('#stripeCardEl');
+  _stripeCard.on('change', ev => {
+    document.getElementById('stripeCardError').textContent = ev.error ? ev.error.message : '';
+  });
+}
+
+async function submitPayment(){
+  const name = document.getElementById('coName').value.trim();
+  const phone = document.getElementById('coPhone').value.trim();
+  const address = document.getElementById('coAddress').value.trim();
+  const notes = document.getElementById('coNotes').value.trim();
+  if(!name || !phone || !address){
+    showToast(lang==='th'?'กรุณากรอกชื่อ เบอร์โทร และที่อยู่ให้ครบ':'Please fill in name, phone, and address');
+    return;
+  }
+  if(!STRIPE_PUBLISHABLE_KEY || !_stripe || !_stripeCard){
+    showToast(lang==='th'?'ระบบชำระเงินยังไม่พร้อมใช้งาน':'Payment system not ready yet');
+    return;
+  }
+  const payBtn = document.getElementById('payBtn');
+  payBtn.disabled = true;
+  payBtn.textContent = lang==='th'?'กำลังดำเนินการ...':'Processing...';
+  try{
+    const { clientSecret } = await window.FB.createPaymentIntent({ name, phone, address, notes });
+    const result = await _stripe.confirmCardPayment(clientSecret, {
+      payment_method: { card: _stripeCard, billing_details: { name, phone } }
+    });
+    if(result.error){
+      document.getElementById('stripeCardError').textContent = result.error.message;
+      payBtn.disabled = false;
+      payBtn.textContent = lang==='th'?'ลองอีกครั้ง':'Try again';
+      return;
+    }
+    // Payment succeeded client-side — the Stripe webhook (Cloud Function)
+    // finalizes the order + clears the cart server-side.
+    document.getElementById('checkoutWrap').innerHTML = `
+      <div class="co-success">
+        <div class="co-success-icon">✅</div>
+        <h3>${lang==='th'?'ชำระเงินสำเร็จ!':'Payment successful!'}</h3>
+        <p style="color:var(--text-muted);margin-top:8px">${lang==='th'?'เราจะติดต่อกลับเพื่อยืนยันการจัดส่งเร็วๆ นี้':'We will contact you to confirm shipping shortly'}</p>
+        <button class="btn-gold" style="margin-top:20px" onclick="goPage('home')">${lang==='th'?'กลับหน้าแรก':'Back to home'}</button>
+      </div>`;
+  }catch(err){
+    console.error('[checkout] payment failed:', err);
+    showToast(lang==='th'?'ชำระเงินไม่สำเร็จ ลองใหม่อีกครั้ง':'Payment failed, please try again');
+    payBtn.disabled = false;
+    payBtn.textContent = lang==='th'?`ชำระเงิน`:`Pay`;
+  }
+}
+
 // ── PAYMENT PAGE ──
 function renderPayment(){
   const s=getDB().settings;const p=s.payment||{};
@@ -7531,88 +8031,58 @@ function buildTabs(containerId,cats,curCat,onFilter){
   `).join('');
 }
 
-// ── AMULETS ──
-let _aQuery='';
-let _aVisible=36;
-function searchA(){
-  const v=document.getElementById('aSearch').value;
-  _aQuery=v.toLowerCase().trim();
-  _aVisible=36;
-  document.getElementById('aSearchClear').classList.toggle('show',!!_aQuery);
-  renderA(curAcat);
-}
-function clearSearchA(){document.getElementById('aSearch').value='';_aQuery='';_aVisible=36;document.getElementById('aSearchClear').classList.remove('show');renderA(curAcat);}
-function applySort(list,sortKey){
-  const arr=[...list];
-  switch(sortKey){
-    case 'price-asc':return arr.sort((a,b)=>(a.hidePrice?Infinity:Number(a.price||0))-(b.hidePrice?Infinity:Number(b.price||0)));
-    case 'price-desc':return arr.sort((a,b)=>(b.hidePrice?-1:Number(b.price||0))-(a.hidePrice?-1:Number(a.price||0)));
-    case 'name':return arr.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
-    case 'year-desc':return arr.sort((a,b)=>(parseInt(b.year)||0)-(parseInt(a.year)||0));
-    case 'year-asc':return arr.sort((a,b)=>(parseInt(a.year)||0)-(parseInt(b.year)||0));
-    default:
-      // available first, sold last
-      return arr.sort((a,b)=>{const sa=a.status==='sold'?2:(a.status==='reserved'?1:0);const sb=b.status==='sold'?2:(b.status==='reserved'?1:0);return sa-sb;});
-  }
-}
-function matchSearch(item,q){
-  if(!q)return true;
-  const hay=[item.name,item.cat,item.temple,item.year,item.desc,item.badge].filter(Boolean).join(' ').toLowerCase();
-  return hay.indexOf(q)>=0;
-}
-function renderA(cat){
-  const db=getDB();const settings=db.settings;
-  const cats=[...new Set(db.amulets.map(a=>a.cat).filter(Boolean))];
-  buildTabs('aTabs',cats,cat,'filterA');
-  let list=cat==='all'?db.amulets:db.amulets.filter(a=>a.cat===cat);
-  list=list.filter(a=>matchSearch(a,_aQuery));
-  const sort=document.getElementById('aSort')?document.getElementById('aSort').value:'default';
-  list=applySort(list,sort);
-  const cnt=document.getElementById('aCount');
-  if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'piece':'pieces'}${_aQuery?' for "'+_aQuery+'"':''}`:'';
-  const visible=list.slice(0,_aVisible);
-  const aGrid=document.getElementById('aGrid');
-  const _aKey=`${cat}|${_aQuery}|${sort}|${visible.length}`;
-  if(aGrid.dataset.renderKey===_aKey && aGrid.children.length>0){ return; }
-  aGrid.dataset.renderKey=_aKey;
-  aGrid.innerHTML=list.length
-    ? visible.map((a,i)=>buildCard(a,'amulets',settings,i)).join('') + (list.length>_aVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreA()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_aVisible})</button></div>`:'')
-    : `<div class="empty-state" style="grid-column:1/-1">${_aQuery?'No items match "'+_aQuery+'".':'No items in this category.'}</div>`;
-}
-function loadMoreA(){_aVisible+=36;renderA(curAcat);}
-function filterA(cat,el){document.querySelectorAll('#aTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAcat=cat;_aVisible=36;renderA(cat);}
+// ── SHOP (Amulets + Accessories combined) ──
+let curStype='all';
+let curScat='all';
+let _sQuery='';
+let _sVisible=36;
 
-let _acQuery='';
-let _acVisible=36;
-function searchAc(){
-  const v=document.getElementById('acSearch').value;
-  _acQuery=v.toLowerCase().trim();
-  _acVisible=36;
-  document.getElementById('acSearchClear').classList.toggle('show',!!_acQuery);
-  renderAc(curAccat);
+function combinedShopList(){
+  const db=getDB();
+  const am=(db.amulets||[]).map(a=>({...a,_type:'amulets'}));
+  const ac=(db.accessories||[]).map(a=>({...a,_type:'accessories'}));
+  if(curStype==='amulets') return am;
+  if(curStype==='accessories') return ac;
+  return am.concat(ac);
 }
-function clearSearchAc(){document.getElementById('acSearch').value='';_acQuery='';_acVisible=36;document.getElementById('acSearchClear').classList.remove('show');renderAc(curAccat);}
-function renderAc(cat){
+
+function searchS(){
+  const v=document.getElementById('sSearch').value;
+  _sQuery=v.toLowerCase().trim();
+  _sVisible=36;
+  document.getElementById('sSearchClear').classList.toggle('show',!!_sQuery);
+  renderShop(curScat);
+}
+function clearSearchS(){document.getElementById('sSearch').value='';_sQuery='';_sVisible=36;document.getElementById('sSearchClear').classList.remove('show');renderShop(curScat);}
+
+function filterSType(type,el){
+  document.querySelectorAll('#sTypeTabs .cat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  curStype=type;curScat='all';_sVisible=36;renderShop('all');
+}
+
+function renderShop(cat){
   const db=getDB();const settings=db.settings;
-  const cats=[...new Set(db.accessories.map(a=>a.cat).filter(Boolean))];
-  buildTabs('acTabs',cats,cat,'filterAc');
-  let list=cat==='all'?db.accessories:db.accessories.filter(a=>a.cat===cat);
-  list=list.filter(a=>matchSearch(a,_acQuery));
-  const sort=document.getElementById('acSort')?document.getElementById('acSort').value:'default';
+  const all=combinedShopList();
+  const cats=[...new Set(all.map(a=>a.cat).filter(Boolean))];
+  buildTabs('sTabs',cats,cat,'filterS');
+  let list=cat==='all'?all:all.filter(a=>a.cat===cat);
+  list=list.filter(a=>matchSearch(a,_sQuery));
+  const sort=document.getElementById('sSort')?document.getElementById('sSort').value:'default';
   list=applySort(list,sort);
-  const cnt=document.getElementById('acCount');
-  if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'item':'items'}${_acQuery?' for "'+_acQuery+'"':''}`:'';
-  const visible=list.slice(0,_acVisible);
-  const acGrid=document.getElementById('acGrid');
-  const _acKey=`${cat}|${_acQuery}|${sort}|${visible.length}`;
-  if(acGrid.dataset.renderKey===_acKey && acGrid.children.length>0){ return; }
-  acGrid.dataset.renderKey=_acKey;
-  acGrid.innerHTML=list.length
-    ? visible.map((a,i)=>buildCard(a,'accessories',settings,i)).join('') + (list.length>_acVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreAc()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_acVisible})</button></div>`:'')
-    : `<div class="empty-state" style="grid-column:1/-1">${_acQuery?'No items match "'+_acQuery+'".':'No items in this category.'}</div>`;
+  const cnt=document.getElementById('sCount');
+  if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'item':'items'}${_sQuery?' for "'+_sQuery+'"':''}`:'';
+  const visible=list.slice(0,_sVisible);
+  const sGrid=document.getElementById('sGrid');
+  const _sKey=`${curStype}|${cat}|${_sQuery}|${sort}|${visible.length}`;
+  if(sGrid.dataset.renderKey===_sKey && sGrid.children.length>0){ return; }
+  sGrid.dataset.renderKey=_sKey;
+  sGrid.innerHTML=list.length
+    ? visible.map((a,i)=>buildCard(a,a._type,settings,i)).join('') + (list.length>_sVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreS()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_sVisible})</button></div>`:'')
+    : `<div class="empty-state" style="grid-column:1/-1">${_sQuery?'No items match "'+_sQuery+'".':'No items in this category.'}</div>`;
 }
-function loadMoreAc(){_acVisible+=36;renderAc(curAccat);}
-function filterAc(cat,el){document.querySelectorAll('#acTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curAccat=cat;_acVisible=36;renderAc(cat);}
+function loadMoreS(){_sVisible+=36;renderShop(curScat);}
+function filterS(cat,el){document.querySelectorAll('#sTabs .cat-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');curScat=cat;_sVisible=36;renderShop(cat);}
 
 // ── CASING ──
 let _casingStyleQuery = '';
@@ -8629,7 +9099,7 @@ function feedVisibleNav(settings){
 
 function buildFeedStories(db, posts){
   const nav=feedVisibleNav(db.settings||{});
-  const preferred=['amulets','casing','projects','reviews','accessories','contact','about'];
+  const preferred=['shop','casing','projects','reviews','contact','about'];
   const ordered=preferred
     .map(id=>nav.find(n=>n.id===id))
     .filter(Boolean)
@@ -8638,7 +9108,7 @@ function buildFeedStories(db, posts){
     .slice(0,8)
     .map((n,i)=>({
       type:'nav',
-      label:n.id === 'amulets' ? 'New Amulets' : n.label,
+      label:n.id === 'shop' ? 'New Arrivals' : n.label,
       icon:navIcon(n.id),
       tone:i%3===1?'alt':i%3===2?'red':'',
       action:`goPage('${String(n.id).replace(/'/g,"\\'")}')`
@@ -9468,6 +9938,12 @@ async function openProd(type,id){
 
   const priceHtml=item.hidePrice?`<div class="prod-price price-pm" style="font-size:22px">${s.contactPmText||'PM for price'}</div>`:`<div class="prod-price">S$${Number(item.price||0).toLocaleString()}</div>`;
 
+  const addToCartBtnHtml=(!item.hidePrice && status==='available')?
+    (isInCart(type,id)?
+      `<button class="btn-ol" style="width:100%;margin-bottom:10px" onclick="removeFromCart('${type}','${id}')">✓ ${lang==='th'?'อยู่ในตะกร้าแล้ว (นำออก)':'In cart (remove)'}</button>`:
+      `<button class="btn-gold" style="width:100%;margin-bottom:10px" onclick="addToCart('${type}',${id})">🛒 ${lang==='th'?'หยิบใส่ตะกร้า':'Add to cart'}</button>`
+    ):'';
+
   // build contact buttons row
   const contacts=s.contacts||[];
   const contactBtnsHtml=status==='sold'?
@@ -9499,6 +9975,7 @@ async function openProd(type,id){
         ${priceHtml}
         <p class="prod-desc">${item.desc||''}</p>
         <div class="spec-box">${specs}</div>
+        ${addToCartBtnHtml}
         ${contactBtnsHtml}
         <div class="share-row">
           <button class="share-btn" onclick="copyLink('${type}',${id})">🔗 Copy link</button>
@@ -9855,6 +10332,8 @@ async function bootIndex(){
   // visitors see the UI/skeleton instead of staring at the splash screen.
   await window.FB.ready();
   applySettings();
+  initCartWatcher();
+  initCustomerAuthWatcher();
   document.documentElement.classList.add('fb-ready');
   setTimeout(() => {
     const s = document.getElementById('fbSplash');
@@ -9891,8 +10370,7 @@ async function bootIndex(){
           // (e.g. historyStories was just loaded for the first time)
           _socialHomeFeedLoading = false;
           scheduleSocialHomeFeedLoad();
-        } else if(page==='amulets') renderA(curAcat||'all');
-        else if(page==='accessories') renderAc(curAccat||'all');
+        } else if(page==='shop') renderShop(curScat||'all');
         else if(page==='projects') renderP();
         else if(page==='reviews') renderReviews();
         else if(page==='history-stories') renderHistoryStories();
@@ -10800,10 +11278,8 @@ window.addEventListener('appinstalled',()=>{
     ['.trust-grid',   'Trust Badges'],
     ['#trustGrid',    'Trust Badges'],
     // Section headers (each page)
-    ['#amuletsTitle', 'Amulets Title'],
-    ['#amuletsDesc',  'Amulets Description'],
-    ['#accTitle',     'Accessories Title'],
-    ['#accDesc',      'Accessories Description'],
+    ['#shopTitle',    'Shop Title'],
+    ['#shopDesc',     'Shop Description'],
     ['#casingTitle',  'Casing Title'],
     ['#casingDesc',   'Casing Description'],
     ['#projTitle',    'Projects Title'],
@@ -10869,7 +11345,7 @@ window.addEventListener('appinstalled',()=>{
       if(card.closest('.featured-grid')){
         card.setAttribute('data-le-product-page', 'featured');
       } else {
-        card.setAttribute('data-le-product-page', page || 'amulets');
+        card.setAttribute('data-le-product-page', page || 'shop');
       }
       card.setAttribute('data-le-hoverable', '1');
       card.setAttribute('data-le-label', '✏️ Edit item');

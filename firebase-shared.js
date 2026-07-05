@@ -26,7 +26,8 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+  GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
@@ -38,6 +39,9 @@ import {
 import {
   initializeAppCheck, ReCaptchaV3Provider
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app-check.js";
+import {
+  getFunctions, httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-functions.js";
 
 // ─── CONFIG (PUBLIC — safe to commit; protection is via Security Rules) ────
 // Project: yingyingyingsgshop (Singapore — asia-southeast1)
@@ -96,6 +100,7 @@ if (APP_CHECK_SITE_KEY) {
 const auth = getAuth(app);
 const fs   = getFirestore(app);
 const stg  = getStorage(app);
+const fns  = getFunctions(app, 'asia-southeast1');
 
 // ─── STATE ─────────────────────────────────────────────────────────────────
 // In-memory mirror of the current DB. Updated whenever Firestore changes.
@@ -1530,6 +1535,63 @@ function onAuthChange(cb){
 
 function currentUser(){ return auth.currentUser; }
 
+// ─── CUSTOMER LOGIN (Google / Facebook / Email+Password) ───────────────────
+// Separate from admin email/password login above — this is for shoppers.
+// Facebook requires an App ID configured in Firebase Console → Authentication
+// → Sign-in method → Facebook (see CHECKOUT_SETUP.md).
+async function signInWithGoogle(){
+  const provider = new GoogleAuthProvider();
+  const cred = await signInWithPopup(auth, provider);
+  await mergeGuestCartIntoUser(cred.user.uid);
+  return cred.user;
+}
+async function signInWithFacebook(){
+  const provider = new FacebookAuthProvider();
+  const cred = await signInWithPopup(auth, provider);
+  await mergeGuestCartIntoUser(cred.user.uid);
+  return cred.user;
+}
+async function customerSignUpWithEmail(email, password){
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await mergeGuestCartIntoUser(cred.user.uid);
+  return cred.user;
+}
+async function customerSignInWithEmail(email, password){
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  await mergeGuestCartIntoUser(cred.user.uid);
+  return cred.user;
+}
+async function customerSignOut(){
+  await signOut(auth);
+}
+
+// ─── CHECKOUT (calls Cloud Function — see functions/index.js) ──────────────
+// The server (Cloud Function) re-reads each item's real price from
+// Firestore and recomputes the total itself — the client-sent price is
+// NEVER trusted for the actual charge amount.
+async function createPaymentIntent(shipping){
+  const call = httpsCallable(fns, 'createPaymentIntent');
+  const res = await call({ cartKey: cartKey(), shipping });
+  return res.data; // { clientSecret, orderId, amount }
+}
+
+// ─── ORDER HISTORY (customer-facing) ────────────────────────────────────────
+// Requires login — the Firestore rule for `orders` only allows a client to
+// read documents where `uid` matches their own auth uid (or an admin).
+// Guest checkouts (uid: null) are not readable by any client, only admin.
+async function getMyOrders(){
+  const user = auth.currentUser;
+  if(!user) return [];
+  try{
+    const q = query(collection(fs, 'orders'), where('uid', '==', user.uid), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }catch(err){
+    console.error('[FB] getMyOrders failed:', err);
+    return [];
+  }
+}
+
 // ─── ADMIN ROLES ───────────────────────────────────────────────────────────
 // Each admin is stored as a doc under `admins/{lowercased-email}` with
 // shape: { email, role, addedBy, addedAt, displayName? }
@@ -1937,8 +1999,100 @@ async function loadFullItem(key, id){
   return (_db[key] || []).find(item => String(item.id) === sid) || null;
 }
 
+// ─── CART (guest-device based, pre-login) ──────────────────────────────────
+// There is no account system yet (Phase 2), so the cart is stored as one
+// Firestore doc per device, keyed by a random id persisted in localStorage.
+// This survives refreshes/tabs on the same device. When login is added
+// later, this guest cart should be merged into the user's account cart by
+// re-keying the doc to the signed-in uid.
+//
+// Every amulet/accessory is a unique physical piece (no stock/qty field
+// exists anywhere in this app), so a cart "item" is presence/absence only —
+// there is no quantity to increment. Adding an item already in the cart is
+// a no-op, and "remove" deletes it from the array entirely.
+const GUEST_ID_KEY = 'yyy_guest_id';
+function getGuestId(){
+  let id = localStorage.getItem(GUEST_ID_KEY);
+  if(!id){
+    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('g'+Date.now()+Math.random().toString(16).slice(2));
+    localStorage.setItem(GUEST_ID_KEY, id);
+  }
+  return id;
+}
+// Once logged in, the cart is keyed by uid instead of the device guest id.
+function cartKey(){
+  return auth.currentUser ? auth.currentUser.uid : getGuestId();
+}
+function cartDocRef(key){
+  return doc(fs, 'carts', key || cartKey());
+}
+async function cartGet(){
+  try{
+    const snap = await getDoc(cartDocRef());
+    return snap.exists() ? (snap.data().items || []) : [];
+  }catch(err){
+    console.error('[FB] cartGet failed:', err);
+    return [];
+  }
+}
+// Called right after a successful login. Copies any items sitting in the
+// device's guest cart into the now-logged-in user's cart (union by
+// type+id, since items are unique pieces — no quantity to add up), then
+// empties the guest cart doc so it isn't left orphaned.
+async function mergeGuestCartIntoUser(uid){
+  const guestId = getGuestId();
+  if(guestId === uid) return; // nothing to merge
+  try{
+    const guestSnap = await getDoc(cartDocRef(guestId));
+    const guestItems = guestSnap.exists() ? (guestSnap.data().items || []) : [];
+    if(!guestItems.length) return;
+    const userSnap = await getDoc(cartDocRef(uid));
+    const userItems = userSnap.exists() ? (userSnap.data().items || []) : [];
+    const merged = [...userItems];
+    guestItems.forEach(gi => {
+      if(!merged.some(ui => ui.type===gi.type && String(ui.id)===String(gi.id))) merged.push(gi);
+    });
+    await setDoc(cartDocRef(uid), { items: merged, updatedAt: serverTimestamp() });
+    await setDoc(cartDocRef(guestId), { items: [], updatedAt: serverTimestamp() });
+  }catch(err){
+    console.error('[FB] mergeGuestCartIntoUser failed:', err);
+  }
+}
+// item: {type:'amulets'|'accessories', id, name, price, imgs|img, hidePrice}
+async function cartAdd(item){
+  const items = await cartGet();
+  const already = items.some(i => i.type===item.type && String(i.id)===String(item.id));
+  if(already) return items;
+  const next = [...items, {
+    type: item.type,
+    id: item.id,
+    name: item.name || '',
+    price: Number(item.price || 0),
+    img: (item.imgs && item.imgs[0]) || item.img || '',
+    addedAt: Date.now()
+  }];
+  await setDoc(cartDocRef(), { items: next, updatedAt: serverTimestamp() });
+  return next;
+}
+async function cartRemove(type, id){
+  const items = await cartGet();
+  const next = items.filter(i => !(i.type===type && String(i.id)===String(id)));
+  await setDoc(cartDocRef(), { items: next, updatedAt: serverTimestamp() });
+  return next;
+}
+async function cartClear(){
+  await setDoc(cartDocRef(), { items: [], updatedAt: serverTimestamp() });
+}
+function onCartChange(cb){
+  return onSnapshot(cartDocRef(), snap => {
+    cb(snap.exists() ? (snap.data().items || []) : []);
+  }, err => console.error('[FB] cart listener failed:', err));
+}
+
 window.FB = {
   getDB, saveDB, onDBChange, ready,
+  // Cart (guest-device based — see comment above)
+  getGuestId, cartGet, cartAdd, cartRemove, cartClear, onCartChange,
   ensureDBKeys,
   loadHistorySummaries,
   loadHistoryArticle,
@@ -1946,6 +2100,12 @@ window.FB = {
   uploadFile, uploadImageSet, deleteFile, applyWatermark,
   signIn: signInUser,
   signOut: signOutUser,
+  // Customer login (Google / Facebook / Email+Password) — separate from admin signIn/signOut above
+  signInWithGoogle, signInWithFacebook,
+  customerSignUpWithEmail, customerSignInWithEmail,
+  customerSignOut,
+  createPaymentIntent,
+  getMyOrders,
   onAuthChange,
   currentUser,
   // Customer review submissions
