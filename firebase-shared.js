@@ -113,8 +113,8 @@ let _isReady = false;
 
 const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
-const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'casingTypes', 'projects', 'reviews', 'feedPosts', 'historyStories'];
-const DB_LAZY_ITEM_KEYS = new Set(['amulets', 'accessories', 'projects']);
+const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'products', 'casingTypes', 'projects', 'reviews', 'feedPosts', 'historyStories'];
+const DB_LAZY_ITEM_KEYS = new Set(['amulets', 'accessories', 'products', 'projects']);
 // Keep every large collection chunked. A single casing type can grow past
 // Firestore's 1 MiB document limit when it contains many style/photo URLs.
 const DB_ITEM_KEYS = new Set([]);
@@ -550,6 +550,22 @@ function lazyItemSummary(key, item){
   if(key === 'amulets'){
     base.temple = item && item.temple || '';
     base.year = item && item.year || '';
+  }
+  if(key === 'products'){
+    // Unified product schema uses different field names than the legacy
+    // amulets/accessories shape — remap onto the generic summary keys so
+    // any code that reads .cat/.desc/.imgs/.status/.badge/.hidePrice
+    // (feed cards, etc.) keeps working without knowing about `products`.
+    base.cat = item && item.category || '';
+    base.desc = item && (item.shortDesc || item.fullDesc) || '';
+    base.imgs = item && item.coverImg ? [item.coverImg]
+      : (item && Array.isArray(item.gallery) && item.gallery[0] ? [item.gallery[0]] : []);
+    base.status = item && item.stockStatus || 'in_stock';
+    base.badge = item && item.badgeText || '';
+    base.hidePrice = !!(item && item.allowEnquiryOnly);
+    base.price = item && (item.salePrice || item.price) || 0;
+    base.type = item && item.type || 'other';
+    base.publishStatus = item && item.publishStatus || 'draft';
   }
   if(key === 'projects'){
     base.date = item && item.date || '';
@@ -2069,6 +2085,7 @@ async function cartAdd(item){
     name: item.name || '',
     price: Number(item.price || 0),
     img: (item.imgs && item.imgs[0]) || item.img || '',
+    catLabel: item.catLabel || '',
     addedAt: Date.now()
   }];
   await setDoc(cartDocRef(), { items: next, updatedAt: serverTimestamp() });

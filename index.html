@@ -901,6 +901,31 @@
   .cat-tab{background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.18);color:rgba(165,140,85,.65);padding:7px 16px;border-radius:25px;font-size:13.5px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;font-weight:500}
   .cat-tab:hover,.cat-tab.active{background:rgba(201,168,76,.14);color:rgba(240,217,138,.95);border-color:rgba(201,168,76,.45);font-weight:700}
 
+  .shop-cat-windows{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:26px}
+  .shop-cat-win{
+    background:rgba(255,255,255,.05);backdrop-filter:blur(14px);
+    border:1px solid rgba(201,168,76,.18);border-radius:14px;
+    padding:18px 10px;text-align:center;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    color:rgba(220,200,155,.85);font-size:12.5px;font-weight:600;
+    transition:all .2s;
+  }
+  .shop-cat-win:hover{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.5);transform:translateY(-2px)}
+  .shop-cat-win .scw-icon{font-size:26px}
+  @media (max-width:700px){ .shop-cat-windows{grid-template-columns:repeat(4,1fr);gap:8px} .shop-cat-win{padding:14px 6px;font-size:11px} .shop-cat-win .scw-icon{font-size:22px} }
+
+  .shop-filters{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px 16px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.16);border-radius:14px;
+    padding:16px;margin-bottom:22px;
+  }
+  .shop-filters .fg{display:flex;flex-direction:column;gap:6px;margin:0}
+  .shop-filters .fl{font-size:11.5px;color:rgba(201,168,76,.7);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+  .shop-filters .fsel,.shop-filters .fi{
+    background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.22);color:rgba(230,215,180,.9);
+    border-radius:8px;padding:9px 10px;font-size:13.5px;font-family:'DM Sans',sans-serif;
+  }
+
   .ftype-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.12)}
   .ftype-card{
     background:#120e05;
@@ -2441,6 +2466,8 @@
   .status-pill.available{background:#155724;color:#d4edda}
   .status-pill.reserved{background:#856404;color:#fff3cd}
   .status-pill.sold{background:#721c24;color:#f8d7da}
+  .status-pill.low-stock{background:#7a4b0f;color:#ffe4c2}
+  .status-pill.preorder{background:#2f4a7a;color:#d6e4ff}
 
   /* PRICE HIDDEN (PM for price) */
   .price-pm{font-family:var(--font-display);color:var(--gold-dark);font-size:16px;font-style:italic;font-weight:600}
@@ -5651,25 +5678,69 @@
 <div id="page-shop" class="page">
   <div class="sec-head"><h2 id="shopTitle"></h2><div class="gline"></div><p id="shopDesc"></p></div>
   <div class="content">
+
+    <!-- Category windows — quick visual entry points -->
+    <div class="shop-cat-windows" id="shopCatWindows">
+      <div class="shop-cat-win" onclick="filterSTypeByValue('amulet')"><span class="scw-icon">📿</span><span data-en="Amulets" data-th="พระเครื่อง">Amulets</span></div>
+      <div class="shop-cat-win" onclick="goPage('casing')"><span class="scw-icon">🪬</span><span data-en="Casing" data-th="บริการกรอบพระ">Casing</span></div>
+      <div class="shop-cat-win" onclick="filterSTypeByValue('bracelet')"><span class="scw-icon">📿</span><span data-en="Bracelets" data-th="สร้อยข้อมือ">Bracelets</span></div>
+      <div class="shop-cat-win" onclick="filterSTypeByValue('accessory')"><span class="scw-icon">⛓️</span><span data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</span></div>
+      <div class="shop-cat-win" onclick="filterSTypeByValue('book')"><span class="scw-icon">📖</span><span data-en="Books" data-th="หนังสือ">Books</span></div>
+      <div class="shop-cat-win" onclick="filterSTypeByValue('service')"><span class="scw-icon">🛠️</span><span data-en="Services" data-th="บริการ">Services</span></div>
+      <div class="shop-cat-win" onclick="filterSTypeByValue('new-arrivals')"><span class="scw-icon">🆕</span><span data-en="New Arrivals" data-th="มาใหม่">New Arrivals</span></div>
+      <div class="shop-cat-win" onclick="filterSTypeByValue('best-sellers')"><span class="scw-icon">🔥</span><span data-en="Best Sellers" data-th="ขายดี">Best Sellers</span></div>
+    </div>
+
     <div class="cat-tabs" id="sTypeTabs">
       <button class="cat-tab active" onclick="filterSType('all',this)" data-en="All" data-th="ทั้งหมด">All</button>
-      <button class="cat-tab" onclick="filterSType('amulets',this)" data-en="Amulets" data-th="พระเครื่อง">Amulets</button>
-      <button class="cat-tab" onclick="filterSType('accessories',this)" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</button>
+      <button class="cat-tab" onclick="filterSType('amulet',this)" data-en="Amulets" data-th="พระเครื่อง">Amulets</button>
+      <button class="cat-tab" onclick="filterSType('accessory',this)" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</button>
+      <button class="cat-tab" onclick="filterSType('bracelet',this)" data-en="Bracelets" data-th="สร้อยข้อมือ">Bracelets</button>
+      <button class="cat-tab" onclick="filterSType('book',this)" data-en="Books" data-th="หนังสือ">Books</button>
+      <button class="cat-tab" onclick="filterSType('service',this)" data-en="Services" data-th="บริการ">Services</button>
+      <button class="cat-tab" onclick="filterSType('new-arrivals',this)" data-en="New Arrivals" data-th="มาใหม่">New Arrivals</button>
+      <button class="cat-tab" onclick="filterSType('best-sellers',this)" data-en="Best Sellers" data-th="ขายดี">Best Sellers</button>
     </div>
+
     <div class="search-bar">
       <div class="search-input-wrap">
         <input class="search-input" id="sSearch" oninput="searchS()" placeholder="">
         <button class="search-clear" id="sSearchClear" onclick="clearSearchS()" aria-label="Clear">✕</button>
       </div>
       <select class="sort-select" id="sSort" onchange="renderShop(curScat)">
-        <option value="default">Sort: Default</option>
+        <option value="newest" data-en="Sort: Newest" data-th="เรียง: มาใหม่">Sort: Newest</option>
+        <option value="popular" data-en="Sort: Popular" data-th="เรียง: ยอดนิยม">Sort: Popular</option>
         <option value="price-asc">Price: Low to High</option>
         <option value="price-desc">Price: High to Low</option>
         <option value="name">Name: A–Z</option>
-        <option value="year-desc">Year: Newest</option>
-        <option value="year-asc">Year: Oldest</option>
       </select>
+      <button class="btn-ol" id="sFilterToggle" onclick="toggleShopFilters()" type="button" data-en="⚙️ Filters" data-th="⚙️ ตัวกรอง">⚙️ Filters</button>
     </div>
+
+    <div class="shop-filters" id="shopFilters" style="display:none">
+      <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label>
+        <select class="fsel" id="sfCategory" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+      <div class="fg"><label class="fl" data-en="Master" data-th="พระอาจารย์">Master</label>
+        <select class="fsel" id="sfMaster" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+      <div class="fg"><label class="fl" data-en="Temple" data-th="วัด">Temple</label>
+        <select class="fsel" id="sfTemple" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+      <div class="fg"><label class="fl" data-en="Material" data-th="วัสดุ">Material</label>
+        <select class="fsel" id="sfMaterial" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+      <div class="fg"><label class="fl" data-en="Availability" data-th="สถานะสินค้า">Availability</label>
+        <select class="fsel" id="sfAvailability" onchange="renderShop(curScat)">
+          <option value="">All</option>
+          <option value="in_stock" data-en="In stock" data-th="พร้อมจำหน่าย">In stock</option>
+          <option value="preorder" data-en="Pre-order" data-th="พรีออเดอร์">Pre-order</option>
+        </select></div>
+      <div class="fg"><label class="fl" data-en="Min price (SGD)" data-th="ราคาต่ำสุด">Min price (SGD)</label>
+        <input class="fi" id="sfPriceMin" type="number" min="0" oninput="renderShop(curScat)"></div>
+      <div class="fg"><label class="fl" data-en="Max price (SGD)" data-th="ราคาสูงสุด">Max price (SGD)</label>
+        <input class="fi" id="sfPriceMax" type="number" min="0" oninput="renderShop(curScat)"></div>
+      <div class="fg" style="justify-content:flex-end">
+        <button class="btn-ol" onclick="clearShopFilters()" data-en="Clear filters" data-th="ล้างตัวกรอง">Clear filters</button>
+      </div>
+    </div>
+
     <div class="cat-tabs" id="sTabs"></div>
     <div class="result-count" id="sCount"></div>
     <div class="card-grid" id="sGrid"></div>
@@ -6905,7 +6976,7 @@ function renderSocialHomeFeed(){
   // Balance: take up to 2 per type so casing doesn't dominate
   const allPosts=buildFeedPosts(db);
   const seenTypes={}; const balanced=[];
-  const LIMIT_PER_TYPE={casing:2,amulet:2,accessory:2,project:2,review:2,hs:2,default:3,article:3,announcement:3};
+  const LIMIT_PER_TYPE={casing:2,amulet:2,accessory:2,bracelet:2,book:2,service:2,other:2,project:2,review:2,hs:2,default:3,article:3,announcement:3};
   // Manual/pinned posts first (no type-capping)
   allPosts.filter(p=>p.pinned||p.type==='default'||p.type==='article'||p.type==='announcement')
     .slice(0,3).forEach(p=>balanced.push(p));
@@ -7150,11 +7221,11 @@ function updatePageUrl(name){
 
 function dataKeysForPage(name){
   switch(name){
-    case 'shop': return ['amulets','accessories'];
+    case 'shop': return ['products'];
     case 'casing': return ['casingTypes'];
     case 'projects': return ['projects'];
     case 'reviews': return ['reviews'];
-    case 'feed': return ['feedPosts','amulets','projects','reviews','casingTypes'];
+    case 'feed': return ['feedPosts','products','projects','reviews','casingTypes'];
     case 'history-stories': return ['historyStories'];
     case 'home': return [];
     default: return [];
@@ -7312,7 +7383,7 @@ async function warmHomeData(){
   if(!window.FB || typeof window.FB.ensureDBKeys !== 'function') return;
   const run=async()=>{
     try {
-      await window.FB.ensureDBKeys(['settings','amulets','accessories','reviews','projects']);
+      await window.FB.ensureDBKeys(['settings','products','amulets','accessories','reviews','projects']);
       if(document.getElementById('page-home')?.classList.contains('active')) applySettings();
     } catch(err) {
       console.warn('[home] background data load failed:', err);
@@ -7352,6 +7423,12 @@ function renderContactPage(){
 // ── PRE-FILL contact message with item name/price ──
 function buildContactMsg(item,type){
   const s=getDB().settings;
+  if(type==='products'){
+    const hidePrice=!!item.allowEnquiryOnly;
+    const price=hidePrice?(s.contactPmText||'PM for price'):('S$'+prodPrice(item).toLocaleString());
+    const typeLabel=item.type||'item';
+    return `Hi! I'm interested in the ${typeLabel}: "${item.name}" (${price}). Could you share more details? 🙏`;
+  }
   const typeLabel=type==='amulets'?'amulet':(type==='accessories'?'accessory':'item');
   const price=item.hidePrice?(s.contactPmText||'PM for price'):('S$'+Number(item.price||0).toLocaleString());
   return `Hi! I'm interested in the ${typeLabel}: "${item.name}" (${price}). Could you share more details? 🙏`;
@@ -7511,6 +7588,7 @@ function renderFeatured(){
   let items=[];
   (db.amulets||[]).forEach(a=>{if(a.featured||(f.ids||[]).includes('a'+a.id))items.push({...a,_type:'amulets'});});
   (db.accessories||[]).forEach(a=>{if(a.featured||(f.ids||[]).includes('ac'+a.id))items.push({...a,_type:'accessories'});});
+  (db.products||[]).forEach(p=>{if(p.featured && p.publishStatus==='active')items.push({...p,_type:'products'});});
   if(!f.enabled||!items.length){sec.style.display='none';return;}
   sec.style.display='block';
   document.getElementById('featuredTitle').textContent=f.title||'✨ Featured Pieces';
@@ -7519,7 +7597,53 @@ function renderFeatured(){
 }
 
 // ── BUILD CARD (shared) ──
+const PR_TYPE_ICON_FE = { amulet:'📿', accessory:'⛓️', casing:'🪬', bracelet:'📿', book:'📖', service:'🛠️', other:'🏷️' };
+const PR_STOCK_PILL_FE = {
+  low_stock: {en:'Low Stock', th:'ใกล้หมด', cls:'low-stock'},
+  reserved:  {en:'Reserved',  th:'จอง',      cls:'reserved'},
+  preorder:  {en:'Pre-order', th:'พรีออเดอร์', cls:'preorder'},
+  sold_out:  {en:'Sold',      th:'ขายแล้ว',   cls:'sold'},
+};
+function prodPrice(p){ return (p.salePrice!=null && p.salePrice!=='' && Number(p.salePrice)>0) ? Number(p.salePrice) : Number(p.price||0); }
+function prodHasSale(p){ return p.salePrice!=null && p.salePrice!=='' && Number(p.salePrice)>0 && Number(p.salePrice)<Number(p.price||0); }
+function prodCanBuy(p){ return p.allowCheckout!==false && !p.allowEnquiryOnly && p.stockStatus!=='sold_out'; }
+
+function buildProductCard(p,settings,idx=99){
+  const icon=PR_TYPE_ICON_FE[p.type]||'🏷️';
+  const stockInfo=PR_STOCK_PILL_FE[p.stockStatus];
+  const overlay=stockInfo&&stockInfo.cls==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:'';
+  const pill=stockInfo?`<div class="status-pill ${stockInfo.cls}">${lang==='th'?stockInfo.th:stockInfo.en}</div>`:'';
+  const cover=p.coverImg||(p.gallery&&p.gallery[0])||'';
+  const priceHtml=p.allowEnquiryOnly
+    ?`<div class="price-pm">${settings.contactPmText||'PM for price'}</div>`
+    :`<div class="card-price">${prodHasSale(p)?`<span style="text-decoration:line-through;opacity:.55;font-size:13px;margin-right:6px">S$${Number(p.price||0).toLocaleString()}</span>`:''}S$${prodPrice(p).toLocaleString()}</div>`;
+  const eager=idx<8;
+  return `
+    <div class="card" onclick="openProd('products','${p.id}')">
+      <div class="card-img" style="contain:layout style">
+        ${cover?`<img loading="${eager?'eager':'lazy'}" ${eager&&idx<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(cover,'thumb','(max-width: 700px) 50vw, 360px')}>`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
+        ${p.badgeText?`<div class="cbadge cbadge-gold">${escapeHtml(p.badgeText)}</div>`:''}
+        ${pill}
+        ${overlay}
+      </div>
+      <div class="card-body">
+        <div class="card-cat">${escapeHtml(p.category||'')}</div>
+        <div class="card-title">${escapeHtml(p.name||'')}</div>
+        <div class="card-desc">${escapeHtml((p.shortDesc||'').slice(0,70))}${p.shortDesc&&p.shortDesc.length>70?'...':''}</div>
+        ${priceHtml}
+      </div>
+      <div class="card-foot">
+        <span class="tag">${escapeHtml(p.category||p.type||'')}</span>
+        <div style="display:flex;gap:6px">
+          ${prodCanBuy(p)?`<button class="btn-sm" onclick="addToCart('products','${p.id}',event)" title="${lang==='th'?'หยิบใส่ตะกร้า':'Add to cart'}">🛒</button>`:''}
+          <button class="btn-sm" onclick="event.stopPropagation();openProd('products','${p.id}')">${lang==='th'?'ดูสินค้า':'View'}</button>
+        </div>
+      </div>
+    </div>`;
+}
+
 function buildCard(a,type,settings,idx=99){
+  if(type==='products') return buildProductCard(a,settings,idx);
   const icon=type==='amulets'?'📿':'⛓️';
   const status=a.status||'available';
   const overlay=status==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:(status==='reserved'?`<div class="status-overlay reserved"><span>RESERVED</span></div>`:'');
@@ -7631,11 +7755,20 @@ async function addToCart(type, id, ev){
   const db = getDB();
   const item = (db[type]||[]).find(i => String(i.id)===String(id));
   if(!item) return;
-  if(item.status && item.status!=='available'){
-    showToast(lang==='th' ? 'สินค้านี้ไม่พร้อมจำหน่ายแล้ว' : 'This item is no longer available');
-    return;
+  if(type==='products'){
+    if(!prodCanBuy(item)){
+      showToast(lang==='th' ? 'สินค้านี้ไม่พร้อมจำหน่ายแล้ว' : 'This item is no longer available');
+      return;
+    }
+    const imgsArr=[item.coverImg,...(item.gallery||[])].filter(Boolean);
+    _cartItems = await window.FB.cartAdd({type, id: item.id, name: item.name, price: prodPrice(item), imgs: imgsArr, catLabel: item.category || item.type});
+  } else {
+    if(item.status && item.status!=='available'){
+      showToast(lang==='th' ? 'สินค้านี้ไม่พร้อมจำหน่ายแล้ว' : 'This item is no longer available');
+      return;
+    }
+    _cartItems = await window.FB.cartAdd({type, id: item.id, name: item.name, price: item.price, imgs: item.imgs});
   }
-  _cartItems = await window.FB.cartAdd({type, id: item.id, name: item.name, price: item.price, imgs: item.imgs});
   updateCartBadge();
   showToast(lang==='th' ? 'เพิ่มลงตะกร้าแล้ว 🛒' : 'Added to cart 🛒');
   if(document.getElementById('page-cart')?.classList.contains('active')) renderCart();
@@ -7669,7 +7802,7 @@ function renderCart(){
         <div class="cart-item-img">${i.img?`<img loading="lazy" src="${i.img}" alt="">`:'📿'}</div>
         <div class="cart-item-body">
           <div class="cart-item-name">${i.name||''}</div>
-          <div class="cart-item-cat">${i.type==='amulets'?(lang==='th'?'พระเครื่อง':'Amulet'):(lang==='th'?'อุปกรณ์เสริม':'Accessory')}</div>
+          <div class="cart-item-cat">${i.catLabel ? escapeHtml(i.catLabel) : (i.type==='amulets'?(lang==='th'?'พระเครื่อง':'Amulet'):(lang==='th'?'อุปกรณ์เสริม':'Accessory'))}</div>
           <div class="cart-item-price">S$${Number(i.price||0).toLocaleString()}</div>
         </div>
         <button class="cart-item-remove" onclick="removeFromCart('${i.type}','${i.id}')" aria-label="Remove">✕</button>
@@ -8031,19 +8164,94 @@ function buildTabs(containerId,cats,curCat,onFilter){
   `).join('');
 }
 
-// ── SHOP (Amulets + Accessories combined) ──
+// ── SHOP (unified product catalog — all types in one collection) ──
 let curStype='all';
 let curScat='all';
 let _sQuery='';
 let _sVisible=36;
 
-function combinedShopList(){
+// Product types shown in the general Shop browsing grid. Casing is
+// deliberately excluded — it's a made-to-order service with its own page
+// (see Phase 1 design decision), not a stocked catalog item.
+const SHOP_BROWSABLE_TYPES = ['amulet','accessory','bracelet','book','service','other'];
+
+function shopProductList(){
   const db=getDB();
-  const am=(db.amulets||[]).map(a=>({...a,_type:'amulets'}));
-  const ac=(db.accessories||[]).map(a=>({...a,_type:'accessories'}));
-  if(curStype==='amulets') return am;
-  if(curStype==='accessories') return ac;
-  return am.concat(ac);
+  const all=(db.products||[]).filter(p=>p && SHOP_BROWSABLE_TYPES.includes(p.type) &&
+    (p.publishStatus==='active' || p.publishStatus==='sold_out'));
+  if(curStype==='all') return all;
+  if(curStype==='new-arrivals') return all.filter(p=>p.newArrival);
+  if(curStype==='best-sellers') return all.filter(p=>p.bestSeller);
+  return all.filter(p=>p.type===curStype);
+}
+// Backward-compatible alias — old name kept in case any other code still calls it.
+function combinedShopList(){ return shopProductList(); }
+
+function filterSTypeByValue(type){
+  document.querySelectorAll('#sTypeTabs .cat-tab').forEach(t=>t.classList.remove('active'));
+  const btn=[...document.querySelectorAll('#sTypeTabs .cat-tab')].find(b=>b.getAttribute('onclick')===`filterSType('${type}',this)`);
+  if(btn) btn.classList.add('active');
+  curStype=type;curScat='all';_sVisible=36;
+  goPage('shop').then(()=>renderShop('all'));
+}
+
+function matchSearch(item,q){
+  if(!q) return true;
+  const hay=[item.name,item.category,item.subCategory,item.temple,item.master,item.material,...(item.tags||[])]
+    .filter(Boolean).join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+function shopSortPrice(p){ return Number((p.salePrice!=null && p.salePrice!=='' && Number(p.salePrice)>0) ? p.salePrice : (p.price||0)); }
+
+function applySort(list,sortKey){
+  const out=[...list];
+  switch(sortKey){
+    case 'price-asc':  return out.sort((a,b)=>shopSortPrice(a)-shopSortPrice(b));
+    case 'price-desc': return out.sort((a,b)=>shopSortPrice(b)-shopSortPrice(a));
+    case 'name':       return out.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||'')));
+    case 'popular':
+      // No view/sales analytics yet — approximate "popular" with the admin's
+      // best-seller/featured flags, falling back to name order.
+      return out.sort((a,b)=>{
+        const score=p=>(p.bestSeller?2:0)+(p.featured?1:0);
+        return score(b)-score(a) || String(a.name||'').localeCompare(String(b.name||''));
+      });
+    case 'newest':
+    default:
+      return out.sort((a,b)=>(Number(b.createdAt||0))-(Number(a.createdAt||0)));
+  }
+}
+
+function toggleShopFilters(){
+  const box=document.getElementById('shopFilters');
+  const show=box.style.display==='none';
+  box.style.display=show?'grid':'none';
+  if(show) populateShopFilterOptions();
+}
+
+function clearShopFilters(){
+  ['sfCategory','sfMaster','sfTemple','sfMaterial','sfAvailability','sfPriceMin','sfPriceMax'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  renderShop(curScat);
+}
+
+// Fill filter dropdowns with values actually present in the current type's
+// product set, so admins never see an option with zero matching results.
+function populateShopFilterOptions(){
+  const base=curStype==='all'?shopProductList():shopProductList();
+  const uniq=(field)=>[...new Set(base.map(p=>p[field]).filter(Boolean))].sort();
+  const fill=(id,values)=>{
+    const el=document.getElementById(id); if(!el) return;
+    const cur=el.value;
+    el.innerHTML=`<option value="">All</option>`+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+    if(values.includes(cur)) el.value=cur;
+  };
+  fill('sfCategory', uniq('category'));
+  fill('sfMaster', uniq('master'));
+  fill('sfTemple', uniq('temple'));
+  fill('sfMaterial', uniq('material'));
 }
 
 function searchS(){
@@ -8063,22 +8271,38 @@ function filterSType(type,el){
 
 function renderShop(cat){
   const db=getDB();const settings=db.settings;
-  const all=combinedShopList();
-  const cats=[...new Set(all.map(a=>a.cat).filter(Boolean))];
+  const all=shopProductList();
+  const cats=[...new Set(all.map(a=>a.category).filter(Boolean))];
   buildTabs('sTabs',cats,cat,'filterS');
-  let list=cat==='all'?all:all.filter(a=>a.cat===cat);
+  let list=cat==='all'?all:all.filter(a=>a.category===cat);
   list=list.filter(a=>matchSearch(a,_sQuery));
-  const sort=document.getElementById('sSort')?document.getElementById('sSort').value:'default';
+
+  const fCategory=document.getElementById('sfCategory')?.value;
+  const fMaster=document.getElementById('sfMaster')?.value;
+  const fTemple=document.getElementById('sfTemple')?.value;
+  const fMaterial=document.getElementById('sfMaterial')?.value;
+  const fAvail=document.getElementById('sfAvailability')?.value;
+  const fMin=document.getElementById('sfPriceMin')?.value;
+  const fMax=document.getElementById('sfPriceMax')?.value;
+  if(fCategory) list=list.filter(p=>p.category===fCategory);
+  if(fMaster) list=list.filter(p=>p.master===fMaster);
+  if(fTemple) list=list.filter(p=>p.temple===fTemple);
+  if(fMaterial) list=list.filter(p=>p.material===fMaterial);
+  if(fAvail) list=list.filter(p=>p.stockStatus===fAvail);
+  if(fMin) list=list.filter(p=>shopSortPrice(p)>=Number(fMin));
+  if(fMax) list=list.filter(p=>shopSortPrice(p)<=Number(fMax));
+
+  const sort=document.getElementById('sSort')?document.getElementById('sSort').value:'newest';
   list=applySort(list,sort);
   const cnt=document.getElementById('sCount');
   if(cnt)cnt.textContent=list.length?`Showing ${list.length} ${list.length===1?'item':'items'}${_sQuery?' for "'+_sQuery+'"':''}`:'';
   const visible=list.slice(0,_sVisible);
   const sGrid=document.getElementById('sGrid');
-  const _sKey=`${curStype}|${cat}|${_sQuery}|${sort}|${visible.length}`;
+  const _sKey=`${curStype}|${cat}|${_sQuery}|${sort}|${fCategory}|${fMaster}|${fTemple}|${fMaterial}|${fAvail}|${fMin}|${fMax}|${visible.length}`;
   if(sGrid.dataset.renderKey===_sKey && sGrid.children.length>0){ return; }
   sGrid.dataset.renderKey=_sKey;
   sGrid.innerHTML=list.length
-    ? visible.map((a,i)=>buildCard(a,a._type,settings,i)).join('') + (list.length>_sVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreS()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_sVisible})</button></div>`:'')
+    ? visible.map((a,i)=>buildCard(a,'products',settings,i)).join('') + (list.length>_sVisible?`<div class="load-more-wrap" style="grid-column:1/-1;text-align:center;margin-top:8px"><button class="btn-gold" onclick="loadMoreS()">${lang==='th'?'โหลดเพิ่ม':'Load more'} (${list.length-_sVisible})</button></div>`:'')
     : `<div class="empty-state" style="grid-column:1/-1">${_sQuery?'No items match "'+_sQuery+'".':'No items in this category.'}</div>`;
 }
 function loadMoreS(){_sVisible+=36;renderShop(curScat);}
@@ -9593,17 +9817,46 @@ function buildFeedPosts(db){
       };
     });
   const casing=buildCasingUpdatePosts(db);
-  const amulets=buildAmuletFeedPosts(db);
-  const accessories=buildAccessoriesFeedPosts(db);
+  const products=buildProductFeedPosts(db);
   const projects=buildProjectFeedPosts(db);
   const reviews=buildReviewFeedPosts(db);
   const hs=buildHistoryStoriesFeedPosts(db);
-  const auto=[...casing,...amulets,...accessories,...projects,...reviews,...hs];
+  const auto=[...casing,...products,...projects,...reviews,...hs];
   return [...manual,...auto].sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if((b.ts||0) !== (a.ts||0)) return (b.ts||0) - (a.ts||0);
     return (b.score||0) - (a.score||0);
   });
+}
+
+function buildProductFeedPosts(db){
+  const meta = {
+    amulet:    {badge:'📿 New Arrival', cls:'feed-badge-amulet',    kicker:'New Amulet In Stock'},
+    accessory: {badge:'⛓️ Accessory',   cls:'feed-badge-accessory', kicker:'New Accessory'},
+    bracelet:  {badge:'📿 Bracelet',    cls:'feed-badge-accessory', kicker:'New Bracelet'},
+    book:      {badge:'📖 Book',        cls:'feed-badge-accessory', kicker:'New Book'},
+    service:   {badge:'🛠️ Service',    cls:'feed-badge-accessory', kicker:'Service'},
+    other:     {badge:'🏷️ New Item',   cls:'feed-badge-accessory', kicker:'New Item'},
+  };
+  return (db.products||[])
+    .filter(p=>p && p.publishStatus==='active' && (p.coverImg || (p.gallery&&p.gallery.length)))
+    .slice(0,20)
+    .map(p=>{
+      const m=meta[p.type]||meta.other;
+      const price=prodPrice(p);
+      return {
+        type:p.type||'other',
+        badge:m.badge, badgeCls:m.cls, kicker:m.kicker,
+        title:p.name || 'New Product',
+        text:[p.shortDesc||'', price?`S$${Number(price).toLocaleString()}`:''].filter(Boolean).join(' · '),
+        imgs:feedImages([p.coverImg,...(p.gallery||[])].filter(Boolean)),
+        action:`openProd('products','${p.id}')`,
+        cta:'View',
+        pinned:false,
+        ts:Number(p.updatedAt||p.createdAt||0)||0,
+        score:((p.coverImg?1:0)+(p.gallery||[]).length),
+      };
+    });
 }
 
 function buildAmuletFeedPosts(db){
@@ -9924,6 +10177,9 @@ async function openProd(type,id){
   }
   if(!item) item=db[type].find(i=>String(i.id)===String(id));
   if(!item)return;
+
+  if(type==='products'){ renderProductModal(item,id,s); return; }
+
   window._prodImages = item.imgs || [];
   const icon=type==='amulets'?'📿':'⛓️';
   const status=item.status||'available';
@@ -9988,6 +10244,118 @@ async function openProd(type,id){
   document.getElementById('modal').classList.add('open');
   // remember opened item for context
   window._lastOpened={type,id};
+}
+
+// ── Product detail modal (unified catalog) ──
+let _prodVariantSelection=null;
+function renderProductModal(item,id,s){
+  window._prodImages=[item.coverImg,...(item.gallery||[])].filter(Boolean);
+  _prodVariantSelection=null;
+  const icon=PR_TYPE_ICON_FE[item.type]||'🏷️';
+  const stockInfo=PR_STOCK_PILL_FE[item.stockStatus];
+  const statusBadge=stockInfo?`<span class="status-pill ${stockInfo.cls}" style="position:static;display:inline-block;margin-left:8px">${lang==='th'?stockInfo.th:stockInfo.en}</span>`:'';
+
+  const detailRows=[
+    ['Temple', item.temple], ['Master', item.master], ['Year (BE)', item.yearBE],
+    ['Material', item.material], ['Size', item.size], ['Condition', item.condition],
+    ['Certificate', item.certificate],
+  ].filter(([,v])=>v);
+  const specs=detailRows.map(([k,v])=>`<div class="spec-row"><span class="spec-k">${k}</span><span class="spec-v">${escapeHtml(String(v))}</span></div>`).join('')
+    || `<div class="spec-row"><span class="spec-k">Category</span><span class="spec-v">${escapeHtml(item.category||'-')}</span></div>`;
+
+  const shipLabel={ready:lang==='th'?'📦 พร้อมส่ง':'📦 Ready to ship', keep_at_shop:lang==='th'?'🏬 เก็บที่ร้าน':'🏬 Keep at shop', custom_casing:lang==='th'?'🪬 ต้องทำกรอบก่อน':'🪬 Custom casing needed'}[item.fulfillment]||'';
+  const shippingHtml=(item.shipFrom||item.shippingFee||item.prepTime||item.fulfillment)?`
+    <div class="spec-box" style="margin-top:10px">
+      <div class="spec-row"><span class="spec-k">${lang==='th'?'จัดส่งจาก':'Ship from'}</span><span class="spec-v">${item.shipFrom==='singapore'?'🇸🇬 Singapore':'🇹🇭 Thailand'}</span></div>
+      ${item.shippingFee?`<div class="spec-row"><span class="spec-k">${lang==='th'?'ค่าจัดส่ง':'Shipping fee'}</span><span class="spec-v">S$${Number(item.shippingFee).toLocaleString()}</span></div>`:''}
+      ${shipLabel?`<div class="spec-row"><span class="spec-k">${lang==='th'?'สถานะสินค้า':'Fulfillment'}</span><span class="spec-v">${shipLabel}</span></div>`:''}
+      ${item.prepTime?`<div class="spec-row"><span class="spec-k">${lang==='th'?'เวลาเตรียมสินค้า':'Prep time'}</span><span class="spec-v">${escapeHtml(item.prepTime)}</span></div>`:''}
+    </div>`:'';
+
+  const variantHtml=(item.variantsEnabled && (item.variants||[]).length)?`
+    <div class="fg full" style="margin:14px 0">
+      <label class="fl" style="display:block;margin-bottom:6px;font-size:12px;color:var(--text-muted)">${lang==='th'?'เลือกตัวเลือกสินค้า':'Choose an option'}</label>
+      <select class="fsel" style="width:100%" id="prodVariantSelect" onchange="onProdVariantChange('${id}')">
+        <option value="">${lang==='th'?'-- เลือก --':'-- Select --'}</option>
+        ${item.variants.map((v,i)=>`<option value="${i}">${Object.values(v.optionValues||{}).join(' / ')}${v.price?` — S$${Number(v.price).toLocaleString()}`:''}</option>`).join('')}
+      </select>
+    </div>`:'';
+
+  const displayPrice=prodPrice(item);
+  const priceHtml=item.allowEnquiryOnly
+    ?`<div class="prod-price price-pm" style="font-size:22px">${s.contactPmText||'PM for price'}</div>`
+    :`<div class="prod-price">${prodHasSale(item)?`<span style="text-decoration:line-through;opacity:.5;font-size:16px;margin-right:8px">S$${Number(item.price||0).toLocaleString()}</span>`:''}S$${displayPrice.toLocaleString()}</div>`;
+
+  const canBuy=prodCanBuy(item);
+  const addToCartBtnHtml=canBuy?
+    (isInCart('products',id)?
+      `<button class="btn-ol" style="width:100%;margin-bottom:10px" onclick="removeFromCart('products','${id}')">✓ ${lang==='th'?'อยู่ในตะกร้าแล้ว (นำออก)':'In cart (remove)'}</button>`:
+      `<button class="btn-gold" style="width:100%;margin-bottom:10px" onclick="addToCart('products','${id}')">🛒 ${lang==='th'?'หยิบใส่ตะกร้า':'Add to cart'}</button>`
+    ):'';
+
+  const contacts=s.contacts||[];
+  const contactBtnsHtml=item.stockStatus==='sold_out'?
+    `<div style="background:#f8d7da;color:#721c24;padding:14px;border-radius:10px;text-align:center;font-weight:600;border:1px solid #f5c6cb">❌ ${lang==='th'?'สินค้านี้ถูกจำหน่ายแล้ว':'This item has been sold'}</div>`:
+    contacts.length?
+      `<div class="contact-group">
+        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" style="background:${c.color}" onclick="openContactWithItemBtn('products','${id}')">${contactDisplay(c)} →</button>`).join('')}
+      </div>`:
+      `<button class="btn-gold" style="width:100%" onclick="showToast('${(s.contactBtnMessage||'').replace(/'/g,"\\'")}')">${s.contactBtnText||'Contact'}</button>`;
+
+  const cover=item.coverImg||(item.gallery&&item.gallery[0])||'';
+
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-head">
+      <div class="modal-title-wrap">
+        <div class="modal-title-cat">${escapeHtml(item.category||'')}</div>
+        <div class="modal-title">${escapeHtml(item.name||'')}${statusBadge}</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="prod-detail">
+      <div>
+        <div class="prod-main-img" id="mImg">
+          ${cover?`<img loading="lazy" decoding="async" ${imgAttrs(cover,'medium','min(100vw, 520px)')}>`:`<span style="font-size:64px">${icon}</span>`}
+          ${stockInfo&&stockInfo.cls==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:''}
+        </div>
+        ${window._prodImages.length>1?`<div class="prod-thumbs">${window._prodImages.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImgIndex(this,${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','72px')}></div>`).join('')}</div>`:''}
+        ${item.video?`<div style="margin-top:10px"><a class="share-btn" href="${escapeHtml(item.video)}" target="_blank" rel="noopener">🎬 ${lang==='th'?'ดูวิดีโอ':'Watch video'}</a></div>`:''}
+      </div>
+      <div class="prod-info">
+        ${item.badgeText?`<span class="tag cbadge-gold" style="display:inline-block;margin-bottom:8px">${escapeHtml(item.badgeText)}</span>`:''}
+        ${priceHtml}
+        ${item.shortDesc?`<p class="prod-desc">${escapeHtml(item.shortDesc)}</p>`:''}
+        ${item.fullDesc?`<div class="prod-desc">${item.fullDesc}</div>`:''}
+        ${item.story?`<div class="prod-desc" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)"><strong style="color:var(--gold-dark)">${lang==='th'?'เรื่องราว / ความเชื่อ':'Story & belief'}</strong><div style="margin-top:6px">${item.story}</div></div>`:''}
+        <div class="spec-box" style="margin-top:10px">${specs}</div>
+        ${shippingHtml}
+        ${variantHtml}
+        ${addToCartBtnHtml}
+        ${contactBtnsHtml}
+        <div class="share-row">
+          <button class="share-btn" onclick="copyLink('products','${id}')">🔗 Copy link</button>
+          <button class="share-btn" onclick="shareToWA('products','${id}')">📱 WhatsApp</button>
+          <button class="share-btn" onclick="shareToLine('products','${id}')">💬 Line</button>
+          <button class="share-btn" onclick="shareToFB('products','${id}')">📘 Facebook</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+  window._lastOpened={type:'products',id};
+}
+
+// Variant picker just updates the displayed price — cart/checkout still
+// checks out the base product; per-variant cart lines are Phase 4 scope.
+function onProdVariantChange(id){
+  const sel=document.getElementById('prodVariantSelect');
+  const db=getDB();
+  const item=(db.products||[]).find(p=>String(p.id)===String(id));
+  if(!item||!sel.value){ return; }
+  const v=item.variants[Number(sel.value)];
+  if(!v) return;
+  _prodVariantSelection=v;
+  const priceEl=document.querySelector('#modalContent .prod-price');
+  if(priceEl && v.price) priceEl.textContent='S$'+Number(v.price).toLocaleString();
 }
 function openContactWithItemBtn(type,id){openContactWithItem(type,id);}
 function swImgIndex(el,idx){
@@ -10395,9 +10763,13 @@ if('serviceWorker' in navigator){
 async function handleHash(){
   const h=window.location.hash;if(!h)return;
   const m=h.match(/^#(amulets|accessories)-(\d+)$/);
+  const mp=h.match(/^#products-([\w-]+)$/);
   if(m){
     await ensurePageData(m[1]);
     setTimeout(()=>openProd(m[1],parseInt(m[2])),200);
+  } else if(mp){
+    await ensurePageData('shop');
+    setTimeout(()=>openProd('products',mp[1]),200);
   } else {
     const page = pageFromUrl();
     if(page)setTimeout(()=>goPage(page,{updateUrl:false}),200);
