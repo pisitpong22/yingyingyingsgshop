@@ -27,7 +27,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
-  GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, createUserWithEmailAndPassword
+  GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, createUserWithEmailAndPassword,
+  fetchSignInMethodsForEmail, linkWithCredential
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
@@ -1577,15 +1578,71 @@ function currentUser(){ return auth.currentUser; }
 // Separate from admin email/password login above — this is for shoppers.
 // Facebook requires an App ID configured in Firebase Console → Authentication
 // → Sign-in method → Facebook (see CHECKOUT_SETUP.md).
+// If a user tries to sign in with a provider (Google/Facebook) but their
+// email is already registered via a *different* provider, Firebase blocks
+// the sign-in with `auth/account-exists-with-different-credential` (Firebase
+// projects default to "one account per email address"). We resolve this by
+// finding which method the email already uses and linking the new
+// credential onto that existing account instead of failing outright.
+async function _resolveAccountExistsError(err, attemptedProvider){
+  if(err?.code !== 'auth/account-exists-with-different-credential') throw err;
+  const email = err.customData?.email;
+  const pendingCred = attemptedProvider === 'facebook'
+    ? FacebookAuthProvider.credentialFromError(err)
+    : GoogleAuthProvider.credentialFromError(err);
+  if(!email || !pendingCred) throw err;
+  const methods = await fetchSignInMethodsForEmail(auth, email);
+  if(methods.includes('google.com') && attemptedProvider !== 'google'){
+    const result = await signInWithPopup(auth, new GoogleAuthProvider());
+    await linkWithCredential(result.user, pendingCred);
+    return result.user;
+  }
+  if(methods.includes('facebook.com') && attemptedProvider !== 'facebook'){
+    const result = await signInWithPopup(auth, new FacebookAuthProvider());
+    await linkWithCredential(result.user, pendingCred);
+    return result.user;
+  }
+  if(methods.includes('password')){
+    // Can't link silently — need the user's password. Surface a distinct
+    // error so the UI can prompt for it, then call
+    // linkPendingCredentialWithPassword() to finish linking.
+    const linkErr = new Error('Account exists — password needed to link');
+    linkErr.code = 'custom/link-needs-password';
+    linkErr.email = email;
+    linkErr.pendingCred = pendingCred;
+    throw linkErr;
+  }
+  throw err;
+}
 async function signInWithGoogle(){
   const provider = new GoogleAuthProvider();
-  const cred = await signInWithPopup(auth, provider);
-  await mergeGuestCartIntoUser(cred.user.uid);
-  return cred.user;
+  try{
+    const cred = await signInWithPopup(auth, provider);
+    await mergeGuestCartIntoUser(cred.user.uid);
+    return cred.user;
+  }catch(err){
+    const user = await _resolveAccountExistsError(err, 'google');
+    await mergeGuestCartIntoUser(user.uid);
+    return user;
+  }
 }
 async function signInWithFacebook(){
   const provider = new FacebookAuthProvider();
-  const cred = await signInWithPopup(auth, provider);
+  try{
+    const cred = await signInWithPopup(auth, provider);
+    await mergeGuestCartIntoUser(cred.user.uid);
+    return cred.user;
+  }catch(err){
+    const user = await _resolveAccountExistsError(err, 'facebook');
+    await mergeGuestCartIntoUser(user.uid);
+    return user;
+  }
+}
+// Completes account linking for the 'password' branch above — called by the
+// UI after the user enters the password for their existing email/password account.
+async function linkPendingCredentialWithPassword(email, password, pendingCred){
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  await linkWithCredential(cred.user, pendingCred);
   await mergeGuestCartIntoUser(cred.user.uid);
   return cred.user;
 }
@@ -2141,6 +2198,7 @@ window.FB = {
   signOut: signOutUser,
   // Customer login (Google / Facebook / Email+Password) — separate from admin signIn/signOut above
   signInWithGoogle, signInWithFacebook,
+  linkPendingCredentialWithPassword,
   customerSignUpWithEmail, customerSignInWithEmail,
   customerSignOut,
   createPaymentIntent,

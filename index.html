@@ -7921,6 +7921,8 @@ function closeLoginModal(){
   document.getElementById('loginModal').classList.remove('open');
 }
 let _loginMode = 'signin';
+let _pendingLinkEmail = null;
+let _pendingLinkCred = null;
 function toggleLoginMode(){
   _loginMode = _loginMode==='signin' ? 'signup' : 'signin';
   renderLoginModalBody();
@@ -7928,6 +7930,20 @@ function toggleLoginMode(){
 function renderLoginModalBody(){
   const body = document.getElementById('loginModalBody');
   const isSignup = _loginMode==='signup';
+  if(_loginMode==='link'){
+    body.innerHTML = `
+      <div style="font-size:14px;color:var(--text-muted);line-height:1.6">${lang==='th'
+        ? `อีเมล <b style="color:var(--text)">${_pendingLinkEmail}</b> เคยสมัครด้วยอีเมล/รหัสผ่านไว้แล้ว กรุณาใส่รหัสผ่านเดิมเพื่อเชื่อมบัญชีเข้าด้วยกัน`
+        : `The email <b style="color:var(--text)">${_pendingLinkEmail}</b> already has a password-based account. Enter that password to link accounts.`}</div>
+      <div>
+        <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px">${lang==='th'?'รหัสผ่าน':'Password'}</label>
+        <input type="password" id="linkPasswordInput" class="login-input" placeholder="••••••••">
+      </div>
+      <button class="btn-gold" style="width:100%" onclick="completeAccountLink()">${lang==='th'?'เชื่อมบัญชี':'Link account'}</button>
+      <button class="login-btn" style="border:none;background:transparent;color:var(--text-muted);font-weight:400" onclick="_pendingLinkEmail=null;_pendingLinkCred=null;_loginMode='signin';renderLoginModalBody()">${lang==='th'?'ยกเลิก':'Cancel'}</button>
+    `;
+    return;
+  }
   body.innerHTML = `
     <button class="login-btn" onclick="loginGoogle()">🔵 ${lang==='th'?'เข้าสู่ระบบด้วย Google':'Continue with Google'}</button>
     <button class="login-btn" onclick="loginFacebook()">📘 ${lang==='th'?'เข้าสู่ระบบด้วย Facebook':'Continue with Facebook'}</button>
@@ -7944,14 +7960,28 @@ function renderLoginModalBody(){
     <button class="login-btn" style="border:none;background:transparent;color:var(--text-muted);font-weight:400" onclick="toggleLoginMode()">${isSignup?(lang==='th'?'มีบัญชีอยู่แล้ว? เข้าสู่ระบบ':'Already have an account? Sign in'):(lang==='th'?'ยังไม่มีบัญชี? สร้างบัญชีใหม่':"Don't have an account? Sign up")}</button>
   `;
 }
+function _handleLoginError(err, providerLabel){
+  console.error(`[login] ${providerLabel} failed:`, err);
+  if(err.code === 'custom/link-needs-password'){
+    _pendingLinkEmail = err.email;
+    _pendingLinkCred = err.pendingCred;
+    _loginMode = 'link';
+    renderLoginModalBody();
+    return;
+  }
+  if(err.code === 'auth/account-exists-with-different-credential'){
+    showToast(lang==='th'?'อีเมลนี้เคยสมัครด้วยวิธีอื่นแล้ว กรุณาลองเข้าสู่ระบบด้วยวิธีเดิม':'This email is already linked to a different sign-in method');
+    return;
+  }
+  showToast(lang==='th'?'เข้าสู่ระบบไม่สำเร็จ':'Sign-in failed');
+}
 async function loginGoogle(){
   try{
     await window.FB.signInWithGoogle();
     closeLoginModal();
     showToast(lang==='th'?'เข้าสู่ระบบสำเร็จ':'Signed in');
   }catch(err){
-    console.error('[login] google failed:', err);
-    showToast(lang==='th'?'เข้าสู่ระบบไม่สำเร็จ':'Sign-in failed');
+    _handleLoginError(err, 'google');
   }
 }
 async function loginFacebook(){
@@ -7960,8 +7990,25 @@ async function loginFacebook(){
     closeLoginModal();
     showToast(lang==='th'?'เข้าสู่ระบบสำเร็จ':'Signed in');
   }catch(err){
-    console.error('[login] facebook failed:', err);
-    showToast(lang==='th'?'เข้าสู่ระบบไม่สำเร็จ':'Sign-in failed');
+    _handleLoginError(err, 'facebook');
+  }
+}
+async function completeAccountLink(){
+  const password = (document.getElementById('linkPasswordInput')||{}).value||'';
+  if(!password){
+    showToast(lang==='th'?'กรุณากรอกรหัสผ่าน':'Please enter your password');
+    return;
+  }
+  try{
+    await window.FB.linkPendingCredentialWithPassword(_pendingLinkEmail, password, _pendingLinkCred);
+    _pendingLinkEmail = null;
+    _pendingLinkCred = null;
+    _loginMode = 'signin';
+    closeLoginModal();
+    showToast(lang==='th'?'เชื่อมบัญชีและเข้าสู่ระบบสำเร็จ':'Account linked and signed in');
+  }catch(err){
+    console.error('[login] account link failed:', err);
+    showToast(lang==='th'?'รหัสผ่านไม่ถูกต้อง':'Incorrect password');
   }
 }
 function getLoginEmailPassword(){
