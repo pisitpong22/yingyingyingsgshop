@@ -950,8 +950,7 @@
 
       <!-- CATALOG -->
       <div class="sidebar-label" data-en="Catalog" data-th="สินค้า &amp; บริการ">Catalog</div>
-      <div class="side-item" onclick="showPanel('amulets',this)" data-en="📿 Amulets" data-th="📿 พระเครื่อง">📿 Amulets</div>
-      <div class="side-item" onclick="showPanel('accessories',this)" data-en="⛓️ Accessories" data-th="⛓️ อุปกรณ์เสริม">⛓️ Accessories</div>
+      <div class="side-item" onclick="showPanel('products',this)" data-en="🛍️ Products" data-th="🛍️ สินค้า">🛍️ Products</div>
       <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
       <div class="side-item" onclick="showPanel('projects',this)" data-en="🎯 Projects" data-th="🎯 โปรเจกต์">🎯 Projects</div>
       <div class="side-item" onclick="showPanel('reviews',this)" data-en="🙏 Reviews" data-th="🙏 รีวิว">🙏 Reviews</div>
@@ -981,16 +980,10 @@
         <div class="panel-sub" data-en="Your store at a glance. Click any card to manage that section." data-th="ภาพรวมร้านของคุณ คลิกการ์ดเพื่อจัดการแต่ละส่วน">Your store at a glance. Click any card to manage that section.</div>
 
         <div class="dash-grid">
-          <div class="dash-card" onclick="showPanel('amulets',document.querySelector('.side-item[onclick*=amulets]'))" style="cursor:pointer">
-            <div class="dash-icon">📿</div>
-            <div class="dash-num" id="dA">–</div>
-            <div class="dash-label" data-en="Amulets" data-th="พระเครื่อง">Amulets</div>
-            <span class="dash-link" data-en="Manage →" data-th="จัดการ →">Manage →</span>
-          </div>
-          <div class="dash-card" onclick="showPanel('accessories',document.querySelector('.side-item[onclick*=accessories]'))" style="cursor:pointer">
-            <div class="dash-icon">⛓️</div>
-            <div class="dash-num" id="dAc">–</div>
-            <div class="dash-label" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</div>
+          <div class="dash-card" onclick="showPanel('products',document.querySelector('.side-item[onclick*=products]'))" style="cursor:pointer">
+            <div class="dash-icon">🛍️</div>
+            <div class="dash-num" id="dPr">–</div>
+            <div class="dash-label" data-en="Products" data-th="สินค้า">Products</div>
             <span class="dash-link" data-en="Manage →" data-th="จัดการ →">Manage →</span>
           </div>
           <div class="dash-card" onclick="showPanel('casing',document.querySelector('.side-item[onclick*=casing]'))" style="cursor:pointer">
@@ -1022,10 +1015,10 @@
               <span class="quick-edit-title" data-en="Homepage" data-th="หน้าแรก">Homepage</span>
               <span class="quick-edit-sub" data-en="Hero, services, feed, trust" data-th="Hero, บริการ, ฟีด, trust">Hero, services, feed, trust</span>
             </button>
-            <button class="quick-edit-card" onclick="showPanel('amulets',null)">
-              <span class="quick-edit-icon">📿</span>
-              <span class="quick-edit-title" data-en="Amulets" data-th="พระเครื่อง">Amulets</span>
-              <span class="quick-edit-sub" data-en="Products, prices, photos" data-th="สินค้า, ราคา, รูป">Products, prices, photos</span>
+            <button class="quick-edit-card" onclick="showPanel('products',null)">
+              <span class="quick-edit-icon">🛍️</span>
+              <span class="quick-edit-title" data-en="Products" data-th="สินค้า">Products</span>
+              <span class="quick-edit-sub" data-en="Amulets, accessories, bracelets, and more" data-th="พระ, อุปกรณ์เสริม, สร้อย, และอื่นๆ">Amulets, accessories, bracelets, and more</span>
             </button>
             <button class="quick-edit-card" onclick="showPanel('casing',null)">
               <span class="quick-edit-icon">🪬</span>
@@ -1488,91 +1481,255 @@
         <div id="store-pages-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:8px"></div>
       </div>
 
-      <div class="panel" id="panel-amulets">
-        <div class="panel-title">📿 Amulets</div>
-        <div class="panel-sub">Add, edit, and delete amulet listings. Each item appears on the Amulets page with photos, price, and category filter.</div>
-        <div id="pageHeader-amulets"></div>
-        <div class="form-card">
-          <div class="form-section-title" id="a_form_title" data-en="➕ Add New Amulet" data-th="➕ เพิ่มพระเครื่องใหม่">➕ Add New Amulet</div>
-          <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Name *" data-th="ชื่อ *">Name *</label><input class="fi" id="a_name"></div>
-            <div class="fg"><label class="fl" data-en="Price (SGD) *" data-th="ราคา (SGD) *">Price (SGD) *</label><input class="fi" id="a_price" type="number"></div>
-            <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label><input class="fi" id="a_cat" list="a_cat_list" placeholder="e.g. Pong, Coin"><datalist id="a_cat_list"></datalist></div>
-            <div class="fg"><label class="fl" data-en="Badge" data-th="ป้ายกำกับ">Badge</label><input class="fi" id="a_badge"></div>
-            <div class="fg"><label class="fl" data-en="Temple / Origin" data-th="วัด / ที่มา">Temple / Origin</label><input class="fi" id="a_temple"></div>
-            <div class="fg"><label class="fl" data-en="Year" data-th="ปี">Year</label><input class="fi" id="a_year"></div>
-            <div class="fg"><label class="fl" data-en="Status" data-th="สถานะ">Status</label>
-              <select class="fsel" id="a_status">
-                <option value="available" data-en="✅ Available" data-th="✅ พร้อมจำหน่าย">✅ Available</option>
-                <option value="reserved" data-en="⏳ Reserved" data-th="⏳ จอง">⏳ Reserved</option>
-                <option value="sold" data-en="❌ Sold" data-th="❌ ขายแล้ว">❌ Sold</option>
-              </select>
-            </div>
-            <div class="fg" style="justify-content:flex-end">
-              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="a_hidePrice" style="width:auto"> <span data-en="Hide price (PM for price)" data-th="ซ่อนราคา (ทักแชท)">Hide price (PM for price)</span></label>
-              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:4px"><input type="checkbox" id="a_featured" style="width:auto"> <span data-en="✨ Show as Featured on Home" data-th="✨ แสดงในหน้าแรก">✨ Show as Featured on Home</span></label>
-            </div>
-            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="a_desc"></textarea></div>
-            <div class="fg full">
-              <label class="fl" data-en="Images" data-th="รูปภาพ">Images</label>
-              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'a_imgs')">
-                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'a_imgs')">
-                <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag images" data-th="คลิกหรือลากรูปมาวาง">Click or drag images</div>
-              </div>
-              <div class="prev-grid" id="a_imgs_p"></div>
-            </div>
-          </div>
-          <div class="form-action-row">
-            <button class="btn-gold" id="a_save_btn" onclick="saveAmulet()" data-en="✅ Save Amulet" data-th="✅ บันทึก">✅ Save Amulet</button>
-            <button class="btn-ol" id="a_cancel_btn" onclick="cancelEditAmulet()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
-            <button class="btn-ol" onclick="cancelEditAmulet()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
-          </div>
-        </div>
-        <div class="sub-title" style="display:flex;align-items:center;justify-content:space-between">All Amulets</div>
-        <div id="a_list"></div>
-      </div>
+      <!-- ══════════ PRODUCTS (unified Amulet/Accessories/Bracelet/Book/Service/Other) ══════════ -->
+      <div class="panel" id="panel-products">
 
-      <!-- ACCESSORIES -->
-      <div class="panel" id="panel-accessories">
-        <div class="panel-title">⛓️ Accessories</div>
-        <div class="panel-sub">Manage accessories such as chains, pendants, and amulet cases. Appears on the Accessories page.</div>
-        <div id="pageHeader-accessories"></div>
-        <div class="form-card">
-          <div class="form-section-title" id="ac_form_title" data-en="➕ Add New Accessory" data-th="➕ เพิ่มอุปกรณ์ใหม่">➕ Add New Accessory</div>
-          <div class="form-grid">
-            <div class="fg"><label class="fl" data-en="Name *" data-th="ชื่อ *">Name *</label><input class="fi" id="ac_name"></div>
-            <div class="fg"><label class="fl" data-en="Price (SGD) *" data-th="ราคา (SGD) *">Price (SGD) *</label><input class="fi" id="ac_price" type="number"></div>
-            <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label><input class="fi" id="ac_cat" list="ac_cat_list" placeholder="Type or pick from list"><datalist id="ac_cat_list"></datalist></div>
-            <div class="fg"><label class="fl" data-en="Badge" data-th="ป้ายกำกับ">Badge</label><input class="fi" id="ac_badge"></div>
-            <div class="fg"><label class="fl" data-en="Status" data-th="สถานะ">Status</label>
-              <select class="fsel" id="ac_status">
-                <option value="available" data-en="✅ Available" data-th="✅ พร้อมจำหน่าย">✅ Available</option>
-                <option value="reserved" data-en="⏳ Reserved" data-th="⏳ จอง">⏳ Reserved</option>
-                <option value="sold" data-en="❌ Sold" data-th="❌ ขายแล้ว">❌ Sold</option>
+        <!-- LIST VIEW -->
+        <div id="productsListView">
+          <div class="panel-title">🛍️ Products
+            <button class="btn-gold" onclick="openProductForm()" data-en="➕ Add New Product" data-th="➕ เพิ่มสินค้าใหม่">➕ Add New Product</button>
+          </div>
+          <div class="panel-sub" data-en="One catalog for everything you sell — amulets, casing-ready accessories, bracelets, books, and services." data-th="แคตตาล็อกเดียวสำหรับสินค้าทุกประเภท — พระเครื่อง, อุปกรณ์เสริม, สร้อย, หนังสือ, บริการ">One catalog for everything you sell — amulets, accessories, bracelets, books, and services.</div>
+
+          <div class="form-card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div class="fg" style="min-width:220px;flex:1">
+              <label class="fl" data-en="Search" data-th="ค้นหา">Search</label>
+              <input class="fi" id="pr_search" placeholder="Search by name or SKU…" oninput="loadProductList()">
+            </div>
+            <div class="fg" style="min-width:160px">
+              <label class="fl" data-en="Type" data-th="ประเภท">Type</label>
+              <select class="fsel" id="pr_filter_type" onchange="loadProductList()">
+                <option value="">All types</option>
+                <option value="amulet">Amulet</option>
+                <option value="accessory">Accessory</option>
+                <option value="casing">Casing</option>
+                <option value="bracelet">Bracelet</option>
+                <option value="book">Book</option>
+                <option value="service">Service</option>
+                <option value="other">Other</option>
               </select>
             </div>
-            <div class="fg" style="justify-content:flex-end">
-              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="ac_hidePrice" style="width:auto"> <span data-en="Hide price (PM for price)" data-th="ซ่อนราคา (ทักแชท)">Hide price (PM for price)</span></label>
-              <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:4px"><input type="checkbox" id="ac_featured" style="width:auto"> <span data-en="✨ Show as Featured on Home" data-th="✨ แสดงในหน้าแรก">✨ Show as Featured on Home</span></label>
-            </div>
-            <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="ac_desc"></textarea></div>
-            <div class="fg full">
-              <label class="fl" data-en="Images" data-th="รูปภาพ">Images</label>
-              <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'ac_imgs')">
-                <input type="file" multiple accept="image/*" onchange="handleImgs(event,'ac_imgs')">
-                <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag images" data-th="คลิกหรือลากรูปมาวาง">Click or drag images</div>
-              </div>
-              <div class="prev-grid" id="ac_imgs_p"></div>
+            <div class="fg" style="min-width:160px">
+              <label class="fl" data-en="Status" data-th="สถานะ">Status</label>
+              <select class="fsel" id="pr_filter_status" onchange="loadProductList()">
+                <option value="">All statuses</option>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="hidden">Hidden</option>
+                <option value="sold_out">Sold out</option>
+              </select>
             </div>
           </div>
-          <div class="form-action-row">
-            <button class="btn-gold" id="ac_save_btn" onclick="saveAccess()" data-en="✅ Save" data-th="✅ บันทึก">✅ Save</button>
-            <button class="btn-ol" id="ac_cancel_btn" onclick="cancelEditAccess()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
-            <button class="btn-ol" onclick="cancelEditAccess()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
+
+          <div id="pr_list"></div>
+        </div>
+
+        <!-- FORM VIEW -->
+        <div id="productFormView" style="display:none">
+          <div class="panel-title" id="pr_form_title">➕ Add New Product</div>
+          <div class="panel-sub" data-en="Fields marked * are required to publish." data-th="ช่องที่มี * ต้องกรอกก่อนเผยแพร่">Fields marked * are required to publish.</div>
+          <div id="pr_warnings" style="display:none;background:rgba(224,80,80,.1);border:1px solid rgba(224,80,80,.35);color:var(--red);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px"></div>
+
+          <!-- 1. BASIC INFO -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="1️⃣ Basic Information" data-th="1️⃣ ข้อมูลพื้นฐาน">1️⃣ Basic Information</div>
+            <div class="form-grid">
+              <div class="fg full"><label class="fl" data-en="Product name *" data-th="ชื่อสินค้า *">Product name *</label><input class="fi" id="pr_name" oninput="prSyncSlug()"></div>
+              <div class="fg"><label class="fl" data-en="Product type *" data-th="ประเภทสินค้า *">Product type *</label>
+                <select class="fsel" id="pr_type" onchange="prRefreshCategoryList()">
+                  <option value="amulet">📿 Amulet</option>
+                  <option value="accessory">⛓️ Accessories</option>
+                  <option value="casing">🪬 Casing</option>
+                  <option value="bracelet">📿 Bracelet</option>
+                  <option value="book">📖 Book</option>
+                  <option value="service">🛠️ Service</option>
+                  <option value="other">🏷️ Other</option>
+                </select>
+              </div>
+              <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label><input class="fi" id="pr_category" list="pr_cat_list" placeholder="e.g. Pong, Coin"><datalist id="pr_cat_list"></datalist></div>
+              <div class="fg"><label class="fl" data-en="Sub-category" data-th="หมวดหมู่ย่อย">Sub-category</label><input class="fi" id="pr_subcat"></div>
+              <div class="fg full"><label class="fl" data-en="Short description" data-th="คำอธิบายสั้น">Short description</label><textarea class="fta" id="pr_shortDesc" style="min-height:60px" maxlength="160" placeholder="Shown on product cards — max 160 characters"></textarea></div>
+              <div class="fg full">
+                <label class="fl" data-en="Full description" data-th="คำอธิบายเต็ม">Full description</label>
+                <div class="rte-wrap">
+                  <div class="rte-toolbar">
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_fullDesc','bold')"><b>B</b></button>
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_fullDesc','italic')"><i>I</i></button>
+                    <span class="rte-sep"></span>
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_fullDesc','insertUnorderedList')">• ≡</button>
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_fullDesc','removeFormat')">⌫</button>
+                  </div>
+                  <div class="rte-editor" id="pr_fullDesc" contenteditable="true" data-placeholder="Full product description…" style="min-height:140px"></div>
+                </div>
+              </div>
+              <div class="fg full">
+                <label class="fl" data-en="Highlight / belief / story" data-th="จุดเด่น / ความเชื่อ / เรื่องราว">Highlight / belief / story</label>
+                <div class="rte-wrap">
+                  <div class="rte-toolbar">
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_story','bold')"><b>B</b></button>
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_story','italic')"><i>I</i></button>
+                    <span class="rte-sep"></span>
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_story','insertUnorderedList')">• ≡</button>
+                    <button type="button" class="rte-btn" onclick="rteExec('pr_story','removeFormat')">⌫</button>
+                  </div>
+                  <div class="rte-editor" id="pr_story" contenteditable="true" data-placeholder="The belief, legend, or story behind this piece…" style="min-height:100px"></div>
+                </div>
+              </div>
+              <div class="fg"><label class="fl" data-en="Temple / Master" data-th="วัด / พระอาจารย์">Temple / Master</label><input class="fi" id="pr_temple" placeholder="Temple"></div>
+              <div class="fg"><label class="fl" data-en="Master name" data-th="ชื่อพระอาจารย์">Master name</label><input class="fi" id="pr_master"></div>
+              <div class="fg"><label class="fl" data-en="Year (BE)" data-th="ปี พ.ศ.">Year (BE)</label><input class="fi" id="pr_yearBE"></div>
+              <div class="fg"><label class="fl" data-en="Material" data-th="วัสดุ">Material</label><input class="fi" id="pr_material"></div>
+              <div class="fg"><label class="fl" data-en="Size" data-th="ขนาด">Size</label><input class="fi" id="pr_size"></div>
+              <div class="fg"><label class="fl" data-en="Condition" data-th="สภาพ">Condition</label><input class="fi" id="pr_condition" placeholder="e.g. Excellent, Used"></div>
+              <div class="fg full"><label class="fl" data-en="Authenticity / certificate info" data-th="ใบรับรอง / หลักฐานความแท้">Authenticity / certificate info</label><input class="fi" id="pr_certificate"></div>
+              <div class="fg full"><label class="fl" data-en="Tags (comma separated)" data-th="แท็ก (คั่นด้วยจุลภาค)">Tags (comma separated)</label><input class="fi" id="pr_tags" placeholder="rare, gold-casing, luang-por"></div>
+            </div>
+          </div>
+
+          <!-- 2. MEDIA -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="2️⃣ Media" data-th="2️⃣ รูปภาพ / วิดีโอ">2️⃣ Media</div>
+            <div class="form-grid">
+              <div class="fg full">
+                <label class="fl" data-en="Photos (first photo = cover, drag to reorder)" data-th="รูปภาพ (รูปแรก = ปกสินค้า, ลากเพื่อจัดลำดับ)">Photos (first photo = cover, drag to reorder)</label>
+                <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'pr_imgs')">
+                  <input type="file" multiple accept="image/*" onchange="handleImgs(event,'pr_imgs')">
+                  <div class="u-icon">📷</div><div class="u-text" data-en="Click or drag images" data-th="คลิกหรือลากรูปมาวาง">Click or drag images</div>
+                </div>
+                <div class="prev-grid" id="pr_imgs_p"></div>
+              </div>
+              <div class="fg full"><label class="fl" data-en="Video URL (optional)" data-th="ลิงก์วิดีโอ (ถ้ามี)">Video URL (optional)</label><input class="fi" id="pr_video" placeholder="https://…"></div>
+            </div>
+          </div>
+
+          <!-- 3. PRICING -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="3️⃣ Pricing" data-th="3️⃣ ราคา">3️⃣ Pricing</div>
+            <div class="form-grid">
+              <div class="fg"><label class="fl" data-en="Normal price (SGD) *" data-th="ราคาปกติ (SGD) *">Normal price (SGD) *</label><input class="fi" id="pr_price" type="number" step="0.01" oninput="prUpdateProfit()"></div>
+              <div class="fg"><label class="fl" data-en="Sale price" data-th="ราคาลด">Sale price</label><input class="fi" id="pr_salePrice" type="number" step="0.01" oninput="prUpdateProfit()"></div>
+              <div class="fg"><label class="fl" data-en="Cost price (admin only)" data-th="ต้นทุน (แอดมินเท่านั้น)">Cost price (admin only)</label><input class="fi" id="pr_costPrice" type="number" step="0.01" oninput="prUpdateProfit()"></div>
+              <div class="fg"><label class="fl" data-en="Currency" data-th="สกุลเงิน">Currency</label><input class="fi" id="pr_currency" value="SGD" disabled></div>
+              <div class="fg"><label class="fl" data-en="Discount label" data-th="ป้ายส่วนลด">Discount label</label><input class="fi" id="pr_discountLabel" placeholder="e.g. -10%"></div>
+              <div class="fg" id="pr_profit_box"><label class="fl" data-en="Expected profit" data-th="กำไรโดยประมาณ">Expected profit</label><input class="fi" id="pr_profit" disabled></div>
+            </div>
+          </div>
+
+          <!-- 4. INVENTORY -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="4️⃣ Inventory" data-th="4️⃣ สต็อกสินค้า">4️⃣ Inventory</div>
+            <div class="form-grid">
+              <div class="fg">
+                <label class="fl" data-en="SKU" data-th="SKU">SKU</label>
+                <div style="display:flex;gap:8px">
+                  <input class="fi" id="pr_sku" placeholder="AM-0001">
+                  <button type="button" class="btn-ol" style="white-space:nowrap" onclick="prAutoSku()" data-en="🔁 Auto" data-th="🔁 สร้างอัตโนมัติ">🔁 Auto</button>
+                </div>
+              </div>
+              <div class="fg"><label class="fl" data-en="Product code" data-th="รหัสสินค้า">Product code</label><input class="fi" id="pr_productCode"></div>
+              <div class="fg" style="justify-content:flex-end">
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_oneOfOne" style="width:auto" onchange="prToggleOneOfOne()" checked> <span data-en="One-of-one item (unique piece)" data-th="ของชิ้นเดียว (ไม่ซ้ำ)">One-of-one item (unique piece)</span></label>
+              </div>
+              <div class="fg" id="pr_stockQty_box"><label class="fl" data-en="Stock quantity" data-th="จำนวนสต็อก">Stock quantity</label><input class="fi" id="pr_stockQty" type="number" min="0" value="1" disabled></div>
+              <div class="fg"><label class="fl" data-en="Stock status" data-th="สถานะสต็อก">Stock status</label>
+                <select class="fsel" id="pr_stockStatus">
+                  <option value="in_stock" data-en="✅ In stock" data-th="✅ พร้อมจำหน่าย">✅ In stock</option>
+                  <option value="low_stock" data-en="⚠️ Low stock" data-th="⚠️ ใกล้หมด">⚠️ Low stock</option>
+                  <option value="reserved" data-en="⏳ Reserved" data-th="⏳ จอง">⏳ Reserved</option>
+                  <option value="preorder" data-en="🕐 Pre-order" data-th="🕐 พรีออเดอร์">🕐 Pre-order</option>
+                  <option value="sold_out" data-en="❌ Sold out" data-th="❌ ขายแล้ว">❌ Sold out</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. VARIANTS -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="5️⃣ Variants" data-th="5️⃣ ตัวเลือกสินค้า">5️⃣ Variants</div>
+            <div class="form-grid">
+              <div class="fg full" style="justify-content:flex-end">
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_variantsEnabled" style="width:auto" onchange="prToggleVariants()"> <span data-en="Enable variants (size, casing type, material, color, set…)" data-th="เปิดใช้ตัวเลือกสินค้า (ขนาด, ประเภทกรอบ, วัสดุ, สี, ชุด…)">Enable variants (size, casing type, material, color, set…)</span></label>
+              </div>
+            </div>
+            <div id="pr_variants_box" style="display:none">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
+                <div class="fg" style="min-width:160px;margin:0"><label class="fl" data-en="Option name" data-th="ชื่อตัวเลือก">Option name</label><input class="fi" id="pr_opt_name" placeholder="e.g. Size"></div>
+                <div class="fg" style="min-width:220px;flex:1;margin:0"><label class="fl" data-en="Values (comma separated)" data-th="ค่า (คั่นด้วยจุลภาค)">Values (comma separated)</label><input class="fi" id="pr_opt_values" placeholder="S, M, L"></div>
+                <button type="button" class="btn-ol" onclick="prAddVariantOption()" data-en="➕ Add option" data-th="➕ เพิ่มตัวเลือก">➕ Add option</button>
+              </div>
+              <div id="pr_opt_list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+              <button type="button" class="btn-add" onclick="prGenerateVariantRows()" data-en="⚙️ Generate variant rows" data-th="⚙️ สร้างตารางตัวเลือก">⚙️ Generate variant rows</button>
+              <div id="pr_variant_rows" style="margin-top:14px"></div>
+            </div>
+          </div>
+
+          <!-- 6. SHIPPING -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="6️⃣ Shipping" data-th="6️⃣ การจัดส่ง">6️⃣ Shipping</div>
+            <div class="form-grid">
+              <div class="fg"><label class="fl" data-en="Weight (g)" data-th="น้ำหนัก (กรัม)">Weight (g)</label><input class="fi" id="pr_weight" type="number"></div>
+              <div class="fg"><label class="fl" data-en="Package size" data-th="ขนาดพัสดุ">Package size</label><input class="fi" id="pr_packageSize" placeholder="e.g. 15×10×5 cm"></div>
+              <div class="fg"><label class="fl" data-en="Ship from" data-th="จัดส่งจาก">Ship from</label>
+                <select class="fsel" id="pr_shipFrom">
+                  <option value="thailand" data-en="🇹🇭 Thailand" data-th="🇹🇭 ไทย">🇹🇭 Thailand</option>
+                  <option value="singapore" data-en="🇸🇬 Singapore" data-th="🇸🇬 สิงคโปร์">🇸🇬 Singapore</option>
+                </select>
+              </div>
+              <div class="fg"><label class="fl" data-en="Shipping fee (SGD)" data-th="ค่าจัดส่ง (SGD)">Shipping fee (SGD)</label><input class="fi" id="pr_shippingFee" type="number" step="0.01"></div>
+              <div class="fg"><label class="fl" data-en="Fulfillment" data-th="การเตรียมสินค้า">Fulfillment</label>
+                <select class="fsel" id="pr_fulfillment">
+                  <option value="ready" data-en="📦 Ready to ship" data-th="📦 พร้อมส่ง">📦 Ready to ship</option>
+                  <option value="keep_at_shop" data-en="🏬 Keep at shop" data-th="🏬 เก็บที่ร้าน">🏬 Keep at shop</option>
+                  <option value="custom_casing" data-en="🪬 Custom casing needed" data-th="🪬 ต้องทำกรอบก่อน">🪬 Custom casing needed</option>
+                </select>
+              </div>
+              <div class="fg"><label class="fl" data-en="Estimated preparation time" data-th="ระยะเวลาเตรียมสินค้าโดยประมาณ">Estimated preparation time</label><input class="fi" id="pr_prepTime" placeholder="e.g. 3-5 days"></div>
+            </div>
+          </div>
+
+          <!-- 7. SALES SETTINGS -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="7️⃣ Sales Settings" data-th="7️⃣ การตั้งค่าการขาย">7️⃣ Sales Settings</div>
+            <div class="form-grid">
+              <div class="fg"><label class="fl" data-en="Publish status" data-th="สถานะการเผยแพร่">Publish status</label>
+                <select class="fsel" id="pr_publishStatus">
+                  <option value="draft" data-en="📝 Draft" data-th="📝 ฉบับร่าง">📝 Draft</option>
+                  <option value="active" data-en="✅ Active" data-th="✅ เผยแพร่">✅ Active</option>
+                  <option value="hidden" data-en="🙈 Hidden" data-th="🙈 ซ่อน">🙈 Hidden</option>
+                  <option value="sold_out" data-en="❌ Sold out" data-th="❌ ขายแล้ว">❌ Sold out</option>
+                </select>
+              </div>
+              <div class="fg full" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px">
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_featured" style="width:auto"> <span data-en="✨ Featured product" data-th="✨ สินค้าแนะนำ">✨ Featured product</span></label>
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_newArrival" style="width:auto"> <span data-en="🆕 New arrival" data-th="🆕 มาใหม่">🆕 New arrival</span></label>
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_bestSeller" style="width:auto"> <span data-en="🔥 Best seller" data-th="🔥 ขายดี">🔥 Best seller</span></label>
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_promotion" style="width:auto"> <span data-en="🏷️ Special promotion" data-th="🏷️ โปรโมชั่นพิเศษ">🏷️ Special promotion</span></label>
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_showOnHomepage" style="width:auto"> <span data-en="🏠 Show on homepage" data-th="🏠 แสดงในหน้าแรก">🏠 Show on homepage</span></label>
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_allowCheckout" style="width:auto" checked onchange="prSyncEnquiryToggle()"> <span data-en="🛒 Allow checkout" data-th="🛒 อนุญาตให้สั่งซื้อ">🛒 Allow checkout</span></label>
+                <label class="fl" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pr_allowEnquiryOnly" style="width:auto" onchange="prSyncCheckoutToggle()"> <span data-en="💬 Enquiry only (hide price / PM)" data-th="💬 ทักแชทเท่านั้น (ซ่อนราคา)">💬 Enquiry only (hide price / PM)</span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. SEO & DISPLAY -->
+          <div class="form-card">
+            <div class="form-section-title" data-en="8️⃣ SEO & Display" data-th="8️⃣ SEO และการแสดงผล">8️⃣ SEO & Display</div>
+            <div class="form-grid">
+              <div class="fg full"><label class="fl" data-en="SEO title" data-th="ชื่อ SEO">SEO title</label><input class="fi" id="pr_seoTitle"></div>
+              <div class="fg full"><label class="fl" data-en="SEO description" data-th="คำอธิบาย SEO">SEO description</label><textarea class="fta" id="pr_seoDesc" maxlength="160" style="min-height:60px"></textarea></div>
+              <div class="fg"><label class="fl" data-en="URL slug" data-th="URL slug">URL slug</label><input class="fi" id="pr_slug"></div>
+              <div class="fg"><label class="fl" data-en="Product badge text" data-th="ข้อความป้ายสินค้า">Product badge text</label><input class="fi" id="pr_badgeText" placeholder="e.g. Rare, Limited"></div>
+            </div>
+          </div>
+
+          <div class="save-bar" style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn-ol" onclick="closeProductForm()" data-en="✕ Cancel" data-th="✕ ยกเลิก">✕ Cancel</button>
+            <button class="btn-ol" onclick="duplicateProduct(null)" id="pr_duplicate_btn" style="display:none" data-en="📄 Duplicate" data-th="📄 ทำสำเนา">📄 Duplicate</button>
+            <button class="btn-ol" onclick="previewProduct()" data-en="👁 Preview" data-th="👁 ดูตัวอย่าง">👁 Preview</button>
+            <button class="btn-ol" onclick="saveProduct('draft')" data-en="💾 Save Draft" data-th="💾 บันทึกฉบับร่าง">💾 Save Draft</button>
+            <button class="btn-gold" onclick="saveProduct('active')" data-en="✅ Publish" data-th="✅ เผยแพร่">✅ Publish</button>
           </div>
         </div>
-        <div class="sub-title" data-en="All Accessories" data-th="อุปกรณ์ทั้งหมด">All Accessories</div>
-        <div id="ac_list"></div>
       </div>
 
       <!-- CASING -->
@@ -2592,9 +2749,8 @@ function refreshDynamic(){
   const tabContent=active.getAttribute('data-tab-content');
   const tabParent=active.getAttribute('data-parent');
 
-  if(id==='panel-amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
+  if(id==='panel-products'){ loadProductList(); }
   else if(id==='panel-history-stories') loadHsPanel();
-  else if(id==='panel-accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
   else if(id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(id==='panel-casing'){
     loadPanelPageIntro('casing');
@@ -2785,6 +2941,7 @@ function applyDbMigrations(d){
   if(!d) return null;
   if(d.frameTypes && !d.casingTypes){d.casingTypes=d.frameTypes;delete d.frameTypes;}
   if(!d.casingTypes)d.casingTypes=[];
+  if(!d.products)d.products=[];
   if(!d.settings)d.settings=defaultSettings();
   if(!d.settings.customPages)d.settings.customPages=[];
   // Backfill missing fields on existing custom pages.
@@ -2932,7 +3089,7 @@ function rewriteImageUrls(d){
 function getDB(){
   let d = FB.getDB();
   if(!d || !Object.keys(d).length){
-    return {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[],feedPosts:[],historyStories:[]};
+    return {settings:defaultSettings(),amulets:[],accessories:[],products:[],casingTypes:[],projects:[],reviews:[],feedPosts:[],historyStories:[]};
   }
   return applyDbMigrations(d);
 }
@@ -3104,8 +3261,7 @@ function showPanel(name, el){
 
   // Load data for each panel
   if(name==='dashboard')loadDash();
-  if(name==='amulets'){loadPanelPageIntro('amulets');loadList('amulets');}
-  if(name==='accessories'){loadPanelPageIntro('accessories');loadList('accessories');}
+  if(name==='products'){ closeProductForm(); loadProductList(); }
   if(name==='casing'){exitTypeView();loadPanelPageIntro('casing');loadCasingTypes();}
   if(name==='projects'){loadPanelPageIntro('projects');loadList('projects');}
   if(name==='store-pages') loadStorePages();
@@ -3209,8 +3365,7 @@ document.addEventListener('click', (e) => {
 
 function loadDash(){
   const db=getDB();
-  document.getElementById('dA').textContent=db.amulets.length;
-  document.getElementById('dAc').textContent=db.accessories.length;
+  document.getElementById('dPr').textContent=(db.products||[]).length;
   document.getElementById('dF').textContent=(db.casingTypes||[]).length;
   document.getElementById('dP').textContent=db.projects.length;
   const _elDhs=document.getElementById('dHS'); if(_elDhs) _elDhs.textContent=(db.historyStories||[]).length;
@@ -4583,12 +4738,13 @@ function loadFeatured(){
   const items=[];
   (db.amulets||[]).forEach(a=>{if(a.featured)items.push({type:'📿 Amulet',name:a.name,id:a.id,kind:'amulets'});});
   (db.accessories||[]).forEach(a=>{if(a.featured)items.push({type:'⛓️ Accessory',name:a.name,id:a.id,kind:'accessories'});});
+  (db.products||[]).forEach(p=>{if(p.featured)items.push({type:(PR_TYPE_ICON[p.type]||'🏷️')+' Product',name:p.name,id:p.id,kind:'products'});});
   const list=document.getElementById('featList');
-  if(!items.length){list.innerHTML=`<div class="empty-state" style="padding:24px">No items marked as Featured yet. Edit any amulet or accessory and toggle "Show as Featured on Home".</div>`;return;}
+  if(!items.length){list.innerHTML=`<div class="empty-state" style="padding:24px">No items marked as Featured yet. Edit any product and toggle "Featured product".</div>`;return;}
   list.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
     ${items.map(it=>`<div style="background:rgba(201,168,76,.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px">
       <div><div style="font-size:11px;color:var(--text-muted)">${it.type}</div><div style="font-weight:600;font-size:13.5px">${it.name}</div></div>
-      <button class="btn-edit" onclick="unfeature('${it.kind}',${it.id})">${tr('del')}</button>
+      <button class="btn-edit" onclick="unfeature('${it.kind}',${typeof it.id==='string'?`'${it.id}'`:it.id})">${tr('del')}</button>
     </div>`).join('')}
   </div>`;
 }
@@ -5434,8 +5590,7 @@ function loadStorePages(){
   const nav = db.settings.nav || [];
   const pages = [
     {id:'home',      icon:'🏠', title:'Homepage',       desc:'Hero, trust badges, service cards, featured items',  panel:'home',            builtin:true},
-    {id:'amulets',   icon:'📿', title:'Amulets',         desc:'Amulet products, prices, and photos',                panel:'amulets',         builtin:true},
-    {id:'accessories',icon:'⛓️',title:'Accessories',     desc:'Accessories, cords, chains, and accessories',        panel:'accessories',      builtin:true},
+    {id:'products',  icon:'🛍️', title:'Products',        desc:'All products — amulets, accessories, bracelets, books, and more', panel:'products',       builtin:true},
     {id:'casing',    icon:'🪬', title:'Casing Service',  desc:'Casing types, styles, and sample photos',            panel:'casing',          builtin:true},
     {id:'history-stories',icon:'📖',title:'History & Stories',desc:'Articles about monks, amulet history, beliefs, guides',panel:'history-stories',builtin:true},
     {id:'projects',  icon:'🎯', title:'Projects',         desc:'Community projects, events, and group activities',   panel:'projects',        builtin:true},
@@ -5882,6 +6037,456 @@ function cancelEditAccess(){
   document.getElementById('ac_form_title').textContent=lang==='th'?'➕ เพิ่มอุปกรณ์ใหม่':'➕ Add New Accessory';
   document.getElementById('ac_save_btn').textContent=lang==='th'?'✅ บันทึก':'✅ Save';
   document.getElementById('ac_cancel_btn').style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PRODUCTS — unified catalog (replaces separate Amulets/Accessories admin)
+//  Products live in db.products[]. Schema: see phase1-product-schema doc.
+//  Casing is intentionally NOT part of this system (stays its own service
+//  flow under panel-casing) — see Phase 1 design decision.
+// ═══════════════════════════════════════════════════════════════════════
+let editingProductId = null;
+let prVariantOptions = []; // [{name, values:[]}]
+let prVariantRows = [];    // [{id, optionValues:{}, price, stockQty, sku, img}]
+
+function prTypePrefix(type){
+  return { amulet:'AM', accessory:'AC', casing:'CS', bracelet:'BR', book:'BK', service:'SV', other:'OT' }[type] || 'PR';
+}
+
+function prSlugify(s){
+  return (s||'').toString().toLowerCase().trim()
+    .replace(/[^\w\s-]/g,'').replace(/[\s_-]+/g,'-').replace(/^-+|-+$/g,'');
+}
+
+function prStripHtml(html){
+  const d = document.createElement('div'); d.innerHTML = html || ''; return d.textContent || '';
+}
+
+// Auto-fill the slug field from the name, but only while the admin hasn't
+// typed a custom slug already (avoids clobbering manual edits).
+let _prSlugTouched = false;
+function prSyncSlug(){
+  if(_prSlugTouched) return;
+  const name = document.getElementById('pr_name').value;
+  document.getElementById('pr_slug').value = prSlugify(name);
+}
+document.addEventListener('input', (e) => {
+  if(e.target && e.target.id === 'pr_slug') _prSlugTouched = true;
+});
+
+function prAutoSku(){
+  const type = document.getElementById('pr_type').value;
+  const prefix = prTypePrefix(type);
+  const db = getDB();
+  const existing = (db.products||[]).filter(p => (p.sku||'').startsWith(prefix + '-'));
+  const nums = existing.map(p => parseInt((p.sku||'').split('-')[1], 10)).filter(n => !isNaN(n));
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  document.getElementById('pr_sku').value = `${prefix}-${String(next).padStart(4,'0')}`;
+}
+
+function prUpdateProfit(){
+  const price = Number(document.getElementById('pr_salePrice').value || document.getElementById('pr_price').value || 0);
+  const cost = Number(document.getElementById('pr_costPrice').value || 0);
+  const box = document.getElementById('pr_profit');
+  if(!cost && !price){ box.value=''; return; }
+  box.value = 'S$' + (price - cost).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function prToggleOneOfOne(){
+  const isOne = document.getElementById('pr_oneOfOne').checked;
+  const qtyInput = document.getElementById('pr_stockQty');
+  qtyInput.disabled = isOne;
+  if(isOne) qtyInput.value = 1;
+}
+
+function prSyncEnquiryToggle(){
+  if(document.getElementById('pr_allowCheckout').checked) document.getElementById('pr_allowEnquiryOnly').checked = false;
+}
+function prSyncCheckoutToggle(){
+  if(document.getElementById('pr_allowEnquiryOnly').checked) document.getElementById('pr_allowCheckout').checked = false;
+}
+
+function prRefreshCategoryList(){
+  const type = document.getElementById('pr_type').value;
+  const db = getDB();
+  const cats = [...new Set((db.products||[]).filter(p=>p.type===type).map(p=>p.category).filter(Boolean))];
+  document.getElementById('pr_cat_list').innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">`).join('');
+}
+
+// ── VARIANTS ─────────────────────────────────────────────────────────────
+function prToggleVariants(){
+  const on = document.getElementById('pr_variantsEnabled').checked;
+  document.getElementById('pr_variants_box').style.display = on ? 'block' : 'none';
+}
+
+function prAddVariantOption(){
+  const name = document.getElementById('pr_opt_name').value.trim();
+  const values = document.getElementById('pr_opt_values').value.split(',').map(v=>v.trim()).filter(Boolean);
+  if(!name || !values.length){ showToast(lang==='th'?'กรอกชื่อและค่าตัวเลือกก่อน':'Enter an option name and values first'); return; }
+  prVariantOptions.push({ name, values });
+  document.getElementById('pr_opt_name').value = '';
+  document.getElementById('pr_opt_values').value = '';
+  prRenderOptionList();
+}
+
+function prRemoveVariantOption(idx){
+  prVariantOptions.splice(idx,1);
+  prRenderOptionList();
+}
+
+function prRenderOptionList(){
+  const el = document.getElementById('pr_opt_list');
+  el.innerHTML = prVariantOptions.map((o,i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--surface-3);border:1px solid var(--border-strong);border-radius:9px;font-size:13px">
+      <strong>${escapeHtml(o.name)}:</strong> ${o.values.map(escapeHtml).join(', ')}
+      <button type="button" class="pi-rm" onclick="prRemoveVariantOption(${i})" style="position:static">✕</button>
+    </div>`).join('');
+}
+
+// Cartesian product of all option values → one row per combination.
+// Existing rows matching the same combination keep their price/stock/sku/img.
+function prGenerateVariantRows(){
+  if(!prVariantOptions.length){ showToast(lang==='th'?'เพิ่มตัวเลือกอย่างน้อย 1 อย่างก่อน':'Add at least one option first'); return; }
+  let combos = [{}];
+  prVariantOptions.forEach(opt => {
+    const next = [];
+    combos.forEach(c => opt.values.forEach(v => next.push({...c, [opt.name]: v})));
+    combos = next;
+  });
+  prVariantRows = combos.map(optionValues => {
+    const key = JSON.stringify(optionValues);
+    const existing = prVariantRows.find(r => JSON.stringify(r.optionValues) === key);
+    return existing || { id: 'v_'+Math.random().toString(36).slice(2,9), optionValues, price:'', stockQty:'', sku:'', img:'' };
+  });
+  prRenderVariantRows();
+}
+
+function prRenderVariantRows(){
+  const el = document.getElementById('pr_variant_rows');
+  if(!prVariantRows.length){ el.innerHTML=''; return; }
+  const optionNames = prVariantOptions.map(o=>o.name);
+  el.innerHTML = `<table class="dtable"><thead><tr>
+      ${optionNames.map(n=>`<th>${escapeHtml(n)}</th>`).join('')}
+      <th data-en="Price" data-th="ราคา">Price</th><th data-en="Stock" data-th="สต็อก">Stock</th><th>SKU</th><th data-en="Image URL" data-th="ลิงก์รูป">Image URL</th><th></th>
+    </tr></thead><tbody>
+    ${prVariantRows.map((r,i)=>`<tr>
+      ${optionNames.map(n=>`<td>${escapeHtml(r.optionValues[n]||'')}</td>`).join('')}
+      <td><input class="fi" style="min-width:80px" value="${escapeAttr(r.price)}" oninput="prVariantRows[${i}].price=this.value"></td>
+      <td><input class="fi" style="min-width:70px" value="${escapeAttr(r.stockQty)}" oninput="prVariantRows[${i}].stockQty=this.value"></td>
+      <td><input class="fi" style="min-width:100px" value="${escapeAttr(r.sku)}" oninput="prVariantRows[${i}].sku=this.value"></td>
+      <td><input class="fi" style="min-width:140px" value="${escapeAttr(r.img)}" oninput="prVariantRows[${i}].img=this.value"></td>
+      <td><button type="button" class="btn-del" onclick="prRemoveVariantRow(${i})">✕</button></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+function prRemoveVariantRow(idx){
+  prVariantRows.splice(idx,1);
+  prRenderVariantRows();
+}
+
+// ── FORM OPEN/CLOSE ──────────────────────────────────────────────────────
+function openProductForm(id){
+  editingProductId = id || null;
+  document.getElementById('productsListView').style.display = 'none';
+  document.getElementById('productFormView').style.display = 'block';
+  document.getElementById('pr_warnings').style.display = 'none';
+  _prSlugTouched = false;
+  prVariantOptions = [];
+  prVariantRows = [];
+  tempImgs['pr_imgs'] = [];
+
+  if(id){
+    const p = (getDB().products||[]).find(x=>x.id===id);
+    if(p){
+      document.getElementById('pr_form_title').textContent = (lang==='th'?'✏️ แก้ไข: ':'✏️ Edit: ') + (p.name||'');
+      document.getElementById('pr_name').value = p.name||'';
+      document.getElementById('pr_type').value = p.type||'amulet';
+      document.getElementById('pr_category').value = p.category||'';
+      document.getElementById('pr_subcat').value = p.subCategory||'';
+      document.getElementById('pr_shortDesc').value = p.shortDesc||'';
+      rteSetHtml('pr_fullDesc', p.fullDesc||'');
+      rteSetHtml('pr_story', p.story||'');
+      document.getElementById('pr_temple').value = p.temple||'';
+      document.getElementById('pr_master').value = p.master||'';
+      document.getElementById('pr_yearBE').value = p.yearBE||'';
+      document.getElementById('pr_material').value = p.material||'';
+      document.getElementById('pr_size').value = p.size||'';
+      document.getElementById('pr_condition').value = p.condition||'';
+      document.getElementById('pr_certificate').value = p.certificate||'';
+      document.getElementById('pr_tags').value = (p.tags||[]).join(', ');
+      tempImgs['pr_imgs'] = [...(p.coverImg?[p.coverImg]:[]), ...(p.gallery||[])];
+      document.getElementById('pr_video').value = p.video||'';
+      document.getElementById('pr_price').value = p.price||'';
+      document.getElementById('pr_salePrice').value = p.salePrice||'';
+      document.getElementById('pr_costPrice').value = p.costPrice||'';
+      document.getElementById('pr_discountLabel').value = p.discountLabel||'';
+      document.getElementById('pr_sku').value = p.sku||'';
+      document.getElementById('pr_productCode').value = p.productCode||'';
+      document.getElementById('pr_oneOfOne').checked = !!p.oneOfOne;
+      document.getElementById('pr_stockQty').value = p.stockQty ?? 1;
+      document.getElementById('pr_stockQty').disabled = !!p.oneOfOne;
+      document.getElementById('pr_stockStatus').value = p.stockStatus||'in_stock';
+      document.getElementById('pr_variantsEnabled').checked = !!p.variantsEnabled;
+      prVariantOptions = JSON.parse(JSON.stringify(p.variantOptions||[]));
+      prVariantRows = JSON.parse(JSON.stringify(p.variants||[]));
+      document.getElementById('pr_weight').value = p.weight||'';
+      document.getElementById('pr_packageSize').value = p.packageSize||'';
+      document.getElementById('pr_shipFrom').value = p.shipFrom||'thailand';
+      document.getElementById('pr_shippingFee').value = p.shippingFee||'';
+      document.getElementById('pr_fulfillment').value = p.fulfillment||'ready';
+      document.getElementById('pr_prepTime').value = p.prepTime||'';
+      document.getElementById('pr_publishStatus').value = p.publishStatus||'draft';
+      document.getElementById('pr_featured').checked = !!p.featured;
+      document.getElementById('pr_newArrival').checked = !!p.newArrival;
+      document.getElementById('pr_bestSeller').checked = !!p.bestSeller;
+      document.getElementById('pr_promotion').checked = !!p.promotion;
+      document.getElementById('pr_showOnHomepage').checked = !!p.showOnHomepage;
+      document.getElementById('pr_allowCheckout').checked = p.allowCheckout !== false;
+      document.getElementById('pr_allowEnquiryOnly').checked = !!p.allowEnquiryOnly;
+      document.getElementById('pr_seoTitle').value = p.seoTitle||'';
+      document.getElementById('pr_seoDesc').value = p.seoDesc||'';
+      document.getElementById('pr_slug').value = p.slug||''; _prSlugTouched = true;
+      document.getElementById('pr_badgeText').value = p.badgeText||'';
+      document.getElementById('pr_duplicate_btn').style.display = 'inline-block';
+      document.getElementById('pr_duplicate_btn').setAttribute('onclick', `duplicateProduct('${id}')`);
+    }
+  } else {
+    document.getElementById('pr_form_title').textContent = lang==='th'?'➕ เพิ่มสินค้าใหม่':'➕ Add New Product';
+    ['pr_name','pr_category','pr_subcat','pr_shortDesc','pr_temple','pr_master','pr_yearBE','pr_material','pr_size',
+     'pr_condition','pr_certificate','pr_tags','pr_video','pr_price','pr_salePrice','pr_costPrice','pr_discountLabel',
+     'pr_sku','pr_productCode','pr_weight','pr_packageSize','pr_shippingFee','pr_prepTime','pr_seoTitle','pr_seoDesc',
+     'pr_slug','pr_badgeText'].forEach(id2 => { const el=document.getElementById(id2); if(el) el.value=''; });
+    rteSetHtml('pr_fullDesc',''); rteSetHtml('pr_story','');
+    document.getElementById('pr_type').value = 'amulet';
+    document.getElementById('pr_oneOfOne').checked = true;
+    document.getElementById('pr_stockQty').value = 1;
+    document.getElementById('pr_stockQty').disabled = true;
+    document.getElementById('pr_stockStatus').value = 'in_stock';
+    document.getElementById('pr_variantsEnabled').checked = false;
+    document.getElementById('pr_shipFrom').value = 'thailand';
+    document.getElementById('pr_fulfillment').value = 'ready';
+    document.getElementById('pr_publishStatus').value = 'draft';
+    ['pr_featured','pr_newArrival','pr_bestSeller','pr_promotion','pr_showOnHomepage','pr_allowEnquiryOnly'].forEach(id2=>document.getElementById(id2).checked=false);
+    document.getElementById('pr_allowCheckout').checked = true;
+    document.getElementById('pr_duplicate_btn').style.display = 'none';
+  }
+  prToggleVariants();
+  prRenderOptionList();
+  prRenderVariantRows();
+  renderPrev('pr_imgs');
+  prRefreshCategoryList();
+  prUpdateProfit();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function closeProductForm(){
+  document.getElementById('productFormView').style.display = 'none';
+  document.getElementById('productsListView').style.display = 'block';
+  editingProductId = null;
+  loadProductList();
+}
+
+// ── VALIDATION ────────────────────────────────────────────────────────────
+function prValidate(publishing){
+  const missing = [];
+  if(!document.getElementById('pr_name').value.trim()) missing.push(lang==='th'?'ชื่อสินค้า':'Product name');
+  if(!document.getElementById('pr_price').value) missing.push(lang==='th'?'ราคาปกติ':'Normal price');
+  if(publishing){
+    const imgs = tempImgs['pr_imgs']||[];
+    if(!imgs.length) missing.push(lang==='th'?'รูปภาพอย่างน้อย 1 รูป':'At least one photo');
+  }
+  return missing;
+}
+
+// ── SAVE / EDIT / DUPLICATE / DELETE ─────────────────────────────────────
+async function saveProduct(intent){
+  if(!ensureUploadsDone()) return;
+  const publishing = intent === 'active';
+  const missing = prValidate(publishing);
+  const warnBox = document.getElementById('pr_warnings');
+  if(missing.length){
+    warnBox.style.display = 'block';
+    warnBox.textContent = (lang==='th'?'กรอกข้อมูลให้ครบก่อน: ':'Please complete: ') + missing.join(', ');
+    warnBox.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+  warnBox.style.display = 'none';
+
+  const db = getDB();
+  if(!db.products) db.products = [];
+  const imgs = captureImgs('pr_imgs');
+  const isOneOfOne = document.getElementById('pr_oneOfOne').checked;
+  const variantsEnabled = document.getElementById('pr_variantsEnabled').checked;
+
+  const data = {
+    name: document.getElementById('pr_name').value.trim(),
+    type: document.getElementById('pr_type').value,
+    category: document.getElementById('pr_category').value.trim(),
+    subCategory: document.getElementById('pr_subcat').value.trim(),
+    shortDesc: document.getElementById('pr_shortDesc').value.trim() || prStripHtml(rteGetHtml('pr_fullDesc')).slice(0,160),
+    fullDesc: rteGetHtml('pr_fullDesc'),
+    story: rteGetHtml('pr_story'),
+    temple: document.getElementById('pr_temple').value.trim(),
+    master: document.getElementById('pr_master').value.trim(),
+    yearBE: document.getElementById('pr_yearBE').value.trim(),
+    material: document.getElementById('pr_material').value.trim(),
+    size: document.getElementById('pr_size').value.trim(),
+    condition: document.getElementById('pr_condition').value.trim(),
+    certificate: document.getElementById('pr_certificate').value.trim(),
+    tags: document.getElementById('pr_tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    coverImg: imgs[0] || '',
+    gallery: imgs.slice(1),
+    video: document.getElementById('pr_video').value.trim(),
+    price: Number(document.getElementById('pr_price').value || 0),
+    salePrice: document.getElementById('pr_salePrice').value ? Number(document.getElementById('pr_salePrice').value) : null,
+    costPrice: document.getElementById('pr_costPrice').value ? Number(document.getElementById('pr_costPrice').value) : null,
+    currency: 'SGD',
+    discountLabel: document.getElementById('pr_discountLabel').value.trim(),
+    sku: document.getElementById('pr_sku').value.trim(),
+    productCode: document.getElementById('pr_productCode').value.trim(),
+    oneOfOne: isOneOfOne,
+    stockQty: isOneOfOne ? 1 : Number(document.getElementById('pr_stockQty').value || 0),
+    stockStatus: document.getElementById('pr_stockStatus').value,
+    variantsEnabled,
+    variantOptions: variantsEnabled ? prVariantOptions : [],
+    variants: variantsEnabled ? prVariantRows : [],
+    weight: Number(document.getElementById('pr_weight').value || 0),
+    packageSize: document.getElementById('pr_packageSize').value.trim(),
+    shipFrom: document.getElementById('pr_shipFrom').value,
+    shippingFee: Number(document.getElementById('pr_shippingFee').value || 0),
+    fulfillment: document.getElementById('pr_fulfillment').value,
+    prepTime: document.getElementById('pr_prepTime').value.trim(),
+    publishStatus: intent, // 'draft' or 'active' from the button pressed
+    featured: document.getElementById('pr_featured').checked,
+    newArrival: document.getElementById('pr_newArrival').checked,
+    bestSeller: document.getElementById('pr_bestSeller').checked,
+    promotion: document.getElementById('pr_promotion').checked,
+    showOnHomepage: document.getElementById('pr_showOnHomepage').checked,
+    allowCheckout: document.getElementById('pr_allowCheckout').checked,
+    allowEnquiryOnly: document.getElementById('pr_allowEnquiryOnly').checked,
+    seoTitle: document.getElementById('pr_seoTitle').value.trim(),
+    seoDesc: document.getElementById('pr_seoDesc').value.trim(),
+    slug: document.getElementById('pr_slug').value.trim() || prSlugify(document.getElementById('pr_name').value),
+    badgeText: document.getElementById('pr_badgeText').value.trim(),
+    updatedAt: Date.now(),
+  };
+  if(!data.sku) data.sku = `${prTypePrefix(data.type)}-${String((db.products||[]).length+1).padStart(4,'0')}`;
+
+  if(editingProductId){
+    const it = db.products.find(x=>x.id===editingProductId);
+    if(it) Object.assign(it, data);
+  } else {
+    db.products.push({ id:'p_'+Math.random().toString(36).slice(2,10), legacySource:null, legacyId:null, createdAt:Date.now(), ...data });
+  }
+  if(!(await persistDB(db, publishing ? tr('saved') : (lang==='th'?'💾 บันทึกฉบับร่างแล้ว':'💾 Draft saved')))) return;
+  tempImgs['pr_imgs'] = [];
+  closeProductForm();
+  loadDash();
+}
+
+function editProduct(id){ openProductForm(id); }
+
+async function duplicateProduct(id){
+  const db = getDB();
+  const src = (db.products||[]).find(x=>x.id===id);
+  if(!src) return;
+  const copy = JSON.parse(JSON.stringify(src));
+  copy.id = 'p_'+Math.random().toString(36).slice(2,10);
+  copy.name = copy.name + ' (Copy)';
+  copy.sku = '';
+  copy.slug = prSlugify(copy.name);
+  copy.publishStatus = 'draft';
+  copy.createdAt = Date.now();
+  copy.updatedAt = Date.now();
+  db.products.push(copy);
+  if(!(await persistDB(db, lang==='th'?'📄 ทำสำเนาแล้ว':'📄 Duplicated'))) return;
+  loadProductList(); loadDash();
+  openProductForm(copy.id);
+}
+
+async function delProduct(id){
+  if(!tConfirm('confirmDelete')) return;
+  const db = getDB();
+  db.products = (db.products||[]).filter(p=>p.id!==id);
+  if(!(await persistDB(db, tr('deleted')))) return;
+  loadProductList(); loadDash();
+}
+
+function previewProduct(){
+  showToast(lang==='th'
+    ? '👁 หน้าดูสินค้าจริงจะพร้อมใช้งานหลังอัปเดตหน้าร้าน (เฟสถัดไป)'
+    : '👁 Live product preview will be available once the storefront is updated (next phase)');
+}
+
+// ── QUICK EDIT (inline, from the list) ────────────────────────────────────
+async function prQuickUpdate(id, field, value){
+  const db = getDB();
+  const it = (db.products||[]).find(p=>p.id===id);
+  if(!it) return;
+  it[field] = (field === 'price') ? Number(value||0) : value;
+  it.updatedAt = Date.now();
+  await persistDB(db, null); // silent — no toast for inline edits
+  loadDash();
+}
+
+// ── LIST RENDER ────────────────────────────────────────────────────────────
+const PR_TYPE_ICON = { amulet:'📿', accessory:'⛓️', casing:'🪬', bracelet:'📿', book:'📖', service:'🛠️', other:'🏷️' };
+const PR_STOCK_LABEL = {
+  in_stock:  { en:'✅ In stock',  th:'✅ พร้อมจำหน่าย' },
+  low_stock: { en:'⚠️ Low stock', th:'⚠️ ใกล้หมด' },
+  reserved:  { en:'⏳ Reserved',  th:'⏳ จอง' },
+  preorder:  { en:'🕐 Pre-order', th:'🕐 พรีออเดอร์' },
+  sold_out:  { en:'❌ Sold out',  th:'❌ ขายแล้ว' },
+};
+
+function loadProductList(){
+  const db = getDB();
+  let items = [...(db.products||[])];
+  const search = (document.getElementById('pr_search')?.value || '').toLowerCase().trim();
+  const typeFilter = document.getElementById('pr_filter_type')?.value || '';
+  const statusFilter = document.getElementById('pr_filter_status')?.value || '';
+  if(search) items = items.filter(p => (p.name||'').toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search));
+  if(typeFilter) items = items.filter(p => p.type === typeFilter);
+  if(statusFilter) items = items.filter(p => p.publishStatus === statusFilter);
+  items.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+
+  const c = document.getElementById('pr_list');
+  if(!c) return;
+  if(!items.length){
+    c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:12px">${tr('noItems')}</div>`;
+    return;
+  }
+  const publishOptions = ['draft','active','hidden','sold_out'];
+  const publishLabel = { draft:{en:'📝 Draft',th:'📝 ฉบับร่าง'}, active:{en:'✅ Active',th:'✅ เผยแพร่'}, hidden:{en:'🙈 Hidden',th:'🙈 ซ่อน'}, sold_out:{en:'❌ Sold out',th:'❌ ขายแล้ว'} };
+  c.innerHTML = `<table class="dtable">
+    <thead><tr>
+      <th>${tr('image')}</th><th>${tr('name')}</th><th data-en="Type" data-th="ประเภท">Type</th>
+      <th>${tr('price')}</th><th data-en="Stock" data-th="สต็อก">Stock</th><th data-en="Status" data-th="สถานะ">Status</th><th>${tr('actions')}</th>
+    </tr></thead>
+    <tbody>${items.map(p => `
+      <tr>
+        <td>${p.coverImg ? `<img class="thumb" src="${imageUrl(p.coverImg,'thumb')}">` : `<div class="no-img">${PR_TYPE_ICON[p.type]||'🏷️'}</div>`}</td>
+        <td><strong>${escapeHtml(p.name)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${escapeHtml(p.sku||'—')}</span></td>
+        <td><span class="tag">${PR_TYPE_ICON[p.type]||''} ${escapeHtml(p.type||'')}</span></td>
+        <td><input class="fi" style="width:90px;padding:6px 8px" value="${p.price||0}" onchange="prQuickUpdate('${p.id}','price',this.value)"></td>
+        <td>
+          <select class="fsel" style="padding:6px 8px;font-size:12px" onchange="prQuickUpdate('${p.id}','stockStatus',this.value)">
+            ${Object.keys(PR_STOCK_LABEL).map(k=>`<option value="${k}" ${p.stockStatus===k?'selected':''}>${(lang==='th'?PR_STOCK_LABEL[k].th:PR_STOCK_LABEL[k].en)}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="fsel" style="padding:6px 8px;font-size:12px" onchange="prQuickUpdate('${p.id}','publishStatus',this.value)">
+            ${publishOptions.map(k=>`<option value="${k}" ${p.publishStatus===k?'selected':''}>${(lang==='th'?publishLabel[k].th:publishLabel[k].en)}</option>`).join('')}
+          </select>
+        </td>
+        <td><div class="row-actions">
+          <button class="btn-edit" onclick="editProduct('${p.id}')">${tr('edit')}</button>
+          <button class="btn-ol" style="padding:6px 12px;font-size:12px" onclick="duplicateProduct('${p.id}')" data-en="Duplicate" data-th="ทำสำเนา">Duplicate</button>
+          <button class="btn-del" onclick="delProduct('${p.id}')">${tr('del')}</button>
+        </div></td>
+      </tr>`).join('')}
+    </tbody></table>`;
 }
 
 async function saveProject(){
@@ -6828,7 +7433,7 @@ async function bootAdmin(){
       document.getElementById('adminUser').textContent = '👤 ' + (user.email || 'admin');
       // If the DB doc doesn't exist yet (first run), create it with defaults
       if(!FB.getDB() || !Object.keys(FB.getDB()).length){
-        const seed = {settings:defaultSettings(),amulets:[],accessories:[],casingTypes:[],projects:[],reviews:[],feedPosts:[]};
+        const seed = {settings:defaultSettings(),amulets:[],accessories:[],products:[],casingTypes:[],projects:[],reviews:[],feedPosts:[]};
         try { await FB.saveDB(seed); console.log('[admin] seeded empty DB with defaults'); }
         catch(e){ console.error('[admin] failed to seed DB:', e); }
       }
@@ -6932,20 +7537,20 @@ const EDIT_MAP = {
   '#paySub':          {panel:'content-payment',   label:'Payment & shipping'},
 
   // ─── Cards/grids by section ───
-  '#aGrid':           {panel:'amulets',     label:'Amulets list'},
-  '#acGrid':          {panel:'accessories', label:'Accessories list'},
+  '#aGrid':           {panel:'products',    label:'Amulets list'},
+  '#acGrid':          {panel:'products',    label:'Accessories list'},
   '#cTypeGrid':       {panel:'casing',      label:'Casing types'},
 
   // ─── Contact ───
   '.contact-group':   {panel:'content-contact', label:'Contact section'},
 
   // ─── Product cards (the card class is used for everything) ───
-  '.card':            {panel:'amulets',     label:'Product item'},  // overridden by data-le-product-page
+  '.card':            {panel:'products',    label:'Product item'},  // overridden by data-le-product-page
 };
 
 // Reverse mapping for product cards (clicked card → which panel)
 const PRODUCT_PANEL_BY_PAGE = {
-  amulets:'amulets', accessories:'accessories', casing:'casing',
+  amulets:'products', accessories:'products', casing:'casing',
   projects:'projects', reviews:'reviews'
 };
 
@@ -7375,6 +7980,26 @@ async function startWatermarkMigration(){
         (u) => { if(db.accessories[ai] && db.accessories[ai].imgs) db.accessories[ai].imgs[ii] = u; },
         () => (db.accessories[ai].imgs||[])[ii],
         (meta) => { if(db.accessories[ai] && db.accessories[ai].imgs){ db.accessories[ai].imgs[ii] = meta; } }
+      );
+    });
+  });
+
+  // Products (unified catalog) — cover image + gallery
+  (db.products || []).forEach((item, pi) => {
+    if(item.coverImg){
+      pushSlot(
+        () => rawUrl(db.products[pi].coverImg),
+        (u) => { if(db.products[pi]) db.products[pi].coverImg = u; },
+        () => db.products[pi].coverImg,
+        (meta) => { if(db.products[pi]) db.products[pi].coverImg = meta; }
+      );
+    }
+    (item.gallery || []).forEach((img, ii) => {
+      pushSlot(
+        () => rawUrl((db.products[pi].gallery||[])[ii]),
+        (u) => { if(db.products[pi] && db.products[pi].gallery) db.products[pi].gallery[ii] = u; },
+        () => (db.products[pi].gallery||[])[ii],
+        (meta) => { if(db.products[pi] && db.products[pi].gallery){ db.products[pi].gallery[ii] = meta; } }
       );
     });
   });
