@@ -1503,7 +1503,6 @@
                 <option value="amulet">Amulet</option>
                 <option value="accessory">Accessory</option>
                 <option value="casing">Casing</option>
-                <option value="bracelet">Bracelet</option>
                 <option value="book">Book</option>
                 <option value="service">Service</option>
                 <option value="other">Other</option>
@@ -1540,7 +1539,6 @@
                   <option value="amulet">📿 Amulet</option>
                   <option value="accessory">⛓️ Accessories</option>
                   <option value="casing">🪬 Casing</option>
-                  <option value="bracelet">📿 Bracelet</option>
                   <option value="book">📖 Book</option>
                   <option value="service">🛠️ Service</option>
                   <option value="other">🏷️ Other</option>
@@ -6201,7 +6199,7 @@ function openProductForm(id){
     if(p){
       document.getElementById('pr_form_title').textContent = (lang==='th'?'✏️ แก้ไข: ':'✏️ Edit: ') + (p.name||'');
       document.getElementById('pr_name').value = p.name||'';
-      document.getElementById('pr_type').value = p.type||'amulet';
+      document.getElementById('pr_type').value = (p.type==='bracelet' ? 'accessory' : (p.type||'amulet'));
       document.getElementById('pr_category').value = p.category||'';
       document.getElementById('pr_subcat').value = p.subCategory||'';
       document.getElementById('pr_shortDesc').value = p.shortDesc||'';

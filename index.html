@@ -70,8 +70,8 @@
 
     /* ─── LIQUID GLASS DESIGN TOKENS ───
        Centralised so we can swap the whole "glass" look in one place. */
-    --glass-bg:rgba(255,251,235,0.55);
-    --glass-bg-strong:rgba(255,251,235,0.72);
+    --glass-bg:rgba(255,255,255,0.07);
+    --glass-bg-strong:rgba(255,255,255,0.12);
     --glass-bg-dark:rgba(20,16,8,0.45);
     --glass-border:rgba(201,168,76,0.32);
     --glass-border-strong:rgba(201,168,76,0.55);
@@ -817,12 +817,12 @@
   .crumb-sep{color:#bbb;font-size:11px}
   .crumb-cur{color:var(--text);font-weight:600}
 
-  .card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
   .card{
     background:#120e05;
     border:1px solid rgba(201,168,76,.16);
     border-radius:16px;overflow:hidden;
-    cursor:pointer;
+    cursor:pointer;min-width:0;
     transition:transform .2s,border-color .2s,background .2s;
     box-shadow:0 4px 20px rgba(0,0,0,.3);
   }
@@ -842,7 +842,7 @@
     position:relative;overflow:hidden;
     border-radius:0;
   }
-  .card-img img{width:100%;height:100%;object-fit:cover}
+  .card-img img{width:100%;height:100%;object-fit:contain;display:block}
   /* ───── IMAGE LAZY LOAD + BLUR PROGRESSIVE ─────
      Approach:
      1. While loading: show animated shimmer placeholder
@@ -901,29 +901,93 @@
   .cat-tab{background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.18);color:rgba(165,140,85,.65);padding:7px 16px;border-radius:25px;font-size:13.5px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;font-weight:500}
   .cat-tab:hover,.cat-tab.active{background:rgba(201,168,76,.14);color:rgba(240,217,138,.95);border-color:rgba(201,168,76,.45);font-weight:700}
 
-  .shop-cat-windows{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:26px}
-  .shop-cat-win{
-    background:rgba(255,255,255,.05);backdrop-filter:blur(14px);
-    border:1px solid rgba(201,168,76,.18);border-radius:14px;
-    padding:18px 10px;text-align:center;cursor:pointer;
-    display:flex;flex-direction:column;align-items:center;gap:8px;
-    color:rgba(220,200,155,.85);font-size:12.5px;font-weight:600;
-    transition:all .2s;
+  /* ═══ SHOP — sidebar gallery layout ═══ */
+  .shop-topbar{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:24px;
+    flex-wrap:wrap;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08);
   }
-  .shop-cat-win:hover{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.5);transform:translateY(-2px)}
-  .shop-cat-win .scw-icon{font-size:26px}
-  @media (max-width:700px){ .shop-cat-windows{grid-template-columns:repeat(4,1fr);gap:8px} .shop-cat-win{padding:14px 6px;font-size:11px} .shop-cat-win .scw-icon{font-size:22px} }
+  .shop-crumb{font-size:12px;color:rgba(255,240,180,.4);letter-spacing:.3px;margin-bottom:8px}
+  .shop-crumb b{color:var(--gold-light);font-weight:600}
+  .shop-topbar-title{font-family:'Cormorant Garamond',var(--font-display),serif;font-size:clamp(30px,3.6vw,44px);font-weight:600;color:#fff;line-height:1.05}
+  .shop-topbar-desc{color:rgba(255,248,220,.5);font-size:13.5px;margin-top:8px;max-width:480px;line-height:1.6}
+  .shop-topbar-search{min-width:260px}
+  .shop-topbar-search .search-input-wrap{min-width:0}
 
-  .shop-filters{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px 16px;
-    background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.16);border-radius:14px;
-    padding:16px;margin-bottom:22px;
+  .shop-layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:32px;align-items:start}
+
+  .shop-sidebar{
+    position:sticky;top:20px;
+    background:rgba(255,255,255,.04);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(201,168,76,.16);border-radius:18px;padding:22px 18px;
   }
+  .ss-block{margin-bottom:26px}
+  .ss-block:last-child{margin-bottom:0}
+  .ss-label{font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(201,168,76,.65);font-weight:700;margin-bottom:12px}
+  .ss-filter-toggle{background:none;border:none;padding:0;margin:0 0 12px;cursor:default;width:100%;text-align:left;font:inherit;display:block}
+  .ss-toggle-chevron{display:none}
+
+  .shop-cat-windows{display:flex;flex-direction:column;gap:2px}
+  .shop-cat-win{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;
+    color:rgba(220,200,155,.75);font-size:13px;font-weight:600;transition:background .18s,color .18s;
+  }
+  .shop-cat-win:hover{background:rgba(255,255,255,.05)}
+  .shop-cat-win.active{background:rgba(201,168,76,.13);color:#f0d98a}
+  .shop-cat-win .scw-icon-wrap{width:24px;text-align:center;flex-shrink:0}
+  .shop-cat-win .scw-icon{font-size:16px}
+
+  .shop-filters{display:flex;flex-direction:column;gap:14px}
   .shop-filters .fg{display:flex;flex-direction:column;gap:6px;margin:0}
-  .shop-filters .fl{font-size:11.5px;color:rgba(201,168,76,.7);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+  .shop-filters .fl{font-size:10.5px;color:rgba(201,168,76,.6);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
   .shop-filters .fsel,.shop-filters .fi{
-    background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.22);color:rgba(230,215,180,.9);
-    border-radius:8px;padding:9px 10px;font-size:13.5px;font-family:'DM Sans',sans-serif;
+    background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.2);color:rgba(230,215,180,.9);
+    border-radius:8px;padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;width:100%;
+  }
+  .shop-filters .fg-range{flex-direction:row;gap:8px;align-items:flex-end}
+  .shop-filters .fg-range .fi{width:0;flex:1}
+  .shop-clear-btn{
+    width:100%;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold-light);
+    padding:9px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;
+  }
+  .shop-clear-btn:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
+
+  .shop-main-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+  .shop-main-head .result-count{margin:0}
+  .shop-main .sort-select{min-width:0}
+
+  @media (max-width:900px){
+    .shop-layout{grid-template-columns:minmax(0,1fr);gap:20px}
+    .shop-sidebar{min-width:0}
+    .shop-cat-windows{min-width:0}
+    .shop-sidebar{position:relative;top:0;padding:16px}
+    .shop-topbar-search{width:100%}
+    .ss-block{margin-bottom:18px}
+
+    /* Categories: compact horizontal scroll strip instead of a tall list —
+       the vertical list ate most of the screen before any products showed. */
+    .shop-cat-windows{
+      flex-direction:row;overflow-x:auto;gap:8px;padding-bottom:2px;
+      scrollbar-width:none;-ms-overflow-style:none;
+    }
+    .shop-cat-windows::-webkit-scrollbar{display:none}
+    .shop-cat-win{flex:0 0 auto;padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.04)}
+    .shop-cat-win .scw-icon-wrap{width:auto}
+
+    /* Filters: collapsed behind a tap-to-expand toggle, since 6 dropdown
+       fields stacked open by default is what pushed the product grid almost
+       a full screen down before you could see anything. Styled as a visible
+       pill button (not just plain label text) so it reads as tappable. */
+    .ss-filter-toggle{
+      display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+      background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.28);
+      border-radius:10px;padding:10px 14px;margin-bottom:0;
+      color:rgba(230,210,160,.9);font-size:12px;letter-spacing:1px;
+    }
+    .ss-filter-toggle:active{background:rgba(201,168,76,.12)}
+    .ss-toggle-chevron{display:inline-block;transition:transform .2s;color:var(--gold-light);font-size:13px}
+    .ss-filter-toggle.ss-open .ss-toggle-chevron{transform:rotate(180deg)}
+    .shop-filters{display:none;margin-top:14px}
+    .shop-filters.ss-open{display:flex}
   }
 
   .ftype-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(201,168,76,.12)}
@@ -1947,7 +2011,7 @@
   .var-card--sample .var-img img{object-fit:cover}
   .var-grid--sample{grid-template-columns:repeat(3,1fr) !important;gap:0 !important}
 
-  .proj-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .proj-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
   .proj-card{background:#120e05;backdrop-filter:none;-webkit-backdrop-filter:none;border:1px solid rgba(201,168,76,.16);border-radius:16px;overflow:hidden;transition:transform .2s,border-color .2s,background .2s;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3)}
   .proj-card:hover{background:#1a1508;border-color:rgba(201,168,76,.4);box-shadow:0 12px 36px rgba(0,0,0,.4);transform:translateY(-3px)}
   .proj-img{width:100%;height:200px;background:linear-gradient(135deg,#2d1e06,#12100a);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;position:relative}
@@ -2276,7 +2340,7 @@
 
     /* Casing types: 2 columns on mobile (was 1) — much faster to scan
        through 8+ casing types without scrolling for ages. */
-    .card-grid,.proj-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .card-grid,.proj-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .ftype-grid{grid-template-columns:repeat(2,1fr);gap:1px}
     .var-grid{grid-template-columns:repeat(2,1fr);gap:1px}
     .card-img{height:200px}
@@ -2453,6 +2517,9 @@
   .search-clear.show{display:flex}
   .sort-select{background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:25px;padding:11px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);cursor:pointer;min-width:160px}
   .sort-select:focus{outline:none;border-color:var(--gold)}
+  .filter-toggle-btn{background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:25px;padding:11px 20px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .2s;white-space:nowrap}
+  .filter-toggle-btn:hover{border-color:var(--gold);color:var(--gold-light);background:rgba(201,168,76,.1)}
+  .filter-toggle-btn.active{background:rgba(201,168,76,.14);border-color:var(--gold);color:var(--gold-light)}
   .result-count{font-size:13px;color:var(--text-muted);margin-bottom:14px;padding-left:4px}
 
   /* STATUS OVERLAYS — sold/reserved */
@@ -2511,9 +2578,21 @@
   .pay-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
 
   /* CART BUTTON (nav) */
-  .cart-btn{position:relative;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold-light);width:38px;height:38px;border-radius:8px;cursor:pointer;font-size:17px;flex-shrink:0}
-  .cart-btn:hover{border-color:var(--gold);background:rgba(201,168,76,.08)}
-  .cart-badge{position:absolute;top:-6px;right:-6px;background:var(--gold);color:var(--deep);font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1}
+  .cart-btn{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.07);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(201,168,76,.35);border-top-color:rgba(255,255,255,.2);
+    color:var(--gold-light);width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:16px;
+    flex-shrink:0;box-shadow:0 0 14px rgba(201,168,76,.14),inset 0 1px 0 rgba(255,255,255,.08);
+    transition:all .25s ease;
+  }
+  .nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .cart-btn:hover{
+    border-color:var(--gold);background:rgba(201,168,76,.15);
+    box-shadow:0 0 20px rgba(201,168,76,.32),inset 0 1px 0 rgba(255,255,255,.12);
+    transform:translateY(-1px);
+  }
+  .cart-badge{position:absolute;top:-4px;right:-4px;background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));color:#1a0f00;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 4px;line-height:1;box-shadow:0 0 0 2px var(--deep)}
   .cart-badge.show{display:flex}
 
   /* CART PAGE */
@@ -3706,11 +3785,28 @@
   .logo-icon::before{content:'Y';font-weight:900;font-size:18px}
   .logo-text{font-family:'Dancing Script',cursive !important;font-size:26px !important;background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;text-shadow:none !important}
   @media(max-width:999px){
-    nav{top:0 !important;left:0 !important;right:0 !important;transform:none !important;width:100% !important;max-width:none !important;border-radius:0 !important;border-left:none !important;border-right:none !important;border-top:none !important;border-bottom:1px solid rgba(201,168,76,.18) !important;background:#0d0a06 !important;box-shadow:none !important;padding-top:env(safe-area-inset-top,0px) !important;}
-    .nav-inner{height:36px !important;padding:0 10px 0 12px !important}
-    .logo-icon{width:26px !important;height:26px !important;font-size:14px !important}
+    nav{
+      top:calc(10px + env(safe-area-inset-top,0px)) !important;
+      left:10px !important;right:10px !important;
+      transform:none !important;
+      width:auto !important;max-width:none !important;
+      border-radius:999px !important;
+      border:1px solid rgba(201,168,76,.32) !important;
+      border-top:1px solid rgba(255,248,200,.18) !important;
+      background:rgba(15,10,3,.65) !important;
+      box-shadow:0 8px 26px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,248,200,.1) !important;
+      padding-top:0 !important;
+    }
+    .nav-inner{height:44px !important;padding:0 10px 0 14px !important;gap:6px !important}
+    .logo-icon{width:28px !important;height:28px !important;font-size:14px !important}
     .logo-icon::before{font-size:13px}
-    .logo-text{font-family:'Dancing Script',cursive !important;font-size:20px !important;background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important}
+    .logo-text{font-family:'Dancing Script',cursive !important;font-size:21px !important;background:linear-gradient(135deg,#c9a84c,#e8c96a,#c9a84c) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important}
+    /* .cart-btn is 40px by default — taller than this bar, which made
+       it visually overflow/clip against the top and bottom edges. Shrink it
+       (and its icon/badge) to match the compact mobile bar and the smaller
+       28px logo-icon next to it. */
+    .cart-btn{width:32px !important;height:32px !important;font-size:14px !important}
+    .cart-badge{top:-3px !important;right:-3px !important;font-size:8.5px !important;min-width:14px !important;height:14px !important}
   }
   .logo-sub{display:none}
   .nav-links{gap:4px !important}
@@ -4205,6 +4301,7 @@
   }
   .search-input,
   .sort-select,
+  .filter-toggle-btn,
   .hs-search{
     background:rgba(255,255,255,.055) !important;
     color:rgba(255,248,220,.9) !important;
@@ -4213,6 +4310,12 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,.06) !important;
     backdrop-filter:blur(14px) saturate(150%) !important;
     -webkit-backdrop-filter:blur(14px) saturate(150%) !important;
+  }
+  .filter-toggle-btn:hover,
+  .filter-toggle-btn.active{
+    border-color:rgba(201,168,76,.5) !important;
+    color:#e8c96a !important;
+    background:rgba(201,168,76,.14) !important;
   }
   .search-input::placeholder,
   .hs-search::placeholder{color:rgba(255,248,220,.38) !important}
@@ -4341,7 +4444,7 @@
     .page:not(#page-home) .sec-head h2{font-size:38px !important}
     .search-bar{display:grid !important;grid-template-columns:1fr !important}
     .search-input-wrap,.sort-select{min-width:0 !important;width:100% !important}
-    .card-grid,.proj-grid,.rev-grid{grid-template-columns:1fr !important}
+    .card-grid,.proj-grid,.rev-grid{grid-template-columns:minmax(0,1fr) !important}
     .var-grid{grid-template-columns:repeat(2,1fr) !important}
     .ftype-grid{grid-template-columns:repeat(2,1fr) !important;gap:1px !important}
     .feed-shell{display:block !important}
@@ -5398,29 +5501,30 @@
   .card-foot{border-top-color:rgba(201,168,76,.1) !important}
   .card-img{background:linear-gradient(145deg,#2d1e06,#0d0a06) !important;border-radius:0 !important}
 
-  /* ── Mobile/Tablet: full-width flush nav bar (fixes white browser chrome) ── */
+  /* ── Mobile/Tablet: floating liquid-glass nav pill (matches desktop nav
+     and the already-floating bottom tabbar). The notch/Dynamic Island area
+     is covered separately by .safe-area-top-fill above, so the nav itself
+     is free to float with a gap instead of sitting flush edge-to-edge. ── */
   @media(max-width:999px){
     nav{
-      top:0 !important;
-      left:0 !important;
-      right:0 !important;
+      top:calc(10px + env(safe-area-inset-top,0px)) !important;
+      left:10px !important;
+      right:10px !important;
       transform:none !important;
-      width:100% !important;
+      width:auto !important;
       max-width:none !important;
-      border-radius:0 !important;
-      border-left:none !important;
-      border-right:none !important;
-      border-top:none !important;
-      border-bottom:1px solid rgba(201,168,76,.22) !important;
-      background:#0d0a06 !important;
-      backdrop-filter:none !important;
-      -webkit-backdrop-filter:none !important;
-      box-shadow:0 1px 0 rgba(201,168,76,.18) !important;
-      padding-top:env(safe-area-inset-top,0px) !important;
+      border-radius:999px !important;
+      border:1px solid rgba(201,168,76,.32) !important;
+      border-top:1px solid rgba(255,248,200,.18) !important;
+      background:rgba(15,10,3,.65) !important;
+      backdrop-filter:blur(20px) saturate(160%) !important;
+      -webkit-backdrop-filter:blur(20px) saturate(160%) !important;
+      box-shadow:0 8px 26px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,248,200,.1) !important;
+      padding-top:0 !important;
     }
     .nav-inner{
-      padding-left:max(16px, env(safe-area-inset-left,0px)) !important;
-      padding-right:max(16px, env(safe-area-inset-right,0px)) !important;
+      padding-left:max(14px, env(safe-area-inset-left,0px)) !important;
+      padding-right:max(10px, env(safe-area-inset-right,0px)) !important;
     }
   }
 </style>
@@ -5451,17 +5555,19 @@
       </div>
     </div>
     <ul class="nav-links" id="navLinks"></ul>
-    <div style="position:relative" id="acctWrap">
-      <button class="cart-btn" id="acctBtn" onclick="onAcctBtnClick()" aria-label="Account">👤</button>
-      <div class="acct-menu" id="acctMenu">
-        <button onclick="closeAcctMenu();goPage('orders')" data-en="Order History" data-th="ประวัติการสั่งซื้อ">Order History</button>
-        <button onclick="closeAcctMenu();doSignOut()" data-en="Sign out" data-th="ออกจากระบบ">Sign out</button>
+    <div class="nav-actions">
+      <div style="position:relative" id="acctWrap">
+        <button class="cart-btn" id="acctBtn" onclick="onAcctBtnClick()" aria-label="Account">👤</button>
+        <div class="acct-menu" id="acctMenu">
+          <button onclick="closeAcctMenu();goPage('orders')" data-en="Order History" data-th="ประวัติการสั่งซื้อ">Order History</button>
+          <button onclick="closeAcctMenu();doSignOut()" data-en="Sign out" data-th="ออกจากระบบ">Sign out</button>
+        </div>
       </div>
-    </div>
     <button class="cart-btn" id="cartBtn" onclick="goPage('cart')" aria-label="Cart">
       🛒<span class="cart-badge" id="cartBadge">0</span>
     </button>
     <button class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="Menu">☰</button>
+    </div>
   </div>
 </nav>
 <div id="navSpacer" style="height:90px"></div>
@@ -5681,74 +5787,82 @@
 
 <!-- AMULETS -->
 <div id="page-shop" class="page">
-  <div class="sec-head"><h2 id="shopTitle"></h2><div class="gline"></div><p id="shopDesc"></p></div>
   <div class="content">
 
-    <!-- Category windows — quick visual entry points -->
-    <div class="shop-cat-windows" id="shopCatWindows">
-      <div class="shop-cat-win" onclick="filterSTypeByValue('amulet')"><span class="scw-icon">📿</span><span data-en="Amulets" data-th="พระเครื่อง">Amulets</span></div>
-      <div class="shop-cat-win" onclick="goPage('casing')"><span class="scw-icon">🪬</span><span data-en="Casing" data-th="บริการกรอบพระ">Casing</span></div>
-      <div class="shop-cat-win" onclick="filterSTypeByValue('bracelet')"><span class="scw-icon">📿</span><span data-en="Bracelets" data-th="สร้อยข้อมือ">Bracelets</span></div>
-      <div class="shop-cat-win" onclick="filterSTypeByValue('accessory')"><span class="scw-icon">⛓️</span><span data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</span></div>
-      <div class="shop-cat-win" onclick="filterSTypeByValue('book')"><span class="scw-icon">📖</span><span data-en="Books" data-th="หนังสือ">Books</span></div>
-      <div class="shop-cat-win" onclick="filterSTypeByValue('service')"><span class="scw-icon">🛠️</span><span data-en="Services" data-th="บริการ">Services</span></div>
-      <div class="shop-cat-win" onclick="filterSTypeByValue('new-arrivals')"><span class="scw-icon">🆕</span><span data-en="New Arrivals" data-th="มาใหม่">New Arrivals</span></div>
-      <div class="shop-cat-win" onclick="filterSTypeByValue('best-sellers')"><span class="scw-icon">🔥</span><span data-en="Best Sellers" data-th="ขายดี">Best Sellers</span></div>
-    </div>
-
-    <div class="cat-tabs" id="sTypeTabs">
-      <button class="cat-tab active" onclick="filterSType('all',this)" data-en="All" data-th="ทั้งหมด">All</button>
-      <button class="cat-tab" onclick="filterSType('amulet',this)" data-en="Amulets" data-th="พระเครื่อง">Amulets</button>
-      <button class="cat-tab" onclick="filterSType('accessory',this)" data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</button>
-      <button class="cat-tab" onclick="filterSType('bracelet',this)" data-en="Bracelets" data-th="สร้อยข้อมือ">Bracelets</button>
-      <button class="cat-tab" onclick="filterSType('book',this)" data-en="Books" data-th="หนังสือ">Books</button>
-      <button class="cat-tab" onclick="filterSType('service',this)" data-en="Services" data-th="บริการ">Services</button>
-      <button class="cat-tab" onclick="filterSType('new-arrivals',this)" data-en="New Arrivals" data-th="มาใหม่">New Arrivals</button>
-      <button class="cat-tab" onclick="filterSType('best-sellers',this)" data-en="Best Sellers" data-th="ขายดี">Best Sellers</button>
-    </div>
-
-    <div class="search-bar">
-      <div class="search-input-wrap">
-        <input class="search-input" id="sSearch" oninput="searchS()" placeholder="">
-        <button class="search-clear" id="sSearchClear" onclick="clearSearchS()" aria-label="Clear">✕</button>
+    <div class="shop-topbar">
+      <div>
+        <div class="shop-crumb">Home <span>/</span> <b data-en="Shop" data-th="ร้านค้า">Shop</b></div>
+        <h2 id="shopTitle" class="shop-topbar-title"></h2>
+        <p id="shopDesc" class="shop-topbar-desc"></p>
       </div>
-      <select class="sort-select" id="sSort" onchange="renderShop(curScat)">
-        <option value="newest" data-en="Sort: Newest" data-th="เรียง: มาใหม่">Sort: Newest</option>
-        <option value="popular" data-en="Sort: Popular" data-th="เรียง: ยอดนิยม">Sort: Popular</option>
-        <option value="price-asc">Price: Low to High</option>
-        <option value="price-desc">Price: High to Low</option>
-        <option value="name">Name: A–Z</option>
-      </select>
-      <button class="btn-ol" id="sFilterToggle" onclick="toggleShopFilters()" type="button" data-en="⚙️ Filters" data-th="⚙️ ตัวกรอง">⚙️ Filters</button>
-    </div>
-
-    <div class="shop-filters" id="shopFilters" style="display:none">
-      <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label>
-        <select class="fsel" id="sfCategory" onchange="renderShop(curScat)"><option value="">All</option></select></div>
-      <div class="fg"><label class="fl" data-en="Master" data-th="พระอาจารย์">Master</label>
-        <select class="fsel" id="sfMaster" onchange="renderShop(curScat)"><option value="">All</option></select></div>
-      <div class="fg"><label class="fl" data-en="Temple" data-th="วัด">Temple</label>
-        <select class="fsel" id="sfTemple" onchange="renderShop(curScat)"><option value="">All</option></select></div>
-      <div class="fg"><label class="fl" data-en="Material" data-th="วัสดุ">Material</label>
-        <select class="fsel" id="sfMaterial" onchange="renderShop(curScat)"><option value="">All</option></select></div>
-      <div class="fg"><label class="fl" data-en="Availability" data-th="สถานะสินค้า">Availability</label>
-        <select class="fsel" id="sfAvailability" onchange="renderShop(curScat)">
-          <option value="">All</option>
-          <option value="in_stock" data-en="In stock" data-th="พร้อมจำหน่าย">In stock</option>
-          <option value="preorder" data-en="Pre-order" data-th="พรีออเดอร์">Pre-order</option>
-        </select></div>
-      <div class="fg"><label class="fl" data-en="Min price (SGD)" data-th="ราคาต่ำสุด">Min price (SGD)</label>
-        <input class="fi" id="sfPriceMin" type="number" min="0" oninput="renderShop(curScat)"></div>
-      <div class="fg"><label class="fl" data-en="Max price (SGD)" data-th="ราคาสูงสุด">Max price (SGD)</label>
-        <input class="fi" id="sfPriceMax" type="number" min="0" oninput="renderShop(curScat)"></div>
-      <div class="fg" style="justify-content:flex-end">
-        <button class="btn-ol" onclick="clearShopFilters()" data-en="Clear filters" data-th="ล้างตัวกรอง">Clear filters</button>
+      <div class="shop-topbar-search">
+        <div class="search-input-wrap">
+          <input class="search-input" id="sSearch" oninput="searchS()" placeholder="">
+          <button class="search-clear" id="sSearchClear" onclick="clearSearchS()" aria-label="Clear">✕</button>
+        </div>
       </div>
     </div>
 
-    <div class="cat-tabs" id="sTabs"></div>
-    <div class="result-count" id="sCount"></div>
-    <div class="card-grid" id="sGrid"></div>
+    <div class="shop-layout">
+      <aside class="shop-sidebar">
+        <div class="ss-block">
+          <div class="ss-label" data-en="Categories" data-th="หมวดหมู่">Categories</div>
+          <div class="shop-cat-windows" id="shopCatWindows">
+            <div class="shop-cat-win active" data-stype="all" onclick="filterSTypeByValue('all')"><div class="scw-icon-wrap"><span class="scw-icon">🗂️</span></div><span data-en="All" data-th="ทั้งหมด">All</span></div>
+            <div class="shop-cat-win" data-stype="amulet" onclick="filterSTypeByValue('amulet')"><div class="scw-icon-wrap"><span class="scw-icon">📿</span></div><span data-en="Amulets" data-th="พระเครื่อง">Amulets</span></div>
+            <div class="shop-cat-win" data-stype="__casing" onclick="goPage('casing')"><div class="scw-icon-wrap"><span class="scw-icon">🪬</span></div><span data-en="Casing" data-th="บริการกรอบพระ">Casing</span></div>
+            <div class="shop-cat-win" data-stype="accessory" onclick="filterSTypeByValue('accessory')"><div class="scw-icon-wrap"><span class="scw-icon">⛓️</span></div><span data-en="Accessories" data-th="อุปกรณ์เสริม">Accessories</span></div>
+            <div class="shop-cat-win" data-stype="new-arrivals" onclick="filterSTypeByValue('new-arrivals')"><div class="scw-icon-wrap"><span class="scw-icon">🆕</span></div><span data-en="New Arrivals" data-th="มาใหม่">New Arrivals</span></div>
+            <div class="shop-cat-win" data-stype="best-sellers" onclick="filterSTypeByValue('best-sellers')"><div class="scw-icon-wrap"><span class="scw-icon">🔥</span></div><span data-en="Best Sellers" data-th="ขายดี">Best Sellers</span></div>
+          </div>
+        </div>
+
+        <div class="ss-block">
+          <button type="button" class="ss-label ss-filter-toggle" id="ssFilterToggle" onclick="toggleMobileShopFilters()">
+            <span data-en="Filter" data-th="ตัวกรอง">Filter</span>
+            <span class="ss-toggle-chevron">▾</span>
+          </button>
+          <div class="shop-filters" id="shopFilters">
+            <div class="fg"><label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label>
+              <select class="fsel" id="sfCategory" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+            <div class="fg"><label class="fl" data-en="Master" data-th="พระอาจารย์">Master</label>
+              <select class="fsel" id="sfMaster" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+            <div class="fg"><label class="fl" data-en="Temple" data-th="วัด">Temple</label>
+              <select class="fsel" id="sfTemple" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+            <div class="fg"><label class="fl" data-en="Material" data-th="วัสดุ">Material</label>
+              <select class="fsel" id="sfMaterial" onchange="renderShop(curScat)"><option value="">All</option></select></div>
+            <div class="fg"><label class="fl" data-en="Availability" data-th="สถานะสินค้า">Availability</label>
+              <select class="fsel" id="sfAvailability" onchange="renderShop(curScat)">
+                <option value="">All</option>
+                <option value="in_stock" data-en="In stock" data-th="พร้อมจำหน่าย">In stock</option>
+                <option value="preorder" data-en="Pre-order" data-th="พรีออเดอร์">Pre-order</option>
+              </select></div>
+            <div class="fg"><label class="fl" data-en="Price range (SGD)" data-th="ช่วงราคา (SGD)">Price range (SGD)</label>
+              <div class="fg-range">
+                <input class="fi" id="sfPriceMin" type="number" min="0" placeholder="Min" oninput="renderShop(curScat)">
+                <input class="fi" id="sfPriceMax" type="number" min="0" placeholder="Max" oninput="renderShop(curScat)">
+              </div></div>
+            <button class="shop-clear-btn" onclick="clearShopFilters()" data-en="Clear filters" data-th="ล้างตัวกรอง">Clear filters</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="shop-main">
+        <div class="cat-tabs" id="sTabs"></div>
+        <div class="shop-main-head">
+          <div class="result-count" id="sCount"></div>
+          <select class="sort-select" id="sSort" onchange="renderShop(curScat)">
+            <option value="newest" data-en="Sort: Newest" data-th="เรียง: มาใหม่">Sort: Newest</option>
+            <option value="popular" data-en="Sort: Popular" data-th="เรียง: ยอดนิยม">Sort: Popular</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="name">Name: A–Z</option>
+          </select>
+        </div>
+        <div class="card-grid" id="sGrid"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -6749,8 +6863,16 @@ function applySettings(){
   }).join('');
 
   const sec = s.sections || {};
-  setRich('shopTitle', (sec.shop||sec.amulets||{}).title||'');
-  setRich('shopDesc',  (sec.shop||sec.amulets||{}).desc||'');
+  // NOTE: this used to fall back to the legacy `sec.amulets` section content
+  // (from before Amulets/Accessories/etc. were merged into one Shop page).
+  // Existing Firestore docs still have `sections.amulets` populated with the
+  // old "Amulets" copy, and since `sections.shop` was never written for them,
+  // the fallback chain kept surfacing stale "Amulets"-only text on the
+  // unified Shop page. Falling back to hardcoded Shop copy instead — once the
+  // Live Editor's content-sections panel is fixed, admins can override via
+  // `sections.shop`.
+  setRich('shopTitle', (sec.shop||{}).title||'🛍️ Shop');
+  setRich('shopDesc',  (sec.shop||{}).desc||'Amulets, casing, bracelets, accessories, books and services — all hand-selected and verified.');
   setRich('casingTitle',  (sec.casing||{}).title||'');
   setRich('casingDesc',   (sec.casing||{}).desc||'');
   setRich('projTitle',    (sec.projects||{}).title||'');
@@ -7278,6 +7400,19 @@ async function goPage(name, opts={}){
   const pg = document.getElementById('page-'+name);
   if(!pg) return;
 
+  // Show skeletons right away — synchronously, before the page-transition
+  // timeout below. If this were left inside doSwitch() (which can fire up to
+  // 210ms later, after the page-leaving animation), it could run AFTER
+  // renderShop()/renderP()/renderReviews() had already painted real data
+  // (those run right after `await ensurePageData()` further down, which can
+  // resolve in well under 210ms once the data is cached). The skeleton HTML
+  // would then overwrite the real content and nothing would repaint it,
+  // leaving the grid stuck on placeholder cards until a non-goPage re-render
+  // (e.g. clicking a category tab) ran directly.
+  if(name==='shop')     showGridSkeleton('sGrid',12);
+  if(name==='projects') showGridSkeleton('pGrid',8);
+  if(name==='reviews')  showGridSkeleton('revGrid',6);
+
   const doSwitch = () => {
     document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.classList.remove('page-leaving');});
     if(typeof closeHsArticle === 'function') closeHsArticle();
@@ -7290,10 +7425,6 @@ async function goPage(name, opts={}){
     window.scrollTo(0,0);
     document.getElementById('navLinks').classList.remove('open');
     document.getElementById('mobileOverlay').classList.remove('open');
-    // Show skeletons immediately for pages that have them
-    if(name==='shop')     showGridSkeleton('sGrid',12);
-    if(name==='projects') showGridSkeleton('pGrid',8);
-    if(name==='reviews')  showGridSkeleton('revGrid',6);
   };
 
   if(currentPg && currentPg !== pg){
@@ -7333,7 +7464,16 @@ async function goPage(name, opts={}){
   } else if(name!=='casing'){
     await ensurePageData(name);
   }
-  if(name==='shop'){curStype='all';curScat='all';renderShop('all');}
+  if(name==='shop'){
+    // Only reset the type/category filters when actually navigating INTO the
+    // shop page from elsewhere (e.g. the top nav). If we're already on the
+    // shop page — which is the case when a category window tile calls
+    // filterSTypeByValue() → goPage('shop') — resetting here would silently
+    // overwrite the type it just set, and every category tile would always
+    // render "All" instead of the chosen type.
+    if(currentPg !== pg){ curStype='all'; curScat='all'; }
+    renderShop(curScat);
+  }
   if(name==='casing'){
     curCasingType=null;
     loadState.casing='loading';
@@ -8234,15 +8374,20 @@ function shopProductList(){
   if(curStype==='all') return all;
   if(curStype==='new-arrivals') return all.filter(p=>p.newArrival);
   if(curStype==='best-sellers') return all.filter(p=>p.bestSeller);
+  // Bracelets no longer has its own tile in the Shop nav — folded into
+  // Accessories. Existing products still have type==='bracelet' in the data
+  // (admin's type field/SKU prefix are untouched), so the Accessories filter
+  // matches both types rather than requiring a data migration.
+  if(curStype==='accessory') return all.filter(p=>p.type==='accessory'||p.type==='bracelet');
   return all.filter(p=>p.type===curStype);
 }
 // Backward-compatible alias — old name kept in case any other code still calls it.
 function combinedShopList(){ return shopProductList(); }
 
 function filterSTypeByValue(type){
-  document.querySelectorAll('#sTypeTabs .cat-tab').forEach(t=>t.classList.remove('active'));
-  const btn=[...document.querySelectorAll('#sTypeTabs .cat-tab')].find(b=>b.getAttribute('onclick')===`filterSType('${type}',this)`);
-  if(btn) btn.classList.add('active');
+  document.querySelectorAll('#shopCatWindows .shop-cat-win').forEach(t=>t.classList.remove('active'));
+  const win=document.querySelector(`#shopCatWindows .shop-cat-win[data-stype="${type}"]`);
+  if(win) win.classList.add('active');
   curStype=type;curScat='all';_sVisible=36;
   goPage('shop').then(()=>renderShop('all'));
 }
@@ -8275,11 +8420,25 @@ function applySort(list,sortKey){
   }
 }
 
-function toggleShopFilters(){
+// Filters now live permanently in the shop sidebar (no more show/hide toggle
+// panel) — this just re-populates the option lists, called whenever the
+// selected type changes so dropdowns only ever list values that exist for
+// the current type. Guarded by _lastFilterOptStype so it doesn't rebuild
+// (and interrupt) an open <select> on every keystroke/search/sort re-render.
+let _lastFilterOptStype = null;
+function populateShopFilterOptionsIfNeeded(){
+  if(_lastFilterOptStype === curStype) return;
+  _lastFilterOptStype = curStype;
+  populateShopFilterOptions();
+}
+
+// Mobile-only collapse for the sidebar filter fields (see .ss-filter-toggle
+// CSS) — on desktop the filters stay visible regardless of this class.
+function toggleMobileShopFilters(){
   const box=document.getElementById('shopFilters');
-  const show=box.style.display==='none';
-  box.style.display=show?'grid':'none';
-  if(show) populateShopFilterOptions();
+  const btn=document.getElementById('ssFilterToggle');
+  const open=box.classList.toggle('ss-open');
+  if(btn) btn.classList.toggle('ss-open', open);
 }
 
 function clearShopFilters(){
@@ -8315,15 +8474,10 @@ function searchS(){
 }
 function clearSearchS(){document.getElementById('sSearch').value='';_sQuery='';_sVisible=36;document.getElementById('sSearchClear').classList.remove('show');renderShop(curScat);}
 
-function filterSType(type,el){
-  document.querySelectorAll('#sTypeTabs .cat-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  curStype=type;curScat='all';_sVisible=36;renderShop('all');
-}
-
 function renderShop(cat){
   const db=getDB();const settings=db.settings;
   const all=shopProductList();
+  populateShopFilterOptionsIfNeeded();
   const cats=[...new Set(all.map(a=>a.category).filter(Boolean))];
   buildTabs('sTabs',cats,cat,'filterS');
   let list=cat==='all'?all:all.filter(a=>a.category===cat);
@@ -8376,6 +8530,12 @@ let _modalGalleryToken = 0;
 function showGridSkeleton(gridId, count=8){
   const el = document.getElementById(gridId);
   if(!el || el.dataset._hasData) return;
+  // Clear any cached render-key from a previous visit — otherwise the next
+  // real render (e.g. renderShop) can compute the same key as before, see
+  // the skeleton markup sitting in place of the real cards, and wrongly
+  // conclude "already up to date" — leaving the skeleton stuck on screen
+  // forever instead of being replaced with real content.
+  delete el.dataset.renderKey;
   el.innerHTML = Array.from({length:count}, () => `
     <div class="card skeleton-card" aria-hidden="true" style="pointer-events:none;cursor:default">
       <div class="card-img" style="background:linear-gradient(90deg,#1e1407 0%,#2a1d0a 50%,#1e1407 100%);background-size:200% 100%;animation:imgShimmer 1.3s ease-in-out infinite;aspect-ratio:1;border-radius:inherit"></div>

@@ -116,6 +116,18 @@ const DB_DOC = doc(fs, 'app', 'db');
 const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'products', 'casingTypes', 'projects', 'reviews', 'feedPosts', 'historyStories'];
 const DB_LAZY_ITEM_KEYS = new Set(['amulets', 'accessories', 'products', 'projects']);
+
+// Bump this whenever lazyItemSummary()'s output shape changes for any key.
+// Summaries are only rewritten when the full item's content-hash changes
+// (see queueLazyItemWrites) — that's an optimisation so untouched items don't
+// get re-written on every save. But it means: if lazyItemSummary() itself
+// changes (e.g. the 'products' branch was added after some items already had
+// a stale legacy-shaped summary written), an item whose data was never
+// edited again will keep serving that stale summary forever, since its
+// full-item hash never changes. Folding this version into the hash forces a
+// one-time rewrite of every item's summary the next time ANY save happens,
+// after which it goes back to being skipped as normal.
+const SUMMARY_SCHEMA_VERSION = 2;
 // Keep every large collection chunked. A single casing type can grow past
 // Firestore's 1 MiB document limit when it contains many style/photo URLs.
 const DB_ITEM_KEYS = new Set([]);
@@ -608,7 +620,11 @@ function queueLazyItemWrites(key, items, writes){
     itemIds.push(itemId);
     const fullJson = JSON.stringify(item || {});
     const summaryJson = JSON.stringify(lazyItemSummary(key, item || {}));
-    const hash = hashString(fullJson);
+    // Versioned hash: same content + same summary schema version → same
+    // hash → skip (as before). If SUMMARY_SCHEMA_VERSION was bumped since
+    // this item's summary was last written, the hash differs even though
+    // fullJson is identical, forcing a rewrite with the current summary shape.
+    const hash = hashString(fullJson) + ':v' + SUMMARY_SCHEMA_VERSION;
     itemHashes[itemId] = hash;
     if(!_lazyItemHashes[key] || _lazyItemHashes[key][itemId] !== hash){
       queueJsonRecord(
