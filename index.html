@@ -4487,7 +4487,7 @@
     .trust-wrap-outer{
       max-width:min(1100px,calc(100% - 96px)) !important;
       margin:-170px auto 0 !important;
-      padding-bottom:56px !important;
+      padding-bottom:16px !important;
     }
     .trust-strip-card{padding:18px 22px !important}
     #socialChannelsSection{padding-top:60px !important}
@@ -4813,8 +4813,9 @@
   /* Mobile UX pass: larger 3D, redesigned compact trust/services, swipe news. */
   @media(max-width:999px){
     .social-home{
-      padding-bottom:calc(58px + env(safe-area-inset-bottom,0px)) !important;
-      background:linear-gradient(180deg,#100b04 0%,#090604 58%,#090604 100%) !important;
+      min-height:auto !important;
+      padding-bottom:12px !important;
+      background:transparent !important;
     }
     .social-cover{
       padding:50px 16px 0 !important;
@@ -4845,7 +4846,7 @@
     .trust-wrap-outer{
       max-width:calc(100% - 24px) !important;
       margin:6px auto 0 !important;
-      padding:0 0 6px !important;
+      padding:32px 0 6px !important;
     }
     .trust-strip{
       display:grid !important;
@@ -4895,7 +4896,6 @@
       margin:0 !important;
     }
     #homeSections{
-      margin-top:-188px !important;
       padding-bottom:0 !important;
     }
     #svcTitle{font-size:34px !important}
@@ -5032,9 +5032,6 @@
       margin:12px auto 0 !important;
       padding-bottom:10px !important;
     }
-    #homeSections{
-      margin-top:-138px !important;
-    }
     #homeServicesSection{
       padding-top:34px !important;
     }
@@ -5164,9 +5161,6 @@
       padding-bottom:18px !important;
       position:relative !important;
       z-index:3 !important;
-    }
-    #homeSections{
-      margin-top:0 !important;
     }
     #homeServicesSection{
       padding-top:44px !important;
