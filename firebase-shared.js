@@ -507,6 +507,7 @@ function historySummaryFromArticle(a){
     status: a.status || 'published',
     createdAt,
     updatedAt: a.updatedAt || createdAt,
+    hasVideo: !!a.videoUrl,
     _summaryOnly: true,
   };
 }
@@ -1832,7 +1833,7 @@ async function deleteReviewSubmission(id){
 // ─── HISTORY & STORIES CRUD ────────────────────────────────────────────────
 // historyStories is stored as db.historyStories[] — same pattern as reviews/amulets.
 // Each article: { id, title, slug, category, excerpt, content, coverImage,
-//   gallery:[], featured, status:'published'|'draft', seoTitle, seoDescription,
+//   videoUrl, gallery:[], featured, status:'published'|'draft', seoTitle, seoDescription,
 //   createdAt, updatedAt }
 
 function hsGenId(arr){
@@ -1862,6 +1863,7 @@ async function hsAddArticle(data){
     excerpt: data.excerpt || '',
     content: data.content || '',
     coverImage: data.coverImage || '',
+    videoUrl: data.videoUrl || '',
     gallery: Array.isArray(data.gallery) ? data.gallery : [],
     featured: !!data.featured,
     status: data.status || 'published',

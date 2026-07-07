@@ -1828,6 +1828,11 @@
               <div class="prev-grid" id="hs_gallery_p"></div>
             </div>
             <div class="fg full">
+              <label class="fl">Video URL (YouTube, optional)</label>
+              <input class="fi" id="hs_video_url" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/...">
+              <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Paste a YouTube link (Unlisted works fine) — it'll embed automatically when someone opens the article.</div>
+            </div>
+            <div class="fg full">
               <label class="fl">Content</label>
               <div class="rte-wrap">
                 <div class="rte-toolbar">
@@ -3007,11 +3012,14 @@ function applyDbMigrations(d){
       d.settings.nav.splice(insertAt,0,{id:'payment',label:'Payment',visible:true,enabled:true,builtin:true});
     }
     // History & Stories — dedicated module, treat as builtin so it shows in nav
-    if(!d.settings.nav.find(n=>n.id==='history-stories')){
-      d.settings.nav.push({id:'history-stories',label:'History & Stories',visible:true,enabled:true,builtin:true});
+    // (public-facing slug is 'library'; rename any pre-existing entry too)
+    const legacyHsNav=d.settings.nav.find(n=>n.id==='history-stories');
+    if(legacyHsNav) legacyHsNav.id='library';
+    if(!d.settings.nav.find(n=>n.id==='library')){
+      d.settings.nav.push({id:'library',label:'History & Stories',visible:true,enabled:true,builtin:true});
     } else {
       // Upgrade existing entry to builtin so admin nav doesn't show "Edit Page Content"
-      const hsNav = d.settings.nav.find(n=>n.id==='history-stories');
+      const hsNav = d.settings.nav.find(n=>n.id==='library');
       if(hsNav) hsNav.builtin = true;
     }
   }
@@ -5679,7 +5687,7 @@ function renderHsList(){
     <tbody>${articles.map(a=>`
       <tr>
         <td>${a.coverImage?`<img class="thumb" src="${imageUrl(a.coverImage,'thumb')}" alt="" style="object-position:${hsCoverObjectPosition(a)}">`:`<div class="no-img">📖</div>`}</td>
-        <td><strong>${escapeHtml(a.title||'')}</strong><br><small style="color:var(--text-muted)">${escapeHtml(a.slug||'')}</small></td>
+        <td><strong>${escapeHtml(a.title||'')}</strong>${a.videoUrl?' <span title="Has video">🎬</span>':''}<br><small style="color:var(--text-muted)">${escapeHtml(a.slug||'')}</small></td>
         <td><span class="tag">${HS_CAT_LABELS[a.category]||a.category||'-'}</span></td>
         <td>${a.status==='draft'?'<span class="tag" style="background:#f5e8c8;color:#7a5c00">📝 Draft</span>':'<span class="tag" style="background:#e2f5e8;color:#176b37">✅ Published</span>'}</td>
         <td style="text-align:center">${a.featured?'⭐':'-'}</td>
@@ -5703,6 +5711,7 @@ function editHsArticle(id){
   document.getElementById('hs_slug').value      = a.slug||'';
   document.getElementById('hs_category').value  = a.category||'guides-articles';
   document.getElementById('hs_excerpt').value   = a.excerpt||'';
+  document.getElementById('hs_video_url').value = a.videoUrl||'';
   document.getElementById('hs_featured').checked = !!a.featured;
   document.getElementById('hs_published').checked = a.status!=='draft';
   document.getElementById('hs_seo_title').value  = a.seoTitle||'';
@@ -5725,6 +5734,7 @@ function cancelEditHs(){
   document.getElementById('hs_slug').value     = '';
   document.getElementById('hs_category').value = 'monk-biographies';
   document.getElementById('hs_excerpt').value  = '';
+  document.getElementById('hs_video_url').value = '';
   document.getElementById('hs_featured').checked  = false;
   document.getElementById('hs_published').checked = true;
   document.getElementById('hs_seo_title').value = '';
@@ -5758,6 +5768,7 @@ async function saveHsArticle(){
     slug:        document.getElementById('hs_slug').value.trim() || title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60),
     category:    document.getElementById('hs_category').value,
     excerpt:     document.getElementById('hs_excerpt').value.trim(),
+    videoUrl:    document.getElementById('hs_video_url').value.trim(),
     content:     rteGetHtml('hs_content'),
     coverImage:  captureImgs('hs_cover')[0] || '',
     coverPositionX: _hsCoverPosX,
