@@ -6385,6 +6385,7 @@ const loadState = {
   shop: 'idle',
   projects: 'idle',
 };
+let _pageNavToken = 0;
 
 function safeWatchImages(root=document){
   const scope = root && root.querySelectorAll ? root : document;
@@ -7658,6 +7659,7 @@ async function goPage(name, opts={}){
   const currentPg = document.querySelector('.page.active');
   const pg = document.getElementById('page-'+name);
   if(!pg) return;
+  const navToken = ++_pageNavToken;
 
   // Show skeletons right away — synchronously, before the page-transition
   // timeout below. If this were left inside doSwitch() (which can fire up to
@@ -7742,7 +7744,7 @@ async function goPage(name, opts={}){
     // Load in background — don't block UI (skeleton already shown above)
     ensurePageData(name).then(()=>{
       loadState.shop='loaded';
-      if(document.getElementById('page-shop')?.classList.contains('active')) renderShop(curScat);
+      if(navToken === _pageNavToken) renderShop(curScat);
     }).catch(err=>{
       loadState.shop='error';
       console.warn('[shop] load failed:', err);
@@ -7757,7 +7759,7 @@ async function goPage(name, opts={}){
     // Load in background — don't block UI
     ensurePageData(name).then(()=>{
       loadState.casing='loaded';
-      if(document.getElementById('page-casing')?.classList.contains('active')) renderCasingTypes();
+      if(navToken === _pageNavToken) renderCasingTypes();
     }).catch(err=>{
       loadState.casing='error';
       console.warn('[casing] load failed:', err);
@@ -7770,7 +7772,7 @@ async function goPage(name, opts={}){
     // Load in background — don't block UI (skeleton already shown above)
     ensurePageData(name).then(()=>{
       loadState.projects='loaded';
-      if(document.getElementById('page-projects')?.classList.contains('active')) renderP();
+      if(navToken === _pageNavToken) renderP();
     }).catch(err=>{
       loadState.projects='error';
       console.warn('[projects] load failed:', err);
