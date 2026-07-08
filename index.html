@@ -6382,6 +6382,8 @@ let curCasingType=null;
 const loadState = {
   homeFeed: 'idle', // idle | loading | loaded | empty | error
   casing: 'idle',
+  shop: 'idle',
+  projects: 'idle',
 };
 
 function safeWatchImages(root=document){
@@ -7722,6 +7724,9 @@ async function goPage(name, opts={}){
         <p>${lang==='th'?'โหลดข้อมูล History & Stories ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ':'Could not load History & Stories. Please refresh.'}</p>
       </div>`;
     });
+  } else if(name==='shop' || name==='projects'){
+    // Handled below via their own non-blocking loaders (same pattern as casing/library):
+    // skeleton is already painted, data loads in the background, goPage() doesn't wait on it.
   } else if(name!=='casing'){
     await ensurePageData(name);
   }
@@ -7733,7 +7738,17 @@ async function goPage(name, opts={}){
     // overwrite the type it just set, and every category tile would always
     // render "All" instead of the chosen type.
     if(currentPg !== pg){ curStype='all'; curScat='all'; }
-    renderShop(curScat);
+    loadState.shop='loading';
+    // Load in background — don't block UI (skeleton already shown above)
+    ensurePageData(name).then(()=>{
+      loadState.shop='loaded';
+      if(document.getElementById('page-shop')?.classList.contains('active')) renderShop(curScat);
+    }).catch(err=>{
+      loadState.shop='error';
+      console.warn('[shop] load failed:', err);
+      const grid=document.getElementById('sGrid');
+      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลสินค้าไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ':'Could not load products. Please refresh.'}</div>`;
+    });
   }
   if(name==='casing'){
     curCasingType=null;
@@ -7750,7 +7765,19 @@ async function goPage(name, opts={}){
       if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลกรอบไม่สำเร็จ':'Could not load casing data. Please refresh.'}</div>`;
     });
   }
-  if(name==='projects')renderP();
+  if(name==='projects'){
+    loadState.projects='loading';
+    // Load in background — don't block UI (skeleton already shown above)
+    ensurePageData(name).then(()=>{
+      loadState.projects='loaded';
+      if(document.getElementById('page-projects')?.classList.contains('active')) renderP();
+    }).catch(err=>{
+      loadState.projects='error';
+      console.warn('[projects] load failed:', err);
+      const grid=document.getElementById('pGrid');
+      if(grid) grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1">${lang==='th'?'โหลดข้อมูลโปรเจกต์ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ':'Could not load projects. Please refresh.'}</div>`;
+    });
+  }
   if(name==='reviews')renderReviews();
   if(name==='payment')renderPayment();
   if(name==='cart')renderCart();
