@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="YYYSG">
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;600;700&family=Sarabun:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=Cinzel:wght@400;600;700&family=Marcellus&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
-<script type="module" src="firebase-shared.js?v=20260704a"></script>
+<script type="module" src="firebase-shared.js?v=20260708c"></script>
 <style>
   /* ═══════════════════════════════════════════════════════════════
      YINGYINGYINGSG ADMIN — Dark Premium Redesign 2026
@@ -254,6 +254,21 @@
   .u-text{color:var(--text-muted);font-size:13.5px}
   .u-hint{color:var(--text-dim);font-size:11.5px;margin-top:3px}
 
+  /* ── PROJECT THUMBNAIL FOCAL POINT (drag-to-pan) ── */
+  .prj-focus{display:none;margin-top:10px;padding:14px;border:1px solid var(--border);border-radius:12px;background:rgba(201,168,76,.04)}
+  .prj-focus.active{display:grid;grid-template-columns:minmax(200px,300px) 1fr;gap:16px;align-items:center}
+  .prj-focus-preview{position:relative;border-radius:10px;overflow:hidden;background:var(--surface-3);border:1px solid var(--border);transition:aspect-ratio .25s ease}
+  .prj-focus-preview[data-size="normal"]{aspect-ratio:4/3}
+  .prj-focus-preview[data-size="feature"]{aspect-ratio:16/9}
+  .prj-focus-preview[data-size="tall"]{aspect-ratio:3/4}
+  .prj-focus-preview img{width:100%;height:100%;object-fit:cover;display:block;cursor:grab;user-select:none;touch-action:none}
+  .prj-focus-preview img:active{cursor:grabbing}
+  .prj-focus-crosshair{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px 0 0 -8px;border:2px solid var(--gold-light);border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.45),0 0 8px rgba(0,0,0,.4);pointer-events:none}
+  .prj-focus-side{display:grid;gap:8px}
+  .prj-focus-title{font-size:12.5px;font-weight:800;color:var(--text)}
+  .prj-focus-hint{font-size:11.5px;color:var(--text-muted);line-height:1.5}
+  .prj-focus-val{font-size:12px;color:var(--gold);font-weight:700}
+
   /* ── IMAGE PREVIEWS ── */
   .prev-grid{display:flex !important;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:flex-start}
   .prev-item{
@@ -321,9 +336,9 @@
   .dtable td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle;color:var(--text)}
   .dtable tr:last-child td{border-bottom:none}
   .dtable tr:hover td{background:rgba(201,168,76,.04)}
-  .dtable tr.variant-row.dragging td{opacity:.42}
-  .dtable tr.variant-row.drag-over-top td{border-top:2px solid var(--gold)}
-  .dtable tr.variant-row.drag-over-bottom td{border-bottom:2px solid var(--gold)}
+  .dtable tr.dragging td{opacity:.42}
+  .dtable tr.drag-over-top td{border-top:2px solid var(--gold)}
+  .dtable tr.drag-over-bottom td{border-bottom:2px solid var(--gold)}
   .variant-drag-cell{display:flex;align-items:center;gap:8px}
   .variant-drag-handle{cursor:grab;color:var(--gold);font-size:17px;line-height:1;padding:6px 4px;border:1px solid var(--border);border-radius:6px;background:var(--surface-3);user-select:none}
   .variant-drag-handle:active{cursor:grabbing}
@@ -1883,16 +1898,57 @@
           <div class="form-grid">
             <div class="fg full"><label class="fl" data-en="Project Name *" data-th="ชื่อโปรเจกต์ *">Project Name *</label><input class="fi" id="p_name"></div>
             <div class="fg">
-              <label class="fl" data-en="Status" data-th="สถานะ">Status</label>
-              <select class="fsel" id="p_status">
-                <option value="active" data-en="In Progress" data-th="กำลังดำเนินการ">In Progress</option>
-                <option value="done" data-en="Completed" data-th="เสร็จสิ้น">Completed</option>
-                <option value="soon" data-en="Coming Soon" data-th="เร็วๆ นี้">Coming Soon</option>
-                <option value="open" data-en="Open All Year" data-th="เปิดรับตลอด">Open All Year</option>
+              <label class="fl" data-en="Type" data-th="ประเภท">Type</label>
+              <select class="fsel" id="p_type" onchange="pToggleType()">
+                <option value="campaign" data-en="🎯 Fundraising Campaign" data-th="🎯 แคมเปญระดมทุน">🎯 Fundraising Campaign</option>
+                <option value="offering" data-en="🎁 Fixed-Price Merit Set" data-th="🎁 ชุดทำบุญราคาคงที่">🎁 Fixed-Price Merit Set</option>
               </select>
             </div>
-            <div class="fg"><label class="fl" data-en="Year" data-th="ปี">Year</label><input class="fi" id="p_date"></div>
+            <div class="fg">
+              <label class="fl" data-en="Category" data-th="หมวดหมู่">Category</label>
+              <select class="fsel" id="p_category">
+                <option value="" data-en="— None —" data-th="— ไม่ระบุ —">— None —</option>
+                <option value="wat" data-en="Temple" data-th="วัด · ศาสนสถาน">Temple</option>
+                <option value="education" data-en="Education" data-th="การศึกษา">Education</option>
+                <option value="elderly" data-en="Elderly" data-th="ผู้สูงอายุ">Elderly</option>
+                <option value="health" data-en="Health" data-th="สุขภาพ">Health</option>
+                <option value="animal" data-en="Animals" data-th="สัตว์">Animals</option>
+                <option value="poor" data-en="Underprivileged" data-th="ผู้ยากไร้">Underprivileged</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label class="fl" data-en="Card Size (grid layout)" data-th="ขนาดการ์ด (เลย์เอาต์กริด)">Card Size (grid layout)</label>
+              <select class="fsel" id="p_size" onchange="prjFocusUpdateAspect()">
+                <option value="normal" data-en="Normal" data-th="ปกติ">Normal</option>
+                <option value="tall" data-en="Tall (2 rows)" data-th="สูง (2 แถว)">Tall (2 rows)</option>
+                <option value="feature" data-en="Feature (large, 2×2)" data-th="เด่น (ใหญ่ 2×2)">Feature (large, 2×2)</option>
+              </select>
+            </div>
+            <div class="fg"><label class="fl" data-en="Year / Date tag" data-th="ปี / แท็กวันที่">Year / Date tag</label><input class="fi" id="p_date"></div>
             <div class="fg full"><label class="fl" data-en="Description" data-th="คำอธิบาย">Description</label><textarea class="fta" id="p_desc" style="min-height:120px"></textarea></div>
+
+            <div id="p_campaign_box" style="display:contents">
+              <div class="fg">
+                <label class="fl" data-en="Status" data-th="สถานะ">Status</label>
+                <select class="fsel" id="p_status">
+                  <option value="urgent" data-en="🔥 Urgent" data-th="🔥 เร่งด่วน">🔥 Urgent</option>
+                  <option value="active" data-en="In Progress" data-th="กำลังดำเนินการ">In Progress</option>
+                  <option value="done" data-en="Completed" data-th="เสร็จสิ้น">Completed</option>
+                  <option value="soon" data-en="Coming Soon" data-th="เร็วๆ นี้">Coming Soon</option>
+                  <option value="open" data-en="Open All Year" data-th="เปิดรับตลอด">Open All Year</option>
+                </select>
+              </div>
+              <div class="fg"><label class="fl" data-en="Goal Amount (S$)" data-th="เป้าหมาย (S$)">Goal Amount (S$)</label><input class="fi" type="number" min="0" id="p_goal"></div>
+              <div class="fg"><label class="fl" data-en="Raised So Far (S$)" data-th="ยอดที่ได้แล้ว (S$)">Raised So Far (S$)</label><input class="fi" type="number" min="0" id="p_raised"></div>
+              <div class="fg"><label class="fl" data-en="Number of Donors" data-th="จำนวนผู้ร่วมบุญ">Number of Donors</label><input class="fi" type="number" min="0" id="p_donors"></div>
+              <div class="fg"><label class="fl" data-en="Closing Date (text)" data-th="วันปิดรับ (ข้อความ)">Closing Date (text)</label><input class="fi" id="p_closing" placeholder="e.g. 31 Aug 2026 / ไม่มีกำหนด"></div>
+            </div>
+
+            <div id="p_offering_box" style="display:none">
+              <div class="fg"><label class="fl" data-en="Price (S$)" data-th="ราคา (S$)">Price (S$)</label><input class="fi" type="number" min="0" id="p_price"></div>
+              <div class="fg"><label class="fl" data-en="Unit (e.g. set, bucket)" data-th="หน่วย (เช่น ชุด, ถัง)">Unit (e.g. set, bucket)</label><input class="fi" id="p_unit"></div>
+            </div>
+
             <div class="fg full">
               <label class="fl" data-en="Images" data-th="รูปภาพ">Images</label>
               <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'p_imgs')">
@@ -1900,6 +1956,23 @@
                 <div class="u-icon">🎯</div><div class="u-text" data-en="Upload project images" data-th="อัปโหลดรูปโปรเจกต์">Upload project images</div>
               </div>
               <div class="prev-grid" id="p_imgs_p"></div>
+            </div>
+
+            <div class="fg full">
+              <label class="fl" data-en="Thumbnail Focal Point" data-th="จุดโฟกัสรูปปก">Thumbnail Focal Point</label>
+              <div class="prj-focus" id="p_focus">
+                <div class="prj-focus-preview" id="p_focus_preview" data-size="normal">
+                  <img id="p_focus_img" src="" alt="" draggable="false" onpointerdown="prjFocusDragStart(event)">
+                  <div class="prj-focus-crosshair" id="p_focus_crosshair"></div>
+                </div>
+                <div class="prj-focus-side">
+                  <div class="prj-focus-title" data-en="Drag the photo to reposition" data-th="ลากรูปเพื่อเลื่อนตำแหน่ง">Drag the photo to reposition</div>
+                  <div class="prj-focus-hint" data-en="The frame matches the card size you picked above — drag until the part that matters stays inside it." data-th="กรอบนี้มีสัดส่วนตามขนาดการ์ดที่เลือกไว้ด้านบน ลากรูปจนกว่าส่วนสำคัญจะอยู่ในกรอบ">The frame matches the card size you picked above — drag until the part that matters stays inside it.</div>
+                  <div class="prj-focus-val" id="p_focus_val">50% , 50%</div>
+                  <button type="button" class="btn-ol" style="padding:8px 12px;font-size:12px;justify-self:start" onclick="prjResetFocus()" data-en="Reset to Center" data-th="รีเซ็ตกลับตรงกลาง">Reset to Center</button>
+                </div>
+              </div>
+              <input type="hidden" id="p_focal" value="50% 50%">
             </div>
           </div>
           <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
@@ -2841,7 +2914,7 @@ function defaultSettings(){
       amulets:{title:'📿 Amulets',desc:'Authentic amulets, hand-selected and verified.'},
       accessories:{title:'⛓️ Accessories',desc:'Chains, pendants, cases and complete accessories.'},
       casing:{title:'🪬 Casing Service',desc:'Premium amulet casings in various styles.'},
-      projects:{title:'🎯 Projects',desc:'Special commissioned projects and exclusive collections.'},
+      projects:{title:'Because even a single act of merit<br>can flow together into a greater stream.',desc:'Contribute to a goal-based campaign, or make an offering through a ready-made merit package — no target required, simply choose what suits you.'},
       about:{title:'About Yingyingying Amulet',desc:'We are a specialist amulet shop dedicated to authenticity and quality.'},
     },
     trustCards:[
@@ -5017,16 +5090,49 @@ function loadList(type){
   const c=document.getElementById(cid);
   if(!items.length){c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:12px">${tr('noItems')}</div>`;return;}
   // status pretty name
-  const statusLabels={active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
-  const statusLabelsTh={active:'🟢 กำลังดำเนินการ',done:'✅ เสร็จสิ้น',soon:'🔵 เร็วๆ นี้',open:'🔁 เปิดรับตลอด'};
+  const statusLabels={urgent:'🔥 Urgent',active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
+  const statusLabelsTh={urgent:'🔥 เร่งด่วน',active:'🟢 กำลังดำเนินการ',done:'✅ เสร็จสิ้น',soon:'🔵 เร็วๆ นี้',open:'🔁 เปิดรับตลอด'};
+  const prjCatLabels={wat:{en:'Temple',th:'วัด'},education:{en:'Education',th:'การศึกษา'},elderly:{en:'Elderly',th:'ผู้สูงอายุ'},health:{en:'Health',th:'สุขภาพ'},animal:{en:'Animals',th:'สัตว์'},poor:{en:'Underprivileged',th:'ผู้ยากไร้'}};
+  if(type==='projects'){
+    c.innerHTML=`<table class="dtable">
+      <thead><tr><th></th><th>${tr('image')}</th><th>${tr('name')}</th><th>${lang==='th'?'ประเภท':'Type'}</th><th>${lang==='th'?'หมวดหมู่':'Category'}</th><th>${lang==='th'?'สถานะ / ราคา':'Status / Price'}</th><th>${tr('actions')}</th></tr></thead>
+      <tbody>${items.map((item,i)=>{
+        const isOffering=item.type==='offering';
+        const typeTag=isOffering
+          ?`<span class="tag" style="background:#8b2a2a;color:#ffe4d6">${lang==='th'?'🎁 ชุดทำบุญ':'🎁 Merit Set'}</span>`
+          :`<span class="tag">${lang==='th'?'🎯 แคมเปญ':'🎯 Campaign'}</span>`;
+        const catLabel=prjCatLabels[item.category]?prjCatLabels[item.category][lang==='th'?'th':'en']:'-';
+        const statusOrPrice=isOffering
+          ?`S$${Number(item.price||0).toLocaleString()}${item.unit?` / ${item.unit}`:''}`
+          :`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status||'-'}</span>`;
+        return `<tr draggable="true"
+          ondragstart="prjDragStart(event,'${escapeHtml(String(item.id))}')"
+          ondragover="prjDragOver(event)"
+          ondragleave="prjDragLeave(event)"
+          ondrop="prjDrop(event,'${escapeHtml(String(item.id))}')"
+          ondragend="prjDragEnd()">
+        <td style="cursor:grab;color:var(--text-muted);font-size:16px;text-align:center;user-select:none" title="${lang==='th'?'ลากเพื่อจัดลำดับ':'Drag to reorder'}">⋮⋮</td>
+        <td>${item.imgs&&item.imgs[0]?`<img class="thumb" src="${imageUrl(item.imgs[0],'thumb')}">`:`<div class="no-img">${icons[type]}</div>`}</td>
+        <td><strong>${item.name}</strong></td>
+        <td>${typeTag}</td>
+        <td>${catLabel}</td>
+        <td>${statusOrPrice}</td>
+        <td><div class="row-actions">
+          <button class="btn-edit" onclick="${editFn}(${item.id})">${tr('edit')}</button>
+          <button class="btn-del" onclick="delItem('${type}',${item.id})">${tr('del')}</button>
+        </div></td>
+      </tr>`;}).join('')}
+      </tbody></table>`;
+    return;
+  }
   c.innerHTML=`<table class="dtable">
-    <thead><tr><th>${tr('image')}</th><th>${tr('name')}</th><th>${type==='projects'?tr('status'):tr('category')}</th><th>${type==='projects'?tr('year'):tr('price')}</th><th>${tr('actions')}</th></tr></thead>
+    <thead><tr><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('category')}</th><th>${tr('price')}</th><th>${tr('actions')}</th></tr></thead>
     <tbody>${items.map(item=>`
       <tr>
         <td>${item.imgs&&item.imgs[0]?`<img class="thumb" src="${imageUrl(item.imgs[0],'thumb')}">`:`<div class="no-img">${icons[type]}</div>`}</td>
         <td><strong>${item.name}</strong></td>
-        <td>${type==='projects'?`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status}</span>`:`<span class="tag">${item.cat||'-'}</span>`}</td>
-        <td>${type==='projects'?(item.date||'-'):`S$${Number(item.price||0).toLocaleString()}`}</td>
+        <td><span class="tag">${item.cat||'-'}</span></td>
+        <td>S$${Number(item.price||0).toLocaleString()}</td>
         <td><div class="row-actions">
           <button class="btn-edit" onclick="${editFn}(${item.id})">${tr('edit')}</button>
           <button class="btn-del" onclick="delItem('${type}',${item.id})">${tr('del')}</button>
@@ -6498,12 +6604,137 @@ function loadProductList(){
     </tbody></table>`;
 }
 
+function pToggleType(){
+  // Both field groups stay visible at all times so the form always looks
+  // the same whether you're adding a new project or editing an existing
+  // one — regardless of which Type is selected. saveProject() still only
+  // *uses* the fields relevant to the chosen type when building the record.
+  document.getElementById('p_campaign_box').style.display='contents';
+  document.getElementById('p_offering_box').style.display='contents';
+}
+
+// ─── PROJECT THUMBNAIL FOCAL POINT (drag-to-pan) ──────────────────────────
+let _prjFocusPosX = 50, _prjFocusPosY = 50;
+let _prjFocusDragging = false, _prjFocusStartClientX = 0, _prjFocusStartClientY = 0, _prjFocusStartX = 50, _prjFocusStartY = 50;
+
+function prjClampPos(v){ return Math.max(0, Math.min(100, v)); }
+
+function prjFocusApplyPos(x, y){
+  _prjFocusPosX = prjClampPos(x);
+  _prjFocusPosY = prjClampPos(y);
+  const img = document.getElementById('p_focus_img');
+  const cross = document.getElementById('p_focus_crosshair');
+  const val = document.getElementById('p_focus_val');
+  const hidden = document.getElementById('p_focal');
+  if(img) img.style.objectPosition = `${_prjFocusPosX}% ${_prjFocusPosY}%`;
+  if(cross) cross.style.left = `${_prjFocusPosX}%`, cross.style.top = `${_prjFocusPosY}%`;
+  if(val) val.textContent = `${Math.round(_prjFocusPosX)}% , ${Math.round(_prjFocusPosY)}%`;
+  if(hidden) hidden.value = `${_prjFocusPosX}% ${_prjFocusPosY}%`;
+}
+
+function prjResetFocus(){ prjFocusApplyPos(50, 50); }
+
+function prjFocusUpdateAspect(){
+  const preview = document.getElementById('p_focus_preview');
+  const sizeEl = document.getElementById('p_size');
+  if(preview && sizeEl) preview.dataset.size = sizeEl.value || 'normal';
+}
+
+// Parses either the old keyword format ("left top") or the new percentage
+// format ("37% 62%") into {x,y} 0-100 numbers.
+function prjParseFocal(str){
+  const kw = {left:0, center:50, right:100, top:0, bottom:100};
+  const parts = String(str || 'center center').trim().split(/\s+/);
+  const parseOne = (token, fallback) => {
+    if(token == null) return fallback;
+    if(token.endsWith('%')) return prjClampPos(parseFloat(token)) || fallback;
+    if(kw[token] !== undefined) return kw[token];
+    return fallback;
+  };
+  return { x: parseOne(parts[0], 50), y: parseOne(parts[1], 50) };
+}
+
+function prjRenderFocusPreview(){
+  const box = document.getElementById('p_focus');
+  const img = document.getElementById('p_focus_img');
+  if(!box || !img) return;
+  const first = captureImgs('p_imgs')[0];
+  const src = safePreviewUrl(first);
+  if(!src){
+    box.classList.remove('active');
+    img.removeAttribute('src');
+    return;
+  }
+  img.src = src;
+  box.classList.add('active');
+  prjFocusUpdateAspect();
+  prjFocusApplyPos(_prjFocusPosX, _prjFocusPosY);
+}
+
+function prjFocusDragStart(e){
+  e.preventDefault();
+  const img = document.getElementById('p_focus_img');
+  if(!img) return;
+  _prjFocusDragging = true;
+  _prjFocusStartClientX = e.clientX;
+  _prjFocusStartClientY = e.clientY;
+  _prjFocusStartX = _prjFocusPosX;
+  _prjFocusStartY = _prjFocusPosY;
+  try{ img.setPointerCapture(e.pointerId); }catch(_){}
+  img.addEventListener('pointermove', prjFocusDragMove);
+  img.addEventListener('pointerup', prjFocusDragEnd);
+  img.addEventListener('pointercancel', prjFocusDragEnd);
+}
+function prjFocusDragMove(e){
+  if(!_prjFocusDragging) return;
+  const preview = document.getElementById('p_focus_preview');
+  if(!preview) return;
+  const rect = preview.getBoundingClientRect();
+  // Dragging the photo right reveals more of its left side, so the delta
+  // is inverted relative to normal cursor movement (feels like grabbing
+  // and sliding the physical photo under the frame).
+  const dx = -((e.clientX - _prjFocusStartClientX) / rect.width) * 100;
+  const dy = -((e.clientY - _prjFocusStartClientY) / rect.height) * 100;
+  prjFocusApplyPos(_prjFocusStartX + dx, _prjFocusStartY + dy);
+}
+function prjFocusDragEnd(e){
+  _prjFocusDragging = false;
+  const img = document.getElementById('p_focus_img');
+  if(img){
+    img.removeEventListener('pointermove', prjFocusDragMove);
+    img.removeEventListener('pointerup', prjFocusDragEnd);
+    img.removeEventListener('pointercancel', prjFocusDragEnd);
+  }
+}
+
 async function saveProject(){
   if(!ensureUploadsDone()) return;
   const name=document.getElementById('p_name').value.trim();
   if(!name){showToast(tr('needName'));return;}
   const db=getDB();
-  const data={name,status:document.getElementById('p_status').value,date:document.getElementById('p_date').value||'',desc:document.getElementById('p_desc').value,imgs:captureImgs('p_imgs')};
+  const type=document.getElementById('p_type').value;
+  const data={
+    name,
+    type,
+    category:document.getElementById('p_category').value,
+    size:document.getElementById('p_size').value,
+    date:document.getElementById('p_date').value||'',
+    desc:document.getElementById('p_desc').value,
+    imgs:captureImgs('p_imgs'),
+    focal:document.getElementById('p_focal').value||'center center',
+  };
+  if(type==='offering'){
+    data.price=Number(document.getElementById('p_price').value)||0;
+    data.unit=document.getElementById('p_unit').value.trim();
+    data.status='open';data.goal=0;data.raised=0;data.donors=0;data.closing='';
+  } else {
+    data.status=document.getElementById('p_status').value;
+    data.goal=Number(document.getElementById('p_goal').value)||0;
+    data.raised=Number(document.getElementById('p_raised').value)||0;
+    data.donors=Number(document.getElementById('p_donors').value)||0;
+    data.closing=document.getElementById('p_closing').value.trim();
+    data.price=0;data.unit='';
+  }
   if(editingItemId.projects){
     const it=db.projects.find(x=>x.id===editingItemId.projects);
     if(it)Object.assign(it,data);
@@ -6516,14 +6747,83 @@ async function saveProject(){
   loadList('projects');loadDash();
 }
 
+// ─── PROJECT DRAG & DROP REORDER ──────────────────────────────────────────
+let _prjDragId=null, _prjOrderSaving=false;
+function prjDragStart(e,id){
+  if(_prjOrderSaving){ e.preventDefault(); return; }
+  _prjDragId=id;
+  const row=e.currentTarget;
+  if(row) row.classList.add('dragging');
+  try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',String(id)); }catch(_){}
+}
+function prjDragOver(e){
+  e.preventDefault();
+  try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+  const row=e.currentTarget;
+  if(!row||_prjDragId===null) return;
+  const rect=row.getBoundingClientRect();
+  row.classList.remove('drag-over-top','drag-over-bottom');
+  row.classList.add(e.clientY < rect.top+rect.height/2 ? 'drag-over-top' : 'drag-over-bottom');
+}
+function prjDragLeave(e){ e.currentTarget.classList.remove('drag-over-top','drag-over-bottom'); }
+async function prjDrop(e,targetId){
+  e.preventDefault();
+  const row=e.currentTarget;
+  if(row) row.classList.remove('drag-over-top','drag-over-bottom');
+  if(_prjDragId===null||String(_prjDragId)===String(targetId)) return;
+  const rect=row.getBoundingClientRect();
+  const before=e.clientY < (rect.top+rect.height/2);
+  await reorderProjectByDrag(_prjDragId,targetId,before);
+}
+function prjDragEnd(){
+  _prjDragId=null;
+  document.querySelectorAll('#p_list tr.dragging,#p_list tr.drag-over-top,#p_list tr.drag-over-bottom')
+    .forEach(r=>r.classList.remove('dragging','drag-over-top','drag-over-bottom'));
+}
+async function reorderProjectByDrag(dragId,targetId,before){
+  if(_prjOrderSaving) return;
+  _prjOrderSaving=true;
+  try{
+    const db=getDB();
+    const arr=db.projects||[];
+    const from=arr.findIndex(p=>String(p.id)===String(dragId));
+    const target=arr.findIndex(p=>String(p.id)===String(targetId));
+    if(from<0||target<0){ _prjOrderSaving=false; return; }
+    const [item]=arr.splice(from,1);
+    const insertAt=before
+      ? (target>from ? target-1 : target)
+      : (target<from ? target+1 : target);
+    arr.splice(Math.max(0,Math.min(arr.length,insertAt)),0,item);
+    loadList('projects');
+    if(!(await persistDB(db,lang==='th'?'✅ บันทึกลำดับแล้ว':'✅ Order saved'))){
+      loadList('projects');
+    }
+  } finally {
+    _prjOrderSaving=false;
+  }
+}
+
 function editProject(id){
   const it=getDB().projects.find(x=>x.id===id);if(!it)return;
   editingItemId.projects=id;
   document.getElementById('p_name').value=it.name||'';
-  document.getElementById('p_status').value=it.status||'active';
+  document.getElementById('p_type').value=it.type||'campaign';
+  document.getElementById('p_category').value=it.category||'';
+  document.getElementById('p_size').value=it.size||'normal';
   document.getElementById('p_date').value=it.date||'';
   document.getElementById('p_desc').value=it.desc||'';
-  tempImgs['p_imgs']=[...(it.imgs||[])];renderPrev('p_imgs');
+  document.getElementById('p_status').value=it.status||'active';
+  document.getElementById('p_goal').value=it.goal||'';
+  document.getElementById('p_raised').value=it.raised||'';
+  document.getElementById('p_donors').value=it.donors||'';
+  document.getElementById('p_closing').value=it.closing||'';
+  document.getElementById('p_price').value=it.price||'';
+  document.getElementById('p_unit').value=it.unit||'';
+  pToggleType();
+  tempImgs['p_imgs']=[...(it.imgs||[])];
+  const parsed=prjParseFocal(it.focal);
+  _prjFocusPosX=parsed.x; _prjFocusPosY=parsed.y;
+  renderPrev('p_imgs');
   document.getElementById('p_form_title').textContent=lang==='th'?'✏️ แก้ไขโปรเจกต์':'✏️ Edit Project';
   document.getElementById('p_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update Project';
   document.getElementById('p_cancel_btn').style.display='inline-block';
@@ -6532,8 +6832,14 @@ function editProject(id){
 
 function cancelEditProject(){
   editingItemId.projects=null;
-  clearF(['p_name','p_date','p_desc'],'p_imgs');
+  clearF(['p_name','p_date','p_desc','p_goal','p_raised','p_donors','p_closing','p_price','p_unit'],'p_imgs');
+  document.getElementById('p_type').value='campaign';
+  document.getElementById('p_category').value='';
+  document.getElementById('p_size').value='normal';
   document.getElementById('p_status').value='active';
+  _prjFocusPosX=50; _prjFocusPosY=50;
+  prjRenderFocusPreview();
+  pToggleType();
   document.getElementById('p_form_title').textContent=lang==='th'?'➕ เพิ่มโปรเจกต์ใหม่':'➕ Add New Project';
   document.getElementById('p_save_btn').textContent=lang==='th'?'✅ บันทึกโปรเจกต์':'✅ Save Project';
   document.getElementById('p_cancel_btn').style.display='none';
@@ -6764,6 +7070,7 @@ function renderPrev(key){
   if(!arr.length){
     el.innerHTML = '';
     if(key === 'hs_cover') hsRenderCoverFocus();
+    if(key === 'p_imgs') prjRenderFocusPreview();
     return;
   }
   const last = arr.length - 1;
@@ -6813,6 +7120,7 @@ function renderPrev(key){
   }).join('');
   initPrevGridDrag(key);
   if(key === 'hs_cover') hsRenderCoverFocus();
+  if(key === 'p_imgs') prjRenderFocusPreview();
 }
 
 function escapeAttr(s){

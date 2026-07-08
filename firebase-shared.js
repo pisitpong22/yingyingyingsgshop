@@ -127,7 +127,7 @@ const DB_LAZY_ITEM_KEYS = new Set(['amulets', 'accessories', 'products', 'projec
 // full-item hash never changes. Folding this version into the hash forces a
 // one-time rewrite of every item's summary the next time ANY save happens,
 // after which it goes back to being skipped as normal.
-const SUMMARY_SCHEMA_VERSION = 2;
+const SUMMARY_SCHEMA_VERSION = 4;
 // Keep every large collection chunked. A single casing type can grow past
 // Firestore's 1 MiB document limit when it contains many style/photo URLs.
 const DB_ITEM_KEYS = new Set([]);
@@ -606,6 +606,16 @@ function lazyItemSummary(key, item){
   if(key === 'projects'){
     base.date = item && item.date || '';
     base.status = item && item.status || 'active';
+    base.type = item && item.type || 'campaign';
+    base.category = item && item.category || '';
+    base.size = item && item.size || 'normal';
+    base.goal = item && item.goal || 0;
+    base.raised = item && item.raised || 0;
+    base.price = item && item.price || 0;
+    base.unit = item && item.unit || '';
+    base.donors = item && item.donors || 0;
+    base.closing = item && item.closing || '';
+    base.focal = item && item.focal || 'center center';
   }
   return base;
 }
