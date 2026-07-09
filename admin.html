@@ -1073,6 +1073,16 @@
       <div class="tab-content" data-tab-content="branding" data-parent="store">
         <h3 class="subsection-title" data-en="🏷️ Branding & Logo" data-th="🏷️ แบรนด์ & โลโก้">🏷️ Branding & Logo</h3>
         <div class="subsection-sub" data-en="Shop name, top bar message, and logo display." data-th="ชื่อร้าน, ข้อความแถบบน, และการแสดงโลโก้">Shop name, top bar message, and logo display.</div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="📿 Shop Status" data-th="📿 สถานะร้านค้า">📿 Shop Status</div>
+          <div class="form-section-desc" data-en="Turn the Shop page off temporarily. Customers will see a &quot;Coming Soon&quot; message instead of products. Other pages (Home, Casing, etc.) stay open as normal." data-th="ปิดหน้า Shop ไว้ชั่วคราว ลูกค้าจะเห็นข้อความ &quot;เร็วๆ นี้&quot; แทนสินค้า ส่วนหน้าอื่นๆ (Home, Casing ฯลฯ) ยังเปิดใช้งานได้ปกติ">Turn the Shop page off temporarily. Customers will see a "Coming Soon" message instead of products.</div>
+          <label class="fi-toggle-row" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="b_shopEnabled" style="width:18px;height:18px">
+            <span data-en="Shop is open to customers" data-th="เปิดร้านค้าให้ลูกค้าเข้าดูได้">Shop is open to customers</span>
+          </label>
+        </div>
+
         <div class="form-card">
           <div class="form-grid">
             <div class="fg full"><label class="fl" data-en="Browser Tab Title" data-th="ชื่อแท็บเบราว์เซอร์">Browser Tab Title</label><input class="fi" id="b_pageTitle"></div>
@@ -3490,6 +3500,7 @@ function selectFont(family){
 
 function loadBranding(){
   const s=getDB().settings;
+  document.getElementById('b_shopEnabled').checked=s.shopEnabled!==false;
   document.getElementById('b_pageTitle').value=s.pageTitle||'';
   document.getElementById('b_logoIcon').value=s.logoIcon||'';
   document.getElementById('b_logoText').value=s.logoText||'';
@@ -3500,6 +3511,7 @@ function loadBranding(){
 }
 async function saveBranding(){
   const db=getDB();
+  db.settings.shopEnabled=document.getElementById('b_shopEnabled').checked;
   db.settings.pageTitle=document.getElementById('b_pageTitle').value;
   db.settings.logoIcon=document.getElementById('b_logoIcon').value;
   db.settings.logoText=document.getElementById('b_logoText').value;

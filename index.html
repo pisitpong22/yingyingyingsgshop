@@ -2521,6 +2521,10 @@
   @keyframes slideInTR{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
 
   .empty-state{text-align:center;padding:60px 24px;color:var(--text-muted);background:var(--surface);border:1px dashed var(--border);border-radius:14px}
+  .shop-maintenance{text-align:center;padding:100px 24px;max-width:560px;margin:0 auto}
+  .shop-maintenance-icon{font-size:52px;margin-bottom:18px;opacity:.85}
+  .shop-maintenance h2{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--gold);margin-bottom:12px}
+  .shop-maintenance p{color:var(--text-muted);line-height:1.7;margin-bottom:24px}
 
   /* HAMBURGER */
   .menu-btn{display:none;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold-light);width:38px;height:38px;border-radius:8px;cursor:pointer;font-size:18px;align-items:center;justify-content:center}
@@ -6034,6 +6038,17 @@
 <div id="page-shop" class="page">
   <div class="content">
 
+    <div id="shopMaintenance" class="shop-maintenance" style="display:none">
+      <div class="shop-maintenance-icon">📿</div>
+      <h2 data-en="Shop Coming Soon" data-th="ร้านค้ากำลังจะเปิดเร็วๆ นี้">Shop Coming Soon</h2>
+      <p data-en="We're putting the finishing touches on the shop. Please check back soon." data-th="เรากำลังเตรียมร้านค้าให้พร้อม กรุณากลับมาเช็คอีกครั้งเร็วๆ นี้">We're putting the finishing touches on the shop. Please check back soon.</p>
+      <button class="btn-gold" onclick="goPage('home')" data-en="← Back to Home" data-th="← กลับหน้าแรก">← Back to Home</button>
+    </div>
+
+    <div id="shopMain">
+    <div id="shopPreviewBadge" style="display:none;background:#c9a84c;color:#1a1206;font-weight:700;font-size:13px;text-align:center;padding:8px 12px;border-radius:8px;margin-bottom:14px">
+      👁️ Preview mode — shop is closed to customers (shopEnabled: off)
+    </div>
     <div class="shop-topbar">
       <div>
         <div class="shop-crumb">Home <span>/</span> <b data-en="Shop" data-th="ร้านค้า">Shop</b></div>
@@ -6106,6 +6121,8 @@
         </div>
         <div class="card-grid" id="sGrid"></div>
       </div>
+    </div>
+
     </div>
 
   </div>
@@ -6398,6 +6415,7 @@ function safeWatchImages(root=document){
 // ── DEFAULTS ──
 function defaultSettings(){
   return {
+    shopEnabled:true, // when false, /shop shows a "coming soon" placeholder instead of the product grid
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
     logoIcon:'/favicon/apple-touch-icon.png',
     logoText:'YingyingyingSG',
@@ -6533,6 +6551,7 @@ function applyDbMigrations(d){
   if(d.frameTypes && !d.casingTypes){d.casingTypes=d.frameTypes;delete d.frameTypes;}
   if(!d.casingTypes)d.casingTypes=[];
   if(!d.settings)d.settings=defaultSettings();
+  if(d.settings.shopEnabled===undefined)d.settings.shopEnabled=true;
   if(!d.settings.customPages)d.settings.customPages=[];
   // historyStories: dedicated module (migrated from customPages if needed)
   if(!d.historyStories) d.historyStories = [];
@@ -7587,6 +7606,12 @@ function setActiveNav(name){
   const mt=document.getElementById('mtab-'+name);if(mt)mt.classList.add('active');
 }
 
+// ?shopPreview=1 lets Arm view the real shop (local or live) while
+// settings.shopEnabled=false is hiding it from everyone else — since
+// shopEnabled lives in the same Firestore doc for both local and live,
+// there's no other way to preview without also un-hiding it for customers.
+const SHOP_PREVIEW = new URLSearchParams(location.search).get('shopPreview')==='1';
+
 function pageFromUrl(){
   const params = new URLSearchParams(location.search);
   const qPage = params.get('page');
@@ -7733,6 +7758,18 @@ async function goPage(name, opts={}){
     await ensurePageData(name);
   }
   if(name==='shop'){
+    const shopMaint=document.getElementById('shopMaintenance');
+    const shopMain=document.getElementById('shopMain');
+    if(db.settings.shopEnabled===false && !SHOP_PREVIEW){
+      // Shop closed by admin — show placeholder, skip data loading entirely.
+      if(shopMaint) shopMaint.style.display='';
+      if(shopMain) shopMain.style.display='none';
+      return;
+    }
+    if(shopMaint) shopMaint.style.display='none';
+    if(shopMain) shopMain.style.display='';
+    const previewBadge=document.getElementById('shopPreviewBadge');
+    if(previewBadge) previewBadge.style.display=(db.settings.shopEnabled===false && SHOP_PREVIEW) ? '' : 'none';
     // Only reset the type/category filters when actually navigating INTO the
     // shop page from elsewhere (e.g. the top nav). If we're already on the
     // shop page — which is the case when a category window tile calls
