@@ -965,7 +965,7 @@
 
       <!-- CATALOG -->
       <div class="sidebar-label" data-en="Catalog" data-th="สินค้า &amp; บริการ">Catalog</div>
-      <div class="side-item" onclick="showPanel('products',this)" data-en="🛍️ Products" data-th="🛍️ สินค้า">🛍️ Products</div>
+      <div class="side-item" onclick="showPanel('products',this)" data-en="🛍️ Shop" data-th="🛍️ ร้านค้า">🛍️ Shop</div>
       <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
       <div class="side-item" onclick="showPanel('projects',this)" data-en="🎯 Projects" data-th="🎯 โปรเจกต์">🎯 Projects</div>
       <div class="side-item" onclick="showPanel('reviews',this)" data-en="🙏 Reviews" data-th="🙏 รีวิว">🙏 Reviews</div>
@@ -998,7 +998,7 @@
           <div class="dash-card" onclick="showPanel('products',document.querySelector('.side-item[onclick*=products]'))" style="cursor:pointer">
             <div class="dash-icon">🛍️</div>
             <div class="dash-num" id="dPr">–</div>
-            <div class="dash-label" data-en="Products" data-th="สินค้า">Products</div>
+            <div class="dash-label" data-en="Shop" data-th="ร้านค้า">Shop</div>
             <span class="dash-link" data-en="Manage →" data-th="จัดการ →">Manage →</span>
           </div>
           <div class="dash-card" onclick="showPanel('casing',document.querySelector('.side-item[onclick*=casing]'))" style="cursor:pointer">
@@ -1032,7 +1032,7 @@
             </button>
             <button class="quick-edit-card" onclick="showPanel('products',null)">
               <span class="quick-edit-icon">🛍️</span>
-              <span class="quick-edit-title" data-en="Products" data-th="สินค้า">Products</span>
+              <span class="quick-edit-title" data-en="Shop" data-th="ร้านค้า">Shop</span>
               <span class="quick-edit-sub" data-en="Amulets, accessories, bracelets, and more" data-th="พระ, อุปกรณ์เสริม, สร้อย, และอื่นๆ">Amulets, accessories, bracelets, and more</span>
             </button>
             <button class="quick-edit-card" onclick="showPanel('casing',null)">
@@ -1073,15 +1073,6 @@
       <div class="tab-content" data-tab-content="branding" data-parent="store">
         <h3 class="subsection-title" data-en="🏷️ Branding & Logo" data-th="🏷️ แบรนด์ & โลโก้">🏷️ Branding & Logo</h3>
         <div class="subsection-sub" data-en="Shop name, top bar message, and logo display." data-th="ชื่อร้าน, ข้อความแถบบน, และการแสดงโลโก้">Shop name, top bar message, and logo display.</div>
-
-        <div class="form-card">
-          <div class="form-section-title" data-en="📿 Shop Status" data-th="📿 สถานะร้านค้า">📿 Shop Status</div>
-          <div class="form-section-desc" data-en="Turn the Shop page off temporarily. Customers will see a &quot;Coming Soon&quot; message instead of products. Other pages (Home, Casing, etc.) stay open as normal." data-th="ปิดหน้า Shop ไว้ชั่วคราว ลูกค้าจะเห็นข้อความ &quot;เร็วๆ นี้&quot; แทนสินค้า ส่วนหน้าอื่นๆ (Home, Casing ฯลฯ) ยังเปิดใช้งานได้ปกติ">Turn the Shop page off temporarily. Customers will see a "Coming Soon" message instead of products.</div>
-          <label class="fi-toggle-row" style="display:flex;align-items:center;gap:10px;cursor:pointer">
-            <input type="checkbox" id="b_shopEnabled" style="width:18px;height:18px">
-            <span data-en="Shop is open to customers" data-th="เปิดร้านค้าให้ลูกค้าเข้าดูได้">Shop is open to customers</span>
-          </label>
-        </div>
 
         <div class="form-card">
           <div class="form-grid">
@@ -1511,10 +1502,19 @@
 
         <!-- LIST VIEW -->
         <div id="productsListView">
-          <div class="panel-title">🛍️ Products
+          <div class="panel-title">🛍️ Shop
             <button class="btn-gold" onclick="openProductForm()" data-en="➕ Add New Product" data-th="➕ เพิ่มสินค้าใหม่">➕ Add New Product</button>
           </div>
           <div class="panel-sub" data-en="One catalog for everything you sell — amulets, casing-ready accessories, bracelets, books, and services." data-th="แคตตาล็อกเดียวสำหรับสินค้าทุกประเภท — พระเครื่อง, อุปกรณ์เสริม, สร้อย, หนังสือ, บริการ">One catalog for everything you sell — amulets, accessories, bracelets, books, and services.</div>
+
+          <div class="form-card">
+            <div class="form-section-title" data-en="📿 Shop Status" data-th="📿 สถานะร้านค้า">📿 Shop Status</div>
+            <div class="form-section-desc" data-en="Turn the Shop page off temporarily. Customers will see a &quot;Coming Soon&quot; message instead of products. Other pages (Home, Casing, etc.) stay open as normal." data-th="ปิดหน้า Shop ไว้ชั่วคราว ลูกค้าจะเห็นข้อความ &quot;เร็วๆ นี้&quot; แทนสินค้า ส่วนหน้าอื่นๆ (Home, Casing ฯลฯ) ยังเปิดใช้งานได้ปกติ">Turn the Shop page off temporarily. Customers will see a "Coming Soon" message instead of products.</div>
+            <label class="fi-toggle-row" style="display:flex;align-items:center;gap:10px;cursor:pointer">
+              <input type="checkbox" id="b_shopEnabled" style="width:18px;height:18px" onchange="saveShopStatus()">
+              <span data-en="Shop is open to customers" data-th="เปิดร้านค้าให้ลูกค้าเข้าดูได้">Shop is open to customers</span>
+            </label>
+          </div>
 
           <div class="form-card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
             <div class="fg" style="min-width:220px;flex:1">
@@ -3357,7 +3357,7 @@ function showPanel(name, el){
 
   // Load data for each panel
   if(name==='dashboard')loadDash();
-  if(name==='products'){ closeProductForm(); loadProductList(); }
+  if(name==='products'){ closeProductForm(); loadProductList(); loadShopStatus(); }
   if(name==='casing'){exitTypeView();loadPanelPageIntro('casing');loadCasingTypes();}
   if(name==='projects'){loadPanelPageIntro('projects');loadList('projects');}
   if(name==='store-pages') loadStorePages();
@@ -3505,9 +3505,18 @@ function selectFont(family){
   renderFontPicker();
 }
 
-function loadBranding(){
+function loadShopStatus(){
   const s=getDB().settings;
   document.getElementById('b_shopEnabled').checked=s.shopEnabled!==false;
+}
+async function saveShopStatus(){
+  const db=getDB();
+  db.settings.shopEnabled=document.getElementById('b_shopEnabled').checked;
+  await persistDB(db,tr('brandingSaved'));
+}
+
+function loadBranding(){
+  const s=getDB().settings;
   document.getElementById('b_pageTitle').value=s.pageTitle||'';
   document.getElementById('b_logoIcon').value=s.logoIcon||'';
   document.getElementById('b_logoText').value=s.logoText||'';
@@ -3518,7 +3527,6 @@ function loadBranding(){
 }
 async function saveBranding(){
   const db=getDB();
-  db.settings.shopEnabled=document.getElementById('b_shopEnabled').checked;
   db.settings.pageTitle=document.getElementById('b_pageTitle').value;
   db.settings.logoIcon=document.getElementById('b_logoIcon').value;
   db.settings.logoText=document.getElementById('b_logoText').value;
@@ -5721,7 +5729,7 @@ function loadStorePages(){
   const nav = db.settings.nav || [];
   const pages = [
     {id:'home',      icon:'🏠', title:'Homepage',       desc:'Hero, trust badges, service cards, featured items',  panel:'home',            builtin:true},
-    {id:'products',  icon:'🛍️', title:'Products',        desc:'All products — amulets, accessories, bracelets, books, and more', panel:'products',       builtin:true},
+    {id:'products',  icon:'🛍️', title:'Shop',            desc:'All products — amulets, accessories, bracelets, books, and more', panel:'products',       builtin:true},
     {id:'casing',    icon:'🪬', title:'Casing Service',  desc:'Casing types, styles, and sample photos',            panel:'casing',          builtin:true},
     {id:'history-stories',icon:'📖',title:'History & Stories',desc:'Articles about monks, amulet history, beliefs, guides',panel:'history-stories',builtin:true},
     {id:'projects',  icon:'🎯', title:'Projects',         desc:'Community projects, events, and group activities',   panel:'projects',        builtin:true},
