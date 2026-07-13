@@ -6644,10 +6644,11 @@ function applyDbMigrations(d){
   }
   if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);if(c.showFloat===undefined)c.showFloat=true;if(c.showOnHome===undefined)c.showOnHome=false;c.label=stripContactIcon(c.label);});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
-    if(!d.settings.nav.find(n=>n.id==='feed')){
-      const homeIdx=d.settings.nav.findIndex(n=>n.id==='home');
-      d.settings.nav.splice(homeIdx>=0?homeIdx+1:0,0,{id:'feed',label:'Feed',visible:true,enabled:true,builtin:true});
-    }
+    // 'feed' and 'payment' are not standalone pages any more — Feed content
+    // now lives inside the home page ("Latest Updates" slider) and Payment
+    // is shown inside the checkout flow, not as a top-level menu page.
+    // Drop any leftover nav entries so they can't show up as broken/dead links.
+    d.settings.nav = d.settings.nav.filter(n=>n && n.id!=='feed' && n.id!=='payment');
     if(!d.settings.nav.find(n=>n.id==='contact')){
       const casingIdx=d.settings.nav.findIndex(n=>n.id==='casing');
       d.settings.nav.splice(casingIdx>=0?casingIdx+1:d.settings.nav.length,0,{id:'contact',label:'Contact',visible:true,enabled:true,builtin:true});
@@ -6656,11 +6657,6 @@ function applyDbMigrations(d){
       const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
       const insertAt=aboutIdx>=0?aboutIdx+1:d.settings.nav.length;
       d.settings.nav.splice(insertAt,0,{id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true});
-    }
-    if(!d.settings.nav.find(n=>n.id==='payment')){
-      const revIdx=d.settings.nav.findIndex(n=>n.id==='reviews');
-      const insertAt=revIdx>=0?revIdx+1:d.settings.nav.length;
-      d.settings.nav.splice(insertAt,0,{id:'payment',label:'Payment',visible:true,enabled:true,builtin:true});
     }
     // Merge legacy separate "Amulets" + "Accessories" nav entries into one
     // combined "Shop" entry (single browsing page now covers both).
