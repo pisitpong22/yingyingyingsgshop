@@ -1411,7 +1411,7 @@
       <!-- CONTACT & SOCIAL (merged) -->
       <div class="tab-content" data-tab-content="contact" data-parent="checkout">
         <h3 class="subsection-title">💬 Contact & Social Links</h3>
-        <div class="subsection-sub">Manage all social and contact links in one place. Each link can appear as a <strong>floating button</strong> (bottom of screen) and/or a <strong>homepage card</strong> in the Social Channels section. Drag ⋮⋮ to reorder.</div>
+        <div class="subsection-sub">Manage all social and contact links in one place. Each link can appear as a <strong>floating button</strong> (bottom of screen), a <strong>homepage card</strong> in the Social Channels section, and/or in the <strong>product/article contact list</strong>. Drag ⋮⋮ to reorder. Add or remove as many links as you like — they'll show up wherever their toggles are checked.</div>
 
         <div class="form-card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
@@ -1421,20 +1421,23 @@
                 <span style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🪟 Float</span>
                 = show as floating chat button &nbsp;·&nbsp;
                 <span style="background:rgba(100,180,100,.12);border:1px solid rgba(100,180,100,.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🏠 Home</span>
-                = show on homepage Social Channels section
+                = show on homepage Social Channels section &nbsp;·&nbsp;
+                <span style="background:rgba(100,150,220,.12);border:1px solid rgba(100,150,220,.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🛒 Detail</span>
+                = show in product/casing/project contact buttons
               </div>
             </div>
 
           </div>
 
           <!-- Column headers -->
-          <div style="display:grid;grid-template-columns:20px 100px 1fr 130px 70px 70px 30px;gap:8px;align-items:center;padding:0 4px 8px;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">
+          <div style="display:grid;grid-template-columns:20px 100px 1fr 130px 60px 60px 60px 30px;gap:8px;align-items:center;padding:0 4px 8px;border-bottom:2px solid var(--border);font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">
             <span></span>
             <span>Platform</span>
             <span>URL</span>
             <span>Label / Message</span>
             <span style="text-align:center">🪟 Float</span>
             <span style="text-align:center">🏠 Home</span>
+            <span style="text-align:center">🛒 Detail</span>
             <span></span>
           </div>
 
@@ -3074,7 +3077,7 @@ function applyDbMigrations(d){
     if(d.settings.reviews.homeCount===undefined)d.settings.reviews.homeCount=3;
     if(d.settings.reviews.homeMode===undefined)d.settings.reviews.homeMode='top';
   }
-  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);if(c.showFloat===undefined)c.showFloat=true;c.label=stripContactIcon(c.label);});}
+  if(d.settings.contacts){d.settings.contacts.forEach(c=>{if(c.url===undefined)c.url='';if(c.icon===undefined)c.icon=extractContactIcon(c.label);if(c.showFloat===undefined)c.showFloat=true;if(c.showInDetail===undefined)c.showInDetail=true;c.label=stripContactIcon(c.label);});}
   if(d.settings.nav && Array.isArray(d.settings.nav)){
     // 'feed' and 'payment' are not standalone pages any more — Feed content
     // now lives inside the home page ("Latest Updates" slider) and Payment
@@ -4699,7 +4702,7 @@ function renderContactList(arr){
     <div class="c-row" data-c-idx="${i}" draggable="true"
       ondragstart="cDragStart(event,${i})" ondragover="cDragOver(event)"
       ondragleave="cDragLeave(event)" ondrop="cDrop(event,${i})" ondragend="cDragEnd()"
-      style="display:grid;grid-template-columns:20px 100px 1fr 130px 70px 70px 30px;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border);transition:background .12s">
+      style="display:grid;grid-template-columns:20px 100px 1fr 130px 60px 60px 60px 30px;gap:8px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--border);transition:background .12s">
       <span style="cursor:grab;color:var(--text-muted);font-size:16px;text-align:center;user-select:none" title="Drag to reorder">⋮⋮</span>
       <div style="display:flex;align-items:center;gap:6px">
         <select data-c-platform="${i}" onchange="cPlatformChange(${i},this.value)"
@@ -4723,6 +4726,10 @@ function renderContactList(arr){
       <label style="display:flex;justify-content:center;cursor:pointer" title="Show on homepage Social Channels">
         <input type="checkbox" data-c-home="${i}" ${c.showOnHome?'checked':''}
           style="width:18px;height:18px;accent-color:#2e7d32">
+      </label>
+      <label style="display:flex;justify-content:center;cursor:pointer" title="Show in product/casing/project contact buttons">
+        <input type="checkbox" data-c-detail="${i}" ${c.showInDetail!==false?'checked':''}
+          style="width:18px;height:18px;accent-color:#3a6fc4">
       </label>
       <button onclick="rmContact(${i})" class="btn-del" style="padding:5px 8px;font-size:12px">✕</button>
     </div>`;
@@ -4784,6 +4791,7 @@ function captureContacts(){
       url: urlEl ? urlEl.value.trim() : '',
       showFloat: !!document.querySelector(`[data-c-float="${i}"]`)?.checked,
       showOnHome: !!document.querySelector(`[data-c-home="${i}"]`)?.checked,
+      showInDetail: !!document.querySelector(`[data-c-detail="${i}"]`)?.checked,
       message: document.querySelector(`[data-c-msg="${i}"]`)?.value.trim() || '',
     });
   });
@@ -4791,7 +4799,7 @@ function captureContacts(){
 }
 function addContactBtn(){
   const cur=document.querySelector('#contactList [data-c-label]') ? captureContacts() : [...(getDB().settings.contacts||[])];
-  cur.push({icon:'🔗',label:'',color:'#888888',url:'',message:'',showFloat:true,showOnHome:false});
+  cur.push({icon:'🔗',label:'',color:'#888888',url:'',message:'',showFloat:true,showOnHome:false,showInDetail:true});
   renderContactList(cur);
 }
 function rmContact(i){const cur=captureContacts();cur.splice(i,1);renderContactList(cur);}
