@@ -24,7 +24,7 @@
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=Sarabun:wght@300;400;500;600&family=Noto+Serif:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
 <!-- Firebase shared module — provides window.FB API -->
-<script type="module" src="firebase-shared.js?v=20260708c"></script>
+<script type="module" src="firebase-shared.js?v=20260724a"></script>
 <!-- Stripe.js — used on the Checkout page to securely collect card details -->
 <script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -2219,6 +2219,21 @@
   .var-name{font-family:var(--font-display);font-size:13px;font-weight:700;color:rgba(225,205,165,.92);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .var-hint{font-size:10.5px;color:rgba(201,168,76,.65);font-weight:600;opacity:.85;transition:opacity .2s}
   .var-card:hover .var-hint{opacity:1}
+  /* ── Casing style availability (scalable — see CASING_AVAILABILITY in
+     firebase-shared.js). ".is-oos" is the cssClass for "out_of_stock"; a
+     future status just needs its own modifier class following this pattern. */
+  .var-card.is-oos .var-img img{filter:grayscale(.55) brightness(.62);transition:filter .18s}
+  .var-card.is-oos .var-img::before{content:'';position:absolute;inset:0;z-index:1;background:rgba(10,8,4,.28);pointer-events:none}
+  .var-status-badge{position:absolute;top:8px;left:8px;z-index:3;font-family:var(--font-display);font-size:9px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;padding:3px 8px;border-radius:5px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .var-status-badge.is-oos{background:rgba(13,10,6,.82);border:1px solid rgba(201,168,76,.5);color:rgba(232,201,106,.95)}
+  .var-price-badge.is-oos{background:rgba(255,255,255,.1);color:rgba(220,205,175,.75);box-shadow:none}
+  .var-card.is-oos .var-name{color:rgba(225,205,165,.62)}
+  .var-hint.is-oos{color:rgba(201,168,76,.55)}
+  .casing-quick-card.is-oos{opacity:.6}
+  .quick-oos-tag{color:rgba(232,201,106,.85);font-weight:700}
+  .variant-oos-banner{display:flex;align-items:flex-start;gap:9px;width:100%;margin-top:10px;background:linear-gradient(135deg,rgba(201,168,76,.14),rgba(255,255,255,.04));border:1.5px solid rgba(201,168,76,.4);border-radius:10px;padding:9px 13px}
+  .variant-oos-banner-icon{font-size:15px;line-height:1.3;flex-shrink:0}
+  .variant-oos-banner-txt{font-size:12px;color:rgba(232,201,106,.9);font-weight:600;line-height:1.45}
   .var-card--sample .var-img{aspect-ratio:3/4}
   .var-card--sample .var-img img{object-fit:cover}
   .var-grid--sample{grid-template-columns:repeat(3,1fr) !important;gap:0 !important}
@@ -9193,11 +9208,16 @@ function setupCasingStyleTools(vars){
       </button>`)
   ].join('');
   if(quick){
-    quick.innerHTML=popular.slice(0,8).map(v=>`
-      <button type="button" class="casing-quick-card" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
+    quick.innerHTML=popular.slice(0,8).map(v=>{
+      const avail = window.FB && window.FB.casingAvailabilityMeta ? window.FB.casingAvailabilityMeta(v) : {key:'available'};
+      const statusClass = avail.cssClass || '';
+      const oosTag = statusClass ? ` · <span class="quick-oos-tag">${lang==='th'?avail.th:avail.en}</span>` : '';
+      return `
+      <button type="button" class="casing-quick-card${statusClass?' '+statusClass:''}" onclick="selectCasingStyleChip('${String(v.id).replace(/'/g,"\\'")}')">
         <span class="casing-quick-name">${escapeHtml(v.name || '')}</span>
-        <span class="casing-quick-meta">${casingPhotoCount(v)} ${lang==='th'?'รูป':'photos'}${v.price?` · S$${Number(v.price).toLocaleString()}`:''}</span>
-      </button>`).join('');
+        <span class="casing-quick-meta">${casingPhotoCount(v)} ${lang==='th'?'รูป':'photos'}${v.price?` · S$${Number(v.price).toLocaleString()}`:''}${oosTag}</span>
+      </button>`;
+    }).join('');
   }
 }
 
@@ -9330,16 +9350,22 @@ function variantCardHtml(ty, v, i){
   const imgTag = imgUrl
     ? `<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async"${alreadyLoaded?' class="is-loaded"':''} ${onload} src="${escapeHtml(imgUrl)}">`
     : '🪬';
+  // Availability: still fully clickable/browsable when out of stock — only the
+  // visual treatment changes. See CASING_AVAILABILITY in firebase-shared.js.
+  const avail = window.FB && window.FB.casingAvailabilityMeta ? window.FB.casingAvailabilityMeta(v) : {key:'available'};
+  const statusClass = avail.cssClass || '';
+  const hintText = avail[lang==='th'?'cardHintTh':'cardHintEn'] || (lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples');
   return `
-    <div class="var-card" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
+    <div class="var-card${statusClass?' '+statusClass:''}" data-style-id="${escapeHtml(v.id)}" data-style-key="${escapeHtml(casingVariantKey(v))}" data-photo-count="${casingPhotoCount(v)}" data-search="${escapeHtml(casingVariantSearchText(v))}" onclick="openVariant(${ty.id},${v.id})">
       <div class="var-img" style="contain:layout style;aspect-ratio:9/16">
         ${imgTag}
-        ${v.price?`<div class="var-price-badge">S$${Number(v.price).toLocaleString()}</div>`:''}
+        ${statusClass?`<div class="var-status-badge ${statusClass}">${lang==='th'?avail.th:avail.en}</div>`:''}
+        ${v.price?`<div class="var-price-badge${statusClass?' '+statusClass:''}">S$${Number(v.price).toLocaleString()}</div>`:''}
         ${v.imgs&&v.imgs.length>1?`<div class="var-img-count">📷 ${v.imgs.length}</div>`:''}
       </div>
       <div class="var-body">
         <div class="var-name">${v.name}</div>
-        <div class="var-hint">👆 ${lang==='th'?'คลิกเพื่อดูตัวอย่างเพิ่ม':'Click to see more samples'}</div>
+        <div class="var-hint${statusClass?' '+statusClass:''}">👆 ${hintText}</div>
       </div>
     </div>`;
 }
@@ -9546,6 +9572,9 @@ function openVariant(typeId,varId){
   window._lbImages = imgs;
   // Direct URLs — Firebase Storage Asia bucket serves original optimised images.
   const thumbify = (url) => imageUrl(url,'medium');
+  const avail = window.FB && window.FB.casingAvailabilityMeta ? window.FB.casingAvailabilityMeta(v) : {key:'available'};
+  const statusClass = avail.cssClass || '';
+  const bannerText = avail[lang==='th'?'bannerTh':'bannerEn'];
   document.getElementById('modalContent').innerHTML=`
     <button class="modal-mobile-close" onclick="closeModal()" aria-label="Close">×</button>
     <div class="modal-head" style="padding-bottom:12px">
@@ -9553,8 +9582,10 @@ function openVariant(typeId,varId){
         <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
           <div class="modal-title" style="font-size:24px">${v.name}</div>
           ${v.price?`<div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--gold-dark)">S$${Number(v.price).toLocaleString()}</div>`:''}
+          ${statusClass?`<div class="var-status-badge ${statusClass}" style="position:static">${lang==='th'?avail.th:avail.en}</div>`:''}
         </div>
         ${imgs.length?`<div style="font-size:12px;color:var(--text-muted);margin-top:6px">📷 ${imgs.length} sample${imgs.length>1?'s':''} · ${lang==='th'?'แตะรูปเพื่อดูภาพใหญ่ แล้วปัด/กดลูกศรเพื่อดูรูปต่อไป':'tap any photo to enlarge, then swipe or use arrows'}</div>`:''}
+        ${bannerText?`<div class="variant-oos-banner"><span class="variant-oos-banner-icon">⏳</span><span class="variant-oos-banner-txt">${bannerText}</span></div>`:''}
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>

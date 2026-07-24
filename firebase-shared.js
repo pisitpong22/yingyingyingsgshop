@@ -117,6 +117,47 @@ const DB_SPLIT_VERSION = 1;
 const DB_SPLIT_KEYS = ['settings', 'amulets', 'accessories', 'products', 'casingTypes', 'projects', 'reviews', 'feedPosts', 'historyStories'];
 const DB_LAZY_ITEM_KEYS = new Set(['amulets', 'accessories', 'products', 'projects']);
 
+// ─── CASING STYLE AVAILABILITY ──────────────────────────────────────────────
+// Single source of truth for casing-style stock status, shared by admin.html
+// (edit form + inline quick-select) and index.html (style grid + sample
+// modal), so labels/copy never drift between the two.
+//
+// To add a new status later (e.g. "coming_soon", "discontinued"): add one
+// entry below with a unique cssClass, then add the matching visual treatment
+// for that cssClass in index.html's CSS (search ".var-card.is-oos" for the
+// pattern to copy). No other code changes are needed — both admin.html and
+// index.html read this registry, not hardcoded values.
+const CASING_AVAILABILITY_DEFAULT = 'available';
+const CASING_AVAILABILITY = {
+  available: {
+    en: 'Available', th: 'มีสินค้า',
+    adminIcon: '🟢',
+  },
+  out_of_stock: {
+    en: 'Out of Stock', th: 'สินค้าหมด',
+    adminIcon: '🔴',
+    cssClass: 'is-oos',              // applied to .var-card / .var-price-badge
+    cardHintEn: 'Sold out — tap to view samples',
+    cardHintTh: 'หมดชั่วคราว · แตะเพื่อดูตัวอย่าง',
+    bannerEn: 'This style is currently out of stock. You are welcome to browse the sample photos below, or message us to ask about the next restock.',
+    bannerTh: 'แบบนี้หมดชั่วคราว ยังสามารถดูตัวอย่างรูปด้านล่างได้ตามปกติ หากสนใจสามารถทักสอบถามคิวถัดไปได้เลยค่ะ',
+  },
+};
+// Given a variant object, returns its status key — falls back to "available"
+// for legacy variants that predate this field (no migration needed).
+function casingAvailabilityStatus(v){
+  const key = v && v.availability;
+  return (key && CASING_AVAILABILITY[key]) ? key : CASING_AVAILABILITY_DEFAULT;
+}
+function casingAvailabilityMeta(v){
+  const key = casingAvailabilityStatus(v);
+  return { key, ...CASING_AVAILABILITY[key] };
+}
+function casingAvailabilityOptions(){
+  return Object.keys(CASING_AVAILABILITY).map(key => ({ key, ...CASING_AVAILABILITY[key] }));
+}
+
+
 // Bump this whenever lazyItemSummary()'s output shape changes for any key.
 // Summaries are only rewritten when the full item's content-hash changes
 // (see queueLazyItemWrites) — that's an optimisation so untouched items don't
@@ -2247,6 +2288,12 @@ window.FB = {
   ensureCasingVariants,
   // Expose variant ID cache so admin can show counts without loading all variants
   get _casingVariantIds(){ return _casingVariantIds; },
+  // Casing style availability (single source of truth — see definition above)
+  CASING_AVAILABILITY,
+  CASING_AVAILABILITY_DEFAULT,
+  casingAvailabilityStatus,
+  casingAvailabilityMeta,
+  casingAvailabilityOptions,
 
   // Delete all casing variant Firestore docs (called by admin Reset Casing Styles tool)
   async resetCasingVariantDocs(){

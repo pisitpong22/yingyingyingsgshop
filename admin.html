@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="YYYSG">
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;600;700&family=Sarabun:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=Cinzel:wght@400;600;700&family=Marcellus&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
-<script type="module" src="firebase-shared.js?v=20260708c"></script>
+<script type="module" src="firebase-shared.js?v=20260724a"></script>
 <style>
   /* ═══════════════════════════════════════════════════════════════
      YINGYINGYINGSG ADMIN — Dark Premium Redesign 2026
@@ -2477,6 +2477,7 @@
     <div class="form-grid">
       <div class="fg"><label class="fl" data-en="Style Name *" data-th="ชื่อแบบ *">Style Name *</label><input class="fi" id="fv_name"></div>
       <div class="fg"><label class="fl" data-en="Price (SGD) — optional" data-th="ราคา (SGD) — ไม่บังคับ">Price (SGD) — optional</label><input class="fi" id="fv_price" type="number"></div>
+      <div class="fg"><label class="fl" data-en="Availability" data-th="สถานะสินค้า">Availability</label><select class="fsel" id="fv_availability"></select></div>
       <div class="fg full">
         <label class="fl" data-en="Sample Images — upload as many as you like" data-th="รูปตัวอย่าง — อัปโหลดได้ไม่จำกัด">Sample Images — upload as many as you like</label>
         <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="ddr(event,'fv_imgs')">
@@ -5409,8 +5410,9 @@ function renderVariantListFromDB(){
 function _renderVariantTable(vars, c){
 
   const last=vars.length-1;
+  const availOpts = window.FB && window.FB.casingAvailabilityOptions ? window.FB.casingAvailabilityOptions() : [];
   c.innerHTML=`<table class="dtable">
-    <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
+    <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th data-en="Availability" data-th="สถานะสินค้า">Availability</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
     <tbody>${vars.map((v,idx)=>`
       <tr class="variant-row" data-variant-id="${escapeHtml(String(v.id))}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}
           ondragover="variantDragOver(event)"
@@ -5429,6 +5431,11 @@ function _renderVariantTable(vars, c){
         <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="no-img">🪬</div>`}</td>
         <td><strong>${escapeHtml(String(v.name||''))}</strong></td>
         <td>${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
+        <td>
+          <select class="fsel" style="padding:6px 8px;font-size:12px" onchange="variantQuickUpdateAvailability('${escapeHtml(String(v.id))}',this.value)">
+            ${availOpts.map(o=>`<option value="${o.key}" ${(window.FB.casingAvailabilityStatus(v)===o.key)?'selected':''}>${o.adminIcon?o.adminIcon+' ':''}${escapeHtml(lang==='th'?o.th:o.en)}</option>`).join('')}
+          </select>
+        </td>
         <td><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
         <td><div class="row-actions">
           <button class="btn-edit" onclick="openVariantForm('${escapeHtml(String(v.id))}')">✏️</button>
@@ -5443,6 +5450,18 @@ function _renderVariantTable(vars, c){
   }
 }
 
+
+// ─── CASING VARIANT AVAILABILITY ─────────────────────────────────────────────
+// Options are built from window.FB.casingAvailabilityOptions() (defined once
+// in firebase-shared.js and shared with index.html), so adding a new status
+// later only requires editing that one registry — nothing here needs to change.
+function populateAvailabilitySelect(selectId){
+  const sel = document.getElementById(selectId);
+  if(!sel || !window.FB || !window.FB.casingAvailabilityOptions) return;
+  sel.innerHTML = window.FB.casingAvailabilityOptions().map(o=>
+    `<option value="${o.key}">${o.adminIcon?o.adminIcon+' ':''}${escapeHtml(lang==='th'?o.th:o.en)}</option>`
+  ).join('');
+}
 
 // ─── CASING VARIANT FORM ─────────────────────────────────────────────────────
 async function openVariantForm(varId=null){
@@ -5460,12 +5479,14 @@ async function openVariantForm(varId=null){
   document.getElementById('fv_price').value = '';
   document.getElementById('fv_imgs_p').innerHTML = '';
   tempImgs['fv_imgs'] = [];
+  populateAvailabilitySelect('fv_availability');
 
   if(varId && ty){
     const v = (ty.variants||[]).find(x=>String(x.id)===String(varId));
     if(v){
       document.getElementById('fv_name').value  = v.name  || '';
       document.getElementById('fv_price').value = v.price != null ? v.price : '';
+      document.getElementById('fv_availability').value = window.FB && window.FB.casingAvailabilityStatus ? window.FB.casingAvailabilityStatus(v) : 'available';
       if(Array.isArray(v.imgs) && v.imgs.length){
         tempImgs['fv_imgs'] = [...v.imgs];
         renderPrev('fv_imgs');
@@ -5498,6 +5519,21 @@ function reloadCurrentCasingStyles(){
 }
 
 
+// Inline quick-toggle from the styles table — mirrors prQuickUpdate's pattern
+// for the Products list. Saves immediately, no need to open the edit form.
+async function variantQuickUpdateAvailability(varId, value){
+  const db = getDB();
+  const ty = (db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+  if(!ty) return;
+  const v = (ty.variants||[]).find(x=>String(x.id)===String(varId));
+  if(!v) return;
+  v.availability = value;
+  v.updatedAt = Date.now();
+  ty.updatedAt = Date.now();
+  if(!(await persistDB(db, null))) return; // silent — inline edit, no toast
+  await reloadCurrentCasingStyles();
+}
+
 async function saveVariant(){
   if(!ensureUploadsDone()) return;
   const name  = document.getElementById('fv_name').value.trim();
@@ -5520,7 +5556,9 @@ async function saveVariant(){
 
   const beforeCount = ty.variants.length;
   const updatedAt = Date.now();
-  const data = {name, price:price===''?'':Number(price), imgs:captureImgs('fv_imgs'), updatedAt};
+  const availSel = document.getElementById('fv_availability');
+  const availability = (availSel && availSel.value) || (window.FB && window.FB.CASING_AVAILABILITY_DEFAULT) || 'available';
+  const data = {name, price:price===''?'':Number(price), imgs:captureImgs('fv_imgs'), availability, updatedAt};
 
   if(editId){
     // EDIT: update only the matching style, preserve all others
