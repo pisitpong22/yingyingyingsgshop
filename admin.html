@@ -792,6 +792,11 @@
     .dtable .row-actions{flex-wrap:nowrap;gap:5px}
     .dtable .row-actions .btn-del,
     .dtable .row-actions .btn-edit{padding:6px 10px;font-size:12px}
+    /* .btn-ol/.btn-gold get width:100% globally on mobile — override so buttons
+       mixed into a row-actions cell (e.g. "Duplicate" next to Edit/Delete on
+       the Shop products list) shrink to fit instead of fighting for full width */
+    .dtable .row-actions .btn-ol,
+    .dtable .row-actions .btn-gold{width:auto;padding:6px 10px;font-size:12px}
 
     /* ── TYPE TILES ── */
     .type-tile{padding:12px;border-radius:11px;margin-bottom:10px}
@@ -1777,7 +1782,7 @@
           </div>
           <div class="panel-title">
             <span><span data-en="🪬 Styles in" data-th="🪬 แบบใน">🪬 Styles in</span> <em id="vTypeName" style="color:var(--gold-dark)"></em></span>
-            <div style="display:flex;gap:8px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn-ol" onclick="openTypeForm(curEditTypeId)" data-en="✏️ Edit Type" data-th="✏️ แก้ไขประเภท">✏️ Edit Type</button>
               <button class="btn-gold" onclick="openVariantForm()" data-en="➕ Add New Style" data-th="➕ เพิ่มแบบใหม่">➕ Add New Style</button>
             </div>
