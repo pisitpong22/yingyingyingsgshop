@@ -457,17 +457,6 @@
   .vc-btn-del{border:1px solid rgba(255,91,91,.35);color:#ff5b5b}
   .vc-btn-del:hover{background:rgba(255,91,91,.1)}
 
-  .cv-fab{
-    position:fixed;right:20px;bottom:24px;z-index:150;
-    width:56px;height:56px;border-radius:50%;
-    background:linear-gradient(135deg,var(--gold-light),var(--gold));
-    color:#1a0f00;font-size:24px;font-weight:700;
-    display:none;align-items:center;justify-content:center;
-    border:none;box-shadow:0 6px 18px rgba(0,0,0,.4);
-    cursor:pointer;transition:transform .15s ease;
-  }
-  .cv-fab:active{transform:scale(.9)}
-
   /* ── TYPE TILES ── */
   .type-tile{
     background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:18px;
@@ -917,24 +906,29 @@
     .dtable .row-actions .btn-ol,
     .dtable .row-actions .btn-gold{width:auto;padding:6px 10px;font-size:12px}
 
-    /* ── CASING STYLE CARDS — mobile stacking (base styles are responsive
-       already; this just tightens spacing/columns for narrow screens) ── */
-    .cv-actions-row{grid-template-columns:1fr}
+    /* ── CASING STYLE CARDS — mobile sizing (same single-row layout as
+       desktop: drag | thumb | body | side — just scaled down to fit) ── */
+    .cv-actions-row{gap:8px}
+    .cv-action-card{padding:12px 10px;gap:8px;border-radius:13px}
+    .cv-action-icon{width:32px;height:32px;font-size:14px;border-radius:9px}
+    .cv-action-text strong{font-size:13px}
+    .cv-action-text small{font-size:10.5px}
     .cv-search-bar{flex-wrap:wrap}
     .cv-sort-select{flex:1;min-width:0}
-    .cv-fab{display:flex}
     .variant-card{
-      grid-template-columns:22px 64px 1fr;
-      grid-template-areas:
-        "drag thumb body"
-        "side side side";
-      padding:14px;gap:4px 10px;
+      grid-template-columns:20px 60px 1fr auto;
+      grid-template-areas:"drag thumb body side";
+      padding:12px;gap:8px;
     }
-    .variant-card .vc-thumb{width:64px;height:64px}
-    .variant-card .vc-side{
-      grid-area:side;flex-direction:row;align-items:center;justify-content:space-between;
-      padding-top:12px;margin-top:10px;border-top:1px solid var(--border);
-    }
+    .variant-card .vc-thumb{width:60px;height:60px;border-radius:12px}
+    .variant-card .vc-name{font-size:13.5px}
+    .variant-card .vc-price{font-size:11.5px}
+    .variant-card .vc-status-pill{font-size:10.5px;padding:4px 9px}
+    .variant-card .vc-drag .variant-drag-handle{padding:3px;font-size:11px}
+    .variant-card .vc-drag .variant-order-num{font-size:9.5px}
+    .variant-card .vc-side{gap:6px}
+    .variant-card .vc-photos{font-size:9.5px;padding:3px 7px;white-space:nowrap}
+    .variant-card .vc-btn{width:28px;height:28px;font-size:12px;border-radius:8px}
 
     /* ── TYPE TILES ── */
     .type-tile{padding:12px;border-radius:11px;margin-bottom:10px}
@@ -1960,8 +1954,6 @@
           <div class="cv-count" id="variantCount"></div>
 
           <div id="variantsList"></div>
-
-          <button class="cv-fab" onclick="openVariantForm()" title="Add New Style">➕</button>
         </div>
       </div>
 
