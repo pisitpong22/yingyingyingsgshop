@@ -803,25 +803,28 @@
     .variant-table tbody{gap:8px}
     .variant-table tr{
       display:grid !important;
-      grid-template-columns:52px 1fr auto;
+      grid-template-columns:26px 52px 1fr auto;
       grid-template-areas:
-        "img name drag"
-        "img price photos"
-        "img avail avail"
-        "actions actions actions";
-      column-gap:10px;row-gap:4px;
+        "drag img name name"
+        "drag img price photos"
+        "drag img avail avail"
+        "actions actions actions actions";
+      column-gap:8px;row-gap:4px;
       padding:10px;
       align-items:center;
     }
     .variant-table td{padding:0 !important;border:none !important;font-size:12.5px}
+    .variant-table td.v-drag{grid-area:drag;align-self:stretch;display:flex}
+    .variant-table td.v-drag .variant-drag-cell{
+      flex-direction:column;justify-content:center;align-items:center;
+      gap:3px;height:100%;
+    }
+    .variant-table td.v-drag .variant-drag-handle{padding:4px 3px;font-size:12px;line-height:1}
+    .variant-table td.v-drag .variant-order-num{font-size:10px;min-width:auto}
     .variant-table td.v-img{grid-area:img;align-self:start}
     .variant-table td.v-img .thumb,.variant-table td.v-img .no-img{width:52px;height:52px;border-radius:9px}
     .variant-table td.v-name{grid-area:name;align-self:center;overflow:hidden}
     .variant-table td.v-name strong{font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .variant-table td.v-drag{grid-area:drag;align-self:start}
-    .variant-table td.v-drag .variant-drag-cell{gap:4px}
-    .variant-table td.v-drag .variant-drag-handle{padding:3px 5px;font-size:12px}
-    .variant-table td.v-drag .variant-order-num{font-size:10px;min-width:14px}
     .variant-table td.v-price{grid-area:price;color:var(--text-muted)}
     .variant-table td.v-photos{grid-area:photos;justify-self:end}
     .variant-table td.v-photos .tag{font-size:11px;padding:3px 8px}
@@ -1822,6 +1825,9 @@
               <button class="btn-ol" onclick="openTypeForm(curEditTypeId)" data-en="✏️ Edit Type" data-th="✏️ แก้ไขประเภท">✏️ Edit Type</button>
               <button class="btn-gold" onclick="openVariantForm()" data-en="➕ Add New Style" data-th="➕ เพิ่มแบบใหม่">➕ Add New Style</button>
             </div>
+          </div>
+          <div class="fg" style="margin-bottom:12px">
+            <input class="fi" id="variantSearch" type="text" placeholder="🔍 Search style by name…" oninput="filterVariantList(this.value)">
           </div>
           <div id="variantsList"></div>
         </div>
@@ -5389,7 +5395,39 @@ async function enterTypeView(typeId){
   document.getElementById('casingVariantsView').style.display='block';
   document.getElementById('vCrumbName').textContent=ty.name;
   document.getElementById('vTypeName').textContent=ty.name;
+  const searchEl=document.getElementById('variantSearch');
+  if(searchEl) searchEl.value='';
   await loadVariants();
+}
+
+// Client-side filter for the style search box — hides non-matching rows
+// without touching the underlying data/order, so drag-reorder and the
+// order numbers stay correct even while filtered.
+function filterVariantList(term){
+  const c=document.getElementById('variantsList');
+  if(!c) return;
+  term=(term||'').trim().toLowerCase();
+  const rows=c.querySelectorAll('tr.variant-row');
+  let visibleCount=0;
+  rows.forEach(r=>{
+    const nameEl=r.querySelector('.v-name strong');
+    const name=nameEl?nameEl.textContent.toLowerCase():'';
+    const match=!term||name.includes(term);
+    r.style.display=match?'':'none';
+    if(match) visibleCount++;
+  });
+  let emptyMsg=c.querySelector('.variant-search-empty');
+  if(term && visibleCount===0){
+    if(!emptyMsg){
+      emptyMsg=document.createElement('div');
+      emptyMsg.className='variant-search-empty';
+      emptyMsg.style.cssText='text-align:center;padding:30px;color:var(--text-muted)';
+      c.appendChild(emptyMsg);
+    }
+    emptyMsg.textContent=lang==='th'?`ไม่พบสไตล์ที่ตรงกับ "${term}"`:`No style matches "${term}"`;
+  } else if(emptyMsg){
+    emptyMsg.remove();
+  }
 }
 
 async function loadVariants(){
@@ -5489,6 +5527,9 @@ function _renderVariantTable(vars, c){
       c.querySelector(`[data-variant-id="${CSS.escape(String(_variantHighlightId))}"]`)?.scrollIntoView({block:'nearest',behavior:'smooth'});
     },0);
   }
+  // Re-apply any active search filter after a re-render (e.g. after add/edit/delete)
+  const _vSearch=document.getElementById('variantSearch');
+  if(_vSearch && _vSearch.value) filterVariantList(_vSearch.value);
 }
 
 
