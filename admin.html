@@ -798,6 +798,42 @@
     .dtable .row-actions .btn-ol,
     .dtable .row-actions .btn-gold{width:auto;padding:6px 10px;font-size:12px}
 
+    /* ── CASING STYLE CARDS — dedicated compact layout (not the generic
+       table→3-col fallback, which made these cards oversized/hard to scan) ── */
+    .variant-table tbody{gap:8px}
+    .variant-table tr{
+      display:grid !important;
+      grid-template-columns:52px 1fr auto;
+      grid-template-areas:
+        "img name drag"
+        "img price photos"
+        "img avail avail"
+        "actions actions actions";
+      column-gap:10px;row-gap:4px;
+      padding:10px;
+      align-items:center;
+    }
+    .variant-table td{padding:0 !important;border:none !important;font-size:12.5px}
+    .variant-table td.v-img{grid-area:img;align-self:start}
+    .variant-table td.v-img .thumb,.variant-table td.v-img .no-img{width:52px;height:52px;border-radius:9px}
+    .variant-table td.v-name{grid-area:name;align-self:center;overflow:hidden}
+    .variant-table td.v-name strong{font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .variant-table td.v-drag{grid-area:drag;align-self:start}
+    .variant-table td.v-drag .variant-drag-cell{gap:4px}
+    .variant-table td.v-drag .variant-drag-handle{padding:3px 5px;font-size:12px}
+    .variant-table td.v-drag .variant-order-num{font-size:10px;min-width:14px}
+    .variant-table td.v-price{grid-area:price;color:var(--text-muted)}
+    .variant-table td.v-photos{grid-area:photos;justify-self:end}
+    .variant-table td.v-photos .tag{font-size:11px;padding:3px 8px}
+    .variant-table td.v-avail{grid-area:avail}
+    .variant-table td.v-avail select{width:100%}
+    .variant-table td.v-actions{
+      grid-area:actions;
+      padding-top:8px !important;margin-top:4px;
+      border-top:1px solid var(--border) !important;
+    }
+    .variant-table td.v-actions .row-actions{justify-content:flex-end}
+
     /* ── TYPE TILES ── */
     .type-tile{padding:12px;border-radius:11px;margin-bottom:10px}
     .type-tile-img{width:64px;height:64px;border-radius:9px;flex-shrink:0}
@@ -5416,14 +5452,14 @@ function _renderVariantTable(vars, c){
 
   const last=vars.length-1;
   const availOpts = window.FB && window.FB.casingAvailabilityOptions ? window.FB.casingAvailabilityOptions() : [];
-  c.innerHTML=`<table class="dtable">
+  c.innerHTML=`<table class="dtable variant-table">
     <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th data-en="Availability" data-th="สถานะสินค้า">Availability</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
     <tbody>${vars.map((v,idx)=>`
       <tr class="variant-row" data-variant-id="${escapeHtml(String(v.id))}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}
           ondragover="variantDragOver(event)"
           ondragleave="variantDragLeave(event)"
           ondrop="variantDrop(event,'${escapeHtml(String(v.id))}')">
-        <td>
+        <td class="v-drag">
           <div class="variant-drag-cell">
             <span class="variant-drag-handle ${_variantOrderSaving?'disabled':''}"
                   ${_variantOrderSaving?'':'draggable="true"'}
@@ -5433,16 +5469,16 @@ function _renderVariantTable(vars, c){
             <span class="variant-order-num">${idx+1}</span>
           </div>
         </td>
-        <td>${v.imgs&&v.imgs[0]?`<img class="thumb" src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="no-img">🪬</div>`}</td>
-        <td><strong>${escapeHtml(String(v.name||''))}</strong></td>
-        <td>${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
-        <td>
+        <td class="v-img">${v.imgs&&v.imgs[0]?`<img class="thumb" src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="no-img">🪬</div>`}</td>
+        <td class="v-name"><strong>${escapeHtml(String(v.name||''))}</strong></td>
+        <td class="v-price">${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
+        <td class="v-avail">
           <select class="fsel" style="padding:6px 8px;font-size:12px" onchange="variantQuickUpdateAvailability('${escapeHtml(String(v.id))}',this.value)">
             ${availOpts.map(o=>`<option value="${o.key}" ${(window.FB.casingAvailabilityStatus(v)===o.key)?'selected':''}>${o.adminIcon?o.adminIcon+' ':''}${escapeHtml(lang==='th'?o.th:o.en)}</option>`).join('')}
           </select>
         </td>
-        <td><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
-        <td><div class="row-actions">
+        <td class="v-photos"><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
+        <td class="v-actions"><div class="row-actions">
           <button class="btn-edit" onclick="openVariantForm('${escapeHtml(String(v.id))}')">✏️</button>
           <button class="btn-del" onclick="delVariant('${escapeHtml(String(v.id))}')">🗑</button>
         </div></td>
