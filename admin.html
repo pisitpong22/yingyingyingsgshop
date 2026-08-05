@@ -349,6 +349,125 @@
   .tag{background:rgba(201,168,76,.1);color:var(--gold);font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--border-strong);font-weight:500}
   .row-actions{display:flex;gap:6px;flex-wrap:wrap}
 
+  /* ── CASING STYLE VIEW — premium card redesign ─────────────────────────── */
+  .cv-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:4px 0 18px}
+  .cv-title{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--text);display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .cv-title em{color:var(--gold);font-style:italic}
+  .cv-sub{font-size:13.5px;color:var(--text-muted);margin-top:4px}
+
+  .cv-actions-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .cv-action-card{
+    display:flex;align-items:center;gap:12px;text-align:left;
+    padding:14px 16px;border-radius:16px;
+    background:var(--surface-2);border:1px solid var(--border);
+    cursor:pointer;transition:transform .15s ease,border-color .15s ease,background .15s ease;
+    font-family:inherit;color:var(--text);
+  }
+  .cv-action-card:hover{transform:translateY(-2px);border-color:var(--border-strong)}
+  .cv-action-card:active{transform:translateY(0) scale(.98)}
+  .cv-action-icon{
+    width:38px;height:38px;flex-shrink:0;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;font-size:17px;
+    background:rgba(201,168,76,.1);border:1px solid var(--border-strong);
+  }
+  .cv-action-text{display:flex;flex-direction:column;gap:1px;overflow:hidden}
+  .cv-action-text strong{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cv-action-text small{font-size:11.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cv-action-primary{background:linear-gradient(135deg,var(--gold-light),var(--gold));border-color:transparent}
+  .cv-action-primary .cv-action-icon{background:rgba(20,14,4,.18);border-color:transparent;color:#1a0f00}
+  .cv-action-primary .cv-action-text strong{color:#1a0f00}
+  .cv-action-primary .cv-action-text small{color:rgba(26,15,0,.65)}
+
+  .cv-search-bar{
+    display:flex;gap:10px;align-items:center;margin-bottom:10px;
+    position:sticky;top:58px;z-index:5;
+    background:var(--bg,#0d0a06);padding:8px 0;
+  }
+  .cv-search-input{
+    flex:1;display:flex;align-items:center;gap:8px;
+    background:var(--surface-2);border:1px solid var(--border);border-radius:999px;
+    height:48px;padding:0 16px;transition:border-color .15s ease;
+  }
+  .cv-search-input:focus-within{border-color:var(--gold)}
+  .cv-search-icon{font-size:15px;opacity:.6;flex-shrink:0}
+  .cv-search-input input{
+    flex:1;background:none;border:none;outline:none;color:var(--text);
+    font-size:14.5px;font-family:inherit;min-width:0;
+  }
+  .cv-search-input input::placeholder{color:var(--text-muted)}
+  .cv-sort-select{
+    height:48px;padding:0 14px;border-radius:999px;
+    background:var(--surface-2);border:1px solid var(--border);color:var(--text);
+    font-size:13px;font-family:inherit;cursor:pointer;
+  }
+  .cv-count{font-size:12.5px;color:var(--text-muted);margin:0 2px 10px}
+  .cv-count strong{color:var(--gold);font-weight:700}
+
+  .variant-card-list{display:flex;flex-direction:column;gap:10px}
+  .variant-card{
+    display:grid;
+    grid-template-columns:26px 80px 1fr auto;
+    grid-template-areas:"drag thumb body side";
+    align-items:center;gap:14px;
+    background:var(--surface-2);border:1px solid var(--border);
+    border-radius:20px;padding:16px 18px;
+    box-shadow:0 2px 10px rgba(0,0,0,.18);
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+    animation:vcFadeSlide .35s ease both;
+  }
+  .variant-card:hover{transform:translateY(-2px);border-color:var(--border-strong);box-shadow:0 8px 22px rgba(0,0,0,.28)}
+  .variant-card.dragging{opacity:.4}
+  .variant-card.drag-over-top{border-top:2px solid var(--gold)}
+  .variant-card.drag-over-bottom{border-bottom:2px solid var(--gold)}
+  .variant-card[data-highlight="1"]{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold),0 8px 22px rgba(0,0,0,.28)}
+  @keyframes vcFadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .vc-drag{grid-area:drag;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .vc-drag .variant-drag-handle{padding:5px 4px;font-size:13px}
+  .vc-drag .variant-order-num{font-size:10.5px}
+
+  .vc-thumb{grid-area:thumb;width:80px;height:80px;border-radius:16px;overflow:hidden;flex-shrink:0}
+  .vc-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .vc-noimg{width:100%;height:100%;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:24px}
+
+  .vc-body{grid-area:body;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .vc-name{font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vc-price{font-size:13px;color:var(--text-muted)}
+  .vc-status-pill{
+    align-self:flex-start;
+    padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;
+    background:rgba(68,209,110,.12);border:1px solid rgba(68,209,110,.4);color:#44d16e;
+    font-family:inherit;cursor:pointer;
+  }
+  .vc-status-pill.is-oos{background:rgba(255,91,91,.12);border-color:rgba(255,91,91,.4);color:#ff5b5b}
+
+  .vc-side{grid-area:side;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+  .vc-photos{
+    font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap;
+    padding:4px 10px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(201,168,76,.06);
+  }
+  .vc-actions{display:flex;gap:6px}
+  .vc-btn{
+    width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-size:14px;cursor:pointer;background:transparent;transition:transform .12s ease,background .12s ease;
+  }
+  .vc-btn:active{transform:scale(.9)}
+  .vc-btn-edit{border:1px solid var(--border-strong);color:var(--gold)}
+  .vc-btn-edit:hover{background:rgba(201,168,76,.1)}
+  .vc-btn-del{border:1px solid rgba(255,91,91,.35);color:#ff5b5b}
+  .vc-btn-del:hover{background:rgba(255,91,91,.1)}
+
+  .cv-fab{
+    position:fixed;right:20px;bottom:24px;z-index:150;
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:#1a0f00;font-size:24px;font-weight:700;
+    display:none;align-items:center;justify-content:center;
+    border:none;box-shadow:0 6px 18px rgba(0,0,0,.4);
+    cursor:pointer;transition:transform .15s ease;
+  }
+  .cv-fab:active{transform:scale(.9)}
+
   /* ── TYPE TILES ── */
   .type-tile{
     background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:18px;
@@ -798,44 +917,24 @@
     .dtable .row-actions .btn-ol,
     .dtable .row-actions .btn-gold{width:auto;padding:6px 10px;font-size:12px}
 
-    /* ── CASING STYLE CARDS — dedicated compact layout (not the generic
-       table→3-col fallback, which made these cards oversized/hard to scan) ── */
-    .variant-table tbody{gap:8px}
-    .variant-table tr{
-      display:grid !important;
-      grid-template-columns:26px 52px 1fr auto;
+    /* ── CASING STYLE CARDS — mobile stacking (base styles are responsive
+       already; this just tightens spacing/columns for narrow screens) ── */
+    .cv-actions-row{grid-template-columns:1fr}
+    .cv-search-bar{flex-wrap:wrap}
+    .cv-sort-select{flex:1;min-width:0}
+    .cv-fab{display:flex}
+    .variant-card{
+      grid-template-columns:22px 64px 1fr;
       grid-template-areas:
-        "drag img name name"
-        "drag img price photos"
-        "drag img avail avail"
-        "actions actions actions actions";
-      column-gap:8px;row-gap:4px;
-      padding:10px;
-      align-items:center;
+        "drag thumb body"
+        "side side side";
+      padding:14px;gap:4px 10px;
     }
-    .variant-table td{padding:0 !important;border:none !important;font-size:12.5px}
-    .variant-table td.v-drag{grid-area:drag;align-self:stretch;display:flex}
-    .variant-table td.v-drag .variant-drag-cell{
-      flex-direction:column;justify-content:center;align-items:center;
-      gap:3px;height:100%;
+    .variant-card .vc-thumb{width:64px;height:64px}
+    .variant-card .vc-side{
+      grid-area:side;flex-direction:row;align-items:center;justify-content:space-between;
+      padding-top:12px;margin-top:10px;border-top:1px solid var(--border);
     }
-    .variant-table td.v-drag .variant-drag-handle{padding:4px 3px;font-size:12px;line-height:1}
-    .variant-table td.v-drag .variant-order-num{font-size:10px;min-width:auto}
-    .variant-table td.v-img{grid-area:img;align-self:start}
-    .variant-table td.v-img .thumb,.variant-table td.v-img .no-img{width:52px;height:52px;border-radius:9px}
-    .variant-table td.v-name{grid-area:name;align-self:center;overflow:hidden}
-    .variant-table td.v-name strong{font-size:14px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .variant-table td.v-price{grid-area:price;color:var(--text-muted)}
-    .variant-table td.v-photos{grid-area:photos;justify-self:end}
-    .variant-table td.v-photos .tag{font-size:11px;padding:3px 8px}
-    .variant-table td.v-avail{grid-area:avail}
-    .variant-table td.v-avail select{width:100%}
-    .variant-table td.v-actions{
-      grid-area:actions;
-      padding-top:8px !important;margin-top:4px;
-      border-top:1px solid var(--border) !important;
-    }
-    .variant-table td.v-actions .row-actions{justify-content:flex-end}
 
     /* ── TYPE TILES ── */
     .type-tile{padding:12px;border-radius:11px;margin-bottom:10px}
@@ -1819,17 +1918,50 @@
             <span class="sep">▸</span>
             <span class="cur" id="vCrumbName"></span>
           </div>
-          <div class="panel-title">
-            <span><span data-en="🪬 Styles in" data-th="🪬 แบบใน">🪬 Styles in</span> <em id="vTypeName" style="color:var(--gold-dark)"></em></span>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn-ol" onclick="openTypeForm(curEditTypeId)" data-en="✏️ Edit Type" data-th="✏️ แก้ไขประเภท">✏️ Edit Type</button>
-              <button class="btn-gold" onclick="openVariantForm()" data-en="➕ Add New Style" data-th="➕ เพิ่มแบบใหม่">➕ Add New Style</button>
+
+          <div class="cv-header">
+            <div>
+              <div class="cv-title"><span data-en="🪬 Styles in" data-th="🪬 แบบใน">🪬 Styles in</span> <em id="vTypeName"></em></div>
+              <div class="cv-sub" data-en="Manage all styles inside this casing type." data-th="จัดการแบบทั้งหมดในประเภทกรอบนี้">Manage all styles inside this casing type.</div>
             </div>
           </div>
-          <div class="fg" style="margin-bottom:12px">
-            <input class="fi" id="variantSearch" type="text" placeholder="🔍 Search style by name…" oninput="filterVariantList(this.value)">
+
+          <div class="cv-actions-row">
+            <button class="cv-action-card" onclick="openTypeForm(curEditTypeId)">
+              <span class="cv-action-icon">✏️</span>
+              <span class="cv-action-text">
+                <strong data-en="Edit Type" data-th="แก้ไขประเภท">Edit Type</strong>
+                <small data-en="Update type details" data-th="แก้ไขรายละเอียดประเภท">Update type details</small>
+              </span>
+            </button>
+            <button class="cv-action-card cv-action-primary" onclick="openVariantForm()">
+              <span class="cv-action-icon">➕</span>
+              <span class="cv-action-text">
+                <strong data-en="Add New Style" data-th="เพิ่มแบบใหม่">Add New Style</strong>
+                <small data-en="Create a new style" data-th="สร้างแบบใหม่">Create a new style</small>
+              </span>
+            </button>
           </div>
+
+          <div class="cv-search-bar">
+            <div class="cv-search-input">
+              <span class="cv-search-icon">🔍</span>
+              <input type="text" id="variantSearch" placeholder="Search style by name…" oninput="filterVariantList(this.value)">
+            </div>
+            <select class="cv-sort-select" id="variantSort" onchange="sortVariantList(this.value)">
+              <option value="custom" data-en="Sort: Custom order" data-th="เรียง: ลำดับที่ตั้งไว้">Sort: Custom order</option>
+              <option value="newest" data-en="Sort: Newest" data-th="เรียง: ใหม่สุด">Sort: Newest</option>
+              <option value="oldest" data-en="Sort: Oldest" data-th="เรียง: เก่าสุด">Sort: Oldest</option>
+              <option value="name-asc" data-en="Sort: Name A–Z" data-th="เรียง: ชื่อ ก–ฮ">Sort: Name A–Z</option>
+              <option value="name-desc" data-en="Sort: Name Z–A" data-th="เรียง: ชื่อ ฮ–ก">Sort: Name Z–A</option>
+            </select>
+          </div>
+
+          <div class="cv-count" id="variantCount"></div>
+
           <div id="variantsList"></div>
+
+          <button class="cv-fab" onclick="openVariantForm()" title="Add New Style">➕</button>
         </div>
       </div>
 
@@ -5388,6 +5520,8 @@ async function delType(typeId){
   loadCasingTypes();loadDash();
 }
 
+let _variantSortMode = 'custom';
+
 async function enterTypeView(typeId){
   curEditTypeId=typeId;
   const ty=(getDB().casingTypes||[]).find(t=>String(t.id)===String(typeId));if(!ty)return;
@@ -5397,23 +5531,26 @@ async function enterTypeView(typeId){
   document.getElementById('vTypeName').textContent=ty.name;
   const searchEl=document.getElementById('variantSearch');
   if(searchEl) searchEl.value='';
+  _variantSortMode='custom';
+  const sortEl=document.getElementById('variantSort');
+  if(sortEl) sortEl.value='custom';
   await loadVariants();
 }
 
-// Client-side filter for the style search box — hides non-matching rows
+// Client-side filter for the style search box — hides non-matching cards
 // without touching the underlying data/order, so drag-reorder and the
 // order numbers stay correct even while filtered.
 function filterVariantList(term){
   const c=document.getElementById('variantsList');
   if(!c) return;
   term=(term||'').trim().toLowerCase();
-  const rows=c.querySelectorAll('tr.variant-row');
+  const cards=c.querySelectorAll('.variant-card');
   let visibleCount=0;
-  rows.forEach(r=>{
-    const nameEl=r.querySelector('.v-name strong');
+  cards.forEach(card=>{
+    const nameEl=card.querySelector('.vc-name');
     const name=nameEl?nameEl.textContent.toLowerCase():'';
     const match=!term||name.includes(term);
-    r.style.display=match?'':'none';
+    card.style.display=match?'':'none';
     if(match) visibleCount++;
   });
   let emptyMsg=c.querySelector('.variant-search-empty');
@@ -5428,6 +5565,25 @@ function filterVariantList(term){
   } else if(emptyMsg){
     emptyMsg.remove();
   }
+}
+
+// Display-only sort for the style list. Never mutates or persists ty.variants —
+// Firestore always keeps the canonical drag-drop order (see reorderVariantByDrag).
+// Dragging is disabled whenever a non-custom sort is active, since visual
+// adjacency here wouldn't reflect the real saved order.
+function _sortVariantsForDisplay(vars){
+  const arr=[...vars];
+  if(_variantSortMode==='newest') arr.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  else if(_variantSortMode==='oldest') arr.sort((a,b)=>(a.updatedAt||0)-(b.updatedAt||0));
+  else if(_variantSortMode==='name-asc') arr.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),lang==='th'?'th':'en'));
+  else if(_variantSortMode==='name-desc') arr.sort((a,b)=>String(b.name||'').localeCompare(String(a.name||''),lang==='th'?'th':'en'));
+  // 'custom' → leave canonical order untouched
+  return arr;
+}
+
+function sortVariantList(mode){
+  _variantSortMode=mode;
+  renderVariantListFromDB();
 }
 
 async function loadVariants(){
@@ -5459,10 +5615,12 @@ async function loadVariants(){
 
   if(!vars.length){
     c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
+    updateVariantCount(0);
     return;
   }
-  // Order is preserved from Firestore (drag-drop reorder saves canonical order)
-  _renderVariantTable(vars,c);
+  // Order is preserved from Firestore (drag-drop reorder saves canonical order);
+  // _sortVariantsForDisplay only re-orders what's shown, never what's saved.
+  _renderVariantTable(_sortVariantsForDisplay(vars),c);
 }
 
 function exitTypeView(){
@@ -5480,48 +5638,56 @@ function renderVariantListFromDB(){
   const vars=ty?ty.variants||[]:[];
   if(!vars.length){
     c.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
+    updateVariantCount(0);
     return;
   }
-  _renderVariantTable(vars, c);
+  _renderVariantTable(_sortVariantsForDisplay(vars), c);
 }
 
-// Separated table render so both loadVariants and renderVariantListFromDB can use it
-function _renderVariantTable(vars, c){
+function updateVariantCount(n){
+  const el=document.getElementById('variantCount');
+  if(!el) return;
+  el.innerHTML=`<strong>${lang==='th'?'สไตล์':'Styles'}</strong> (${n})`;
+}
 
-  const last=vars.length-1;
+// Separated card render so both loadVariants and renderVariantListFromDB can use it
+function _renderVariantTable(vars, c){
   const availOpts = window.FB && window.FB.casingAvailabilityOptions ? window.FB.casingAvailabilityOptions() : [];
-  c.innerHTML=`<table class="dtable variant-table">
-    <thead><tr><th style="width:80px">${lang==='th'?'ลาก':'Drag'}</th><th>${tr('image')}</th><th>${tr('name')}</th><th>${tr('price')}</th><th data-en="Availability" data-th="สถานะสินค้า">Availability</th><th>${tr('photos')}</th><th>${tr('actions')}</th></tr></thead>
-    <tbody>${vars.map((v,idx)=>`
-      <tr class="variant-row" data-variant-id="${escapeHtml(String(v.id))}" ${String(v.id)===String(_variantHighlightId)?'style="background:#fff8df;box-shadow:inset 4px 0 0 var(--gold)"':''}
-          ondragover="variantDragOver(event)"
-          ondragleave="variantDragLeave(event)"
-          ondrop="variantDrop(event,'${escapeHtml(String(v.id))}')">
-        <td class="v-drag">
-          <div class="variant-drag-cell">
-            <span class="variant-drag-handle ${_variantOrderSaving?'disabled':''}"
-                  ${_variantOrderSaving?'':'draggable="true"'}
-                  title="${lang==='th'?'ลากเพื่อจัดลำดับ':'Drag to reorder'}"
-                  ondragstart="variantDragStart(event,'${escapeHtml(String(v.id))}')"
-                  ondragend="variantDragEnd(event)">⋮⋮</span>
-            <span class="variant-order-num">${idx+1}</span>
-          </div>
-        </td>
-        <td class="v-img">${v.imgs&&v.imgs[0]?`<img class="thumb" src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="no-img">🪬</div>`}</td>
-        <td class="v-name"><strong>${escapeHtml(String(v.name||''))}</strong></td>
-        <td class="v-price">${v.price?`S$${Number(v.price).toLocaleString()}`:'-'}</td>
-        <td class="v-avail">
-          <select class="fsel" style="padding:6px 8px;font-size:12px" onchange="variantQuickUpdateAvailability('${escapeHtml(String(v.id))}',this.value)">
-            ${availOpts.map(o=>`<option value="${o.key}" ${(window.FB.casingAvailabilityStatus(v)===o.key)?'selected':''}>${o.adminIcon?o.adminIcon+' ':''}${escapeHtml(lang==='th'?o.th:o.en)}</option>`).join('')}
-          </select>
-        </td>
-        <td class="v-photos"><span class="tag">${(v.imgs||[]).length} ${tr('images')}</span></td>
-        <td class="v-actions"><div class="row-actions">
-          <button class="btn-edit" onclick="openVariantForm('${escapeHtml(String(v.id))}')">✏️</button>
-          <button class="btn-del" onclick="delVariant('${escapeHtml(String(v.id))}')">🗑</button>
-        </div></td>
-      </tr>`).join('')}
-    </tbody></table>`;
+  const dragDisabled = _variantSortMode!=='custom';
+  updateVariantCount(vars.length);
+  c.innerHTML=`<div class="variant-card-list">${vars.map((v,idx)=>{
+    const statusMeta = window.FB && window.FB.casingAvailabilityMeta ? window.FB.casingAvailabilityMeta(v) : {key:'available'};
+    const statusClass = statusMeta.cssClass || '';
+    return `
+    <div class="variant-card" data-variant-id="${escapeHtml(String(v.id))}" ${String(v.id)===String(_variantHighlightId)?'data-highlight="1"':''} style="animation-delay:${Math.min(idx,10)*30}ms"
+        ondragover="variantDragOver(event)"
+        ondragleave="variantDragLeave(event)"
+        ondrop="variantDrop(event,'${escapeHtml(String(v.id))}')">
+      <div class="vc-drag">
+        <span class="variant-drag-handle ${(_variantOrderSaving||dragDisabled)?'disabled':''}"
+              ${dragDisabled?'':'draggable="true"'}
+              title="${dragDisabled?(lang==='th'?'สลับเป็นลำดับที่ตั้งไว้เพื่อลากจัดลำดับ':'Switch to Custom order to drag'):(lang==='th'?'ลากเพื่อจัดลำดับ':'Drag to reorder')}"
+              ondragstart="variantDragStart(event,'${escapeHtml(String(v.id))}')"
+              ondragend="variantDragEnd(event)">⋮⋮</span>
+        <span class="variant-order-num">${idx+1}</span>
+      </div>
+      <div class="vc-thumb">${v.imgs&&v.imgs[0]?`<img src="${imageUrl(v.imgs[0],'thumb')}">`:`<div class="vc-noimg">🪬</div>`}</div>
+      <div class="vc-body">
+        <div class="vc-name">${escapeHtml(String(v.name||''))}</div>
+        <div class="vc-price">${v.price?`S$${Number(v.price).toLocaleString()}`:'—'}</div>
+        <select class="vc-status-pill ${statusClass}" onchange="variantQuickUpdateAvailability('${escapeHtml(String(v.id))}',this.value)">
+          ${availOpts.map(o=>`<option value="${o.key}" ${(statusMeta.key===o.key)?'selected':''}>${o.adminIcon?o.adminIcon+' ':''}${escapeHtml(lang==='th'?o.th:o.en)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="vc-side">
+        <span class="vc-photos">📷 ${(v.imgs||[]).length} ${lang==='th'?'รูป':'Photos'}</span>
+        <div class="vc-actions">
+          <button class="vc-btn vc-btn-edit" onclick="openVariantForm('${escapeHtml(String(v.id))}')" title="${tr('edit')}">✏️</button>
+          <button class="vc-btn vc-btn-del" onclick="delVariant('${escapeHtml(String(v.id))}')" title="${tr('del')}">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
   if(_variantHighlightId!==null){
     setTimeout(()=>{
       c.querySelector(`[data-variant-id="${CSS.escape(String(_variantHighlightId))}"]`)?.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -5595,9 +5761,10 @@ function reloadCurrentCasingStyles(){
 
   if(!vars.length){
     list.innerHTML=`<div style="text-align:center;padding:50px;background:var(--surface);border:1px dashed var(--border);border-radius:12px;color:var(--text-muted)">${tr('noStyles')}</div>`;
+    updateVariantCount(0);
     return;
   }
-  _renderVariantTable(vars, list);
+  _renderVariantTable(_sortVariantsForDisplay(vars), list);
 }
 
 
@@ -5667,7 +5834,7 @@ async function saveVariant(){
 function variantDragStart(e, variantId){
   if(_variantOrderSaving){ e.preventDefault(); return; }
   _variantDragId = variantId;
-  const row = e.currentTarget.closest('tr');
+  const row = e.currentTarget.closest('.variant-card');
   if(row) row.classList.add('dragging');
   try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',String(variantId)); }catch(_){}
 }
@@ -5698,7 +5865,7 @@ async function variantDrop(e, targetId){
 
 function variantDragEnd(){
   _variantDragId = null;
-  document.querySelectorAll('.variant-row.dragging,.drag-over-top,.drag-over-bottom')
+  document.querySelectorAll('.variant-card.dragging,.drag-over-top,.drag-over-bottom')
     .forEach(r=>r.classList.remove('dragging','drag-over-top','drag-over-bottom'));
 }
 
