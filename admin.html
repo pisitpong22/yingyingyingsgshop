@@ -2162,11 +2162,23 @@
               <div class="fg"><label class="fl" data-en="Raised So Far (S$)" data-th="ยอดที่ได้แล้ว (S$)">Raised So Far (S$)</label><input class="fi" type="number" min="0" id="p_raised"></div>
               <div class="fg"><label class="fl" data-en="Number of Donors" data-th="จำนวนผู้ร่วมบุญ">Number of Donors</label><input class="fi" type="number" min="0" id="p_donors"></div>
               <div class="fg"><label class="fl" data-en="Closing Date (text)" data-th="วันปิดรับ (ข้อความ)">Closing Date (text)</label><input class="fi" id="p_closing" placeholder="e.g. 31 Aug 2026 / ไม่มีกำหนด"></div>
+              <div class="fg full" style="display:flex;align-items:center;gap:8px">
+                <input type="checkbox" id="p_hideStats" style="width:16px;height:16px">
+                <label class="fl" style="margin:0" for="p_hideStats" data-en="Hide Raised / Goal / Donors / Closing on card & page" data-th="ซ่อนยอดบริจาค / เป้าหมาย / ผู้ร่วมบุญ / วันปิดรับ บนการ์ดและหน้าโปรเจกต์">Hide Raised / Goal / Donors / Closing on card &amp; page</label>
+              </div>
             </div>
 
             <div id="p_offering_box" style="display:none">
               <div class="fg"><label class="fl" data-en="Price (S$)" data-th="ราคา (S$)">Price (S$)</label><input class="fi" type="number" min="0" id="p_price"></div>
               <div class="fg"><label class="fl" data-en="Unit (e.g. set, bucket)" data-th="หน่วย (เช่น ชุด, ถัง)">Unit (e.g. set, bucket)</label><input class="fi" id="p_unit"></div>
+              <div class="fg full" style="color:var(--text-muted);font-size:12px;margin-top:-6px">
+                <span data-en="↑ Used when there is only ONE price. If this project has several priced options (e.g. different offering sets), add them below instead — Price/Unit above will be ignored." data-th="↑ ใช้ตอนมีราคาเดียว ถ้าโปรเจกต์นี้มีหลายราคา (เช่นหลายเซ็ตให้เลือก) ให้เพิ่มด้านล่างแทน — ราคา/หน่วยด้านบนจะไม่ถูกใช้">↑ Used when there is only ONE price. If this project has several priced options (e.g. different offering sets), add them below instead — Price/Unit above will be ignored.</span>
+              </div>
+              <div class="fg full">
+                <label class="fl" data-en="Price Tiers (optional — multiple offering sets)" data-th="หลายราคา (ถ้ามีหลายเซ็ต)">Price Tiers (optional — multiple offering sets)</label>
+                <div id="p_tierList"></div>
+                <button type="button" class="btn-ol" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="addProjTier()" data-en="+ Add Price Tier" data-th="+ เพิ่มเซ็ตราคา">+ Add Price Tier</button>
+              </div>
             </div>
 
             <div class="fg full">
@@ -5393,9 +5405,10 @@ function loadList(type){
           ?`<span class="tag" style="background:#8b2a2a;color:#ffe4d6">${lang==='th'?'🎁 ชุดทำบุญ':'🎁 Merit Set'}</span>`
           :`<span class="tag">${lang==='th'?'🎯 แคมเปญ':'🎯 Campaign'}</span>`;
         const catLabel=prjCatLabels[item.category]?prjCatLabels[item.category][lang==='th'?'th':'en']:'-';
+        const tierCount=Array.isArray(item.priceTiers)?item.priceTiers.filter(t=>t&&t.name).length:0;
         const statusOrPrice=isOffering
-          ?`S$${Number(item.price||0).toLocaleString()}${item.unit?` / ${item.unit}`:''}`
-          :`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status||'-'}</span>`;
+          ?(tierCount?`${tierCount} ${lang==='th'?'ราคา':'price options'}`:`S$${Number(item.price||0).toLocaleString()}${item.unit?` / ${item.unit}`:''}`)
+          :`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status||'-'}</span>${item.hideStats?` <span class="tag" style="opacity:.7">🙈</span>`:''}`;
         return `<tr draggable="true"
           ondragstart="prjDragStart(event,'${escapeHtml(String(item.id))}')"
           ondragover="prjDragOver(event)"
@@ -7005,13 +7018,44 @@ function loadProductList(){
 }
 
 function pToggleType(){
-  // Both field groups stay visible at all times so the form always looks
-  // the same whether you're adding a new project or editing an existing
-  // one — regardless of which Type is selected. saveProject() still only
-  // *uses* the fields relevant to the chosen type when building the record.
-  document.getElementById('p_campaign_box').style.display='contents';
-  document.getElementById('p_offering_box').style.display='contents';
+  // Show only the field group relevant to the selected Type. Showing both
+  // at once let admins fill in a Status that saveProject() would silently
+  // discard (offering items always force status='open'), or a Price that
+  // gets discarded for campaign items — with no error, so the change just
+  // looked like it "didn't save". One visible group at a time avoids that.
+  const isOffering=document.getElementById('p_type').value==='offering';
+  document.getElementById('p_campaign_box').style.display=isOffering?'none':'contents';
+  document.getElementById('p_offering_box').style.display=isOffering?'contents':'none';
 }
+
+// ─── PROJECT PRICE TIERS (repeatable: name + price + description) ────────
+function renderProjTiers(tiers){
+  const list=Array.isArray(tiers)?tiers:[];
+  document.getElementById('p_tierList').innerHTML=list.map((t,i)=>`
+    <div class="rep-row">
+      <div class="rep-fields">
+        <div class="fg"><label class="fl" data-en="Set Name" data-th="ชื่อเซ็ต">Set Name</label><input class="fi" data-pt-name="${i}" value="${escapeHtml(t.name||'')}" placeholder="${lang==='th'?'เช่น ชุดทำบุญ A':'e.g. Offering Set A'}"></div>
+        <div class="fg"><label class="fl" data-en="Price (S$)" data-th="ราคา (S$)">Price (S$)</label><input class="fi" type="number" min="0" data-pt-price="${i}" value="${t.price||''}"></div>
+        <div class="fg full"><label class="fl" data-en="Details (optional)" data-th="รายละเอียดเพิ่มเติม (ถ้ามี)">Details (optional)</label><input class="fi" data-pt-desc="${i}" value="${escapeHtml(t.desc||'')}"></div>
+      </div>
+      <button type="button" class="rep-rm" onclick="rmProjTier(${i})">✕</button>
+    </div>
+  `).join('');
+}
+function captureProjTiers(){
+  const tiers=[];
+  document.querySelectorAll('[data-pt-name]').forEach(el=>{
+    const i=el.dataset.ptName;
+    tiers.push({
+      name:el.value.trim(),
+      price:Number(document.querySelector(`[data-pt-price="${i}"]`).value)||0,
+      desc:document.querySelector(`[data-pt-desc="${i}"]`).value.trim(),
+    });
+  });
+  return tiers.filter(t=>t.name || t.price);
+}
+function addProjTier(){ const cur=captureProjTiers(); cur.push({name:'',price:0,desc:''}); renderProjTiers(cur); }
+function rmProjTier(idx){ const cur=captureProjTiers(); cur.splice(idx,1); renderProjTiers(cur); }
 
 // ─── PROJECT THUMBNAIL FOCAL POINT (drag-to-pan) ──────────────────────────
 let _prjFocusPosX = 50, _prjFocusPosY = 50;
@@ -7126,14 +7170,16 @@ async function saveProject(){
   if(type==='offering'){
     data.price=Number(document.getElementById('p_price').value)||0;
     data.unit=document.getElementById('p_unit').value.trim();
-    data.status='open';data.goal=0;data.raised=0;data.donors=0;data.closing='';
+    data.priceTiers=captureProjTiers();
+    data.status='open';data.goal=0;data.raised=0;data.donors=0;data.closing='';data.hideStats=false;
   } else {
     data.status=document.getElementById('p_status').value;
     data.goal=Number(document.getElementById('p_goal').value)||0;
     data.raised=Number(document.getElementById('p_raised').value)||0;
     data.donors=Number(document.getElementById('p_donors').value)||0;
     data.closing=document.getElementById('p_closing').value.trim();
-    data.price=0;data.unit='';
+    data.hideStats=document.getElementById('p_hideStats').checked;
+    data.price=0;data.unit='';data.priceTiers=[];
   }
   if(editingItemId.projects){
     const it=db.projects.find(x=>x.id===editingItemId.projects);
@@ -7218,8 +7264,10 @@ function editProject(id){
   document.getElementById('p_raised').value=it.raised||'';
   document.getElementById('p_donors').value=it.donors||'';
   document.getElementById('p_closing').value=it.closing||'';
+  document.getElementById('p_hideStats').checked=!!it.hideStats;
   document.getElementById('p_price').value=it.price||'';
   document.getElementById('p_unit').value=it.unit||'';
+  renderProjTiers(it.priceTiers||[]);
   pToggleType();
   tempImgs['p_imgs']=[...(it.imgs||[])];
   const parsed=prjParseFocal(it.focal);
@@ -7238,6 +7286,8 @@ function cancelEditProject(){
   document.getElementById('p_category').value='';
   document.getElementById('p_size').value='normal';
   document.getElementById('p_status').value='active';
+  document.getElementById('p_hideStats').checked=false;
+  renderProjTiers([]);
   _prjFocusPosX=50; _prjFocusPosY=50;
   prjRenderFocusPreview();
   pToggleType();

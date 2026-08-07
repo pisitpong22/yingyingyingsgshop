@@ -168,7 +168,7 @@ function casingAvailabilityOptions(){
 // full-item hash never changes. Folding this version into the hash forces a
 // one-time rewrite of every item's summary the next time ANY save happens,
 // after which it goes back to being skipped as normal.
-const SUMMARY_SCHEMA_VERSION = 4;
+const SUMMARY_SCHEMA_VERSION = 5; // bumped: projects summary now includes priceTiers + hideStats
 // Keep every large collection chunked. A single casing type can grow past
 // Firestore's 1 MiB document limit when it contains many style/photo URLs.
 const DB_ITEM_KEYS = new Set([]);
@@ -654,6 +654,8 @@ function lazyItemSummary(key, item){
     base.raised = item && item.raised || 0;
     base.price = item && item.price || 0;
     base.unit = item && item.unit || '';
+    base.priceTiers = Array.isArray(item && item.priceTiers) ? item.priceTiers : [];
+    base.hideStats = !!(item && item.hideStats);
     base.donors = item && item.donors || 0;
     base.closing = item && item.closing || '';
     base.focal = item && item.focal || 'center center';

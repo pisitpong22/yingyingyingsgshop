@@ -2299,6 +2299,17 @@
   .s-offer{background:#8b2a2a;color:#ffe4d6}
   .prj-modal-price{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--gold-light);margin:16px 0}
   .prj-modal-price span{font-size:13px;color:var(--text-muted);font-weight:400}
+  .prj-tier-list{display:flex;flex-direction:column;gap:3px;margin-top:2px}
+  .prj-tier-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12.5px}
+  .prj-tier-name{color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .prj-tier-price{font-family:var(--font-display);font-weight:700;color:var(--gold-light);white-space:nowrap}
+  .prj-tier-more{font-size:11px;color:var(--text-muted);margin-top:2px}
+  .prj-modal-tiers{margin:16px 0}
+  .prj-modal-tier-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid rgba(201,168,76,.14)}
+  .prj-modal-tier-row:last-child{border-bottom:none}
+  .prj-modal-tier-name{font-weight:600;color:#fff;font-size:14px}
+  .prj-modal-tier-desc{font-size:12px;color:var(--text-muted);margin-top:3px;line-height:1.6}
+  .prj-modal-tier-price{font-family:var(--font-display);font-weight:700;color:var(--gold-light);font-size:16px;white-space:nowrap}
   .prj-modal-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:16px 0 6px;padding:16px 0;border-top:1px solid rgba(201,168,76,.16);border-bottom:1px solid rgba(201,168,76,.16)}
   .prj-modal-stats div{text-align:center}
   .prj-modal-stats b{display:block;font-family:var(--font-display);font-size:17px;color:var(--gold-light);font-weight:700}
@@ -10843,21 +10854,37 @@ function renderP(){
     const focalPos=p.focal||'center center';
     const imgHtml=p.imgs&&p.imgs[0]?`<img loading="${i<6?'eager':'lazy'}" decoding="async" style="object-position:${focalPos}" ${imgAttrs(p.imgs[0],'thumb','(max-width: 700px) 100vw, 480px')}>`:(type==='offering'?'🎁':'🎯');
     let badgeHtml,footHtml;
+    const tiers=Array.isArray(p.priceTiers)?p.priceTiers.filter(t=>t&&t.name):[];
     if(type==='offering'){
       badgeHtml=`<span class="prj-badge sbadge s-offer">${lang==='th'?'ชุดทำบุญ':'Merit Set'}</span>`;
-      footHtml=`<div class="prj-offer-foot"><div class="prj-price">S$${Number(p.price||0).toLocaleString()}${p.unit?` <small>/ ${p.unit}</small>`:''}</div><div class="prj-cta-btn">${lang==='th'?'ร่วมทำบุญ':'Make Merit'}</div></div>`;
-    }else{
-      const goal=Number(p.goal||0),raised=Number(p.raised||0);
-      const pct=goal>0?Math.min(100,Math.round(raised/goal*100)):0;
-      badgeHtml=`<span class="prj-badge sbadge ${sc[p.status]||'s-active'}">${sm[p.status]||p.status}</span>`;
-      footHtml=`
-        ${goal>0?`<div class="prj-track"><i style="width:${pct}%"></i></div>`:''}
-        <div class="prj-stats">
-          <div><b>S$${raised.toLocaleString()}</b>${lang==='th'?'ยอดบริจาค':'Raised'}</div>
-          <div><b>${goal>0?'S$'+goal.toLocaleString():'—'}</b>${lang==='th'?'เป้าหมาย':'Goal'}</div>
-          <div><b>${p.donors?Number(p.donors).toLocaleString():'—'}</b>${lang==='th'?'ผู้ร่วมบุญ':'Donors'}</div>
-          <div><b>${p.closing||(lang==='th'?'ไม่มีกำหนด':'Ongoing')}</b>${lang==='th'?'วันปิดรับ':'Closes'}</div>
+      if(tiers.length){
+        const shown=tiers.slice(0,3);
+        footHtml=`<div class="prj-offer-foot" style="align-items:flex-end">
+          <div class="prj-tier-list">
+            ${shown.map(t=>`<div class="prj-tier-row"><span class="prj-tier-name">${t.name}</span><span class="prj-tier-price">S$${Number(t.price||0).toLocaleString()}</span></div>`).join('')}
+            ${tiers.length>shown.length?`<div class="prj-tier-more">+${tiers.length-shown.length} ${lang==='th'?'ตัวเลือกอื่น':'more option'}${tiers.length-shown.length>1&&lang!=='th'?'s':''}</div>`:''}
+          </div>
+          <div class="prj-cta-btn">${lang==='th'?'ร่วมทำบุญ':'Make Merit'}</div>
         </div>`;
+      } else {
+        footHtml=`<div class="prj-offer-foot"><div class="prj-price">S$${Number(p.price||0).toLocaleString()}${p.unit?` <small>/ ${p.unit}</small>`:''}</div><div class="prj-cta-btn">${lang==='th'?'ร่วมทำบุญ':'Make Merit'}</div></div>`;
+      }
+    }else{
+      badgeHtml=`<span class="prj-badge sbadge ${sc[p.status]||'s-active'}">${sm[p.status]||p.status}</span>`;
+      if(p.hideStats){
+        footHtml='';
+      } else {
+        const goal=Number(p.goal||0),raised=Number(p.raised||0);
+        const pct=goal>0?Math.min(100,Math.round(raised/goal*100)):0;
+        footHtml=`
+          ${goal>0?`<div class="prj-track"><i style="width:${pct}%"></i></div>`:''}
+          <div class="prj-stats">
+            <div><b>S$${raised.toLocaleString()}</b>${lang==='th'?'ยอดบริจาค':'Raised'}</div>
+            <div><b>${goal>0?'S$'+goal.toLocaleString():'—'}</b>${lang==='th'?'เป้าหมาย':'Goal'}</div>
+            <div><b>${p.donors?Number(p.donors).toLocaleString():'—'}</b>${lang==='th'?'ผู้ร่วมบุญ':'Donors'}</div>
+            <div><b>${p.closing||(lang==='th'?'ไม่มีกำหนด':'Ongoing')}</b>${lang==='th'?'วันปิดรับ':'Closes'}</div>
+          </div>`;
+      }
     }
     return `
     <div class="prj-card ${sizeClass}" onclick="openProject(${p.id})">
@@ -10893,8 +10920,22 @@ async function openProject(id){
   const catLabel=catObj?(lang==='th'?catObj.th:catObj.en):'';
 
   let statsHtml;
+  const modalTiers=Array.isArray(p.priceTiers)?p.priceTiers.filter(t=>t&&t.name):[];
   if(type==='offering'){
-    statsHtml=`<div class="prj-modal-price">S$${Number(p.price||0).toLocaleString()}${p.unit?` <span>/ ${p.unit}</span>`:''}</div>`;
+    if(modalTiers.length){
+      statsHtml=`<div class="prj-modal-tiers">${modalTiers.map(t=>`
+        <div class="prj-modal-tier-row">
+          <div>
+            <div class="prj-modal-tier-name">${t.name}</div>
+            ${t.desc?`<div class="prj-modal-tier-desc">${t.desc}</div>`:''}
+          </div>
+          <div class="prj-modal-tier-price">S$${Number(t.price||0).toLocaleString()}</div>
+        </div>`).join('')}</div>`;
+    } else {
+      statsHtml=`<div class="prj-modal-price">S$${Number(p.price||0).toLocaleString()}${p.unit?` <span>/ ${p.unit}</span>`:''}</div>`;
+    }
+  }else if(p.hideStats){
+    statsHtml='';
   }else{
     const goal=Number(p.goal||0),raised=Number(p.raised||0);
     const pct=goal>0?Math.min(100,Math.round(raised/goal*100)):0;
