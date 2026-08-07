@@ -7171,6 +7171,15 @@ function applySettings(){
   const activePage=document.querySelector('.page.active');
   setActiveNav(activePage ? activePage.id.replace(/^page-/,'') : 'home');
 
+  // Shop closed by admin — hide account/cart icons too (nothing to buy, nothing to sign in for)
+  {
+    const _shopClosed = s.shopEnabled===false && !SHOP_PREVIEW;
+    const _acctWrap=document.getElementById('acctWrap');
+    const _cartBtn=document.getElementById('cartBtn');
+    if(_acctWrap) _acctWrap.style.display = _shopClosed ? 'none' : '';
+    if(_cartBtn) _cartBtn.style.display = _shopClosed ? 'none' : '';
+  }
+
   // CUSTOM PAGES — render their containers
   renderCustomPages();
 
