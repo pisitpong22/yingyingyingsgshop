@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Yingyingying Amulet</title>
+<script>
+  // Apply saved theme before first paint to avoid a dark/light flash.
+  (function(){
+    try{
+      if(localStorage.getItem('yyy_admin_theme')==='light'){
+        document.documentElement.setAttribute('data-theme','light');
+      }
+    }catch(e){}
+  })();
+</script>
 <!-- Favicons & PWA manifest -->
 <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96">
 <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
@@ -25,6 +35,13 @@
     --text:#f0e8d8;--text-muted:#8a7a62;--text-dim:#5a4e3a;
     --deep:#0d0b08;--cream:#f0e8d8;
     --red:#e05050;--green:#4caf7a;--blue:#5a9be0;
+    --on-gold:#1a0f00;
+  }
+  :root[data-theme="light"]{
+    --gold:#a9822f;--gold-light:#c9a84c;--gold-dark:#8a6a1f;
+    --bg:#faf7f0;--surface:#ffffff;--surface-2:#f6f1e4;--surface-3:#ede4cf;
+    --border:rgba(160,120,32,0.18);--border-strong:rgba(160,120,32,0.34);
+    --text:#2a2018;--text-muted:#7a6a52;--text-dim:#a89878;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
@@ -36,7 +53,7 @@
 
   /* ── LOGIN ── */
   .lb{background:transparent;border:1px solid rgba(201,168,76,.25);color:var(--text-muted);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
-  .lb.active{background:var(--gold);color:var(--bg)}
+  .lb.active{background:var(--gold);color:var(--on-gold)}
   .lb:hover:not(.active){color:var(--gold-light);border-color:rgba(201,168,76,.5)}
   .login-lang{position:absolute;top:20px;right:24px}
   .lang-sw{display:flex;gap:6px}
@@ -50,7 +67,7 @@
   .login-input{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);font-family:inherit;transition:all .2s}
   .login-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
   .login-input::placeholder{color:var(--text-dim)}
-  .login-btn{width:100%;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--bg);border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;font-family:inherit;box-shadow:0 4px 16px rgba(201,168,76,.3)}
+  .login-btn{width:100%;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;font-family:inherit;box-shadow:0 4px 16px rgba(201,168,76,.3)}
   .login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(201,168,76,.4)}
   .login-err{color:var(--red);font-size:13px;font-weight:500;display:none;margin-bottom:10px;text-align:center;padding:10px;background:rgba(224,80,80,.1);border-radius:8px;border:1px solid rgba(224,80,80,.2)}
   .login-err.show{display:block}
@@ -80,7 +97,9 @@
   .lang-sw{display:flex;gap:5px}
   .view-btn{background:transparent;border:1px solid var(--border-strong);color:var(--gold-light);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap}
   .view-btn:hover{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.4)}
-  .live-btn{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--bg);border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 3px 10px rgba(201,168,76,.25)}
+  .live-btn{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 3px 10px rgba(201,168,76,.25)}
+  .theme-toggle-btn{background:transparent;border:1px solid var(--border-strong);color:var(--gold-light);width:34px;height:34px;border-radius:8px;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+  .theme-toggle-btn:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
   .live-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(201,168,76,.35)}
   .logout-btn{background:transparent;border:1px solid rgba(224,80,80,.3);color:var(--red);padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
   .logout-btn:hover{background:rgba(224,80,80,.1)}
@@ -184,6 +203,11 @@
   }
   .form-card:last-child{margin-bottom:0}
   .form-section-title{font-size:14px;font-weight:700;margin-bottom:5px;color:var(--text);display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .fc-toggle-head{cursor:pointer;user-select:none;margin-bottom:0;padding:2px 0;border-radius:8px;transition:color .15s}
+  .fc-toggle-head:hover{color:var(--gold-light)}
+  .fc-chevron{color:var(--gold);font-size:13px;transition:transform .2s;flex-shrink:0}
+  .fc-chevron.open{transform:rotate(90deg)}
+  .fc-body{margin-top:16px}
   .form-section-desc{color:var(--text-muted);font-size:12.5px;margin-bottom:14px;line-height:1.6}
   .page-intro-card{border-color:var(--border-strong);background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02))}
   .page-intro-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
@@ -215,7 +239,7 @@
 
   /* ── BUTTONS ── */
   .btn-gold{
-    background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--bg);
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);
     padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;
     transition:all .18s;box-shadow:0 3px 12px rgba(201,168,76,.25);
     display:inline-flex;align-items:center;gap:7px;font-family:inherit;
@@ -228,7 +252,7 @@
   .btn-del:hover{background:rgba(224,80,80,.12);border-color:var(--red)}
   .btn-edit{background:transparent;color:var(--gold);border:1px solid var(--border-strong);padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;font-family:inherit}
   .btn-edit:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
-  .btn-sm{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--bg);border:none;padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-sm{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
   .btn-add{background:transparent;color:var(--gold);border:1.5px dashed rgba(201,168,76,.4);padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;margin-top:10px;font-family:inherit}
   .btn-add:hover{background:rgba(201,168,76,.07);border-color:var(--gold);border-style:solid}
 
@@ -296,7 +320,7 @@
   .pi-error-text{color:var(--red);font-weight:600}
   .pi-bar{height:4px;background:rgba(201,168,76,.1);border-radius:3px;overflow:hidden;margin-top:5px}
   .pi-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));border-radius:3px;transition:width .3s ease-out}
-  .pi-badge{position:absolute;top:6px;left:6px;background:var(--gold);color:var(--bg);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.4px;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none;line-height:1.3;z-index:2}
+  .pi-badge{position:absolute;top:6px;left:6px;background:var(--gold);color:var(--on-gold);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.4px;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none;line-height:1.3;z-index:2}
   .pi-drag-handle{position:absolute;top:5px;left:5px;width:26px;height:26px;background:rgba(13,11,8,.8);border:1px solid rgba(201,168,76,.3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:var(--gold-light);cursor:grab;z-index:3;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:background .15s;user-select:none}
   .pi-drag-handle:active{cursor:grabbing;background:rgba(30,26,19,.9)}
   .prev-item.dragging{opacity:.4;outline:2px dashed var(--gold);outline-offset:2px}
@@ -311,7 +335,7 @@
   .rte-toolbar{display:flex;align-items:center;gap:2px;padding:6px 8px;background:var(--surface-3);border-bottom:1px solid var(--border);border-radius:9px 9px 0 0;flex-wrap:wrap}
   .rte-btn{background:transparent;border:none;color:var(--text);width:30px;height:28px;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;transition:background .15s;font-family:inherit;padding:0}
   .rte-btn:hover{background:rgba(201,168,76,.15)}
-  .rte-btn.active{background:var(--gold);color:var(--bg)}
+  .rte-btn.active{background:var(--gold);color:var(--on-gold)}
   .rte-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
   .rte-color-picker{position:relative}
   .rte-color-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:32px;padding:2px 0}
@@ -482,7 +506,7 @@
   .slider{position:absolute;cursor:pointer;inset:0;background:var(--surface-3);border-radius:22px;transition:.2s;border:1px solid var(--border)}
   .slider:before{position:absolute;content:'';height:16px;width:16px;left:2px;bottom:2px;background:var(--text-muted);border-radius:50%;transition:.2s}
   .switch input:checked + .slider{background:var(--gold);border-color:var(--gold)}
-  .switch input:checked + .slider:before{transform:translateX(20px);background:var(--bg)}
+  .switch input:checked + .slider:before{transform:translateX(20px);background:var(--on-gold)}
   .switch-label{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-muted);font-weight:500}
 
   /* ── HOME-ORDER ITEMS ── */
@@ -495,7 +519,7 @@
   .ho-label{flex:1;min-width:0;font-weight:600;color:var(--text);font-size:14px}
   .ho-pos{font-size:11px;color:var(--text-muted);background:rgba(201,168,76,.1);padding:2px 8px;border-radius:16px;font-weight:600}
   .ho-arrow-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-  .ho-arrow-btn:hover:not(:disabled){background:var(--gold);color:var(--bg);border-color:var(--gold)}
+  .ho-arrow-btn:hover:not(:disabled){background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
   .ho-arrow-btn:disabled{opacity:.3;cursor:not-allowed}
   .ho-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:600}
 
@@ -1057,6 +1081,7 @@
         <button class="lb active" onclick="setLang('en')">EN</button>
         <button class="lb" onclick="setLang('th')">TH</button>
       </div>
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light / dark mode" aria-label="Toggle theme">🌙</button>
       <a href="index.html" target="_blank" class="view-btn" data-en="👁 View Store" data-th="👁 ดูหน้าร้าน">👁 View Store</a>
       <button class="live-btn" onclick="openLiveEditor()" data-en="✨ Live Editor" data-th="✨ แก้แบบสด">✨ Live Editor</button>
       <button class="logout-btn" onclick="doLogout()" data-en="Sign Out" data-th="ออกจากระบบ">Sign Out</button>
@@ -1072,6 +1097,8 @@
         </div>
         <button onclick="setLang('en');closeActionMenu()" class="action-menu-item" data-lang-toggle="en">🌐 English</button>
         <button onclick="setLang('th');closeActionMenu()" class="action-menu-item" data-lang-toggle="th">🌐 ภาษาไทย</button>
+        <div class="action-menu-divider"></div>
+        <button onclick="toggleTheme();closeActionMenu()" class="action-menu-item" id="themeToggleBtnMobile" data-en="🌙 Dark / Light Mode" data-th="🌙 โหมดมืด / สว่าง">🌙 Dark / Light Mode</button>
         <div class="action-menu-divider"></div>
         <a href="index.html" target="_blank" class="action-menu-item" data-en="👁 View Store" data-th="👁 ดูหน้าร้าน">👁 View Store</a>
         <button onclick="openLiveEditor();closeActionMenu()" class="action-menu-item" data-en="✨ Live Editor" data-th="✨ แก้แบบสด">✨ Live Editor</button>
@@ -1966,7 +1993,11 @@
 
         <!-- Article Editor -->
         <div class="form-card" id="hs-editor-card">
-          <div class="form-section-title" id="hs_form_title">➕ Add New Article</div>
+          <div class="form-section-title fc-toggle-head" onclick="toggleFC('hs')">
+            <span id="hs_form_title">➕ Add New Article</span>
+            <span class="fc-chevron" id="hs_fc_chevron">▸</span>
+          </div>
+          <div class="fc-body" id="hs_fc_body" style="display:none">
           <div class="form-grid">
             <div class="fg full"><label class="fl">Title *</label><input class="fi" id="hs_title" placeholder="e.g. Luang Pu Thuad Biography" oninput="hsAutoSlug()"></div>
             <div class="fg"><label class="fl">Category</label>
@@ -2065,6 +2096,7 @@
             <button class="btn-ol" id="hs_cancel_btn" onclick="cancelEditHs()" style="display:none">✕ Cancel Edit</button>
             <button class="btn-ol" onclick="cancelEditHs()">🔄 Clear</button>
           </div>
+          </div>
         </div>
 
         <!-- Article List -->
@@ -2078,7 +2110,11 @@
         <div class="panel-sub">Community projects, event commissions, and special group amulets. Appears on the Projects page.</div>
         <div id="pageHeader-projects"></div>
         <div class="form-card">
-          <div class="form-section-title" id="p_form_title" data-en="➕ Add New Project" data-th="➕ เพิ่มโปรเจกต์ใหม่">➕ Add New Project</div>
+          <div class="form-section-title fc-toggle-head" onclick="toggleFC('p')">
+            <span id="p_form_title" data-en="➕ Add New Project" data-th="➕ เพิ่มโปรเจกต์ใหม่">➕ Add New Project</span>
+            <span class="fc-chevron" id="p_fc_chevron">▸</span>
+          </div>
+          <div class="fc-body" id="p_fc_body" style="display:none">
           <div class="form-grid">
             <div class="fg full"><label class="fl" data-en="Project Name *" data-th="ชื่อโปรเจกต์ *">Project Name *</label><input class="fi" id="p_name"></div>
             <div class="fg">
@@ -2163,6 +2199,7 @@
             <button class="btn-gold" id="p_save_btn" onclick="saveProject()" data-en="✅ Save Project" data-th="✅ บันทึกโปรเจกต์">✅ Save Project</button>
             <button class="btn-ol" id="p_cancel_btn" onclick="cancelEditProject()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
           </div>
+          </div>
         </div>
         <div class="sub-title" data-en="All Projects" data-th="โปรเจกต์ทั้งหมด">All Projects</div>
         <div id="p_list"></div>
@@ -2235,7 +2272,11 @@
         </div>
 
         <div class="form-card">
-          <div class="form-section-title" id="r_form_title" data-en="➕ Add New Review" data-th="➕ เพิ่มรีวิวใหม่">➕ Add New Review</div>
+          <div class="form-section-title fc-toggle-head" onclick="toggleFC('r')">
+            <span id="r_form_title" data-en="➕ Add New Review" data-th="➕ เพิ่มรีวิวใหม่">➕ Add New Review</span>
+            <span class="fc-chevron" id="r_fc_chevron">▸</span>
+          </div>
+          <div class="fc-body" id="r_fc_body" style="display:none">
           <div class="form-section-desc"
                data-en="Quick way to add chat reviews: paste the screenshot below, optionally type the message, save. Name and rating are optional."
                data-th="วิธีง่ายสุดในการเพิ่มรีวิวจากแชท: วางรูปแคปแชทด้านล่าง (ไม่บังคับใส่ข้อความ) แล้วบันทึก ชื่อและคะแนนดาวไม่บังคับ">
@@ -2315,6 +2356,7 @@
             <button class="btn-gold" id="r_save_btn" onclick="saveReview()" data-en="✅ Save Review" data-th="✅ บันทึกรีวิว">✅ Save Review</button>
             <button class="btn-ol" id="r_cancel_btn" onclick="cancelEditReview()" style="display:none" data-en="✕ Cancel Edit" data-th="✕ ยกเลิกการแก้ไข">✕ Cancel Edit</button>
             <button class="btn-ol" onclick="cancelEditReview()" data-en="🔄 Clear" data-th="🔄 ล้าง">🔄 Clear</button>
+          </div>
           </div>
         </div>
         <div class="sub-title" data-en="All Reviews" data-th="รีวิวทั้งหมด">All Reviews</div>
@@ -2876,9 +2918,49 @@
 const DB_KEY='yyy_db';
 const AUTH_KEY='yyy_auth';
 const LANG_KEY='yyy_admin_lang';
+const THEME_KEY='yyy_admin_theme';
 
 // ── I18N ──
 let lang=localStorage.getItem(LANG_KEY)||'en';
+
+// ── THEME (light / dark) ──
+function applyTheme(theme){
+  const isLight = theme==='light';
+  document.documentElement.setAttribute('data-theme', isLight?'light':'dark');
+  const icon = isLight ? '☀️' : '🌙';
+  const btn = document.getElementById('themeToggleBtn');
+  if(btn) btn.textContent = icon;
+  const btnM = document.getElementById('themeToggleBtnMobile');
+  if(btnM) btnM.textContent = icon + (lang==='th' ? ' โหมดมืด / สว่าง' : ' Dark / Light Mode');
+}
+function toggleTheme(){
+  const current = localStorage.getItem(THEME_KEY)==='light' ? 'light' : 'dark';
+  const next = current==='light' ? 'dark' : 'light';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem(THEME_KEY)==='light' ? 'light' : 'dark');
+
+// ── COLLAPSIBLE "+ Add New" FORM CARDS ──
+// Forms start collapsed; clicking the header (or Edit on a list item) opens them.
+function toggleFC(prefix){
+  const body=document.getElementById(prefix+'_fc_body');
+  if(!body) return;
+  const isOpen = body.style.display!=='none';
+  if(isOpen) closeFC(prefix); else openFC(prefix);
+}
+function openFC(prefix){
+  const body=document.getElementById(prefix+'_fc_body');
+  const chev=document.getElementById(prefix+'_fc_chevron');
+  if(body) body.style.display='';
+  if(chev) chev.classList.add('open');
+}
+function closeFC(prefix){
+  const body=document.getElementById(prefix+'_fc_body');
+  const chev=document.getElementById(prefix+'_fc_chevron');
+  if(body) body.style.display='none';
+  if(chev) chev.classList.remove('open');
+}
 
 const TR = {
   // Toast / confirm messages
@@ -5245,6 +5327,7 @@ async function saveReview(){
 function editReview(id){
   const rv=(getDB().reviews||[]).find(x=>x.id===id);if(!rv)return;
   editingReviewId=id;
+  openFC('r');
   document.getElementById('r_name').value=rv.name||'';
   document.getElementById('r_display').value=rv.displayName||'';
   // Existing reviews without an explicit anonymous flag default to NOT anon
@@ -5272,6 +5355,7 @@ function cancelEditReview(){
   document.getElementById('r_form_title').textContent=lang==='th'?'➕ เพิ่มรีวิวใหม่':'➕ Add New Review';
   document.getElementById('r_save_btn').textContent=lang==='th'?'✅ บันทึกรีวิว':'✅ Save Review';
   document.getElementById('r_cancel_btn').style.display='none';
+  closeFC('r');
 }
 async function deleteReview(id){
   if(!tConfirm('confirmDelete'))return;
@@ -6126,6 +6210,7 @@ function editHsArticle(id){
   const a  = (db.historyStories||[]).find(x=>String(x.id)===String(id));
   if(!a) return;
   _hsEditId = a.id;
+  openFC('hs');
   document.getElementById('hs_form_title').textContent = '✏️ Edit Article';
   document.getElementById('hs_title').value     = a.title||'';
   document.getElementById('hs_slug').value      = a.slug||'';
@@ -6167,6 +6252,7 @@ function cancelEditHs(){
   renderPrev('hs_cover');
   renderPrev('hs_gallery');
   document.getElementById('hs_cancel_btn').style.display = 'none';
+  closeFC('hs');
 }
 
 function hsAutoSlug(){
@@ -7120,6 +7206,7 @@ async function reorderProjectByDrag(dragId,targetId,before){
 function editProject(id){
   const it=getDB().projects.find(x=>x.id===id);if(!it)return;
   editingItemId.projects=id;
+  openFC('p');
   document.getElementById('p_name').value=it.name||'';
   document.getElementById('p_type').value=it.type||'campaign';
   document.getElementById('p_category').value=it.category||'';
@@ -7157,6 +7244,7 @@ function cancelEditProject(){
   document.getElementById('p_form_title').textContent=lang==='th'?'➕ เพิ่มโปรเจกต์ใหม่':'➕ Add New Project';
   document.getElementById('p_save_btn').textContent=lang==='th'?'✅ บันทึกโปรเจกต์':'✅ Save Project';
   document.getElementById('p_cancel_btn').style.display='none';
+  closeFC('p');
 }
 
 async function delItem(type,id){
