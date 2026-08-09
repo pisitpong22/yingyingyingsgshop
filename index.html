@@ -25,8 +25,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=Sarabun:wght@300;400;500;600&family=Noto+Serif:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
 <!-- Firebase shared module — provides window.FB API -->
 <script type="module" src="firebase-shared.js?v=20260724a"></script>
-<!-- Stripe.js — used on the Checkout page to securely collect card details -->
-<script src="https://js.stripe.com/v3/"></script>
+<!-- Stripe.js is loaded lazily (see loadStripeJs()) only when a visitor
+     actually opens Checkout — it's ~1MB of JS that most page views never
+     need, so we don't make every mobile visitor pay for it upfront. -->
+<link rel="preconnect" href="https://js.stripe.com" crossorigin>
 <script>
 // ───── DIAGNOSTIC: trace what causes "Unsafe attempt to load URL" errors ─────
 // This patches Image.src and CSS backgroundImage so we can see who's loading
@@ -8400,6 +8402,23 @@ let _stripe = null;
 let _stripeCard = null;
 let _authUser = null;
 
+// Loads https://js.stripe.com/v3/ on first use only (Checkout page), instead
+// of on every page view — saves ~1MB of JS parse/exec for visitors who are
+// just browsing. Safe to call repeatedly; resolves immediately once loaded.
+let _stripeJsPromise = null;
+function loadStripeJs(){
+  if(window.Stripe) return Promise.resolve();
+  if(_stripeJsPromise) return _stripeJsPromise;
+  _stripeJsPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://js.stripe.com/v3/';
+    s.onload = resolve;
+    s.onerror = () => { _stripeJsPromise = null; reject(new Error('Stripe.js failed to load')); };
+    document.head.appendChild(s);
+  });
+  return _stripeJsPromise;
+}
+
 function initCustomerAuthWatcher(){
   if(!window.FB || typeof window.FB.onAuthChange !== 'function') return;
   window.FB.onAuthChange(user => {
@@ -8677,15 +8696,25 @@ function renderCheckout(){
   mountStripeCard();
 }
 
-function mountStripeCard(){
+async function mountStripeCard(){
   if(!STRIPE_PUBLISHABLE_KEY){
     document.getElementById('stripeCardEl').innerHTML = `<div style="color:var(--text-muted);font-size:13px">${lang==='th'?'ยังไม่ได้ตั้งค่า Stripe publishable key':'Stripe publishable key not configured yet'}</div>`;
     return;
   }
-  if(!window.Stripe){
-    document.getElementById('stripeCardEl').innerHTML = `<div style="color:var(--text-muted);font-size:13px">Stripe.js failed to load</div>`;
+  const cardEl = document.getElementById('stripeCardEl');
+  if(cardEl) cardEl.innerHTML = `<div style="color:var(--text-muted);font-size:13px">${lang==='th'?'กำลังโหลดระบบชำระเงิน...':'Loading payment form...'}</div>`;
+  try{
+    await loadStripeJs();
+  }catch(err){
+    console.error('[checkout] Stripe.js failed to load:', err);
+    if(cardEl) cardEl.innerHTML = `<div style="color:var(--text-muted);font-size:13px">Stripe.js failed to load</div>`;
     return;
   }
+  // renderCheckout() may have re-rendered (or navigated away) while we were
+  // awaiting the script — bail if #stripeCardEl is gone or now belongs to a
+  // fresh render.
+  if(!document.getElementById('stripeCardEl')) return;
+  if(cardEl) cardEl.innerHTML = '';
   if(!_stripe) _stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
   const elements = _stripe.elements();
   _stripeCard = elements.create('card');
