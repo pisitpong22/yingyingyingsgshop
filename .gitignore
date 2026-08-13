@@ -13,6 +13,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+.claude/settings.local.json
 
 # Secrets (never commit these)
 *-firebase-adminsdk-*.json
