@@ -4254,7 +4254,8 @@
   #homeSections{display:flex !important;flex-direction:column !important;max-width:none !important;margin:0 !important;padding:0 !important}
   .social-channels-section{order:1 !important;padding:76px 0 66px !important;background:transparent !important;border:none !important}
   .latest-updates-section{order:2 !important;padding:70px 0 68px !important;background:transparent !important;border:none !important}
-  #homeReviewsSection{order:3 !important;display:block !important;padding:70px 0 110px !important;background:transparent !important}
+  #homeReviewsSection{order:3 !important;padding:70px 0 110px !important;background:transparent !important}
+  #homeReviewsSection:not([data-hidden="1"]){display:block !important}
   .social-channels-wrap,.latest-updates-inner,.home-reviews-inner{max-width:1100px !important;margin:0 auto !important;padding:0 24px !important}
   .social-channels-inner{
     border-radius:28px;background:rgba(255,255,255,.055);
@@ -4401,7 +4402,7 @@
     padding-top:86px !important;
   }
   .latest-updates-section{padding-top:70px !important}
-  .home-reviews-section{display:block !important}
+  .home-reviews-section:not([data-hidden="1"]){display:block !important}
   .home-reviews-eyebrow::before{content:'✦ CUSTOMER REVIEWS ✦';font-size:13px;color:var(--ref-gold);letter-spacing:8px}
   .home-reviews-eyebrow{font-size:0 !important}
   #homeRevTitle{font-size:38px !important}
@@ -8104,8 +8105,17 @@ function renderHomeReviews(){
   const sec = document.getElementById('homeReviewsSection');
   if(!sec) return;
 
-  // Keep the redesign preview complete even if older admin settings had
-  // hidden reviews on the home page.
+  // Admin toggle (Reviews → Show on Homepage) wins over everything else.
+  // data-hidden also switches off the `display:block !important` theme rules.
+  if(s.showOnHome === false){
+    sec.dataset.hidden = '1';
+    sec.style.display = 'none';
+    return;
+  }
+  delete sec.dataset.hidden;
+
+  // Otherwise keep the preview visible even if an older homeOrder entry
+  // had disabled it.
   sec.dataset.disabledByOrder = '0';
 
   // Pick which reviews to show
