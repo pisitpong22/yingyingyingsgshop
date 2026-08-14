@@ -55,6 +55,9 @@ A live Thai amulet shop taking real card payments.
   is empty in the DB object until `openCasingType()` has run.
 - **Storefront is English-only.** No language switcher. The *admin* is
   bilingual via `data-en` / `data-th` attributes + `applyLang()`.
+- **Never write `?.` or `??` in `index.html`.** See "Old phones saw a blank
+  screen" below. One character of ES2020 anywhere in the main `<script>`
+  discards the whole block on an old phone, and the whole site with it.
 
 ### Testing admin panels without Firebase
 
@@ -223,6 +226,70 @@ The old rules score 10/14 on it; the current ones 14/14. Note the emulator's
 plain REST upload endpoint does **not** populate `request.resource` the way the
 SDK does — curl-ing the emulator reports 403 for everything and proves nothing.
 Use the SDK-based test.
+
+### 1e. Old phones saw a blank screen — FIXED
+
+Reported 15 Aug 2026: a customer on an old Android got a blank/white page that
+looked frozen. Three separate causes, all now closed.
+
+**a. `?.` killed the entire app.** `index.html` had 29 uses of optional
+chaining, all inside the one `<script>` block that holds every render
+function, `goPage()` and `bootIndex()`. `?.` is ES2020 — Chrome/Android WebView
+**older than 80** rejects it at *parse* time, which throws away the whole block,
+not just that line. Result: nothing rendered, no click handler existed, and
+`bootIndex()` never ran so the splash was never removed. The visitor sat on a
+dead screen forever.
+
+Replaced with helpers defined at the top of that block — `pageIsActive(id)`,
+`clsOf(id)` (returns a no-op classList when the element is missing),
+`valOf(id)`, `elById(id)`. `index.html` is now ES2019-clean.
+
+> **This is the trap to remember.** A `?.` is invisible in review and works
+> perfectly on every machine you test on. It only fails on the devices you
+> can't see. Check before every deploy:
+> ```bash
+> grep -n '?\.\|??\|||=\|&&=' index.html   # must print nothing
+> ```
+
+`admin.html` still has 68 `?.` and 3 `??`. It is login-gated and staff-only, so
+it was left alone — but it will break the same way on an old phone.
+
+**b. `inset:0` is Chrome 87+.** 24 uses, including `.fb-splash`, `#lightbox`,
+`.modal-overlay` and `.mobile-overlay`. On older browsers the declaration is
+dropped, so a `position:fixed` overlay collapses to a small box at the top-left
+instead of covering the screen. All expanded to `top/right/bottom/left`.
+
+**c. Lite mode, for renderer out-of-memory.** The page carries ~170
+`backdrop-filter` blurs, a fixed 4-layer gradient body background
+(`background-attachment:fixed` repaints the full viewport every scroll frame)
+and a three.js/WebGL hero. On a 1–2 GB Android that combination can get Chrome's
+renderer OOM-killed, which paints **plain white** and reads to the visitor as a
+hang. `liteMode()` in `<head>` sets `<html class="lite-mode">` when
+`deviceMemory <= 2`, `hardwareConcurrency <= 2`, or Chrome < 80; the last CSS
+block in the stylesheet then drops backdrop-filters, the fixed background, the
+decorative blurs and animations, and `initPhra3D()` returns early so WebGL is
+never created. Layout, content and colours are unchanged — verified in the
+preview by forcing the class.
+
+**d. Boot watchdog** (`bootWatchdog()`, first `<script>` in `<head>`). The
+storefront renders everything from JS, so any future failure means a blank
+page again. The watchdog is deliberately **ES5** — `var`, `function`, string
+concatenation, no arrow functions — so it parses on any browser ever shipped.
+**Do not modernise it.** 12s after load, if neither `window.__yyyAppBooted`
+(set on the last line of the main block, so it only runs if that block parsed
+*and* executed) nor `<html class="fb-ready">` is present, it removes the splash
+and renders an inline-styled fallback: what happened, "open in browser" advice
+for in-app browsers like LINE, a Try again button, the shop email, and the
+captured error message. Tested by serving a copy with a deliberate parse error
+— fallback appeared and reported `Uncaught SyntaxError`.
+
+Note the in-app-browser advice is load-bearing: links opened from LINE /
+Facebook / Instagram run in Android System WebView, which on old devices is
+frozen at a version far behind the user's Chrome.
+
+Network weight was **not** the problem — `index.html` is 615 KB raw but 118 KB
+over the wire (Firebase serves it brotli-compressed). The cost is parse and
+render on weak hardware, which is what item 4 below addresses.
 
 ### 2. Confirm CSP on the checkout flow, then enforce it
 

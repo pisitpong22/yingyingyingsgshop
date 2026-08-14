@@ -73,6 +73,104 @@
      actually opens Checkout — it's ~1MB of JS that most page views never
      need, so we don't make every mobile visitor pay for it upfront. -->
 <link rel="preconnect" href="https://js.stripe.com" crossorigin>
+
+<!-- ═════ BOOT WATCHDOG — must stay ES5 and must stay first ═════
+     Everything a visitor sees is rendered by JavaScript, and the loading
+     splash is only removed by JS. So ANY failure below this point — a syntax
+     error an old Android WebView can't parse, a blocked script, a renderer
+     that ran out of memory mid-load — used to leave the visitor staring at a
+     dead screen with no explanation and no way out.
+
+     This block is deliberately written in ES5 (var, function, string
+     concatenation, no arrow functions, no optional chaining) so that it is
+     parseable by every browser that has ever shipped. Do not modernise it.
+     It is the one piece of code that MUST run when nothing else does. -->
+<script>
+// ───── LITE MODE ─────
+// This page leans hard on effects that are cheap on a laptop and brutal on a
+// budget Android: ~170 backdrop-filter blurs, a fixed multi-gradient body
+// background, and a WebGL hero. On a 1–2 GB device those can push Chrome's
+// renderer into an out-of-memory kill, which paints a plain white screen and
+// looks to the visitor exactly like a hang. Flag weak hardware BEFORE first
+// paint so the stylesheet can drop the expensive parts.
+(function liteMode(){
+  var weak = false;
+  try {
+    if(navigator.deviceMemory && navigator.deviceMemory <= 2) weak = true;
+    if(navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) weak = true;
+    // Chrome older than 80 can't parse ES2020 anyway; give it the light path.
+    var m = /Chrom(?:e|ium)\/(\d+)/.exec(navigator.userAgent || '');
+    if(m && parseInt(m[1], 10) < 80) weak = true;
+  } catch(e){}
+  if(weak){
+    document.documentElement.className += ' lite-mode';
+    window.__yyyLite = true;
+  }
+})();
+
+(function bootWatchdog(){
+  var GRACE_MS = 12000;      // generous: slow 3G on an old phone is not a failure
+  var firstError = null;
+
+  window.addEventListener('error', function(e){
+    if(!firstError) firstError = (e && e.message) ? e.message : 'script error';
+  }, true);
+
+  function showFallback(){
+    if(document.getElementById('bootFallback')) return;
+    var box = document.createElement('div');
+    box.id = 'bootFallback';
+    // Inline styles only — the stylesheet may be exactly what failed.
+    box.setAttribute('style',
+      'position:fixed;top:0;right:0;bottom:0;left:0;z-index:2147483647;' +
+      'background:#0d0a06;color:#efe7d6;overflow:auto;' +
+      'font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;');
+    box.innerHTML =
+      '<div style="max-width:22em;margin:0 auto;padding:56px 24px;text-align:center">' +
+        '<div style="font-size:40px;line-height:1">📿</div>' +
+        '<h1 style="font-size:20px;margin:18px 0 0;color:#c9a84c">YingyingyingSG</h1>' +
+        '<p style="font-size:15px;line-height:1.6;margin:16px 0 0">' +
+          'This page did not load properly on your browser.</p>' +
+        '<p style="font-size:14px;line-height:1.6;margin:12px 0 0;color:#b6ab97">' +
+          'If you opened this link inside another app (LINE, Facebook, Instagram), ' +
+          'please tap the menu and choose <b>Open in browser</b>. ' +
+          'Updating Chrome from the Play Store also fixes it.</p>' +
+        '<p style="margin:26px 0 0">' +
+          '<a href="javascript:location.reload()" ' +
+             'style="display:inline-block;padding:13px 26px;border-radius:8px;' +
+                    'background:#c9a84c;color:#12100a;text-decoration:none;font-weight:bold">' +
+            'Try again</a></p>' +
+        '<p style="font-size:14px;line-height:1.6;margin:26px 0 0;color:#b6ab97">' +
+          'Or contact us and we will help you order:<br>' +
+          '<a href="mailto:yingyingyingamulet@gmail.com" style="color:#c9a84c">' +
+            'yingyingyingamulet@gmail.com</a></p>' +
+        '<p style="font-size:11px;margin:22px 0 0;color:#6d6455;word-break:break-all">' +
+          (firstError ? ('ref: ' + String(firstError).slice(0, 140)) : 'ref: boot timeout') +
+        '</p>' +
+      '</div>';
+    document.body.appendChild(box);
+  }
+
+  function check(){
+    // The main script sets window.__yyyAppBooted on its very last line, and
+    // bootIndex() sets <html class="fb-ready"> once the page is showable.
+    // Either one means the visitor has a real page — leave it alone.
+    if(window.__yyyAppBooted ||
+       document.documentElement.className.indexOf('fb-ready') > -1) return;
+
+    // The app never came up. Clear the splash so it can't trap anyone, then
+    // say something honest instead of showing a blank shell.
+    var splash = document.getElementById('fbSplash');
+    if(splash && splash.parentNode) splash.parentNode.removeChild(splash);
+    showFallback();
+  }
+
+  if(window.addEventListener) window.addEventListener('load', function(){ setTimeout(check, GRACE_MS); });
+  // load may never fire if a resource hangs — arm an independent timer too.
+  setTimeout(check, GRACE_MS + 4000);
+})();
+</script>
+
 <script>
 // ───── DIAGNOSTIC: trace what causes "Unsafe attempt to load URL" errors ─────
 // This patches Image.src and CSS backgroundImage so we can see who's loading
@@ -440,7 +538,7 @@
      so users don't see seed/default values flash in for a beat.
      The splash is removed once <html class="fb-ready"> is set. */
   .fb-splash{
-    position:fixed;inset:0;z-index:99999;
+    position:fixed;top:0;right:0;bottom:0;left:0;z-index:99999;
     background:#0a0805;
     display:flex;align-items:center;justify-content:center;
     transition:opacity .35s ease-out;
@@ -1067,7 +1165,7 @@
     contain:layout style;
   }
   .ftype-banner::after{
-    content:'';position:absolute;inset:0;
+    content:'';position:absolute;top:0;right:0;bottom:0;left:0;
     background:linear-gradient(to top,rgba(10,8,3,.85) 0%,rgba(10,8,3,.2) 55%,transparent 100%);
     pointer-events:none;
   }
@@ -1297,7 +1395,7 @@
      (those only target the `background` shorthand, not this custom prop). */
   .svc-card::before{
     content:'';
-    position:absolute;inset:0;
+    position:absolute;top:0;right:0;bottom:0;left:0;
     background-image:var(--svc-bg, none);
     background-size:cover;
     background-position:center;
@@ -1732,7 +1830,7 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
     transition:.25s;
   }
-  .hss-seal-circ::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px dashed rgba(201,168,76,.35);opacity:0;transition:.25s}
+  .hss-seal-circ::after{content:'';position:absolute;top:-5px;right:-5px;bottom:-5px;left:-5px;border-radius:50%;border:1px dashed rgba(201,168,76,.35);opacity:0;transition:.25s}
   .hss-seal.active .hss-seal-circ,.hss-seal:hover .hss-seal-circ{
     border-color:var(--gold);background:radial-gradient(circle at 35% 30%,rgba(232,201,106,.25),rgba(122,95,34,.18));
     box-shadow:0 0 0 1px rgba(201,168,76,.35),0 8px 22px rgba(201,168,76,.22);
@@ -1833,7 +1931,7 @@
   }
   .hss-load-more:hover{background:rgba(201,168,76,.16);border-color:rgba(201,168,76,.55)}
 
-  .hss-dust{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .hss-dust{position:fixed;top:0;right:0;bottom:0;left:0;pointer-events:none;z-index:0;overflow:hidden}
   .hss-dust span{position:absolute;bottom:-10px;width:3px;height:3px;border-radius:50%;background:var(--gold-light);opacity:.5;filter:blur(.3px);animation:hssRise linear infinite}
   @keyframes hssRise{
     0%{transform:translateY(0) translateX(0);opacity:0}
@@ -1868,7 +1966,7 @@
      against nav's (200) instead of being trapped inside .page's own
      stacking context — that trap is what was covering it before. */
   #hsArticleView{
-    position:fixed;inset:0;z-index:300;
+    position:fixed;top:0;right:0;bottom:0;left:0;z-index:300;
     background:rgba(6,4,2,.72);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
     display:none;align-items:center;justify-content:center;padding:20px;
@@ -1904,7 +2002,7 @@
   .hs-article-cover{border-radius:16px;overflow:hidden;margin:28px 0 20px;aspect-ratio:16/9}
   .hs-article-cover img{width:100%;height:100%;object-fit:cover;display:block}
   .hss-video-wrap{position:relative;padding-top:56.25%;border-radius:16px;overflow:hidden;margin:28px 0 20px;background:#000}
-  .hss-video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+  .hss-video-wrap iframe{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;border:0;display:block}
   .hs-article-meta{margin-bottom:14px}
   .hs-article-title{
     font-family:var(--font-display,'Noto Serif',serif);
@@ -2260,7 +2358,7 @@
     position:relative;overflow:hidden;
     contain:layout style;
   }
-  .var-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.15) 0%,transparent 40%);pointer-events:none}
+  .var-img::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;background:linear-gradient(to top,rgba(0,0,0,.15) 0%,transparent 40%);pointer-events:none}
   .var-img img{width:100%;height:100%;object-fit:cover}
   .var-img-count{position:absolute;bottom:32px;left:7px;z-index:2;background:rgba(0,0,0,.58);color:rgba(210,190,145,.85);font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px}
   .var-price-badge{position:absolute;top:8px;right:8px;z-index:2;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);font-family:var(--font-display);font-size:13px;font-weight:700;padding:3px 9px;border-radius:6px;letter-spacing:.2px}
@@ -2273,7 +2371,7 @@
      firebase-shared.js). ".is-oos" is the cssClass for "out_of_stock"; a
      future status just needs its own modifier class following this pattern. */
   .var-card.is-oos .var-img img{filter:grayscale(.55) brightness(.62);transition:filter .18s}
-  .var-card.is-oos .var-img::before{content:'';position:absolute;inset:0;z-index:1;background:rgba(10,8,4,.28);pointer-events:none}
+  .var-card.is-oos .var-img::before{content:'';position:absolute;top:0;right:0;bottom:0;left:0;z-index:1;background:rgba(10,8,4,.28);pointer-events:none}
   .var-status-badge{position:absolute;top:8px;left:8px;z-index:3;font-family:var(--font-display);font-size:9.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:4px 9px;border-radius:5px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
   .var-status-badge.is-oos{background:linear-gradient(135deg,#8b1a1a,#5c0f0f);border:1px solid rgba(232,201,106,.7);color:#f3ddab;box-shadow:0 2px 10px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1);text-shadow:0 1px 1px rgba(0,0,0,.35)}
   .var-price-badge.is-oos{background:rgba(255,255,255,.1);color:rgba(220,205,175,.75);box-shadow:none}
@@ -2321,15 +2419,15 @@
   .prj-feature{grid-column:span 2;grid-row:span 2;min-height:560px}
   .prj-tall{grid-row:span 2;min-height:560px}
   .prj-card{position:relative;background:#120e05;border:1px solid rgba(201,168,76,.16);border-radius:18px;overflow:hidden;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s;box-shadow:0 6px 24px rgba(0,0,0,.3);display:flex;flex-direction:column}
-  .prj-card-glow{position:absolute;inset:-18%;background-size:cover;background-position:center;filter:blur(46px) saturate(2) brightness(.8);opacity:.6;z-index:0;transform:scale(1.15);pointer-events:none;transition:opacity .45s,filter .45s}
+  .prj-card-glow{position:absolute;top:-18%;right:-18%;bottom:-18%;left:-18%;background-size:cover;background-position:center;filter:blur(46px) saturate(2) brightness(.8);opacity:.6;z-index:0;transform:scale(1.15);pointer-events:none;transition:opacity .45s,filter .45s}
   .prj-card:hover .prj-card-glow{opacity:.85;filter:blur(40px) saturate(2.2) brightness(.85)}
-  .prj-card::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:conic-gradient(from 0deg,transparent 0%,var(--gold-light) 8%,transparent 18%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s;animation:prjRotate 2.6s linear infinite paused;z-index:3;pointer-events:none}
+  .prj-card::before{content:'';position:absolute;top:0;right:0;bottom:0;left:0;border-radius:inherit;padding:1.5px;background:conic-gradient(from 0deg,transparent 0%,var(--gold-light) 8%,transparent 18%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s;animation:prjRotate 2.6s linear infinite paused;z-index:3;pointer-events:none}
   .prj-card:hover::before{opacity:1;animation-play-state:running}
   @keyframes prjRotate{to{background:conic-gradient(from 360deg,transparent 0%,var(--gold-light) 8%,transparent 18%)}}
   .prj-card:hover{transform:translateY(-8px);border-color:rgba(201,168,76,.4);box-shadow:0 24px 50px rgba(201,168,76,.2)}
   .prj-img{position:relative;z-index:1;flex:1;min-height:150px;display:flex;align-items:center;justify-content:center;font-size:52px;background:linear-gradient(135deg,#2d1e06,#12100a);overflow:hidden}
-  .prj-img img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
-  .prj-img::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.6) 100%)}
+  .prj-img img{width:100%;height:100%;object-fit:cover;position:absolute;top:0;right:0;bottom:0;left:0}
+  .prj-img::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.6) 100%)}
   .prj-badge{position:absolute;top:14px;left:14px;z-index:2}
   .prj-cat{position:absolute;bottom:12px;left:15px;z-index:2;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--gold-light);font-weight:700}
   .prj-photo-count{position:absolute;bottom:12px;right:14px;z-index:2;background:rgba(0,0,0,.6);color:var(--gold-light);font-size:10.5px;font-weight:600;padding:3px 10px;border-radius:99px;backdrop-filter:blur(6px)}
@@ -2406,7 +2504,7 @@
     position:relative;overflow:hidden;
   }
   .trust-card::before{
-    content:'';position:absolute;inset:0;
+    content:'';position:absolute;top:0;right:0;bottom:0;left:0;
     background:
       radial-gradient(ellipse at 50% -10%,rgba(255,230,120,.18),transparent 55%),
       linear-gradient(180deg,rgba(255,255,255,.4) 0%,transparent 40%);
@@ -2426,7 +2524,7 @@
   }
   .trust-desc{color:var(--text-muted);font-size:13px;line-height:1.7}
 
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay{display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.82);z-index:300;align-items:center;justify-content:center;padding:20px}
   .modal-overlay.open{display:flex}
   /* Review submission form */
   /* Make the review modal a solid, warm, premium card instead of the
@@ -2471,7 +2569,7 @@
   #reviewModal .btn-ol:hover{background:rgba(201,168,76,.12);color:var(--text);border-color:var(--gold)}
   .rf-note{font-size:12px;color:var(--text-muted);text-align:right;margin-top:12px;font-style:italic}
   /* Review thank-you popup — large, centered, auto-dismiss */
-  #reviewThanks{display:none;position:fixed;inset:0;z-index:700;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:rtFade .35s ease}
+  #reviewThanks{display:none;position:fixed;top:0;right:0;bottom:0;left:0;z-index:700;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);animation:rtFade .35s ease}
   #reviewThanks.open{display:flex}
   #reviewThanks.closing{animation:rtFadeOut .5s ease forwards}
   .rt-card{max-width:560px;width:100%;background:linear-gradient(150deg,#fffdf6,#fdf3d8);border:1px solid rgba(201,168,76,.5);border-radius:24px;padding:46px 38px;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.4);animation:rtPop .45s cubic-bezier(.2,.9,.3,1.2)}
@@ -2578,7 +2676,7 @@
   @media(max-width:520px){.variant-gallery{grid-template-columns:repeat(3,1fr)}}
 
   /* LIGHTBOX */
-  #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:600;align-items:center;justify-content:center;padding:24px;animation:lbFade .25s ease}
+  #lightbox{display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.94);z-index:600;align-items:center;justify-content:center;padding:24px;animation:lbFade .25s ease}
   #lightbox.open{display:flex}
   @keyframes lbFade{from{opacity:0}to{opacity:1}}
   #lbImgWrap{max-width:95vw;max-height:90vh;display:flex;align-items:center;justify-content:center;cursor:default;position:relative;min-width:180px;min-height:180px}
@@ -2625,7 +2723,7 @@
 
   /* HAMBURGER */
   .menu-btn{display:none;background:transparent;border:1px solid rgba(201,168,76,.3);color:var(--gold-light);width:38px;height:38px;border-radius:8px;cursor:pointer;font-size:18px;align-items:center;justify-content:center}
-  .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;backdrop-filter:blur(4px)}
+  .mobile-overlay{display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.6);z-index:99;backdrop-filter:blur(4px)}
   .mobile-overlay.open{display:block}
 
   /* TABLET */
@@ -2876,7 +2974,7 @@
 
   /* STATUS OVERLAYS — sold/reserved */
   .card-img,.var-img{position:relative}
-  .status-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:32px;font-weight:700;letter-spacing:6px;color:#fff;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none;z-index:5;background:linear-gradient(135deg,rgba(0,0,0,.6) 0%,rgba(139,0,0,.4) 100%);backdrop-filter:saturate(.4)}
+  .status-overlay{position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:32px;font-weight:700;letter-spacing:6px;color:#fff;text-transform:uppercase;text-shadow:0 2px 12px rgba(0,0,0,.6);pointer-events:none;z-index:5;background:linear-gradient(135deg,rgba(0,0,0,.6) 0%,rgba(139,0,0,.4) 100%);backdrop-filter:saturate(.4)}
   .status-overlay.reserved{background:linear-gradient(135deg,rgba(0,0,0,.55) 0%,rgba(139,100,20,.4) 100%)}
   .status-overlay.reserved::after{content:'RESERVED'}
   .status-overlay.sold::after{content:'SOLD'}
@@ -2902,7 +3000,7 @@
     position:relative;
   }
   .featured-section::before{
-    content:'';position:absolute;inset:0;
+    content:'';position:absolute;top:0;right:0;bottom:0;left:0;
     background:radial-gradient(ellipse at 30% 0%,rgba(255,230,130,.12),transparent 50%);
     pointer-events:none;
   }
@@ -2997,7 +3095,7 @@
     padding:72px 24px;position:relative;overflow:hidden;
   }
   .home-reviews-section::before{
-    content:'';position:absolute;inset:0;
+    content:'';position:absolute;top:0;right:0;bottom:0;left:0;
     background:
       radial-gradient(ellipse at 30% 0%,rgba(201,168,76,.1) 0%,transparent 55%),
       radial-gradient(ellipse at 70% 100%,rgba(255,210,100,.07) 0%,transparent 50%);
@@ -3262,7 +3360,7 @@
     justify-content:center;
   }
   .social-cover-bg{
-    position:absolute;inset:0;
+    position:absolute;top:0;right:0;bottom:0;left:0;
     background:
       linear-gradient(120deg,rgba(8,5,1,.92) 0%,rgba(22,14,4,.72) 55%,rgba(6,4,1,.88) 100%),
       radial-gradient(circle at 70% 38%,rgba(232,201,106,.18),transparent 42%),
@@ -3707,7 +3805,7 @@
     box-shadow:0 10px 24px rgba(77,48,5,.14);
   }
   .feed-story img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9}
-  .feed-story::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.72))}
+  .feed-story::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.72))}
   .feed-story-label{position:absolute;left:10px;right:10px;bottom:10px;color:#fff;font-weight:900;font-size:12px;z-index:1;line-height:1.2}
   .feed-story-nav{
     display:flex;align-items:center;justify-content:center;
@@ -5005,7 +5103,7 @@
   .logo-icon.has-image::before{content:none !important}
   .social-cover-bg{
     display:block !important;
-    inset:0 !important;
+    top:0 !important;right:0 !important;bottom:0 !important;left:0 !important;
     background-size:cover !important;
     background-position:center center !important;
     background-repeat:no-repeat !important;
@@ -6470,6 +6568,36 @@
     .site-footer{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
     .site-footer-inner{flex-direction:column;gap:18px}
   }
+
+  /* ═══════════ LITE MODE ═══════════
+     Set by the liteMode() probe in <head> on low-memory / low-core devices.
+     Layout, colours and content are untouched — only the GPU-heavy decoration
+     is dropped, because that is what makes a budget Android renderer die.
+     Keep this LAST in the stylesheet so it wins on specificity ties. */
+  html.lite-mode *,
+  html.lite-mode *::before,
+  html.lite-mode *::after{
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
+  }
+  /* A fixed multi-gradient background repaints the whole viewport on every
+     scroll frame — the single most expensive thing on the page. */
+  html.lite-mode body{
+    background:#0d0a06 !important;
+    background-attachment:scroll !important;
+  }
+  /* Large decorative blurs each allocate a full-size offscreen buffer. */
+  html.lite-mode .prj-card-glow,
+  html.lite-mode .hss-dust,
+  html.lite-mode .hero-3d,
+  html.lite-mode #phra3d,
+  html.lite-mode #phra3dLegacy{display:none !important}
+  html.lite-mode *{
+    animation:none !important;
+    transition:none !important;
+    text-shadow:none !important;
+  }
+  html.lite-mode .reveal-up{opacity:1 !important;transform:none !important}
 </style>
 <footer class="site-footer">
   <div class="site-footer-inner">
@@ -6587,6 +6715,18 @@
 <div id="toast"></div>
 
 <script>
+// ───── OLD-BROWSER SAFETY: no optional chaining (`?.`) in this block ─────
+// `?.` is ES2020 — a browser older than Chrome 80 / Android WebView 80 fails
+// to PARSE it, which throws away this entire <script>, not just the one line.
+// Every render function, goPage(), and bootIndex() live in here, so a single
+// `?.` anywhere below leaves an old phone on a dead, empty screen forever.
+// Use these helpers instead. Same for admin.html if it is ever shared.
+const _NOOP_CLS = {add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}};
+function elById(id){ return document.getElementById(id); }
+function pageIsActive(id){ const el=document.getElementById(id); return !!(el && el.classList.contains('active')); }
+function clsOf(id){ const el=document.getElementById(id); return el ? el.classList : _NOOP_CLS; }
+function valOf(id){ const el=document.getElementById(id); return el ? el.value : undefined; }
+
 const DB_KEY = 'yyy_db';
 let curCasingType=null;
 const loadState = {
@@ -7450,7 +7590,7 @@ function applySettings(){
   `).join('');
   renderContactPage();
   renderSocialHomeBase();
-  if(document.getElementById('page-home')?.classList.contains('active')) scheduleSocialHomeFeedLoad();
+  if(pageIsActive('page-home')) scheduleSocialHomeFeedLoad();
 
   // ── FEATURED on home ──
   renderFeatured();
@@ -7641,7 +7781,7 @@ function scheduleSocialCasingPreviewLoad(){
   _socialHomeCasingQueued=true;
   const run=()=>{
     window.FB.ensureDBKeys(['casingTypes']).then(()=>{
-      if(document.getElementById('page-home')?.classList.contains('active')) renderSocialHomeFeed();
+      if(pageIsActive('page-home')) renderSocialHomeFeed();
     }).catch(err=>{
       console.warn('[home feed] casing preview skipped:', err);
     }).finally(()=>{
@@ -7934,7 +8074,7 @@ function setNavClearance(){
   if(!nav||!spacer)return;
   // On home page: nav overlaps hero (liquid glass effect) — no spacer needed
   const isHome=document.body.classList.contains('is-home-page')||
-    document.getElementById('page-home')?.classList.contains('active');
+    pageIsActive('page-home');
   if(isHome){spacer.style.height='0px';return;}
   const b=nav.getBoundingClientRect().bottom;
   if(b>0)spacer.style.height=(Math.round(b)+12)+'px';
@@ -8132,7 +8272,7 @@ async function warmHomeData(){
   const run=async()=>{
     try {
       await window.FB.ensureDBKeys(['settings','products','amulets','accessories','reviews','projects']);
-      if(document.getElementById('page-home')?.classList.contains('active')) applySettings();
+      if(pageIsActive('page-home')) applySettings();
     } catch(err) {
       console.warn('[home] background data load failed:', err);
     }
@@ -8503,7 +8643,7 @@ function initCartWatcher(){
   _cartUnsub = window.FB.onCartChange(items => {
     _cartItems = items || [];
     updateCartBadge();
-    if(document.getElementById('page-cart')?.classList.contains('active')) renderCart();
+    if(pageIsActive('page-cart')) renderCart();
   });
 }
 
@@ -8541,7 +8681,7 @@ async function addToCart(type, id, ev){
   }
   updateCartBadge();
   showToast(lang==='th' ? 'เพิ่มลงตะกร้าแล้ว 🛒' : 'Added to cart 🛒');
-  if(document.getElementById('page-cart')?.classList.contains('active')) renderCart();
+  if(pageIsActive('page-cart')) renderCart();
   if(window._lastOpened && String(window._lastOpened.type)===String(type) && String(window._lastOpened.id)===String(id)) openProd(type,id);
 }
 
@@ -8549,7 +8689,7 @@ async function removeFromCart(type, id){
   if(!window.FB || typeof window.FB.cartRemove !== 'function') return;
   _cartItems = await window.FB.cartRemove(type, id);
   updateCartBadge();
-  if(document.getElementById('page-cart')?.classList.contains('active')) renderCart();
+  if(pageIsActive('page-cart')) renderCart();
   if(window._lastOpened && String(window._lastOpened.type)===String(type) && String(window._lastOpened.id)===String(id)) openProd(type,id);
 }
 
@@ -8642,7 +8782,7 @@ document.addEventListener('click', ev => {
 async function doSignOut(){
   await window.FB.customerSignOut();
   showToast(lang==='th'?'ออกจากระบบแล้ว':'Signed out');
-  if(document.getElementById('page-orders')?.classList.contains('active')) goPage('home');
+  if(pageIsActive('page-orders')) goPage('home');
 }
 
 function orderStatusLabel(status){
@@ -8799,7 +8939,7 @@ async function completeAccountLink(){
   }
 }
 function getLoginEmailPassword(){
-  const email = (document.getElementById('loginEmailInput')||{}).value?.trim();
+  const email = ((document.getElementById('loginEmailInput')||{}).value||'').trim();
   const password = (document.getElementById('loginPasswordInput')||{}).value||'';
   if(!email || !password){
     showToast(lang==='th'?'กรุณากรอกอีเมลและรหัสผ่าน':'Please enter email and password');
@@ -9135,13 +9275,13 @@ function renderShop(cat){
   let list=cat==='all'?all:all.filter(a=>a.category===cat);
   list=list.filter(a=>matchSearch(a,_sQuery));
 
-  const fCategory=document.getElementById('sfCategory')?.value;
-  const fMaster=document.getElementById('sfMaster')?.value;
-  const fTemple=document.getElementById('sfTemple')?.value;
-  const fMaterial=document.getElementById('sfMaterial')?.value;
-  const fAvail=document.getElementById('sfAvailability')?.value;
-  const fMin=document.getElementById('sfPriceMin')?.value;
-  const fMax=document.getElementById('sfPriceMax')?.value;
+  const fCategory=valOf('sfCategory');
+  const fMaster=valOf('sfMaster');
+  const fTemple=valOf('sfTemple');
+  const fMaterial=valOf('sfMaterial');
+  const fAvail=valOf('sfAvailability');
+  const fMin=valOf('sfPriceMin');
+  const fMax=valOf('sfPriceMax');
   if(fCategory) list=list.filter(p=>p.category===fCategory);
   if(fMaster) list=list.filter(p=>p.master===fMaster);
   if(fTemple) list=list.filter(p=>p.temple===fTemple);
@@ -9318,7 +9458,7 @@ async function openCasingType(typeId, {scroll=true}={}){
   // ty.variants=[] is set in Phase 1 and means "deferred", not "no variants".
   // We need to check if there are known variant IDs (in ty._variantIds or
   // firebase-shared's _casingVariantIds cache) that haven't been loaded yet.
-  const loadedVariantCount = (ty?.variants?.length) || 0;
+  const loadedVariantCount = (ty && ty.variants ? ty.variants.length : 0) || 0;
   // needsLoad: there's at least one variant ID we haven't fetched yet
   const needsLoad = loadedVariantCount === 0 && window.FB && window.FB.ensureCasingVariants;
 
@@ -9424,7 +9564,7 @@ function setupCasingStyleTools(vars){
   _casingStyleQuery='';
   _casingStyleMode='all';
   input.value='';
-  document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+  clsOf('casingStyleSearchClear').remove('show');
   if(!vars || !vars.length){
 	    tools.style.display='none';
 	    strip.innerHTML='';
@@ -9477,7 +9617,7 @@ function filterCasingStyles(){
   const input=document.getElementById('casingStyleSearch');
   _casingStyleQuery=(input ? input.value : '').toLowerCase().trim();
   _casingStyleMode='all';
-  document.getElementById('casingStyleSearchClear')?.classList.toggle('show',!!_casingStyleQuery);
+  clsOf('casingStyleSearchClear').toggle('show',!!_casingStyleQuery);
   document.querySelectorAll('#casingStyleStrip .casing-style-chip').forEach(ch=>ch.classList.toggle('active', ch.dataset.styleChip === 'all'));
   applyCasingStyleFilter();
 }
@@ -9487,7 +9627,7 @@ function clearCasingStyleSearch(){
   if(input) input.value='';
   _casingStyleQuery='';
   _casingStyleMode='all';
-  document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+  clsOf('casingStyleSearchClear').remove('show');
   document.querySelectorAll('#casingStyleStrip .casing-style-chip').forEach(ch=>ch.classList.toggle('active', ch.dataset.styleChip === 'all'));
   applyCasingStyleFilter();
 }
@@ -9504,11 +9644,12 @@ function selectCasingStyleChip(styleId){
     if(input) input.value='';
     _casingStyleQuery='';
     _casingStyleMode='popular';
-    document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+    clsOf('casingStyleSearchClear').remove('show');
     applyCasingStyleFilter();
     const cnt=document.getElementById('casingStyleCount');
     if(cnt) cnt.textContent = lang==='th' ? 'เรียงตามจำนวนรูปมากไปน้อย' : 'Sorted by most sample photos';
-    document.querySelector('.casing-results-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
+    const _resPanel = document.querySelector('.casing-results-panel');
+    if(_resPanel) _resPanel.scrollIntoView({behavior:'smooth',block:'start'});
     return;
   }
   let card=cards.find(el=>el.dataset.styleId === String(styleId));
@@ -9529,7 +9670,7 @@ function selectCasingStyleChip(styleId){
   if(input) input.value='';
   _casingStyleQuery='';
   _casingStyleMode='all';
-  document.getElementById('casingStyleSearchClear')?.classList.remove('show');
+  clsOf('casingStyleSearchClear').remove('show');
   cards.forEach(el=>el.classList.remove('is-hidden','is-highlighted'));
   card.classList.add('is-highlighted');
   card.scrollIntoView({behavior:'smooth',block:'center'});
@@ -10114,17 +10255,20 @@ function _lbKeyHandler(e){
   else if(e.key === 'ArrowLeft') lbPrev();
 }
 let _lbTouchX = null;
-document.getElementById('lightbox')?.addEventListener('touchstart', e => {
-  _lbTouchX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null;
-}, {passive:true});
-document.getElementById('lightbox')?.addEventListener('touchend', e => {
-  if(_lbTouchX === null) return;
-  const endX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : _lbTouchX;
-  const diff = endX - _lbTouchX;
-  _lbTouchX = null;
-  if(Math.abs(diff) < 42) return;
-  diff < 0 ? lbNext(e) : lbPrev(e);
-}, {passive:true});
+const _lbEl = document.getElementById('lightbox');
+if(_lbEl){
+  _lbEl.addEventListener('touchstart', e => {
+    _lbTouchX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null;
+  }, {passive:true});
+  _lbEl.addEventListener('touchend', e => {
+    if(_lbTouchX === null) return;
+    const endX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : _lbTouchX;
+    const diff = endX - _lbTouchX;
+    _lbTouchX = null;
+    if(Math.abs(diff) < 42) return;
+    diff < 0 ? lbNext(e) : lbPrev(e);
+  }, {passive:true});
+}
 
 // ── FEED PAGE ──
 let _feedVisible = 10;
@@ -10412,8 +10556,9 @@ function renderHistoryStories(){
   const s  = db.settings||{};
   const el = document.getElementById('hsPageTitle');
   const de = document.getElementById('hsPageDesc');
-  if(el) el.textContent = s.sections?.hsTitle || '📖 History & Stories';
-  if(de) de.textContent = s.sections?.hsDesc  || 'Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.';
+  const _sec = s.sections || {};
+  if(el) el.textContent = _sec.hsTitle || '📖 History & Stories';
+  if(de) de.textContent = _sec.hsDesc  || 'Learn about Thai amulets, respected monks, sacred objects, katha, and traditional beliefs.';
 
   const _hsRaw = db.historyStories||[];
   const all = _hsRaw.filter(a=>a && a.status !== 'draft');
@@ -11018,7 +11163,11 @@ function renderFeedPost(p){
 function copyFeedLink(type){
   const url=new URL(location.href);
   url.hash='feed';
-  navigator.clipboard?.writeText(url.toString()).then(()=>{
+  if(!navigator.clipboard || !navigator.clipboard.writeText){
+    showToast('Copy this page link from the browser bar');
+    return;
+  }
+  navigator.clipboard.writeText(url.toString()).then(()=>{
     showToast(type ? `Copied feed link` : 'Copied');
   }).catch(()=>showToast('Copy this page link from the browser bar'));
 }
@@ -11911,6 +12060,12 @@ window.addEventListener('appinstalled',()=>{
   }catch(e){console.warn('manifest setup failed',e);}
 })();
 
+// Sentinel for the watchdog in <head>. Reaching this line means the whole
+// block above parsed AND ran. If a future edit reintroduces syntax an old
+// browser can't parse, this never runs and the watchdog shows the fallback
+// instead of leaving the visitor on a blank screen.
+window.__yyyAppBooted = true;
+
 </script>
 
 
@@ -11982,6 +12137,11 @@ window.addEventListener('appinstalled',()=>{
 
   // Public entry point. Idempotent — safe to call on every settings change.
   window.initPhra3D = async function(){
+    // Lite mode (low-memory / low-core device): three.js + a GLB + a live
+    // WebGL context is the single biggest memory allocation on the page, and
+    // the hero canvas is already display:none there. Downloading and running
+    // it anyway is how a weak renderer gets OOM-killed into a white screen.
+    if(window.__yyyLite) return;
     if(initInFlight) return initInFlight;
     canvas = canvas || document.getElementById('phra3d');
     if(!canvas) return;
