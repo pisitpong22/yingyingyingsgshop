@@ -30,10 +30,13 @@ A live Thai amulet shop taking real card payments.
 - **`main` auto-deploys to production.** `.github/workflows/firebase-hosting-merge.yml`
   runs `firebase deploy --only hosting` on every push to `main`. There is no
   staging. Branch + PR if you want a preview URL first.
-- **Hosting serves the repo root** (`"public": "."`). Any new file at the root
-  becomes publicly fetchable unless added to the `ignore` list in
-  `firebase.json`. `functions/`, `cors.json`, `functions-index.js`, `*.md`,
-  `*.log` are already ignored.
+- **Hosting serves the repo root** (`"public": "."`). Any new file becomes
+  publicly fetchable unless it matches the `ignore` list in `firebase.json`.
+  After adding a file, actually curl it in production — do not assume.
+- **`**/.*` does not do what it looks like.** It matches dot-*files*
+  (`.gitignore`, `.firebaserc` → 404) but **not files inside dot-directories**.
+  `.github/workflows/` and `.claude/` were being served until `**/.*/**` was
+  added. Both patterns are needed.
 - **App Check + reCAPTCHA fails on localhost and in automated browsers.**
   Expect `appCheck/recaptcha-error` in the console when testing locally — it is
   not a real failure. It also means the local preview cannot read Firestore, so
