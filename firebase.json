@@ -27,7 +27,8 @@
       "*.log",
 
       "*.rules",
-      "firestore.indexes.json"
+      "firestore.indexes.json",
+      "tests/**"
     ],
     "headers": [
       {

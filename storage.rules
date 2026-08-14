@@ -1,13 +1,33 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Signed-in does NOT mean staff: sign-up is open to the public
+    // (email/password + Google + Facebook), so `request.auth != null` is just
+    // a stranger with an account. Team membership lives in Firestore, same
+    // check as firestore.rules.
+    function isTeamMember() {
+      return request.auth != null &&
+        firestore.exists(/databases/(default)/documents/admins/$(request.auth.token.email.lower()));
+    }
+
     match /uploads/{allPaths=**} {
       allow read: if true;
-      // Signed-in team members can upload anything (store images, 3D models, etc.)
-      // Public visitors (customers) can upload ONLY images up to 10MB — this lets
-      // them attach amulet photos to a review without needing an account.
-      allow write: if request.auth != null
-        || (request.resource.size < 10 * 1024 * 1024
+
+      // Only the team may change or remove a file that already exists. Every
+      // product photo's exact path is public — it sits in the download URL on
+      // the storefront — so an open write let anyone silently replace the
+      // shop's photos with anything they liked, at the same URL.
+      allow update, delete: if isTeamMember();
+
+      // Customers still attach photos to a review without an account, so
+      // creating a NEW object stays open — image only, 10MB cap.
+      //
+      // `resource == null` is load-bearing: Storage evaluates an upload over
+      // an EXISTING path as `create`, not `update`, so without it this clause
+      // hands anyone a way to replace any file they can name. Verified.
+      allow create: if isTeamMember()
+        || (resource == null
+            && request.resource.size < 10 * 1024 * 1024
             && request.resource.contentType.matches('image/.*'));
     }
   }

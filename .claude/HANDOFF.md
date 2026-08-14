@@ -172,6 +172,58 @@ from the Firebase Console — doc ID is the lowercased email, field
 unauthorized signer still gets the "not authorized" alert instead of an
 unhandled promise rejection; its write is expected to fail.
 
+### 1c. Stored XSS from customer reviews — FIXED
+
+Found in a security pass on 15 Aug 2026. Anyone can create a `reviewSubmissions`
+doc (that is the feature) and the rules check only type and length, never
+content. Both surfaces then interpolated that text straight into `innerHTML`.
+Proven by injecting a payload — it executed in four places:
+
+- **Admin, Reviews screen** — the reviewer's *name*, and an image URL breaking
+  out of `src="…"` (submission `imgs` entries are unvalidated strings). Fired
+  as soon as the admin OPENED the screen, before approving anything, in a
+  session that can write all of `app/*` and read every `orders` doc.
+- **Storefront, every visitor** — review *text* and *name*, once approved.
+
+CSP contributed nothing: it is Report-Only, and `script-src` already allows
+`'unsafe-inline'`. Enforcing it (item 2) would not have stopped this.
+
+Now escaped at every render point. Review text keeps line breaks via `<br>`;
+it never had other formatting. Admin image URLs go through `safePreviewUrl()`
++ `escapeAttr()`. **Anything reaching `innerHTML` from `reviews` or
+`reviewSubmissions` must stay escaped** — those two collections are public
+input.
+
+### 1d. Storage rules let anyone replace any product photo — FIXED
+
+`allow write: if request.auth != null || (size < 10MB && image/*)` had two holes:
+
+- **An upload to an EXISTING path is evaluated as `create`, not `update`.** So
+  the "customers may attach review photos" clause also let a complete stranger
+  overwrite any file whose path they knew — and every product photo's path is
+  public, it is right there in the download URL on the storefront. Silent
+  defacement at the same URL, browser-cached for a year (`immutable`).
+- `request.auth != null` is not staff. Sign-up is open, so any stranger with an
+  account could write or delete anything under `uploads/`, any size, any type.
+
+Now: `update`/`delete` require `isTeamMember()` (same Firestore `admins` lookup
+as firestore.rules, via `firestore.exists`), and the public `create` clause is
+guarded with `resource == null`. **That guard is load-bearing — without it the
+create/update split does nothing.** Deployed 15 Aug 2026, ruleset `9c6493ea`.
+
+`tests/storage.rules.test.mjs` pins all of this down — 14 cases, run it before
+touching the rules again:
+
+```bash
+npm i --no-save @firebase/rules-unit-testing firebase
+firebase emulators:exec --only storage,firestore --project demo-rules-test "node tests/storage.rules.test.mjs"
+```
+
+The old rules score 10/14 on it; the current ones 14/14. Note the emulator's
+plain REST upload endpoint does **not** populate `request.resource` the way the
+SDK does — curl-ing the emulator reports 403 for everything and proves nothing.
+Use the SDK-based test.
+
 ### 2. Confirm CSP on the checkout flow, then enforce it
 
 The report-only policy already caught one real gap: App Check calls
