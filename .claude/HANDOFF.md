@@ -130,10 +130,10 @@ Notes for next time:
 `orders` was verified: `allow write: if false` (Cloud Functions write via Admin
 SDK, bypassing rules), read only for an admin or the order's own `uid`. Correct.
 
-### 1b. 🔴 Anyone who signs up can make themselves an admin — NOT FIXED
+### 1b. Anyone who signs up could make themselves an admin — FIXED
 
 Found while verifying the above. Email/password, Google **and** Facebook sign-in
-are all enabled with open public sign-up. In `firestore.rules`:
+are all enabled with open public sign-up. The rule used to read:
 
 ```
 match /admins/{adminId} {
@@ -149,21 +149,20 @@ write grants them:
 - write on `app/{docId}` — the entire storefront database
 - read/update/delete on `reviewSubmissions`
 
-The self-create clause exists for the first-run bootstrap (`ensureFirstSuperAdmin`
-in `firebase-shared.js:1822`), which only fires when zero admins exist. There are
-now 3, so the client-side path is dead code — but the *rule* is still wide open,
-and rules are the only real boundary.
+The self-create clause existed for the first-run bootstrap
+(`ensureFirstSuperAdmin` in `firebase-shared.js`), which only fires when zero
+admins exist. There are 3, so the client path was already dead code — but the
+*rule* was the only real boundary, and it was open.
 
-Fix (needs a deploy, so it will sign nobody out but takes effect instantly):
+Now `create, update, delete` all require `isSuperAdmin()`, and `read` requires
+`isTeamMember()` (it was `request.auth != null`, which leaked the admin roster
+to anyone signed in). Deployed 15 Aug 2026.
 
-```
-allow create: if isSuperAdmin();
-allow read:   if isTeamMember();   // currently `request.auth != null`,
-                                   // which leaks the admin roster
-```
-
-To bootstrap a new project after this change, add the first `admins` doc from
-the Console.
+**There is no self-service bootstrap any more.** Seed the first `admins` doc
+from the Firebase Console — doc ID is the lowercased email, field
+`role: "super_admin"`. `ensureFirstSuperAdmin()` was kept, but only so an
+unauthorized signer still gets the "not authorized" alert instead of an
+unhandled promise rejection; its write is expected to fail.
 
 ### 2. Confirm CSP on the checkout flow, then enforce it
 

@@ -1817,17 +1817,29 @@ async function deleteAdminRecord(email){
 
 // Bootstrap: if there are NO admins yet, the first email to sign in
 // becomes the super_admin. After that, every login must match an
-// existing record. This lets the very first deploy work without
-// needing manual Firestore seeding.
+// existing record.
+//
+// Security Rules no longer allow this write — anyone can sign up, so a
+// self-service promotion was a way in. Seed the first admin from the
+// Firebase Console instead. This is kept only so an unauthorized signer
+// gets the "not authorized" message rather than an unhandled rejection:
+// every failure path here must return null, never throw.
 async function ensureFirstSuperAdmin(email){
   const key = adminEmailKey(email);
   if(!key) return null;
   const existing = await getAdminRecord(key);
   if(existing) return existing;
+  // listAdmins() returns [] when the read is denied, so an empty list is not
+  // proof the collection is empty. The write below is the real check.
   const all = await listAdmins();
   if(all.length === 0){
-    console.log('[FB] No admins yet — promoting first signer to super_admin:', key);
-    return await setAdminRecord(key, { role: 'super_admin', addedBy: 'bootstrap' });
+    console.log('[FB] No admins yet — attempting to promote first signer:', key);
+    try {
+      return await setAdminRecord(key, { role: 'super_admin', addedBy: 'bootstrap' });
+    } catch(e){
+      console.warn('[FB] bootstrap promotion denied — seed the first admin from the Firebase Console:', e);
+      return null;
+    }
   }
   return null;
 }

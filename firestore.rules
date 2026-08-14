@@ -17,12 +17,19 @@ service cloud.firestore {
       allow write: if isTeamMember();
     }
 
-    // Admin team records
+    // Admin team records.
+    //
+    // These docs ARE the permission system: isTeamMember() only checks that a
+    // doc exists, so creating one here grants read of every order (customer
+    // names, phones, addresses) and write of the whole site DB. Sign-up is
+    // open to the public (email/password + Google + Facebook), so a signed-in
+    // user is just a stranger — never let one write into this collection.
+    //
+    // Seed the first super_admin from the Firebase Console. There is no
+    // self-service bootstrap; that is the point.
     match /admins/{adminId} {
-      allow read: if request.auth != null;
-      allow create: if isSuperAdmin() ||
-        (request.auth != null && request.auth.token.email.lower() == adminId);
-      allow update, delete: if isSuperAdmin();
+      allow read: if isTeamMember();
+      allow create, update, delete: if isSuperAdmin();
     }
 
     // Customer review submissions — anyone can submit, only team can read/manage
