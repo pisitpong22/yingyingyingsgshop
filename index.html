@@ -7137,6 +7137,9 @@ function reviewPhotoAlt(rv, i, total){
   return photoAlt(base, i, total);
 }
 
+// Emits src/srcset/sizes AND alt. Do not write a literal alt= alongside a call
+// to this — duplicate attributes resolve to the FIRST one, so the alt from here
+// wins and the hand-written one is silently dropped. Pass it as `alt` instead.
 function imgAttrs(img, preferred='thumb', sizes='(max-width: 700px) 50vw, 360px', alt=''){
   const src=imageUrl(img, preferred);
   if(!src) return '';
@@ -7771,7 +7774,7 @@ function renderCustomPages(){
     } else if(layout === 'list'){
       body = `<div class="cp-list">${items.map(it => `
         <div class="cp-list-item" onclick="openCpItem('${p.id}','${it.id}')">
-          ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','120px')} alt=""></div>`:''}
+          ${it.img?`<div class="cp-list-img"><img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','120px',photoAlt(it.title,0,1))}></div>`:''}
           <div class="cp-list-body">
             <h3 class="cp-list-title">${it.title || ''}</h3>
             ${it.subtitle?`<div class="cp-list-subtitle">${it.subtitle}</div>`:''}
@@ -7783,7 +7786,7 @@ function renderCustomPages(){
     } else {
       body = `<div class="cp-grid">${items.map(it => `
         <div class="cp-card" onclick="openCpItem('${p.id}','${it.id}')">
-          <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','280px')} alt="">`:'📄'}</div>
+          <div class="cp-card-img">${it.img?`<img loading="lazy" decoding="async" ${imgAttrs(it.img,'thumb','280px',photoAlt(it.title,0,1))}>`:'📄'}</div>
           <div class="cp-card-body">
             <h3 class="cp-card-title">${it.title || ''}</h3>
             ${it.subtitle?`<div class="cp-card-subtitle">${it.subtitle}</div>`:''}
@@ -7836,7 +7839,7 @@ function openCpItem(pageId, itemId){
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
-    ${it.img?`<div style="margin-bottom:22px"><img loading="eager" decoding="async" fetchpriority="high" ${imgAttrs(it.img,'medium','min(100vw, 700px)')} alt="" style="width:100%;max-height:420px;object-fit:cover;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12)"></div>`:''}
+    ${it.img?`<div style="margin-bottom:22px"><img loading="eager" decoding="async" fetchpriority="high" ${imgAttrs(it.img,'medium','min(100vw, 700px)',photoAlt(it.title,0,1))} style="width:100%;max-height:420px;object-fit:cover;border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.12)"></div>`:''}
     <div class="custom-page-content" style="max-width:100%;background:transparent;border:none;box-shadow:none;padding:0;backdrop-filter:none;-webkit-backdrop-filter:none">${it.content || '<p style="color:var(--text-muted);font-style:italic">No content yet.</p>'}</div>
   `;
   openModal('article');
@@ -8382,7 +8385,7 @@ function buildProductCard(p,settings,idx=99){
   return `
     <div class="card" onclick="openProd('products','${p.id}')" role="button" tabindex="0" aria-label="${escapeHtml(p.name||'')}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
       <div class="card-img" style="contain:layout style">
-        ${cover?`<img loading="${eager?'eager':'lazy'}" ${eager&&idx<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(cover,'thumb','(max-width: 700px) 50vw, 360px')} alt="${escapeHtml(p.name||'')}">`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
+        ${cover?`<img loading="${eager?'eager':'lazy'}" ${eager&&idx<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(cover,'thumb','(max-width: 700px) 50vw, 360px',photoAlt(p.name,0,1))}>`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
         ${p.badgeText?`<div class="cbadge cbadge-gold">${escapeHtml(p.badgeText)}</div>`:''}
         ${pill}
         ${overlay}
@@ -8415,7 +8418,7 @@ function buildCard(a,type,settings,idx=99){
   return `
     <div class="card" onclick="openProd('${type}',${a.id})" role="button" tabindex="0" aria-label="${escapeHtml(a.name||'')}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
       <div class="card-img" style="contain:layout style">
-        ${a.imgs&&a.imgs[0]?`<img loading="${eager?'eager':'lazy'}" ${eager&&idx<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(a.imgs[0],'thumb','(max-width: 700px) 50vw, 360px')} alt="${escapeHtml(a.name||'')}">`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
+        ${a.imgs&&a.imgs[0]?`<img loading="${eager?'eager':'lazy'}" ${eager&&idx<4?'fetchpriority="high"':''} decoding="async" ${imgAttrs(a.imgs[0],'thumb','(max-width: 700px) 50vw, 360px',photoAlt(a.name,0,1))}>`:`<div class="card-ph"><span style="font-size:44px">${icon}</span><span>No image</span></div>`}
         ${a.badge?`<div class="cbadge cbadge-gold">${a.badge}</div>`:''}
         ${pill}
         ${overlay}
@@ -8969,7 +8972,7 @@ function renderPayment(){
         <dl class="pay-info">
           <dt>Account Name</dt><dd>${p.paynowName||'—'}</dd>
         </dl>
-        ${p.qrImage?`<div class="pay-qr"><img loading="lazy" decoding="async" ${imgAttrs(p.qrImage,'medium','320px')} alt="PayNow QR"></div>`:''}
+        ${p.qrImage?`<div class="pay-qr"><img loading="lazy" decoding="async" ${imgAttrs(p.qrImage,'medium','320px',lang==='th'?'คิวอาร์โค้ด PayNow สำหรับชำระเงิน':'PayNow QR code for payment')}></div>`:''}
       </div>
       <div class="pay-block">
         <h3>📦 Shipping</h3>
@@ -9280,7 +9283,7 @@ function renderCasingTypes(){
     <div class="ftype-card" onclick="openCasingType(${ty.id})">
       <div class="ftype-shimmer"></div>
       <div class="ftype-banner">
-        ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(ty.bannerImg,'medium','(max-width: 700px) 100vw, 420px')} alt="${escapeHtml(ty.name||'')}">`:``}
+        ${ty.bannerImg?`<img loading="${i<3?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(ty.bannerImg,'medium','(max-width: 700px) 100vw, 420px',photoAlt(ty.name,0,1))}>`:``}
         ${styleCount>0?`<div class="ftype-count">${styleCount} ${useSamples?(lang==='th'?'ตัวอย่าง':'samples'):(lang==='th'?'แบบ':'styles')}</div>`:''}
       </div>
       <div class="ftype-body">
@@ -10158,7 +10161,7 @@ function renderFeed(){
     const minis=posts.filter(p=>p.type==='casing' && p.imgs&&p.imgs[0]).slice(0,5);
     popular.innerHTML=minis.length ? minis.map(p=>`
       <div class="feed-mini" onclick="${p.action}">
-        <img class="feed-mini-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','64px')} alt="">
+        <img class="feed-mini-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','64px',photoAlt(p.title,0,1))}>
         <div>
           <div class="feed-mini-name">${escapeHtml(p.title)}</div>
           <div class="feed-mini-meta">${escapeHtml(p.kicker)}</div>
@@ -10173,7 +10176,7 @@ function renderFeed(){
     const quickItems=posts.filter(p=>p.imgs&&p.imgs[0]).slice(0,2);
     quick.innerHTML=quickItems.length ? quickItems.map(p=>`
       <div class="feed-mini" onclick="${p.action}" style="display:block">
-        <img class="feed-mini-img" style="width:100%;height:86px;border-radius:12px;margin-bottom:8px" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','220px')} alt="">
+        <img class="feed-mini-img" style="width:100%;height:86px;border-radius:12px;margin-bottom:8px" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','220px',photoAlt(p.title,0,1))}>
         <div class="feed-mini-name">${escapeHtml(p.title)}</div>
       </div>
     `).join('') : `<div class="feed-mini-meta">Add photos to show previews.</div>`;
@@ -10237,7 +10240,7 @@ function renderFeedStory(st){
   }
   return `
     <button type="button" class="feed-story" onclick="${st.action}">
-      <img loading="lazy" decoding="async" ${imgAttrs(st.imgs[0],'thumb','120px')} alt="">
+      <img loading="lazy" decoding="async" ${imgAttrs(st.imgs[0],'thumb','120px',photoAlt(st.title,0,1))}>
       <span class="feed-story-label">${escapeHtml(st.title)}</span>
     </button>
   `;
@@ -10444,7 +10447,7 @@ function renderHistoryStories(){
       <div class="hss-featured" onclick="openHsArticle(${featured.id})">
         <div class="hss-feat-img">
           ${featured.coverImage
-            ? `<img loading="eager" fetchpriority="high" decoding="async" ${imgAttrs(featured.coverImage,'medium','(max-width:700px) 100vw, 50vw')} alt="" style="${hsCoverStyle(featured)}">`
+            ? `<img loading="eager" fetchpriority="high" decoding="async" ${imgAttrs(featured.coverImage,'medium','(max-width:700px) 100vw, 50vw',photoAlt(featured.title,0,1))} style="${hsCoverStyle(featured)}">`
             : `<span class="hss-fallback-icon">${hsCatIcon(featured.category)}</span>`}
           ${featured.hasVideo?'<span class="hss-video-badge">▶</span>':''}
         </div>
@@ -10464,10 +10467,10 @@ function renderHistoryStories(){
     if(rest.length){
       const rowHtml = (a,i)=>{
         const thumb = a.coverImage
-          ? `<img loading="lazy" decoding="async" ${imgAttrs(a.coverImage,'thumb','72px')} alt="" style="${hsCoverStyle(a)}">`
+          ? `<img loading="lazy" decoding="async" ${imgAttrs(a.coverImage,'thumb','72px',photoAlt(a.title,0,1))} style="${hsCoverStyle(a)}">`
           : hsCatIcon(a.category);
         const nodeImg = a.coverImage
-          ? `<img loading="lazy" decoding="async" ${imgAttrs(a.coverImage,'thumb','52px')} alt="" style="${hsCoverStyle(a)}">`
+          ? `<img loading="lazy" decoding="async" ${imgAttrs(a.coverImage,'thumb','52px',photoAlt(a.title,0,1))} style="${hsCoverStyle(a)}">`
           : hsCatIcon(a.category);
         const card = `<div class="hss-t-card" onclick="openHsArticle(${a.id})">
               <div class="hss-t-thumb">${thumb}${a.hasVideo?'<span class="hss-video-badge">▶</span>':''}</div>
@@ -10534,7 +10537,7 @@ async function openHsArticle(id){
       <div class="hs-article-page">
         ${a.videoUrl && ytVideoId(a.videoUrl)
           ? `<div class="hss-video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/${ytVideoId(a.videoUrl)}" title="${escapeHtml(a.title||'')}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`
-          : (a.coverImage?`<div class="hs-article-cover"><img loading="eager" decoding="async" fetchpriority="high" ${imgAttrs(a.coverImage,'medium','min(100vw,660px)')} alt="" style="${hsCoverStyle(a)}"></div>`:'')}
+          : (a.coverImage?`<div class="hs-article-cover"><img loading="eager" decoding="async" fetchpriority="high" ${imgAttrs(a.coverImage,'medium','min(100vw,660px)',photoAlt(a.title,0,1))} style="${hsCoverStyle(a)}"></div>`:'')}
         <div class="hs-article-meta">
           <div class="hss-badge">${hsCatIcon(a.category)} ${hsCatLabel(a.category)}</div>
         </div>
@@ -10995,7 +10998,7 @@ function renderFeedPost(p){
       </div>
       ${hasMedia?`
         <div class="feed-media ${mediaClass}" onclick="${p.action}" style="cursor:pointer">
-          ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 640px')} alt="">`).join('')}
+          ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 640px',photoAlt(p.title,i,imgs.length))}>`).join('')}
         </div>
       `:''}
       <div class="feed-cta-bar">
