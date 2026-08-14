@@ -520,6 +520,14 @@
   .pi-drag-handle:active{cursor:grabbing;background:rgba(30,26,19,.9)}
   .prev-item.dragging{opacity:.4;outline:2px dashed var(--gold);outline-offset:2px}
   .prev-item.drag-over{outline:2px solid var(--gold);outline-offset:3px}
+  /* Alt text — what a blind visitor hears and what Google Image Search reads.
+     Sits under each uploaded photo; empty ones are outlined so they stand out. */
+  .pi-alt{padding:7px 8px 8px;max-width:280px;box-sizing:border-box}
+  .pi-alt-input{width:100%;box-sizing:border-box;font-size:12px;padding:6px 8px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text)}
+  .pi-alt-input::placeholder{color:var(--text-dim)}
+  .pi-alt-input:focus{outline:none;border-color:var(--gold);background:var(--surface)}
+  .pi-alt-input.is-empty{border-color:rgba(224,80,80,.45)}
+  .pi-alt-hint{font-size:10.5px;color:var(--text-muted);line-height:1.4;margin-top:4px}
   .pi-rm{position:absolute;top:-8px;right:-8px;background:var(--red);color:white;border:2px solid var(--surface);border-radius:50%;width:28px;height:28px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:3;box-shadow:0 3px 10px rgba(0,0,0,.35)}
   .pi-rm:hover{background:#b03030;transform:scale(1.12)}
   .prev-rm{position:absolute;top:-8px;right:-8px;background:var(--red);color:white;border:2px solid var(--surface);border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.35)}
@@ -4087,13 +4095,30 @@ function loadNeedsAttention(){
   }
 
   // Products with no photo — on an amulet shop this is the whole pitch.
+  // The fields are coverImg + gallery (see saveProduct); `images`/`image` never
+  // existed, so this check silently never fired.
+  const productPhotos = p => [p.coverImg, ...(p.gallery||[])].filter(Boolean);
   const noPhoto = (db.products||[]).filter(p =>
-    p.hidden !== true && !(p.images||[]).length && !p.image
+    p.hidden !== true && !productPhotos(p).length
   ).length;
   if(noPhoto){
     items.push({sev:'warn',
-      en:`${noPhoto} product${noPhoto>1?'s':''} have no photo`,
+      en:`${noPhoto} product${noPhoto>1?'s have':' has'} no photo`,
       th:`มีสินค้า ${noPhoto} ชิ้นที่ยังไม่มีรูป`,
+      actEn:'Open Shop', actTh:'ไปที่ร้านค้า', go:"showPanel('products')"});
+  }
+
+  // Photos with no alt text. Google Image Search is a real channel for amulets
+  // and it reads the alt; so does every screen reader. The storefront falls
+  // back to the product name, which is better than nothing but describes the
+  // listing rather than the photo.
+  const noAlt = (db.products||[]).reduce((n, p) => p.hidden === true ? n :
+    n + productPhotos(p).filter(im => !(im && typeof im === 'object' && String(im.alt||'').trim())).length
+  , 0);
+  if(noAlt){
+    items.push({sev:'warn',
+      en:`${noAlt} product photo${noAlt>1?'s have':' has'} no alt text — invisible to Google Images`,
+      th:`มีรูปสินค้า ${noAlt} รูปที่ยังไม่มีคำอธิบาย (alt) — Google Images จะหาไม่เจอ`,
       actEn:'Open Shop', actTh:'ไปที่ร้านค้า', go:"showPanel('products')"});
   }
 
@@ -7616,13 +7641,51 @@ function captureImgs(key){
   return arr
     .map(e => {
       // Plain string or already-normalised image-set object → use as-is
+      // (an image-set already carries its own `alt`)
       if(typeof e === 'string' || isImageSet(e)) return e;
       // Upload entry object: { status, url, … } — url may itself be a
-      // string (uploadFile) or an image-set object (uploadImageSet)
-      if(e && e.status === 'done') return e.url;
+      // string (uploadFile) or an image-set object (uploadImageSet).
+      // The alt the user typed lives on the entry, so fold it into the value
+      // we actually store.
+      if(e && e.status === 'done') return withImgAlt(e.url, e.alt);
       return null;
     })
     .filter(isUsableStoredImage);
+}
+
+// ─── ALT TEXT ─────────────────────────────────────────────────────────────
+// Stored on the image object itself: {url, medium, thumb, alt}. The storefront
+// reads it in imageAlt() and falls back to the product name when it's missing,
+// so an empty alt is not fatal — just worse for Google Image Search and for
+// anyone using a screen reader.
+
+// A plain URL string has nowhere to keep an alt, so it grows into an object
+// the first time one is typed.
+function withImgAlt(img, alt){
+  const t = String(alt || '').trim();
+  if(!t) return img;
+  if(typeof img === 'string') return { url: img, alt: t };
+  if(img && typeof img === 'object') return { ...img, alt: t };
+  return img;
+}
+
+function imgAltOf(entry){
+  if(!entry || typeof entry !== 'object') return '';
+  return typeof entry.alt === 'string' ? entry.alt : '';
+}
+
+// Called on every keystroke — deliberately does NOT re-render, or the field
+// would lose focus mid-word.
+function setImgAlt(key, i, value){
+  const arr = tempImgs[key];
+  if(!arr || arr[i] === undefined) return;
+  const alt = String(value || '').slice(0, 180);
+  const e = arr[i];
+  if(typeof e === 'string'){
+    arr[i] = { url: e, alt };
+    return;
+  }
+  e.alt = alt; // image-set object, or an upload entry (folded in by captureImgs)
 }
 
 function isImageSet(img){
@@ -7822,6 +7885,12 @@ function renderPrev(key){
     if(key === 'p_imgs') prjRenderFocusPreview();
     return;
   }
+  // An upload finishing elsewhere re-renders the whole list. If someone is
+  // mid-sentence in an alt field when that happens, put the caret back.
+  const focused = document.activeElement;
+  const keepIdx = (focused && focused.classList && focused.classList.contains('pi-alt-input')
+    && focused.dataset.pkey === key) ? focused.dataset.pidx : null;
+  const keepCaret = keepIdx !== null ? focused.selectionStart : null;
   const last = arr.length - 1;
   el.innerHTML = arr.map((entry, i) => {
     // Normalise: legacy strings become a "done" object
@@ -7857,6 +7926,9 @@ function renderPrev(key){
     // status === 'done' OR legacy string
     const url = e.url;
     const safeUrl = safePreviewUrl(url);
+    // For a legacy plain-string entry the alt lives on `entry` itself, not on
+    // the normalised `e` we built above.
+    const altVal = imgAltOf(entry) || imgAltOf(e.url);
     return `
       <div class="prev-item is-done${isPrimary ? ' is-primary' : ''}"
            data-pkey="${key}" data-pidx="${i}"
@@ -7865,8 +7937,25 @@ function renderPrev(key){
         ${isPrimary ? `<div class="pi-badge">${lang==='th'?'หลัก':'Cover'}</div>` : ''}
         <div class="pi-drag-handle" title="${lang==='th'?'ลากเพื่อเปลี่ยนลำดับ':'Drag to reorder'}">⠿</div>
         <button class="pi-rm" onclick="rmImg('${key}',${i})" title="${lang==='th'?'ลบ':'Remove'}">✕</button>
+        <div class="pi-alt">
+          <input type="text" class="pi-alt-input${altVal ? '' : ' is-empty'}"
+                 data-pkey="${key}" data-pidx="${i}" maxlength="180"
+                 value="${escapeAttr(altVal)}"
+                 placeholder="${lang==='th'?'คำอธิบายรูป (alt)':'Alt text — describe this photo'}"
+                 title="${escapeAttr(lang==='th'?'อธิบายว่าในรูปคืออะไร เช่น พระสมเด็จ วัดระฆัง ตลับทอง — ใช้กับ Google Images และโปรแกรมอ่านหน้าจอ':'Describe what is in the photo, e.g. Phra Somdej Wat Rakang in a gold casing — used by Google Images and screen readers')}"
+                 oninput="setImgAlt('${key}',${i},this.value);this.classList.toggle('is-empty',!this.value.trim())"
+                 onmousedown="this.closest('.prev-item').draggable=false"
+                 onblur="this.closest('.prev-item').draggable=true">
+        </div>
       </div>`;
   }).join('');
+  if(keepIdx !== null){
+    const again = el.querySelector(`.pi-alt-input[data-pidx="${keepIdx}"]`);
+    if(again){
+      again.focus();
+      if(keepCaret != null){ try { again.setSelectionRange(keepCaret, keepCaret); } catch(_){} }
+    }
+  }
   initPrevGridDrag(key);
   if(key === 'hs_cover') hsRenderCoverFocus();
   if(key === 'p_imgs') prjRenderFocusPreview();

@@ -7100,11 +7100,48 @@ function imageSrcset(img){
   return parts.join(', ');
 }
 
-function imgAttrs(img, preferred='thumb', sizes='(max-width: 700px) 50vw, 360px'){
+// Alt text for an image. Images uploaded through the admin can carry their
+// own `alt` (see the Alt text field in the image uploader); everything saved
+// before that field existed falls back to whatever the caller knows the image
+// is showing — usually the product/style/project name it belongs to.
+//
+// These are content images, not decoration, so they must never end up with an
+// empty alt: it is what Google Image Search indexes (a real channel for
+// amulets) and the only description a screen reader has to offer.
+function imageAlt(img, fallback=''){
+  const own = (img && typeof img === 'object' && typeof img.alt === 'string') ? img.alt.trim() : '';
+  return own || String(fallback || '').trim();
+}
+
+// "Phra Somdej — photo 2 of 5". The number is only added when there is more
+// than one photo, so a single-image product just gets its name.
+function photoAlt(name, i, total){
+  // Titles can be long, multi-line and emoji-laden; alt text should stay a
+  // short description, so collapse whitespace and cap it.
+  const label = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 120)
+    || (lang === 'th' ? 'สินค้า' : 'Item');
+  if(!(total > 1)) return label;
+  return lang === 'th'
+    ? `${label} — รูปที่ ${i+1} จาก ${total}`
+    : `${label} — photo ${i+1} of ${total}`;
+}
+
+// Review photos are the customer's own, so the useful description is whose
+// review it came from. Anonymous reviews stay anonymous here too — the alt
+// attribute is public text.
+function reviewPhotoAlt(rv, i, total){
+  const who = rv.anonymous ? '' : String(rv.displayName || rv.name || '').trim();
+  const base = who
+    ? (lang === 'th' ? `รีวิวจาก ${who}` : `Review by ${who}`)
+    : (lang === 'th' ? 'รีวิวจากลูกค้า' : 'Customer review');
+  return photoAlt(base, i, total);
+}
+
+function imgAttrs(img, preferred='thumb', sizes='(max-width: 700px) 50vw, 360px', alt=''){
   const src=imageUrl(img, preferred);
   if(!src) return '';
   const ss=imageSrcset(img);
-  return `src="${escapeHtml(src)}"${ss?` srcset="${ss}" sizes="${escapeHtml(sizes)}"`:''}`;
+  return `src="${escapeHtml(src)}"${ss?` srcset="${ss}" sizes="${escapeHtml(sizes)}"`:''} alt="${escapeHtml(imageAlt(img, alt))}"`;
 }
 
 function sanitizeRichHtml(value){
@@ -7255,8 +7292,13 @@ function applySettings(){
     if(shouldUseStillImage){
       // Still image mode — hide canvas, show image
       if(canvas) canvas.style.display = 'none';
+      // The hero is the first thing a crawler sees; it needs a real description.
+      // Falls back to the hero headline the owner wrote, minus its markup.
+      const heroAlt = imageAlt(s.hero.heroImage,
+        [s.hero.titleHighlight, s.hero.titleRest].filter(Boolean).join(' ').trim() || s.logoText || '');
       if(existingImg){
         existingImg.src = heroImage;
+        existingImg.alt = heroAlt;
       } else {
         const img = document.createElement('img');
         img.className = 'hero-still-img';
@@ -7265,7 +7307,7 @@ function applySettings(){
         img.setAttribute('fetchpriority', 'high');
         img.setAttribute('decoding', 'async');
         img.src = heroImage;
-        img.alt = '';
+        img.alt = heroAlt;
         hero3dBlock.appendChild(img);
       }
       hero3dBlock.style.display = '';
@@ -7653,7 +7695,7 @@ function renderSocialPost(p){
                  accessory:'accessory',history:'history',hs:'hs'};
   const badgeType=typeMap[p.type||'default']||'default';
   const thumbHtml=thumb
-    ? `<img loading="lazy" decoding="async" ${imgAttrs(thumb,'medium','(max-width:700px) 100vw, 400px')} alt="">`
+    ? `<img loading="lazy" decoding="async" ${imgAttrs(thumb,'medium','(max-width:700px) 100vw, 400px',photoAlt(p.title,0,1))}>`
     : `<div class="update-card-thumb-placeholder">✦</div>`;
   return `
     <article class="update-card" data-feed-type="${escapeHtml(badgeType)}" onclick="${p.action}">
@@ -7687,7 +7729,7 @@ function renderSocialWidgets(posts){
     const imgs=posts.filter(p=>p.imgs&&p.imgs[0]).slice(0,2);
     preview.innerHTML=imgs.length ? imgs.map(p=>`
       <div onclick="${p.action}" style="cursor:pointer">
-        <img class="social-preview-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','250px')} alt="">
+        <img class="social-preview-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','250px',photoAlt(p.title,0,1))}>
         <div class="social-widget-row"><span>${escapeHtml((p.title||'Update').split(' · ').pop())}</span></div>
       </div>
     `).join('') : `<div class="social-widget-row"><span>Photos</span><small>Soon</small></div>`;
@@ -8274,7 +8316,7 @@ function renderHomeReviews(){
       ? ''
       : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
     const imgsHtml = (rv.imgs && rv.imgs.length)
-      ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','120px')} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
+      ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i,arr)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','120px',reviewPhotoAlt(rv,i,arr.length))} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
       : '';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
@@ -8416,7 +8458,7 @@ function renderReviews(){
     const nameHtml = rv.anonymous
       ? ''
       : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
-    const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','160px')} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
+    const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i,arr)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','160px',reviewPhotoAlt(rv,i,arr.length))} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
     const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
     return `
       <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
@@ -8436,7 +8478,7 @@ function renderReviews(){
 }
 function openReviewLightbox(reviewId,idx){
   const db=getDB();const rv=(db.reviews||[]).find(r=>r.id===reviewId);if(!rv||!rv.imgs)return;
-  window._lbImages=rv.imgs;openLightbox(idx);
+  window._lbImages=rv.imgs;window._lbAltName=reviewPhotoAlt(rv,0,1);openLightbox(idx);
 }
 
 // ── CART ──
@@ -9538,8 +9580,13 @@ function variantCardHtml(ty, v, i){
   const alreadyLoaded = isCasingImageLoaded(imgUrl);
   // onload: mark this URL so we never show shimmer for it again
   const onload = imgUrl ? `onload="markCasingImageLoaded('${imgUrl.replace(/'/g,"\'")}')"` : '';
+  const styleName = String(v.name || '').trim();
+  const typeName = String((ty && ty.name) || '').trim();
+  const cardAlt = imageAlt(v.imgs && v.imgs[0], (styleName && typeName)
+    ? (lang === 'th' ? `${styleName} — ${typeName}` : `${styleName} — ${typeName} casing`)
+    : (styleName || typeName));
   const imgTag = imgUrl
-    ? `<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async"${alreadyLoaded?' class="is-loaded"':''} ${onload} src="${escapeHtml(imgUrl)}">`
+    ? `<img loading="${i<8?'eager':'lazy'}" ${i<4?'fetchpriority="high"':''} decoding="async"${alreadyLoaded?' class="is-loaded"':''} ${onload} src="${escapeHtml(imgUrl)}" alt="${escapeHtml(cardAlt)}">`
     : '🪬';
   // Availability: still fully clickable/browsable when out of stock — only the
   // visual treatment changes. See CASING_AVAILABILITY in firebase-shared.js.
@@ -9674,10 +9721,11 @@ function renderVariants(typeId){
     const samples=(ty.sampleImgs&&ty.sampleImgs.length)?ty.sampleImgs : (ty.bannerImg?[ty.bannerImg]:[]);
     if(samples.length){
       window._lbImages=samples;
+      window._lbAltName=ty.name||'';
       grid.classList.add('var-grid--sample');
       grid.innerHTML=samples.map((img,i)=>`
         <div class="var-card var-card--sample" onclick="openLightbox(${i},this)">
-          <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<3?'medium':'thumb','(max-width: 700px) 50vw, 320px')}></div>
+          <div class="var-img"><img loading="${i<8?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<3?'medium':'thumb','(max-width: 700px) 50vw, 320px',photoAlt(ty.name,i,samples.length))}></div>
         </div>`).join('');
       preloadImages(samples.map(img=>imageUrl(img,'thumb')), 6);
     } else {
@@ -9737,18 +9785,18 @@ function _attachVariantScrollFlush(grid, renderToken){
   window.addEventListener('scroll', flush, {passive:true});
 }
 
-function variantPhotoHtml(img, i){
-  return `<button type="button" class="variant-photo" onclick="openLightbox(${i},this)" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<6?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px')}></button>`;
+function variantPhotoHtml(img, i, name='', total=0){
+  return `<button type="button" class="variant-photo" onclick="openLightbox(${i},this)" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<6?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px',photoAlt(name,i,total))}></button>`;
 }
 
-function appendVariantPhotosProgressively(gallery, imgs, start, token){
+function appendVariantPhotosProgressively(gallery, imgs, start, token, name=''){
   const chunkSize = window.matchMedia && window.matchMedia('(max-width: 700px)').matches ? 8 : 12;
   const run=()=>{
     if(token !== _modalGalleryToken || !document.body.contains(gallery)) return;
     const end=Math.min(start + chunkSize, imgs.length);
-    gallery.insertAdjacentHTML('beforeend', imgs.slice(start,end).map((img,idx)=>variantPhotoHtml(img,start+idx)).join(''));
+    gallery.insertAdjacentHTML('beforeend', imgs.slice(start,end).map((img,idx)=>variantPhotoHtml(img,start+idx,name,imgs.length)).join(''));
     safeWatchImages(gallery);
-    if(end < imgs.length) appendVariantPhotosProgressively(gallery, imgs, end, token);
+    if(end < imgs.length) appendVariantPhotosProgressively(gallery, imgs, end, token, name);
   };
   if('requestIdleCallback' in window) requestIdleCallback(run,{timeout:900});
   else setTimeout(run,60);
@@ -9761,6 +9809,7 @@ function openVariant(typeId,varId){
   const imgs=feedImages(v.imgs||[]);
   // store images globally for lightbox — keep originals for full-size view
   window._lbImages = imgs;
+  window._lbAltName = v.name || '';
   // Direct URLs — Firebase Storage Asia bucket serves original optimised images.
   const thumbify = (url) => imageUrl(url,'medium');
   const avail = window.FB && window.FB.casingAvailabilityMeta ? window.FB.casingAvailabilityMeta(v) : {key:'available'};
@@ -9781,13 +9830,13 @@ function openVariant(typeId,varId){
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="variant-gallery" id="variantGallery">
-      ${imgs.length?imgs.slice(0,12).map((img,i)=>variantPhotoHtml(img,i)).join(''):'<div class="variant-photo" style="aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
+      ${imgs.length?imgs.slice(0,12).map((img,i)=>variantPhotoHtml(img,i,v.name,imgs.length)).join(''):'<div class="variant-photo" style="aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d1e06,#12100a)">🪬</div>'}
     </div>`;
   const token=++_modalGalleryToken;
   const gallery=document.getElementById('variantGallery');
   if(gallery){
     safeWatchImages(gallery);
-    if(imgs.length > 12) appendVariantPhotosProgressively(gallery, imgs, 12, token);
+    if(imgs.length > 12) appendVariantPhotosProgressively(gallery, imgs, 12, token, v.name);
   }
   preloadImages(imgs.slice(0,12).map(img=>imageUrl(img,'thumb')), 6);
   openModal('variant');
@@ -9800,6 +9849,13 @@ let _lbSourceIndex = -1;
 let _lbSourceUrl = '';
 let _lbObjectUrl = '';
 let _pendingLightboxSourceUrl = '';
+// The lightbox reuses a single <img> for every photo it shows, so its alt has
+// to be rewritten each time the source changes — otherwise it keeps describing
+// the photo before it. `_lbAltName` is set next to every `_lbImages` assignment.
+function currentLightboxAlt(){
+  const imgs = window._lbImages || [];
+  return imageAlt(imgs[_lbIndex], photoAlt(window._lbAltName || '', _lbIndex, imgs.length));
+}
 function getLightboxImg(){
   let img=document.getElementById('lbImg');
   if(img) return img;
@@ -9810,7 +9866,7 @@ function getLightboxImg(){
   img.loading='eager';
   img.decoding='async';
   img.fetchPriority='high';
-  img.alt='';
+  img.alt=currentLightboxAlt();
   wrap.appendChild(img);
   return img;
 }
@@ -9825,7 +9881,7 @@ function setLightboxPreviewSrc(rawUrl){
   imgEl.dataset._watched='1';
   imgEl.removeAttribute('srcset');
   imgEl.removeAttribute('sizes');
-  imgEl.alt='';
+  imgEl.alt=currentLightboxAlt();
   imgEl.classList.remove('is-loaded');
   imgEl.removeAttribute('src');
   if(lb){
@@ -9962,7 +10018,7 @@ function showLightboxImage(){
     imgEl.dataset._watched='1';
     imgEl.removeAttribute('srcset');
     imgEl.removeAttribute('sizes');
-    imgEl.alt='';
+    imgEl.alt=currentLightboxAlt();
     imgEl.classList.remove('is-loaded');
     imgEl.removeAttribute('src');
     if(lb){
@@ -11023,7 +11079,7 @@ function renderP(){
     const catObj=PRJ_CATS.find(c=>c.id===p.category);
     const catLabel=catObj?(lang==='th'?catObj.th:catObj.en):'';
     const focalPos=p.focal||'center center';
-    const imgHtml=p.imgs&&p.imgs[0]?`<img loading="${i<6?'eager':'lazy'}" decoding="async" style="object-position:${focalPos}" ${imgAttrs(p.imgs[0],'thumb','(max-width: 700px) 100vw, 480px')}>`:(type==='offering'?'🎁':'🎯');
+    const imgHtml=p.imgs&&p.imgs[0]?`<img loading="${i<6?'eager':'lazy'}" decoding="async" style="object-position:${focalPos}" ${imgAttrs(p.imgs[0],'thumb','(max-width: 700px) 100vw, 480px',photoAlt(p.name,0,1))}>`:(type==='offering'?'🎁':'🎯');
     let badgeHtml,footHtml;
     const tiers=Array.isArray(p.priceTiers)?p.priceTiers.filter(t=>t&&t.name):[];
     if(type==='offering'){
@@ -11087,6 +11143,7 @@ async function openProject(id){
   const sc={urgent:'s-urgent',active:'s-active',done:'s-done',soon:'s-soon',open:'s-open'};
   const imgs=p.imgs||[];
   window._lbImages=imgs;
+  window._lbAltName=p.name||'';
   const catObj=PRJ_CATS.find(c=>c.id===p.category);
   const catLabel=catObj?(lang==='th'?catObj.th:catObj.en):'';
 
@@ -11144,7 +11201,7 @@ async function openProject(id){
     ${imgs.length?`
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase">${lang==='th'?'รูปภาพ · คลิกเพื่อดูขนาดเต็ม':'Photos · click to view full size'}</div>
       <div class="variant-gallery">
-        ${imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','(max-width: 700px) 50vw, 260px')}></div>`).join('')}
+        ${imgs.map((img,i)=>`<div class="variant-photo" onclick="openLightbox(${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','(max-width: 700px) 50vw, 260px',photoAlt(p.name,i,imgs.length))}></div>`).join('')}
       </div>
     `:''}
     <div style="margin-top:22px">${contactBtnsHtml}</div>
@@ -11170,6 +11227,7 @@ async function openProd(type,id){
   if(type==='products'){ renderProductModal(item,id,s); return; }
 
   window._prodImages = item.imgs || [];
+  window._prodName = item.name || '';
   const icon=type==='amulets'?'📿':'⛓️';
   const status=item.status||'available';
   const statusBadge=status!=='available'?`<span class="status-pill ${status}" style="position:static;display:inline-block;margin-left:8px">${status.toUpperCase()}</span>`:'';
@@ -11210,10 +11268,10 @@ async function openProd(type,id){
     <div class="prod-detail">
       <div>
         <div class="prod-main-img" id="mImg">
-          ${item.imgs&&item.imgs[0]?`<img loading="lazy" decoding="async" ${imgAttrs(item.imgs[0],'medium','min(100vw, 520px)')}>`:`<span style="font-size:64px">${icon}</span>`}
+          ${item.imgs&&item.imgs[0]?`<img loading="lazy" decoding="async" ${imgAttrs(item.imgs[0],'medium','min(100vw, 520px)',photoAlt(item.name,0,item.imgs.length))}>`:`<span style="font-size:64px">${icon}</span>`}
           ${status==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:status==='reserved'?`<div class="status-overlay reserved"><span>RESERVED</span></div>`:''}
         </div>
-        ${item.imgs&&item.imgs.length>1?`<div class="prod-thumbs">${item.imgs.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImgIndex(this,${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','72px')}></div>`).join('')}</div>`:''}
+        ${item.imgs&&item.imgs.length>1?`<div class="prod-thumbs">${item.imgs.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImgIndex(this,${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','72px',photoAlt(item.name,i,item.imgs.length))}></div>`).join('')}</div>`:''}
       </div>
       <div class="prod-info">
         ${item.badge?`<span class="tag cbadge-gold" style="display:inline-block;margin-bottom:8px">${item.badge}</span>`:''}
@@ -11239,6 +11297,7 @@ async function openProd(type,id){
 let _prodVariantSelection=null;
 function renderProductModal(item,id,s){
   window._prodImages=[item.coverImg,...(item.gallery||[])].filter(Boolean);
+  window._prodName=item.name||'';
   _prodVariantSelection=null;
   const icon=PR_TYPE_ICON_FE[item.type]||'🏷️';
   const stockInfo=PR_STOCK_PILL_FE[item.stockStatus];
@@ -11304,10 +11363,10 @@ function renderProductModal(item,id,s){
     <div class="prod-detail">
       <div>
         <div class="prod-main-img" id="mImg">
-          ${cover?`<img loading="lazy" decoding="async" ${imgAttrs(cover,'medium','min(100vw, 520px)')}>`:`<span style="font-size:64px">${icon}</span>`}
+          ${cover?`<img loading="lazy" decoding="async" ${imgAttrs(cover,'medium','min(100vw, 520px)',photoAlt(item.name,0,window._prodImages.length))}>`:`<span style="font-size:64px">${icon}</span>`}
           ${stockInfo&&stockInfo.cls==='sold'?`<div class="status-overlay sold"><span>SOLD</span></div>`:''}
         </div>
-        ${window._prodImages.length>1?`<div class="prod-thumbs">${window._prodImages.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImgIndex(this,${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','72px')}></div>`).join('')}</div>`:''}
+        ${window._prodImages.length>1?`<div class="prod-thumbs">${window._prodImages.map((img,i)=>`<div class="prod-thumb ${i===0?'active':''}" onclick="swImgIndex(this,${i})"><img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','72px',photoAlt(item.name,i,window._prodImages.length))}></div>`).join('')}</div>`:''}
         ${item.video?`<div style="margin-top:10px"><a class="share-btn" href="${escapeHtml(item.video)}" target="_blank" rel="noopener">🎬 ${lang==='th'?'ดูวิดีโอ':'Watch video'}</a></div>`:''}
       </div>
       <div class="prod-info">
@@ -11352,7 +11411,7 @@ function swImgIndex(el,idx){
   if(!img) return;
   document.querySelectorAll('.prod-thumb').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" ${imgAttrs(img,'medium','min(100vw, 520px)')} style="width:100%;height:100%;object-fit:cover">`;
+  document.getElementById('mImg').innerHTML=`<img loading="lazy" decoding="async" ${imgAttrs(img,'medium','min(100vw, 520px)',photoAlt(window._prodName,idx,(window._prodImages||[]).length))} style="width:100%;height:100%;object-fit:cover">`;
 }
 function openModal(kind){
   const modal=document.getElementById('modal');
@@ -11456,7 +11515,7 @@ function rfRenderPreviews(){
   const wrap = document.getElementById('rfPreviews');
   wrap.innerHTML = rfImages.map((im,i) => im.status==='uploading'
     ? `<div class="rf-prev loading"><div class="rf-prev-spin"></div></div>`
-    : `<div class="rf-prev"><img src="${imageUrl(im.url,'thumb')}"><button class="rf-prev-del" onclick="rfRemoveImage(${i})">✕</button></div>`
+    : `<div class="rf-prev"><img src="${imageUrl(im.url,'thumb')}" alt="${escapeHtml(lang==='th'?`รูปที่คุณแนบ ${i+1}`:`Photo ${i+1} you attached`)}"><button class="rf-prev-del" onclick="rfRemoveImage(${i})" aria-label="${escapeHtml(lang==='th'?`ลบรูปที่ ${i+1}`:`Remove photo ${i+1}`)}">✕</button></div>`
   ).join('');
 }
 

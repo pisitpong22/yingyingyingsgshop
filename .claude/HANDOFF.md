@@ -178,10 +178,35 @@ a remaining violation. Place a real test order, watch DevTools Console for
 Note there is no `report-uri`, so violations only appear in each visitor's own
 console. Add a reporting endpoint if you want them collected.
 
-### 3. alt text — 26 of 40 `<img>` have it
+### 3. ~~alt text~~ — DONE
 
-Add an alt field to the admin's image upload so product photos get one.
-Matters for Google Image Search, which is a real channel for amulets.
+Every storefront image that carries meaning now gets an alt at render time.
+The only empty ones left are the shop avatar icons (decorative — the shop name
+sits right next to them, so `alt=""` is correct) and `#lbImg`, the lightbox's
+single reused `<img>`, which is filled the moment it opens.
+
+Two layers:
+
+1. **Per-image alt, typed by the owner.** The admin's image uploader
+   (`renderPrev()` in `admin.html` — one component behind *every* image field,
+   not just products) now shows an Alt text box under each photo, outlined red
+   while empty. It is stored on the image object itself: `{url, medium, thumb,
+   alt}`. A legacy plain-string URL is promoted to an object the first time an
+   alt is typed (`setImgAlt` / `withImgAlt`), and `captureImgs()` folds in an
+   alt typed while the file was still uploading.
+2. **Generated fallback** for the thousands of images that predate the field.
+   `imageAlt(img, fallback)` prefers the typed alt; `photoAlt(name, i, total)`
+   builds "Phra Somdej Wat Rakang — photo 2 of 5" from the product / casing
+   style / project / review it belongs to. Whitespace-collapsed and capped at
+   120 chars, because feed post titles are long and emoji-laden.
+
+`imgAttrs()` gained a 4th argument for the fallback and now always emits an
+`alt`, so any new call site gets one for free — pass the name.
+
+The Dashboard's **Needs attention** list gained a row counting product photos
+with no alt. While wiring it up: the existing "N products have no photo" check
+read `p.images` / `p.image`, fields no product has ever had (they are `coverImg`
+and `gallery`), so it could never fire. Fixed.
 
 ### 4. Split CSS/JS out of the HTML (~1 day)
 
