@@ -5588,8 +5588,16 @@ async function loadPendingReviews(){
   }
   listEl.innerHTML = _pendingReviews.map(rv => {
     const stars = rv.rating>0 ? '★'.repeat(rv.rating)+'☆'.repeat(5-rv.rating) : (lang==='th'?'ไม่ให้คะแนน':'No rating');
-    const who = rv.anonymous ? (lang==='th'?'ไม่ลงชื่อ':'Anonymous') : (rv.name||'—');
-    const imgs = (rv.imgs||[]).map(u=>`<img src="${imageUrl(u,'thumb')}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${imageUrl(u)}','_blank')">`).join('');
+    // Everything on a submission is attacker-controlled: the rules only check
+    // type and length. Escape before it touches innerHTML, and run URLs through
+    // safePreviewUrl so a crafted string cannot break out of src="…".
+    const who = escapeHtml(rv.anonymous ? (lang==='th'?'ไม่ลงชื่อ':'Anonymous') : (rv.name||'—'));
+    const imgs = (rv.imgs||[]).map(u=>{
+      const thumb = safePreviewUrl(u);
+      const full  = safePreviewUrl(imageUrl(u));
+      if(!thumb) return '';
+      return `<img src="${escapeAttr(thumb)}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer" data-full="${escapeAttr(full||thumb)}" onclick="window.open(this.dataset.full,'_blank','noopener')">`;
+    }).join('');
     return `
       <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--bg-soft,#fff)">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:start">
@@ -5646,10 +5654,11 @@ function loadReviewsList(){
   cont.innerHTML=`<table class="dtable">
     <thead><tr><th>${tr('rating')}</th><th>${tr('reviewerName')}</th><th>${tr('reviewText')}</th><th>${tr('reviewDate')}</th><th>${tr('actions')}</th></tr></thead>
     <tbody>${list.map(rv=>{
-      const realName = rv.name || '-';
-      const publicName = rv.anonymous
+      // Approved reviews are the same public text, just copied — escape here too.
+      const realName = escapeHtml(rv.name || '-');
+      const publicName = escapeHtml(rv.anonymous
         ? (lang==='th'?'ไม่ระบุชื่อ':'Anonymous')
-        : (rv.displayName || rv.name || '-');
+        : (rv.displayName || rv.name || '-'));
       const ratingDisplay = (rv.rating||0) > 0
         ? `<span style="color:#c9a84c;letter-spacing:1px">${stars(rv.rating)}</span>`
         : `<span style="color:var(--text-muted);font-size:11px">${lang==='th'?'ไม่มีคะแนน':'No rating'}</span>`;
@@ -5660,9 +5669,9 @@ function loadReviewsList(){
           <strong>${publicName}</strong>
           ${rv.anonymous?`<div style="font-size:10.5px;color:var(--text-muted);margin-top:2px">${lang==='th'?'(จริง: '+realName+')':'(real: '+realName+')'}</div>`:''}
           ${!rv.anonymous && rv.displayName && rv.displayName!==rv.name?`<div style="font-size:10.5px;color:var(--text-muted);margin-top:2px">${lang==='th'?'(จริง: '+realName+')':'(real: '+realName+')'}</div>`:''}
-          ${rv.location?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📍 ${rv.location}</div>`:''}
+          ${rv.location?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📍 ${escapeHtml(rv.location)}</div>`:''}
         </td>
-        <td style="max-width:340px"><div style="font-size:13px;color:var(--text-muted);line-height:1.5">${(rv.text||'').slice(0,140)}${rv.text&&rv.text.length>140?'…':''}</div>${rv.imgs&&rv.imgs.length?`<div style="font-size:11px;margin-top:4px">📷 ${rv.imgs.length}</div>`:''}</td>
+        <td style="max-width:340px"><div style="font-size:13px;color:var(--text-muted);line-height:1.5">${escapeHtml((rv.text||'').slice(0,140))}${rv.text&&rv.text.length>140?'…':''}</div>${rv.imgs&&rv.imgs.length?`<div style="font-size:11px;margin-top:4px">📷 ${rv.imgs.length}</div>`:''}</td>
         <td>${rv.date||'-'}</td>
         <td><button class="btn-edit" onclick="editReview(${rv.id})">${tr('edit')}</button> <button class="btn-del" onclick="deleteReview(${rv.id})">${tr('del')}</button></td>
       </tr>`;

@@ -8317,11 +8317,14 @@ function renderHomeReviews(){
     // Anonymous reviews show no name at all; named reviews show their name.
     const nameHtml = rv.anonymous
       ? ''
-      : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
+      : `<div class="rev-name">${escapeHtml(rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'))}</div>`;
     const imgsHtml = (rv.imgs && rv.imgs.length)
       ? `<div class="rev-imgs">${rv.imgs.slice(0,3).map((img,i,arr)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','120px',reviewPhotoAlt(rv,i,arr.length))} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`
       : '';
-    const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
+    // Reviews are written by the public. Never interpolate them raw — the
+    // submission rules only check type and length, not content. Line breaks
+    // are the only formatting a review is allowed to carry.
+    const textHtml = rv.text ? `<p class="rev-text">${escapeHtml(rv.text).replace(/\n/g, '<br>')}</p>` : '';
     return `
       <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
         <div class="rev-quote">"</div>
@@ -8331,9 +8334,9 @@ function renderHomeReviews(){
         <div class="rev-foot">
           <div>
             ${nameHtml}
-            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
+            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${escapeHtml(rv.location)}</div>`:''}
           </div>
-          ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
+          ${rv.date?`<div class="rev-date">${escapeHtml(rv.date)}</div>`:''}
         </div>
       </div>`;
   }).join('');
@@ -8460,9 +8463,12 @@ function renderReviews(){
     // Anonymous reviews show no name at all; named reviews show their name.
     const nameHtml = rv.anonymous
       ? ''
-      : `<div class="rev-name">${rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer')}</div>`;
+      : `<div class="rev-name">${escapeHtml(rv.displayName || rv.name || (lang==='th' ? 'ลูกค้า' : 'Customer'))}</div>`;
     const imgsHtml=(rv.imgs&&rv.imgs.length)?`<div class="rev-imgs">${rv.imgs.map((img,i,arr)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,'thumb','160px',reviewPhotoAlt(rv,i,arr.length))} onclick="openReviewLightbox(${rv.id},${i})">`).join('')}</div>`:'';
-    const textHtml = rv.text ? `<p class="rev-text">${rv.text}</p>` : '';
+    // Reviews are written by the public. Never interpolate them raw — the
+    // submission rules only check type and length, not content. Line breaks
+    // are the only formatting a review is allowed to carry.
+    const textHtml = rv.text ? `<p class="rev-text">${escapeHtml(rv.text).replace(/\n/g, '<br>')}</p>` : '';
     return `
       <div class="rev-card${rv.text ? '' : ' rev-card-imgonly'}">
         <div class="rev-quote">"</div>
@@ -8472,9 +8478,9 @@ function renderReviews(){
         <div class="rev-foot">
           <div>
             ${nameHtml}
-            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${rv.location}</div>`:''}
+            ${rv.location && !rv.anonymous?`<div class="rev-loc">📍 ${escapeHtml(rv.location)}</div>`:''}
           </div>
-          ${rv.date?`<div class="rev-date">${rv.date}</div>`:''}
+          ${rv.date?`<div class="rev-date">${escapeHtml(rv.date)}</div>`:''}
         </div>
       </div>`;
   }).join('');
