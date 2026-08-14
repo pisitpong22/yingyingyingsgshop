@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# The admin panel is behind a login, but there is no reason for it to appear
+# in search results at all.
+Disallow: /admin.html
+
+Sitemap: https://yingyingyingsgshop.web.app/sitemap.xml

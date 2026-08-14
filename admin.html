@@ -6,10 +6,12 @@
 <title>Admin — Yingyingying Amulet</title>
 <script>
   // Apply saved theme before first paint to avoid a dark/light flash.
+  // Light is the default (standard for content-management work — long editing
+  // sessions on a dark ground are tiring); dark is opt-in and remembered.
   (function(){
     try{
-      if(localStorage.getItem('yyy_admin_theme')==='light'){
-        document.documentElement.setAttribute('data-theme','light');
+      if(localStorage.getItem('yyy_admin_theme')==='dark'){
+        document.documentElement.setAttribute('data-theme','dark');
       }
     }catch(e){}
   })();
@@ -25,50 +27,111 @@
 <script type="module" src="firebase-shared.js?v=20260724a"></script>
 <style>
   /* ═══════════════════════════════════════════════════════════════
-     YINGYINGYINGSG ADMIN — Dark Premium Redesign 2026
-     Dark mode with gold accents — premium, clean, modern
+     YINGYINGYINGSG ADMIN — 2026 redesign
+
+     Light is the DEFAULT theme. This is a content-management tool that
+     gets used for long editing sessions, so it follows the convention
+     every mainstream admin (Shopify, WordPress, Stripe, Ghost) settled
+     on: a neutral near-white canvas, white cards, one accent colour.
+     The brand gold is kept — but demoted to an accent for primary
+     actions and the logo, instead of tinting every surface and every
+     line of text. Dark mode is opt-in and remembered per browser.
+
+     Token contract (used across the whole file — keep all of these
+     defined in BOTH themes or panels will render half-styled):
+       --bg / --surface / --surface-2 / --surface-3   grounds
+       --border / --border-strong                     lines
+       --text / --text-muted / --text-dim             type
+       --gold / --gold-light / --gold-dark / --on-gold accent
+       --red / --green / --blue / --amber             semantic
      ═══════════════════════════════════════════════════════════════ */
   :root{
-    --gold:#c9a84c;--gold-light:#e8c96a;--gold-dark:#a07820;
-    --bg:#0d0b08;--surface:#161210;--surface-2:#1e1a13;--surface-3:#26211a;
-    --border:rgba(201,168,76,0.15);--border-strong:rgba(201,168,76,0.28);
-    --text:#f0e8d8;--text-muted:#8a7a62;--text-dim:#5a4e3a;
-    --deep:#0d0b08;--cream:#f0e8d8;
-    --red:#e05050;--green:#4caf7a;--blue:#5a9be0;
-    --on-gold:#1a0f00;
+    /* Accent — bronze-gold. Dark enough to carry white text on a button
+       and to pass contrast as link text on white, unlike the bright
+       brand gold which is display-only. */
+    --gold:#8a6a1f;--gold-light:#a9822f;--gold-dark:#6d5316;
+    --on-gold:#ffffff;
+    /* Brand gold, for the logo mark and decorative fills only. */
+    --brand-gold:#c9a84c;
+    /* Bare channels so the ~90 `rgba(var(--accent-rgb), α)` tints spread
+       through this file follow the theme instead of being locked to the
+       bright brand gold (which turns every light surface yellow). */
+    --accent-rgb:138,106,31;
+
+    /* Grounds — neutral with a barely-there warm bias so the gold accent
+       sits on them without looking imported from another palette. */
+    --bg:#f6f6f4;--surface:#ffffff;--surface-2:#f2f2ef;--surface-3:#e8e8e4;
+
+    --border:#e2e2dd;--border-strong:#cfcfc8;
+
+    /* --text-dim is still small body copy (upload hints, "Hidden" pills), so
+       it has to clear 4.5:1 on --surface-2, not just look faint. */
+    --text:#1c1d1a;--text-muted:#5f6159;--text-dim:#6b6d65;
+
+    --deep:#1c1d1a;--cream:#ffffff;
+    --red:#b3261e;--green:#1a6f45;--blue:#28588f;--amber:#8a5a06;
+
+    /* Tinted backgrounds for status pills / callouts. */
+    --red-bg:#fbebea;--green-bg:#e8f3ec;--blue-bg:#e9f0f7;--amber-bg:#fbf1df;
+    --accent-bg:#f7f1e2;
+
+    --bar-bg:rgba(255,255,255,.95);
+    --shadow-sm:0 1px 2px rgba(20,22,18,.06);
+    --shadow-md:0 2px 8px rgba(20,22,18,.08);
+    --shadow-lg:0 12px 32px rgba(20,22,18,.14);
   }
-  :root[data-theme="light"]{
-    --gold:#a9822f;--gold-light:#c9a84c;--gold-dark:#8a6a1f;
-    --bg:#faf7f0;--surface:#ffffff;--surface-2:#f6f1e4;--surface-3:#ede4cf;
-    --border:rgba(160,120,32,0.18);--border-strong:rgba(160,120,32,0.34);
-    --text:#2a2018;--text-muted:#7a6a52;--text-dim:#a89878;
+  :root[data-theme="dark"]{
+    --gold:#c9a84c;--gold-light:#e8c96a;--gold-dark:#a07820;
+    --on-gold:#1a0f00;
+    --brand-gold:#c9a84c;
+    --accent-rgb:201,168,76;
+
+    --bg:#0d0b08;--surface:#161210;--surface-2:#1e1a13;--surface-3:#26211a;
+
+    --border:rgba(var(--accent-rgb),0.15);--border-strong:rgba(var(--accent-rgb),0.28);
+
+    /* Muted tones lifted from the old values — the originals sat around
+       2–3:1 against the dark ground, under the 4.5:1 AA threshold. */
+    --text:#f0e8d8;--text-muted:#a89a80;--text-dim:#9a8b70;
+
+    --deep:#0d0b08;--cream:#f0e8d8;
+    --red:#e88b84;--green:#6cc496;--blue:#7db2ea;--amber:#dda850;
+
+    --red-bg:rgba(232,139,132,.12);--green-bg:rgba(108,196,150,.12);
+    --blue-bg:rgba(125,178,234,.12);--amber-bg:rgba(221,168,80,.12);
+    --accent-bg:rgba(var(--accent-rgb),.12);
+
+    --bar-bg:rgba(13,11,8,.95);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 2px 10px rgba(0,0,0,.5);
+    --shadow-lg:0 20px 50px rgba(0,0,0,.6);
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
   body.th,body.th *{font-family:'Sarabun','Inter',sans-serif !important}
   ::-webkit-scrollbar{width:5px;height:5px}
   ::-webkit-scrollbar-track{background:var(--surface)}
-  ::-webkit-scrollbar-thumb{background:rgba(201,168,76,.3);border-radius:3px}
-  ::-webkit-scrollbar-thumb:hover{background:rgba(201,168,76,.5)}
+  ::-webkit-scrollbar-thumb{background:rgba(var(--accent-rgb),.3);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(var(--accent-rgb),.5)}
 
   /* ── LOGIN ── */
-  .lb{background:transparent;border:1px solid rgba(201,168,76,.25);color:var(--text-muted);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+  .lb{background:transparent;border:1px solid rgba(var(--accent-rgb),.25);color:var(--text-muted);padding:5px 12px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
   .lb.active{background:var(--gold);color:var(--on-gold)}
-  .lb:hover:not(.active){color:var(--gold-light);border-color:rgba(201,168,76,.5)}
+  .lb:hover:not(.active){color:var(--gold-light);border-color:rgba(var(--accent-rgb),.5)}
   .login-lang{position:absolute;top:20px;right:24px}
   .lang-sw{display:flex;gap:6px}
   #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);position:relative}
-  .login-box{background:var(--surface);border:1px solid var(--border-strong);border-radius:20px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(201,168,76,.08)}
+  .login-box{background:var(--surface);border:1px solid var(--border-strong);border-radius:20px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(var(--accent-rgb),.08)}
   .login-icon{font-size:40px;margin-bottom:14px;text-align:center}
   .login-title{font-family:'Noto Serif',serif;font-size:22px;font-weight:700;color:var(--gold-light);margin-bottom:6px;text-align:center}
   .login-sub{color:var(--text-muted);font-size:13px;margin-bottom:30px;text-align:center;line-height:1.5}
   .login-group{margin-bottom:16px}
   .login-label{display:block;font-size:12.5px;font-weight:600;color:var(--text-muted);margin-bottom:6px;letter-spacing:.3px}
   .login-input{width:100%;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text);font-family:inherit;transition:all .2s}
-  .login-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+  .login-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12)}
   .login-input::placeholder{color:var(--text-dim)}
-  .login-btn{width:100%;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;font-family:inherit;box-shadow:0 4px 16px rgba(201,168,76,.3)}
-  .login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(201,168,76,.4)}
+  .login-btn{width:100%;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;font-family:inherit;box-shadow:0 4px 16px rgba(var(--accent-rgb),.3)}
+  .login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(var(--accent-rgb),.4)}
   .login-err{color:var(--red);font-size:13px;font-weight:500;display:none;margin-bottom:10px;text-align:center;padding:10px;background:rgba(224,80,80,.1);border-radius:8px;border:1px solid rgba(224,80,80,.2)}
   .login-err.show{display:block}
   .login-hint{color:var(--text-dim);font-size:11.5px;margin-top:16px;text-align:center;line-height:1.5}
@@ -78,29 +141,33 @@
   #adminScreen{display:none;flex-direction:column;min-height:100vh}
   #adminScreen.show{display:flex}
   .admin-top{
-    background:rgba(13,11,8,.92);
-    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    background:var(--surface);
     border-bottom:1px solid var(--border);
     display:flex;align-items:center;justify-content:space-between;
     padding:0 20px;height:58px;
     position:sticky;top:0;z-index:100;
     gap:12px;flex-shrink:0;
   }
+  .admin-logo-text{color:var(--text)}
+  #roleBadge{color:var(--on-gold)}
   .admin-logo{display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0;text-decoration:none}
-  .admin-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--gold-light),var(--gold));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex-shrink:0;box-shadow:0 3px 10px rgba(201,168,76,.3)}
+  .admin-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--gold-light),var(--gold));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;overflow:hidden;flex-shrink:0;box-shadow:0 3px 10px rgba(var(--accent-rgb),.3)}
   .admin-logo-icon img{width:100%;height:100%;object-fit:cover}
   .admin-logo-text{font-family:'Noto Serif',serif;color:var(--gold-light);font-size:15px;font-weight:700;white-space:nowrap}
-  .admin-badge{background:rgba(201,168,76,.12);color:var(--gold);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid rgba(201,168,76,.25);letter-spacing:.5px;flex-shrink:0}
+  .admin-badge{background:rgba(var(--accent-rgb),.12);color:var(--gold);font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid rgba(var(--accent-rgb),.25);letter-spacing:.5px;flex-shrink:0}
   .top-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
   #adminUser{color:var(--text-muted);font-size:12.5px;font-weight:500}
   #roleBadge{color:#fff;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:8px;letter-spacing:.3px;background:var(--gold-dark)}
   .lang-sw{display:flex;gap:5px}
-  .view-btn{background:transparent;border:1px solid var(--border-strong);color:var(--gold-light);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap}
-  .view-btn:hover{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.4)}
-  .live-btn{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 3px 10px rgba(201,168,76,.25)}
+  .view-btn{background:transparent;border:1px solid var(--border-strong);color:var(--gold-dark);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap}
+  .view-btn:hover{background:rgba(var(--accent-rgb),.1);border-color:rgba(var(--accent-rgb),.4)}
+  :root[data-theme="dark"] .view-btn{color:var(--gold-light)}
+  .view-btn:focus-visible,.live-btn:focus-visible,.logout-btn:focus-visible,
+  .theme-toggle-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .live-btn{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 3px 10px rgba(var(--accent-rgb),.25)}
   .theme-toggle-btn{background:transparent;border:1px solid var(--border-strong);color:var(--gold-light);width:34px;height:34px;border-radius:8px;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
-  .theme-toggle-btn:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
-  .live-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(201,168,76,.35)}
+  .theme-toggle-btn:hover{background:rgba(var(--accent-rgb),.1);border-color:var(--gold)}
+  .live-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(var(--accent-rgb),.35)}
   .logout-btn{background:transparent;border:1px solid rgba(224,80,80,.3);color:var(--red);padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
   .logout-btn:hover{background:rgba(224,80,80,.1)}
 
@@ -114,25 +181,119 @@
     overflow-y:auto;
   }
   .sidebar-label{
-    color:rgba(201,168,76,.45);font-size:9.5px;letter-spacing:2.5px;
-    padding:16px 18px 7px;font-weight:800;text-transform:uppercase;
+    color:var(--text-dim);font-size:10px;letter-spacing:.14em;
+    padding:18px 18px 6px;font-weight:700;text-transform:uppercase;
   }
   .side-item{
-    display:flex;align-items:center;gap:10px;
-    padding:9px 12px;margin:1px 10px;
+    display:flex;align-items:center;gap:9px;
+    padding:8px 12px;margin:1px 10px;
     color:var(--text-muted);cursor:pointer;font-size:13.5px;font-weight:500;
-    transition:all .18s;border:none;border-radius:8px;position:relative;
+    transition:background .15s,color .15s;border:none;border-radius:7px;position:relative;
   }
-  .side-item:hover{background:rgba(201,168,76,.07);color:var(--text)}
+  .side-item:hover{background:var(--surface-2);color:var(--text)}
   .side-item.active{
-    background:rgba(201,168,76,.12);color:var(--gold-light);font-weight:600;
-    box-shadow:inset 0 1px 0 rgba(201,168,76,.08);
+    background:var(--accent-bg);color:var(--gold);font-weight:600;
   }
   .side-item.active::before{
-    content:'';position:absolute;left:-10px;top:20%;bottom:20%;width:3px;
-    background:linear-gradient(180deg,var(--gold-light),var(--gold));border-radius:0 2px 2px 0;
+    content:'';position:absolute;left:-10px;top:6px;bottom:6px;width:3px;
+    background:var(--gold);border-radius:0 2px 2px 0;
   }
+  .side-item:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   .side-div{height:1px;background:var(--border);margin:10px 18px}
+
+  /* Count badge on catalog items — tells you there's something in there
+     without having to open it. Populated by refreshSidebarCounts(). */
+  .side-count{
+    margin-left:auto;font-size:11px;font-weight:600;
+    color:var(--text-dim);background:var(--surface-2);
+    padding:1px 7px;border-radius:20px;min-width:20px;text-align:center;
+    font-variant-numeric:tabular-nums;
+  }
+  .side-item.active .side-count{background:var(--surface);color:var(--gold)}
+
+  /* ── SIDEBAR SEARCH ──
+     The single biggest fix for "I can't find where to change this":
+     ~25 editor screens with no way to search them. Filters the nav live,
+     and Enter opens the first match. ⌘K / Ctrl-K focuses it from anywhere. */
+  .side-search-wrap{padding:12px 12px 6px;position:relative}
+  .side-search{
+    width:100%;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:7px;padding:7px 10px 7px 30px;
+    font-size:13px;color:var(--text);font-family:inherit;
+  }
+  .side-search::placeholder{color:var(--text-dim)}
+  .side-search:focus{
+    outline:none;border-color:var(--gold);background:var(--surface);
+    box-shadow:0 0 0 3px rgba(var(--accent-rgb),.14);
+  }
+  .side-search-icon{
+    position:absolute;left:22px;top:50%;transform:translateY(-50%);
+    font-size:12px;color:var(--text-dim);pointer-events:none;
+  }
+  .side-search-kbd{
+    position:absolute;right:22px;top:50%;transform:translateY(-50%);
+    font-size:10.5px;color:var(--text-dim);pointer-events:none;
+    border:1px solid var(--border);border-radius:4px;padding:1px 5px;
+    background:var(--surface);font-family:ui-monospace,Menlo,monospace;
+  }
+  .side-search:focus ~ .side-search-kbd{display:none}
+  /* Hidden by the filter; `.side-div` and labels collapse too so the list
+     doesn't end up with orphaned group headers over nothing. */
+  .side-item.filtered-out,.sidebar-label.filtered-out,.side-div.filtered-out{display:none}
+  .side-noresult{
+    display:none;padding:14px 18px;color:var(--text-dim);font-size:12.5px;line-height:1.5;
+  }
+  .sidebar.no-results .side-noresult{display:block}
+
+  /* ── STATUS PILLS ──
+     State needs to read at a glance, not require reading a word — so each
+     pill carries a colour AND a label. Semantic colours are deliberately
+     separate from the gold accent. */
+  .pill{
+    display:inline-flex;align-items:center;gap:4px;
+    font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+    padding:2px 8px;border-radius:20px;white-space:nowrap;border:1px solid transparent;
+  }
+  .pill-on{background:var(--green-bg);color:var(--green);border-color:currentColor}
+  .pill-off{background:var(--surface-2);color:var(--text-dim);border-color:var(--border-strong)}
+  .pill-neutral{background:var(--blue-bg);color:var(--blue);border-color:currentColor}
+  .pill-warn{background:var(--amber-bg);color:var(--amber);border-color:currentColor}
+  .pill-on::before{content:'●';font-size:8px}
+  .pill-off::before{content:'○';font-size:8px}
+
+  /* ── PAGES HUB ──
+     A row list, not a card grid: rows scan vertically, let each page carry a
+     variable number of shortcut buttons, and stay readable on a phone. */
+  .page-rows{
+    display:flex;flex-direction:column;
+    border:1px solid var(--border);border-radius:12px;
+    overflow:hidden;background:var(--surface);margin-top:6px;
+  }
+  .page-row{
+    display:flex;gap:14px;padding:16px 18px;
+    border-bottom:1px solid var(--border);
+  }
+  .page-row:last-child{border-bottom:none}
+  .page-row:hover{background:var(--surface-2)}
+  .page-row-icon{font-size:22px;line-height:1.3;flex-shrink:0}
+  .page-row-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}
+  .page-row-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .page-row-title{font-size:14.5px;font-weight:650;color:var(--text)}
+  .page-row-desc{font-size:12.5px;color:var(--text-muted);line-height:1.5}
+  .page-row-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+  .page-act{
+    background:var(--surface);border:1px solid var(--border-strong);
+    color:var(--text);border-radius:7px;padding:5px 11px;
+    font-size:12.5px;font-weight:550;cursor:pointer;font-family:inherit;
+    transition:border-color .15s,background .15s,color .15s;
+  }
+  .page-act:hover{border-color:var(--gold);color:var(--gold);background:var(--accent-bg)}
+  .page-act:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+  @media(max-width:560px){
+    .page-row{padding:14px}
+    .page-row-icon{font-size:19px}
+    .page-act{padding:6px 10px}
+  }
 
   /* ── MAIN CONTENT ── */
   .main{padding:28px 32px;background:transparent;overflow-y:auto;max-width:100%}
@@ -172,16 +333,43 @@
   .dash-link{font-size:12px;color:var(--gold);cursor:pointer;font-weight:600;margin-top:12px;display:inline-flex;align-items:center;gap:4px;padding-top:12px;border-top:1px solid var(--border)}
   .dash-link:hover{color:var(--gold-light)}
 
-  .quick-edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:20px 0 28px}
-  .quick-edit-card{
-    background:var(--surface-2);border:1px solid var(--border);border-radius:13px;
-    padding:16px;text-align:left;cursor:pointer;transition:all .18s;color:var(--text);
-    font:inherit;
+  /* ── NEEDS ATTENTION ──
+     Severity is carried by a coloured dot AND the wording, never by colour
+     alone. Rows are quiet by default so a clear list reads as calm. */
+  .na-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  .na-row{
+    display:flex;align-items:center;gap:11px;
+    background:var(--surface-2);border:1px solid var(--border);
+    border-radius:9px;padding:11px 14px;
   }
-  .quick-edit-card:hover{transform:translateY(-2px);border-color:var(--border-strong);background:var(--surface-3);box-shadow:0 6px 20px rgba(0,0,0,.2)}
-  .quick-edit-icon{width:36px;height:36px;border-radius:10px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px}
-  .quick-edit-title{display:block;font-weight:700;font-size:13.5px;margin-bottom:3px;color:var(--text)}
-  .quick-edit-sub{display:block;font-size:12px;color:var(--text-muted);line-height:1.45}
+  .na-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .na-crit .na-dot{background:var(--red)}
+  .na-warn .na-dot{background:var(--amber)}
+  .na-crit{border-color:var(--red);background:var(--red-bg)}
+  .na-text{flex:1;font-size:13.5px;color:var(--text);line-height:1.5;min-width:0}
+  .na-act{
+    background:var(--surface);border:1px solid var(--border-strong);color:var(--text);
+    border-radius:7px;padding:5px 11px;font-size:12.5px;font-weight:600;
+    cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;
+    transition:border-color .15s,color .15s;
+  }
+  .na-act:hover{border-color:var(--gold);color:var(--gold)}
+  .na-act:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+  .na-clear{
+    display:flex;align-items:flex-start;gap:12px;margin-top:14px;
+    background:var(--green-bg);border:1px solid var(--green);
+    border-radius:9px;padding:14px 16px;color:var(--text);
+  }
+  .na-clear-icon{
+    color:var(--green);font-size:15px;font-weight:800;flex-shrink:0;
+    width:22px;height:22px;border-radius:50%;border:1.5px solid var(--green);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .na-clear-sub{font-size:12.5px;color:var(--text-muted);line-height:1.5;margin-top:2px}
+  @media(max-width:560px){
+    .na-row{flex-wrap:wrap}
+    .na-act{margin-left:19px}
+  }
 
   /* ── FORM ELEMENTS ── */
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -193,7 +381,7 @@
     background:var(--surface-2);border:1px solid var(--border-strong);border-radius:8px;
     padding:10px 13px;font-size:13.5px;color:var(--text);transition:all .2s;width:100%;font-family:inherit;
   }
-  .fi:focus,.fta:focus,.fsel:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+  .fi:focus,.fta:focus,.fsel:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.12)}
   .fi::placeholder,.fta::placeholder{color:var(--text-dim)}
   .fsel option{background:var(--surface-2);color:var(--text)}
   .fta{resize:vertical;min-height:90px}
@@ -209,12 +397,12 @@
   .fc-chevron.open{transform:rotate(90deg)}
   .fc-body{margin-top:16px}
   .form-section-desc{color:var(--text-muted);font-size:12.5px;margin-bottom:14px;line-height:1.6}
-  .page-intro-card{border-color:var(--border-strong);background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(201,168,76,.02))}
+  .page-intro-card{border-color:var(--border-strong);background:linear-gradient(135deg,rgba(var(--accent-rgb),.06),rgba(var(--accent-rgb),.02))}
   .page-intro-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
   .page-intro-kicker{font-size:10.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
   .page-intro-title{font-size:16px;font-weight:800;color:var(--text);line-height:1.25}
   .page-intro-text{font-size:12.5px;color:var(--text-muted);line-height:1.55;margin-top:4px;max-width:680px}
-  .page-intro-badge{flex-shrink:0;background:rgba(201,168,76,.14);color:var(--gold);border:1px solid var(--border-strong);border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:700}
+  .page-intro-badge{flex-shrink:0;background:rgba(var(--accent-rgb),.14);color:var(--gold);border:1px solid var(--border-strong);border-radius:999px;padding:4px 10px;font-size:10.5px;font-weight:700}
 
   /* ── TABS ── */
   .tab-bar{
@@ -228,8 +416,15 @@
     padding:9px 16px;font-size:13px;font-weight:600;color:var(--text-muted);
     cursor:pointer;border-radius:9px;white-space:nowrap;transition:all .18s;font-family:inherit;
   }
-  .tab-btn:hover{color:var(--text);background:rgba(201,168,76,.07)}
-  .tab-btn.active{background:var(--surface-3);color:var(--gold-light);box-shadow:0 2px 6px rgba(0,0,0,.2)}
+  .tab-btn:hover{color:var(--text);background:rgba(var(--accent-rgb),.07)}
+  /* The active tab sits on --surface-3, so it needs the darkest accent to
+     clear 4.5:1 — --gold-light only managed 2.9:1 there. */
+  .tab-btn.active{
+    background:var(--surface);color:var(--gold-dark);font-weight:700;
+    box-shadow:var(--shadow-sm);
+  }
+  :root[data-theme="dark"] .tab-btn.active{background:var(--surface-3);color:var(--gold-light)}
+  .tab-btn:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
   body.th .tab-btn{font-family:'Sarabun',sans-serif !important}
   .tab-content{display:none;animation:fadeUp .2s ease}
   .tab-content.active{display:block}
@@ -241,25 +436,25 @@
   .btn-gold{
     background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);
     padding:10px 20px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;
-    transition:all .18s;box-shadow:0 3px 12px rgba(201,168,76,.25);
+    transition:all .18s;box-shadow:0 3px 12px rgba(var(--accent-rgb),.25);
     display:inline-flex;align-items:center;gap:7px;font-family:inherit;
   }
-  .btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,168,76,.35)}
+  .btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(var(--accent-rgb),.35)}
   .btn-gold:active{transform:translateY(0)}
   .btn-ol{background:transparent;color:var(--text-muted);padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;border:1px solid var(--border-strong);transition:all .18s;font-family:inherit}
   .btn-ol:hover{border-color:var(--gold);color:var(--gold-light)}
   .btn-del{background:transparent;color:var(--red);border:1px solid rgba(224,80,80,.35);padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;font-family:inherit}
   .btn-del:hover{background:rgba(224,80,80,.12);border-color:var(--red)}
   .btn-edit{background:transparent;color:var(--gold);border:1px solid var(--border-strong);padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;font-family:inherit}
-  .btn-edit:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
+  .btn-edit:hover{background:rgba(var(--accent-rgb),.1);border-color:var(--gold)}
   .btn-sm{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--on-gold);border:none;padding:7px 14px;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
-  .btn-add{background:transparent;color:var(--gold);border:1.5px dashed rgba(201,168,76,.4);padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;margin-top:10px;font-family:inherit}
-  .btn-add:hover{background:rgba(201,168,76,.07);border-color:var(--gold);border-style:solid}
+  .btn-add{background:transparent;color:var(--gold);border:1.5px dashed rgba(var(--accent-rgb),.4);padding:10px 18px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;margin-top:10px;font-family:inherit}
+  .btn-add:hover{background:rgba(var(--accent-rgb),.07);border-color:var(--gold);border-style:solid}
 
   /* ── SAVE BAR ── */
   .save-bar{
     position:sticky;bottom:0;
-    background:rgba(13,11,8,.95);
+    background:var(--bar-bg);
     backdrop-filter:blur(12px);
     border-top:1px solid var(--border);
     margin:0 -32px -28px;padding:12px 32px;
@@ -268,18 +463,18 @@
 
   /* ── UPLOAD ZONE ── */
   .upload-zone{
-    border:1.5px dashed rgba(201,168,76,.3);border-radius:12px;padding:28px 20px;
+    border:1.5px dashed rgba(var(--accent-rgb),.3);border-radius:12px;padding:28px 20px;
     text-align:center;cursor:pointer;transition:all .2s;
     background:var(--surface-2);position:relative;
   }
-  .upload-zone:hover,.upload-zone.dov{border-color:var(--gold);background:rgba(201,168,76,.04);box-shadow:0 0 0 3px rgba(201,168,76,.08)}
+  .upload-zone:hover,.upload-zone.dov{border-color:var(--gold);background:rgba(var(--accent-rgb),.04);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.08)}
   .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
   .u-icon{font-size:28px;margin-bottom:6px}
   .u-text{color:var(--text-muted);font-size:13.5px}
   .u-hint{color:var(--text-dim);font-size:11.5px;margin-top:3px}
 
   /* ── PROJECT THUMBNAIL FOCAL POINT (drag-to-pan) ── */
-  .prj-focus{display:none;margin-top:10px;padding:14px;border:1px solid var(--border);border-radius:12px;background:rgba(201,168,76,.04)}
+  .prj-focus{display:none;margin-top:10px;padding:14px;border:1px solid var(--border);border-radius:12px;background:rgba(var(--accent-rgb),.04)}
   .prj-focus.active{display:grid;grid-template-columns:minmax(200px,300px) 1fr;gap:16px;align-items:center}
   .prj-focus-preview{position:relative;border-radius:10px;overflow:hidden;background:var(--surface-3);border:1px solid var(--border);transition:aspect-ratio .25s ease}
   .prj-focus-preview[data-size="normal"]{aspect-ratio:4/3}
@@ -301,27 +496,27 @@
     display:inline-flex;flex-direction:column;
   }
   .prev-item:hover{border-color:var(--border-strong);transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.3)}
-  .prev-item.is-primary{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.2)}
+  .prev-item.is-primary{border-color:var(--gold);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.2)}
   .prev-item.is-uploading,.prev-item.is-error{flex-direction:row;align-items:center;gap:10px;padding:10px 14px 10px 10px;width:auto;min-width:240px}
-  .prev-item.is-uploading{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.04)}
+  .prev-item.is-uploading{border-color:rgba(var(--accent-rgb),.4);background:rgba(var(--accent-rgb),.04)}
   .prev-item.is-error{border-color:rgba(224,80,80,.4);background:rgba(224,80,80,.05)}
   .pi-thumb{background:var(--surface-3);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:0;width:auto;max-width:280px;flex-shrink:0}
   .pi-thumb img{display:block;width:auto !important;height:auto !important;max-width:280px;max-height:160px;object-fit:contain !important;border-radius:8px}
   .prev-item.is-uploading .pi-thumb,.prev-item.is-error .pi-thumb{width:44px;height:44px;max-width:44px;max-height:44px;border-radius:6px}
   .pi-thumb-loading,.pi-thumb-error{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px}
-  .pi-thumb-loading{background:rgba(201,168,76,.1)}
+  .pi-thumb-loading{background:rgba(var(--accent-rgb),.1)}
   .pi-thumb-error{background:rgba(224,80,80,.1)}
-  .pi-spinner{width:20px;height:20px;border:2.5px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:piSpin .8s linear infinite}
+  .pi-spinner{width:20px;height:20px;border:2.5px solid rgba(var(--accent-rgb),.2);border-top-color:var(--gold);border-radius:50%;animation:piSpin .8s linear infinite}
   @keyframes piSpin{to{transform:rotate(360deg)}}
   .pi-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding-right:20px}
   .pi-name{font-size:13px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pi-meta{font-size:11.5px;color:var(--text-muted)}
   .pi-status{color:var(--gold);font-weight:600}
   .pi-error-text{color:var(--red);font-weight:600}
-  .pi-bar{height:4px;background:rgba(201,168,76,.1);border-radius:3px;overflow:hidden;margin-top:5px}
+  .pi-bar{height:4px;background:rgba(var(--accent-rgb),.1);border-radius:3px;overflow:hidden;margin-top:5px}
   .pi-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-light),var(--gold));border-radius:3px;transition:width .3s ease-out}
   .pi-badge{position:absolute;top:6px;left:6px;background:var(--gold);color:var(--on-gold);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.4px;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none;line-height:1.3;z-index:2}
-  .pi-drag-handle{position:absolute;top:5px;left:5px;width:26px;height:26px;background:rgba(13,11,8,.8);border:1px solid rgba(201,168,76,.3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:var(--gold-light);cursor:grab;z-index:3;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:background .15s;user-select:none}
+  .pi-drag-handle{position:absolute;top:5px;left:5px;width:26px;height:26px;background:rgba(13,11,8,.8);border:1px solid rgba(var(--accent-rgb),.3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;color:var(--gold-light);cursor:grab;z-index:3;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:background .15s;user-select:none}
   .pi-drag-handle:active{cursor:grabbing;background:rgba(30,26,19,.9)}
   .prev-item.dragging{opacity:.4;outline:2px dashed var(--gold);outline-offset:2px}
   .prev-item.drag-over{outline:2px solid var(--gold);outline-offset:3px}
@@ -331,10 +526,10 @@
 
   /* ── RICH TEXT EDITOR ── */
   .rte-wrap{border:1.5px solid var(--border-strong);border-radius:9px;background:var(--surface-2);overflow:visible;transition:border-color .15s}
-  .rte-wrap:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.1)}
+  .rte-wrap:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1)}
   .rte-toolbar{display:flex;align-items:center;gap:2px;padding:6px 8px;background:var(--surface-3);border-bottom:1px solid var(--border);border-radius:9px 9px 0 0;flex-wrap:wrap}
   .rte-btn{background:transparent;border:none;color:var(--text);width:30px;height:28px;border-radius:5px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;transition:background .15s;font-family:inherit;padding:0}
-  .rte-btn:hover{background:rgba(201,168,76,.15)}
+  .rte-btn:hover{background:rgba(var(--accent-rgb),.15)}
   .rte-btn.active{background:var(--gold);color:var(--on-gold)}
   .rte-sep{width:1px;height:18px;background:var(--border);margin:0 4px}
   .rte-color-picker{position:relative}
@@ -359,7 +554,7 @@
   .dtable th{background:var(--surface-3);color:var(--gold-light);padding:11px 14px;text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
   .dtable td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:middle;color:var(--text)}
   .dtable tr:last-child td{border-bottom:none}
-  .dtable tr:hover td{background:rgba(201,168,76,.04)}
+  .dtable tr:hover td{background:rgba(var(--accent-rgb),.04)}
   .dtable tr.dragging td{opacity:.42}
   .dtable tr.drag-over-top td{border-top:2px solid var(--gold)}
   .dtable tr.drag-over-bottom td{border-bottom:2px solid var(--gold)}
@@ -370,7 +565,7 @@
   .variant-order-num{font-size:11px;color:var(--text-muted);font-weight:700;min-width:22px}
   .thumb{width:42px;height:42px;border-radius:6px;object-fit:cover}
   .no-img{width:42px;height:42px;border-radius:6px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;font-size:18px}
-  .tag{background:rgba(201,168,76,.1);color:var(--gold);font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--border-strong);font-weight:500}
+  .tag{background:rgba(var(--accent-rgb),.1);color:var(--gold);font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--border-strong);font-weight:500}
   .row-actions{display:flex;gap:6px;flex-wrap:wrap}
 
   /* ── CASING STYLE VIEW — premium card redesign ─────────────────────────── */
@@ -392,7 +587,7 @@
   .cv-action-icon{
     width:38px;height:38px;flex-shrink:0;border-radius:11px;
     display:flex;align-items:center;justify-content:center;font-size:17px;
-    background:rgba(201,168,76,.1);border:1px solid var(--border-strong);
+    background:rgba(var(--accent-rgb),.1);border:1px solid var(--border-strong);
   }
   .cv-action-text{display:flex;flex-direction:column;gap:1px;overflow:hidden}
   .cv-action-text strong{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -468,7 +663,7 @@
   .vc-side{grid-area:side;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
   .vc-photos{
     font-size:11px;font-weight:600;color:var(--gold);white-space:nowrap;
-    padding:4px 10px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(201,168,76,.06);
+    padding:4px 10px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(var(--accent-rgb),.06);
   }
   .vc-actions{display:flex;gap:6px}
   .vc-btn{
@@ -477,7 +672,7 @@
   }
   .vc-btn:active{transform:scale(.9)}
   .vc-btn-edit{border:1px solid var(--border-strong);color:var(--gold)}
-  .vc-btn-edit:hover{background:rgba(201,168,76,.1)}
+  .vc-btn-edit:hover{background:rgba(var(--accent-rgb),.1)}
   .vc-btn-del{border:1px solid rgba(255,91,91,.35);color:#ff5b5b}
   .vc-btn-del:hover{background:rgba(255,91,91,.1)}
 
@@ -517,7 +712,7 @@
   .ho-grip{font-size:17px;color:var(--text-dim);cursor:grab;padding:4px 2px}
   .ho-name{font-size:12px;color:var(--text-dim);font-weight:600;letter-spacing:.5px;text-transform:uppercase;min-width:80px}
   .ho-label{flex:1;min-width:0;font-weight:600;color:var(--text);font-size:14px}
-  .ho-pos{font-size:11px;color:var(--text-muted);background:rgba(201,168,76,.1);padding:2px 8px;border-radius:16px;font-weight:600}
+  .ho-pos{font-size:11px;color:var(--text-muted);background:rgba(var(--accent-rgb),.1);padding:2px 8px;border-radius:16px;font-weight:600}
   .ho-arrow-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
   .ho-arrow-btn:hover:not(:disabled){background:var(--gold);color:var(--on-gold);border-color:var(--gold)}
   .ho-arrow-btn:disabled{opacity:.3;cursor:not-allowed}
@@ -565,7 +760,7 @@
   /* ── FONT PICKER ── */
   .font-card{background:var(--surface-2);border:2px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
   .font-card:hover{border-color:var(--border-strong);transform:translateY(-1px)}
-  .font-card.active{border-color:var(--gold);background:rgba(201,168,76,.06);box-shadow:0 0 0 2px rgba(201,168,76,.15)}
+  .font-card.active{border-color:var(--gold);background:rgba(var(--accent-rgb),.06);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.15)}
   .font-card.active::after{content:'✓';position:absolute;top:8px;right:10px;color:var(--gold);font-size:17px;font-weight:700}
   .font-card-preview{font-size:28px;font-weight:700;color:var(--text);line-height:1.1;margin-bottom:5px;word-break:break-word}
   .font-card-name{font-size:10.5px;color:var(--text-muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;font-family:'Inter',sans-serif}
@@ -577,7 +772,7 @@
   .material-opt input{position:absolute;opacity:0;pointer-events:none}
   .material-opt-body{background:var(--surface-2);border:2px solid var(--border);border-radius:11px;padding:12px;transition:all .2s;height:100%;text-align:center}
   .material-opt:hover .material-opt-body{border-color:var(--border-strong);transform:translateY(-1px)}
-  .material-opt input:checked + .material-opt-body{border-color:var(--gold);background:rgba(201,168,76,.07);box-shadow:0 0 0 2px rgba(201,168,76,.15)}
+  .material-opt input:checked + .material-opt-body{border-color:var(--gold);background:rgba(var(--accent-rgb),.07);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.15)}
   .material-opt-swatch{width:54px;height:54px;border-radius:50%;background:var(--swatch,#888);margin:2px auto 8px;box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 2px 6px rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.08)}
   .material-opt-name{font-weight:700;font-size:12.5px;margin-bottom:2px;color:var(--text)}
   .material-opt-desc{font-size:10.5px;color:var(--text-muted);line-height:1.4}
@@ -588,7 +783,7 @@
   .role-opt input{position:absolute;opacity:0;pointer-events:none}
   .role-opt-body{background:var(--surface-2);border:2px solid var(--border);border-radius:11px;padding:14px;transition:all .2s;height:100%}
   .role-opt:hover .role-opt-body{border-color:var(--border-strong)}
-  .role-opt input:checked + .role-opt-body{border-color:var(--gold);background:rgba(201,168,76,.06);box-shadow:0 0 0 2px rgba(201,168,76,.12)}
+  .role-opt input:checked + .role-opt-body{border-color:var(--gold);background:rgba(var(--accent-rgb),.06);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.12)}
   .role-opt-icon{font-size:22px;margin-bottom:5px}
   .role-opt-name{font-weight:700;font-size:14px;margin-bottom:3px;color:var(--text)}
   .role-opt-desc{font-size:11px;color:var(--text-muted);line-height:1.5}
@@ -608,7 +803,7 @@
   .layout-opt input{position:absolute;opacity:0;pointer-events:none}
   .layout-opt-body{background:var(--surface-2);border:2px solid var(--border);border-radius:11px;padding:14px;transition:all .2s;height:100%}
   .layout-opt:hover .layout-opt-body{border-color:var(--border-strong)}
-  .layout-opt input:checked + .layout-opt-body{border-color:var(--gold);background:rgba(201,168,76,.06);box-shadow:0 0 0 2px rgba(201,168,76,.12)}
+  .layout-opt input:checked + .layout-opt-body{border-color:var(--gold);background:rgba(var(--accent-rgb),.06);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.12)}
   .layout-opt-icon{font-size:20px;margin-bottom:4px}
   .layout-opt-name{font-weight:700;font-size:13.5px;margin-bottom:3px;color:var(--text)}
   .layout-opt-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
@@ -621,7 +816,7 @@
   .cp-item-actions{display:flex;gap:6px;flex-shrink:0}
 
   /* ── HISTORY/STORIES FOCUS ── */
-  .hs-cover-focus{display:none;margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:rgba(201,168,76,.04)}
+  .hs-cover-focus{display:none;margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:rgba(var(--accent-rgb),.04)}
   .hs-cover-focus.active{display:grid;grid-template-columns:minmax(200px,340px) 1fr;gap:16px;align-items:center}
   .hs-cover-focus-preview{aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--surface-3);border:1px solid var(--border)}
   .hs-cover-focus-preview img{width:100%;height:100%;object-fit:cover;display:block}
@@ -638,11 +833,11 @@
   #liveEditor{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;flex-direction:column}
   .le-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px;height:52px;flex-shrink:0}
   .le-title{display:flex;align-items:center;gap:10px;color:var(--gold-light);font-weight:700;font-size:14.5px}
-  .le-title-badge{background:rgba(201,168,76,.15);color:var(--gold);font-size:10px;font-weight:600;padding:2px 8px;border-radius:16px;border:1px solid var(--border-strong);letter-spacing:1px}
+  .le-title-badge{background:rgba(var(--accent-rgb),.15);color:var(--gold);font-size:10px;font-weight:600;padding:2px 8px;border-radius:16px;border:1px solid var(--border-strong);letter-spacing:1px}
   .le-close{background:var(--surface-3);border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin-left:auto;transition:all .2s;font-family:inherit}
   .le-close:hover{border-color:var(--border-strong);color:var(--text)}
   .le-reload{background:transparent;border:1px solid var(--border);color:var(--text-muted);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .15s}
-  .le-reload:hover{background:rgba(201,168,76,.08);color:var(--gold-light)}
+  .le-reload:hover{background:rgba(var(--accent-rgb),.08);color:var(--gold-light)}
   .le-body{flex:1;display:grid;grid-template-columns:1fr 360px;overflow:hidden}
   .le-iframe{width:100%;height:100%;border:none;background:var(--bg)}
   .le-panel{background:var(--surface);border-left:1px solid var(--border);overflow-y:auto;position:relative}
@@ -665,13 +860,13 @@
 
   /* ── MOBILE ACTION MENU ── */
   .top-mobile-actions{display:none;position:relative}
-  .action-menu-btn{width:34px;height:34px;border-radius:8px;background:rgba(201,168,76,.1);border:1px solid var(--border-strong);color:var(--gold);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .action-menu-btn{width:34px;height:34px;border-radius:8px;background:rgba(var(--accent-rgb),.1);border:1px solid var(--border-strong);color:var(--gold);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
   .action-menu-btn:active{transform:scale(.94)}
   .action-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:12px;min-width:190px;box-shadow:0 10px 32px rgba(0,0,0,.4);padding:7px;transform:translateY(-8px) scale(.96);opacity:0;visibility:hidden;transition:transform .18s cubic-bezier(.2,.8,.2,1),opacity .15s,visibility 0s .15s;z-index:1000}
   .action-menu.open{transform:translateY(0) scale(1);opacity:1;visibility:visible;transition:transform .18s cubic-bezier(.2,.8,.2,1),opacity .15s,visibility 0s 0s}
   .action-menu-user{padding:8px 12px 10px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border);margin-bottom:5px;word-break:break-all}
   .action-menu-item{display:block;width:100%;text-align:left;padding:9px 12px;background:transparent;border:none;border-radius:7px;color:var(--text);font-size:13.5px;font-weight:500;cursor:pointer;text-decoration:none;transition:background .12s;font-family:inherit}
-  .action-menu-item:hover{background:rgba(201,168,76,.08)}
+  .action-menu-item:hover{background:rgba(var(--accent-rgb),.08)}
   .action-menu-divider{height:1px;background:var(--border);margin:5px 4px}
   .action-menu-danger{color:var(--red)}
   .action-menu-danger:hover{background:rgba(224,80,80,.08)}
@@ -705,8 +900,6 @@
     .dash-icon{width:42px;height:42px;font-size:20px;margin-bottom:8px;border-radius:10px}
     .dash-num{font-size:26px}
     .dash-label{font-size:11px}
-    .quick-edit-grid{gap:10px}
-    .quick-edit-card{padding:14px}
     .upload-zone{padding:22px 14px}
     .btn-gold{padding:9px 16px;font-size:13px}
     .btn-ol{padding:9px 14px;font-size:13px}
@@ -822,7 +1015,7 @@
       margin:0;padding:12px 14px;
       display:flex;flex-direction:row;gap:8px;
       border-top:1px solid var(--border);
-      background:rgba(13,11,8,.97);
+      background:var(--bar-bg);
       backdrop-filter:blur(16px);
       z-index:200;
     }
@@ -835,14 +1028,6 @@
     .dash-num{font-size:24px}
     .dash-label{font-size:10.5px;letter-spacing:.3px}
     .dash-link{font-size:11.5px;margin-top:10px;padding-top:10px}
-    .quick-edit-grid{
-      grid-template-columns:repeat(2,1fr) !important;
-      gap:8px;margin:14px 0 20px;
-    }
-    .quick-edit-card{padding:12px 10px;border-radius:11px}
-    .quick-edit-icon{width:30px;height:30px;font-size:16px;margin-bottom:7px}
-    .quick-edit-title{font-size:12.5px;margin-bottom:2px}
-    .quick-edit-sub{font-size:11px;line-height:1.35}
 
     /* ── TABS ── */
     .tab-bar{
@@ -883,7 +1068,7 @@
     .modal::before{
       content:'';display:block;
       width:36px;height:4px;
-      background:rgba(201,168,76,.3);
+      background:rgba(var(--accent-rgb),.3);
       border-radius:2px;
       margin:-8px auto 16px;
     }
@@ -1032,7 +1217,6 @@
   /* ── Extra small ── */
   @media(max-width:360px){
     .dash-grid{grid-template-columns:1fr}
-    .quick-edit-grid{grid-template-columns:1fr !important}
     .modal{padding:16px 12px 28px}
     .main{padding:12px 10px 80px}
   }
@@ -1113,41 +1297,83 @@
   <div class="admin-body">
     <div class="sidebar">
 
-      <!-- OVERVIEW -->
+      <!-- ─── SEARCH ───────────────────────────────────────────────────
+           data-kw on each item below carries extra search terms (Thai +
+           English + the names of settings that live *inside* that screen)
+           so searching "ธนาคาร", "bank", "og", or "alt" lands you in the
+           right place without knowing which menu owns it. -->
+      <div class="side-search-wrap">
+        <span class="side-search-icon" aria-hidden="true">🔍</span>
+        <input type="search" class="side-search" id="sideSearch"
+               oninput="filterSidebar(this.value)"
+               onkeydown="sidebarSearchKey(event)"
+               autocomplete="off" spellcheck="false"
+               aria-label="Search settings"
+               data-en-ph="Search settings…" data-th-ph="ค้นหาการตั้งค่า…"
+               placeholder="Search settings…">
+        <span class="side-search-kbd" aria-hidden="true">⌘K</span>
+      </div>
+
+      <!-- ─── OVERVIEW ─── -->
       <div class="sidebar-label" data-en="Overview" data-th="ภาพรวม">Overview</div>
-      <div class="side-item active" onclick="showPanel('dashboard',this)" data-en="📊 Dashboard" data-th="📊 แดชบอร์ด">📊 Dashboard</div>
+      <div class="side-item active" onclick="showPanel('dashboard',this)"
+           data-en="📊 Dashboard" data-th="📊 แดชบอร์ด"
+           data-kw="home overview stats แดชบอร์ด ภาพรวม สรุป">📊 Dashboard</div>
+      <div class="side-item" onclick="showPanel('store-pages',this)"
+           data-en="📄 Pages" data-th="📄 หน้าเว็บทั้งหมด"
+           data-kw="pages sitemap visible hidden custom page หน้าเว็บ หน้า ซ่อน แสดง สร้างหน้า">📄 Pages</div>
 
       <div class="side-div"></div>
 
-      <!-- CONTENT -->
-      <div class="sidebar-label" data-en="Content" data-th="เนื้อหา">Content</div>
-      <div class="side-item" onclick="showPanel('home',this)" data-en="🏠 Homepage" data-th="🏠 หน้าแรก">🏠 Homepage</div>
-      <div class="side-item" onclick="showPanel('history-stories',this)" data-en="📖 History &amp; Stories" data-th="📖 ประวัติ &amp; เรื่องราว">📖 History &amp; Stories</div>
-      <div class="side-item" onclick="showPanel('store-pages',this)" data-en="📄 Custom Pages" data-th="📄 หน้าที่สร้างเอง">📄 Custom Pages</div>
-
-      <div class="side-div"></div>
-
-      <!-- CATALOG -->
+      <!-- ─── CATALOG — the things you actually sell ─── -->
       <div class="sidebar-label" data-en="Catalog" data-th="สินค้า &amp; บริการ">Catalog</div>
-      <div class="side-item" onclick="showPanel('products',this)" data-en="🛍️ Shop" data-th="🛍️ ร้านค้า">🛍️ Shop</div>
-      <div class="side-item" onclick="showPanel('casing',this)" data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ">🪬 Casing Service</div>
-      <div class="side-item" onclick="showPanel('projects',this)" data-en="🎯 Projects" data-th="🎯 โปรเจกต์">🎯 Projects</div>
-      <div class="side-item" onclick="showPanel('reviews',this)" data-en="🙏 Reviews" data-th="🙏 รีวิว">🙏 Reviews</div>
+      <div class="side-item" onclick="showPanel('products',this)"
+           data-en="🛍️ Shop" data-th="🛍️ ร้านค้า"
+           data-kw="products amulet price stock sold sku variant สินค้า พระ ราคา สต็อก ขายแล้ว">🛍️ Shop<span class="side-count" id="sc-products"></span></div>
+      <div class="side-item" onclick="showPanel('casing',this)"
+           data-en="🪬 Casing Service" data-th="🪬 บริการกรอบพระ"
+           data-kw="casing frame type style กรอบพระ เลี่ยมพระ ประเภท แบบ">🪬 Casing Service<span class="side-count" id="sc-casing"></span></div>
+      <div class="side-item" onclick="showPanel('projects',this)"
+           data-en="🎯 Projects" data-th="🎯 โปรเจกต์"
+           data-kw="projects event donation tier โปรเจกต์ งานบุญ ระดับราคา">🎯 Projects<span class="side-count" id="sc-projects"></span></div>
+      <div class="side-item" onclick="showPanel('reviews',this)"
+           data-en="🙏 Reviews" data-th="🙏 รีวิว"
+           data-kw="reviews testimonial approve rating รีวิว คำชม อนุมัติ ดาว">🙏 Reviews<span class="side-count" id="sc-reviews"></span></div>
 
       <div class="side-div"></div>
 
-      <!-- SETTINGS -->
+      <!-- ─── CONTENT — what visitors read ─── -->
+      <div class="sidebar-label" data-en="Content" data-th="เนื้อหา">Content</div>
+      <div class="side-item" onclick="showPanel('home',this)"
+           data-en="🏠 Homepage" data-th="🏠 หน้าแรก"
+           data-kw="hero banner trust services social feed layout order latest updates หน้าแรก แบนเนอร์ บริการ โซเชียล เลย์เอาท์ อัปเดต">🏠 Homepage</div>
+      <div class="side-item" onclick="showPanel('history-stories',this)"
+           data-en="📖 Library" data-th="📖 คลังบทความ"
+           data-kw="history stories article monk biography katha guide library บทความ ประวัติ พระเกจิ คาถา คู่มือ เรื่องราว">📖 Library<span class="side-count" id="sc-hs"></span></div>
+      <div class="side-item" onclick="showPanel('navigation',this)"
+           data-en="🧭 Menu &amp; Headers" data-th="🧭 เมนู &amp; หัวข้อหน้า"
+           data-kw="navigation menu order rename hide show page header title เมนู ลำดับ เปลี่ยนชื่อ ซ่อน หัวข้อหน้า">🧭 Menu &amp; Headers</div>
+
+      <div class="side-div"></div>
+
+      <!-- ─── SETTINGS ─── -->
       <div class="sidebar-label" data-en="Settings" data-th="ตั้งค่า">Settings</div>
-      <div class="side-item" onclick="showPanel('store',this)" data-en="🏷️ Branding" data-th="🏷️ แบรนด์">🏷️ Branding</div>
-      <div class="side-item" onclick="showPanel('navigation',this)" data-en="🧭 Navigation" data-th="🧭 เมนู">🧭 Navigation</div>
-      <div class="side-item" onclick="showPanel('checkout',this)" data-en="💳 Payment &amp; Contact" data-th="💳 ชำระเงิน &amp; ติดต่อ">💳 Payment &amp; Contact</div>
-      <div class="side-item" onclick="showPanel('settings',this)" data-en="⚙️ Settings" data-th="⚙️ ตั้งค่า">⚙️ Settings</div>
+      <div class="side-item" onclick="showPanel('store',this)"
+           data-en="🏷️ Branding" data-th="🏷️ แบรนด์ &amp; โลโก้"
+           data-kw="branding logo shop name font top bar announcement แบรนด์ โลโก้ ชื่อร้าน ฟอนต์ แถบบน ประกาศ">🏷️ Branding</div>
+      <div class="side-item" onclick="showPanel('checkout',this)"
+           data-en="💳 Payment &amp; Contact" data-th="💳 ชำระเงิน &amp; ติดต่อ"
+           data-kw="payment paynow promptpay bank stripe card checkout whatsapp line facebook contact ชำระเงิน ธนาคาร พร้อมเพย์ บัตร ติดต่อ ไลน์">💳 Payment &amp; Contact</div>
+      <div class="side-item" onclick="showPanel('settings',this)"
+           data-en="⚙️ Settings" data-th="⚙️ ตั้งค่าระบบ"
+           data-kw="settings seo meta description og image sitemap password account export import backup data advanced ตั้งค่า รหัสผ่าน สำรองข้อมูล ส่งออก">⚙️ Settings</div>
+      <div class="side-item" onclick="showPanel('team',this)"
+           data-en="👥 Team" data-th="👥 ทีมงาน"
+           data-kw="team admin user role permission invite ทีม ผู้ดูแล สิทธิ์ เพิ่มคน">👥 Team</div>
 
-      <div class="side-div"></div>
-
-      <!-- SYSTEM -->
-      <div class="sidebar-label" data-en="System" data-th="ระบบ">System</div>
-      <div class="side-item" onclick="showPanel('team',this)" data-en="👥 Team" data-th="👥 ทีม">👥 Team</div>
+      <div class="side-noresult"
+           data-en="No settings match that search."
+           data-th="ไม่พบการตั้งค่าที่ค้นหา">No settings match that search.</div>
     </div>
 
     <div class="main">
@@ -1156,7 +1382,7 @@
         <div class="panel-title" data-en="Dashboard" data-th="แดชบอร์ด">Dashboard
           <a href="index.html" target="_blank" class="view-btn" style="font-size:13px" data-en="👁 View Store" data-th="👁 ดูหน้าร้าน">👁 View Store</a>
         </div>
-        <div class="panel-sub" data-en="Your store at a glance. Click any card to manage that section." data-th="ภาพรวมร้านของคุณ คลิกการ์ดเพื่อจัดการแต่ละส่วน">Your store at a glance. Click any card to manage that section.</div>
+        <div class="panel-sub" data-en="What's in your store, and what needs doing. Press ⌘K to search every setting." data-th="ร้านคุณมีอะไรอยู่บ้าง และมีอะไรที่ต้องจัดการ กด ⌘K เพื่อค้นหาการตั้งค่าทั้งหมด">What's in your store, and what needs doing. Press ⌘K to search every setting.</div>
 
         <div class="dash-grid">
           <div class="dash-card" onclick="showPanel('products',document.querySelector('.side-item[onclick*=products]'))" style="cursor:pointer">
@@ -1168,7 +1394,7 @@
           <div class="dash-card" onclick="showPanel('casing',document.querySelector('.side-item[onclick*=casing]'))" style="cursor:pointer">
             <div class="dash-icon">🪬</div>
             <div class="dash-num" id="dF">–</div>
-            <div class="dash-label" data-en="Casing Types" data-th="ประเภทกรอบ">Casing Types</div>
+            <div class="dash-label" data-en="Casing Service" data-th="บริการกรอบพระ">Casing Service</div>
             <span class="dash-link" data-en="Manage →" data-th="จัดการ →">Manage →</span>
           </div>
           <div class="dash-card" onclick="showPanel('projects',document.querySelector('.side-item[onclick*=projects]'))" style="cursor:pointer">
@@ -1180,56 +1406,17 @@
           <div class="dash-card" onclick="showPanel('history-stories',document.querySelector('.side-item[onclick*=history]'))" style="cursor:pointer">
             <div class="dash-icon">📖</div>
             <div class="dash-num" id="dHS">–</div>
-            <div class="dash-label" data-en="H&amp;S Articles" data-th="บทความ">H&amp;S Articles</div>
+            <div class="dash-label" data-en="Library" data-th="คลังบทความ">Library</div>
             <span class="dash-link" data-en="Manage →" data-th="จัดการ →">Manage →</span>
           </div>
         </div>
 
         <div class="form-card">
-          <div class="form-section-title" data-en="Quick Access" data-th="เข้าถึงด่วน">Quick Access</div>
-          <div class="form-section-desc" data-en="Jump straight to any section of your store." data-th="กดไปยังส่วนที่ต้องการแก้ได้ทันที">Jump straight to any section of your store.</div>
-          <div class="quick-edit-grid">
-            <button class="quick-edit-card" onclick="showPanel('home',document.querySelector('.side-item[onclick*="showPanel('home'"]'))">
-              <span class="quick-edit-icon">🏠</span>
-              <span class="quick-edit-title" data-en="Homepage" data-th="หน้าแรก">Homepage</span>
-              <span class="quick-edit-sub" data-en="Hero, services, feed, trust" data-th="Hero, บริการ, ฟีด, trust">Hero, services, feed, trust</span>
-            </button>
-            <button class="quick-edit-card" onclick="showPanel('products',null)">
-              <span class="quick-edit-icon">🛍️</span>
-              <span class="quick-edit-title" data-en="Shop" data-th="ร้านค้า">Shop</span>
-              <span class="quick-edit-sub" data-en="Amulets, accessories, bracelets, and more" data-th="พระ, อุปกรณ์เสริม, สร้อย, และอื่นๆ">Amulets, accessories, bracelets, and more</span>
-            </button>
-            <button class="quick-edit-card" onclick="showPanel('casing',null)">
-              <span class="quick-edit-icon">🪬</span>
-              <span class="quick-edit-title" data-en="Casing Service" data-th="บริการกรอบพระ">Casing Service</span>
-              <span class="quick-edit-sub" data-en="Types, styles, sample photos" data-th="ประเภท, สไตล์, รูปตัวอย่าง">Types, styles, sample photos</span>
-            </button>
-            <button class="quick-edit-card" onclick="showPanel('history-stories',null)">
-              <span class="quick-edit-icon">📖</span>
-              <span class="quick-edit-title" data-en="History &amp; Stories" data-th="ประวัติ &amp; เรื่องราว">History &amp; Stories</span>
-              <span class="quick-edit-sub" data-en="Articles, monk bios, guides" data-th="บทความ, ประวัติพระ, คู่มือ">Articles, monk bios, guides</span>
-            </button>
-            <button class="quick-edit-card" onclick="showPanel('reviews',null)">
-              <span class="quick-edit-icon">🙏</span>
-              <span class="quick-edit-title" data-en="Reviews" data-th="รีวิว">Reviews</span>
-              <span class="quick-edit-sub" data-en="Approve &amp; manage customer reviews" data-th="อนุมัติและจัดการรีวิวลูกค้า">Approve &amp; manage reviews</span>
-            </button>
-            <button class="quick-edit-card" onclick="showPanel('checkout',null)">
-              <span class="quick-edit-icon">💳</span>
-              <span class="quick-edit-title" data-en="Payment &amp; Contact" data-th="ชำระเงิน &amp; ติดต่อ">Payment &amp; Contact</span>
-              <span class="quick-edit-sub" data-en="PayNow, PromptPay, WhatsApp" data-th="PayNow, พร้อมเพย์, WhatsApp">PayNow, PromptPay, WhatsApp</span>
-            </button>
-            <button class="quick-edit-card" onclick="showPanel('store',null)">
-              <span class="quick-edit-icon">🏷️</span>
-              <span class="quick-edit-title" data-en="Branding" data-th="แบรนด์">Branding</span>
-              <span class="quick-edit-sub" data-en="Logo, shop name, font" data-th="โลโก้, ชื่อร้าน, ฟอนต์">Logo, shop name, font</span>
-            </button>
-            <button class="quick-edit-card" onclick="showPanel('settings',null)">
-              <span class="quick-edit-icon">⚙️</span>
-              <span class="quick-edit-title" data-en="Settings" data-th="ตั้งค่า">Settings</span>
-              <span class="quick-edit-sub" data-en="SEO, data export, account" data-th="SEO, ส่งออกข้อมูล, บัญชี">SEO, data, account</span>
-            </button>
-          </div>
+          <div class="form-section-title" data-en="Needs attention" data-th="รายการที่ต้องจัดการ">Needs attention</div>
+          <div class="form-section-desc"
+               data-en="Things that are blocking a sale or will look wrong to a customer. This list is empty when everything is in order."
+               data-th="สิ่งที่ขวางการขายอยู่ หรือจะแสดงผลผิดพลาดต่อลูกค้า ถ้าทุกอย่างเรียบร้อยรายการนี้จะว่าง">Things that are blocking a sale or will look wrong to a customer.</div>
+          <div id="needsAttention" class="na-list"></div>
         </div>
       </div>
 
@@ -1323,8 +1510,8 @@
         <div class="form-card">
           <div class="form-section-title" data-en="🔮 Phra Somdej 3D Model (optional)" data-th="🔮 พระสมเด็จ 3D Model (ไม่บังคับ)">🔮 Phra Somdej 3D Model (optional)</div>
           <div class="form-section-desc"
-               data-en-html="Upload a 3D model file (.glb or .gltf) to display as a rotatable phra somdej. Used only if no Hero Image is uploaded above. Use <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> to generate a .glb from a photo."
-               data-th-html="อัปโหลดไฟล์ 3D (.glb หรือ .gltf) เพื่อแสดงพระสมเด็จหมุนได้ ใช้เฉพาะเมื่อไม่มี Hero Image ด้านบน ใช้ <a href='https://trellis2.app' target='_blank' style='color:var(--gold-dark);text-decoration:underline'>trellis2.app</a> สร้าง .glb จากรูปภาพ">
+               data-en-html="Upload a 3D model file (.glb or .gltf) to display as a rotatable phra somdej. Used only if no Hero Image is uploaded above. Use <a href='https://trellis2.app' target='_blank' style='color:var(--gold);text-decoration:underline'>trellis2.app</a> to generate a .glb from a photo."
+               data-th-html="อัปโหลดไฟล์ 3D (.glb หรือ .gltf) เพื่อแสดงพระสมเด็จหมุนได้ ใช้เฉพาะเมื่อไม่มี Hero Image ด้านบน ใช้ <a href='https://trellis2.app' target='_blank' style='color:var(--gold);text-decoration:underline'>trellis2.app</a> สร้าง .glb จากรูปภาพ">
             Upload a 3D model. Used only if no Hero Image is uploaded above.
           </div>
           <div class="upload-zone" ondragover="dov(event,this)" ondragleave="dol(this)" ondrop="dropGlb(event)">
@@ -1384,7 +1571,7 @@
             </div>
           </div>
 
-          <div style="margin-top:14px;padding:12px 14px;background:rgba(201,168,76,.08);border-left:3px solid var(--gold);border-radius:6px;font-size:12.5px;color:var(--text-muted);line-height:1.7">
+          <div style="margin-top:14px;padding:12px 14px;background:rgba(var(--accent-rgb),.08);border-left:3px solid var(--gold);border-radius:6px;font-size:12.5px;color:var(--text-muted);line-height:1.7">
             <strong style="color:var(--gold-dark)" data-en="📐 Tips for good 3D models:" data-th="📐 เคล็ดลับโมเดล 3D ที่ดี:">📐 Tips for good 3D models:</strong>
             <ul style="margin:6px 0 0 18px;padding:0">
               <li data-en="File size under 5 MB loads fast on mobile" data-th="ไฟล์ใต้ 5 MB โหลดเร็วบนมือถือ">File size under 5 MB loads fast on mobile</li>
@@ -1449,7 +1636,7 @@
 
         <div class="save-bar" style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn-gold" onclick="saveHero()" data-en="💾 Save Hero Section" data-th="💾 บันทึก Hero">💾 Save Hero Section</button>
-          <button class="btn-ol" onclick="resetHeroVisuals()" data-en="🗑️ Clear all hero images (bg + 3D)" data-th="🗑️ ล้างรูปทั้งหมดใน Hero (พื้นหลัง + 3D)" style="border-color:rgba(139,0,0,.4);color:#a85050">🗑️ Clear all hero images</button>
+          <button class="btn-ol" onclick="resetHeroVisuals()" data-en="🗑️ Clear all hero images (bg + 3D)" data-th="🗑️ ล้างรูปทั้งหมดใน Hero (พื้นหลัง + 3D)" style="border-color:var(--red);color:var(--red)">🗑️ Clear all hero images</button>
         </div>
       </div>
 
@@ -1460,7 +1647,7 @@
           Reorder or show/hide the moveable sections below. Other sections (Hero, Trust bar, Social Channels, Latest Updates) are fixed and always appear.
         </div>
         <div class="form-card">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(201,168,76,.08);border-radius:8px;border-left:3px solid var(--gold)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;background:rgba(var(--accent-rgb),.08);border-radius:8px;border-left:3px solid var(--gold)">
             <span style="font-size:16px">📌</span>
             <div style="font-size:12.5px;color:var(--text-muted);line-height:1.6">
               <strong style="color:var(--text)">Fixed order (not draggable):</strong> Hero → Trust bar → Service Cards*<br>
@@ -1582,7 +1769,7 @@
             <div>
               <div class="form-section-title" style="margin:0">Platform Links</div>
               <div class="form-section-desc" style="margin:4px 0 0">
-                <span style="background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🪟 Float</span>
+                <span style="background:rgba(var(--accent-rgb),.15);border:1px solid rgba(var(--accent-rgb),.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🪟 Float</span>
                 = show as floating chat button &nbsp;·&nbsp;
                 <span style="background:rgba(100,180,100,.12);border:1px solid rgba(100,180,100,.3);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">🏠 Home</span>
                 = show on homepage Social Channels section &nbsp;·&nbsp;
@@ -1659,9 +1846,13 @@
       <!-- AMULETS -->
       <!-- STORE PAGES HUB -->
       <div class="panel" id="panel-store-pages">
-        <div class="panel-title">📄 Store Pages</div>
-        <div class="panel-sub">Overview of all pages on your website. Click a page to manage its content.</div>
-        <div id="store-pages-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:8px"></div>
+        <div class="panel-title" data-en="📄 Pages" data-th="📄 หน้าเว็บทั้งหมด">📄 Pages
+          <a href="index.html" target="_blank" class="view-btn" style="font-size:13px" data-en="👁 View Store" data-th="👁 ดูหน้าร้าน">👁 View Store</a>
+        </div>
+        <div class="panel-sub"
+             data-en="Every page on your website. Each row shows whether it's visible in the menu and every screen that controls it — so you never have to guess which menu to open."
+             data-th="ทุกหน้าบนเว็บของคุณ แต่ละแถวบอกว่าหน้านั้นแสดงในเมนูหรือไม่ และมีปุ่มลัดไปยังทุกที่ที่ใช้แก้หน้านั้น — จะได้ไม่ต้องเดาว่าต้องเข้าเมนูไหน">Every page on your website. Each row shows whether it's visible in the menu and every screen that controls it.</div>
+        <div id="store-pages-list" class="page-rows"></div>
       </div>
 
       <!-- ══════════ PRODUCTS (unified Amulet/Accessories/Bracelet/Book/Service/Other) ══════════ -->
@@ -1986,7 +2177,7 @@
 
       <!-- HISTORY & STORIES -->
       <div class="panel" id="panel-history-stories">
-        <div class="panel-title">📖 History &amp; Stories</div>
+        <div class="panel-title" data-en="📖 Library" data-th="📖 คลังบทความ">📖 Library</div>
         <div class="panel-sub" data-en="Manage articles about monk biographies, amulet history, beliefs, katha, and guides." data-th="จัดการบทความเกี่ยวกับประวัติพระเกจิ ประวัติพระเครื่อง ความเชื่อ คาถา และคู่มือ">
           Manage articles about monk biographies, amulet history, beliefs, katha, and guides.
         </div>
@@ -2240,7 +2431,7 @@
           <div class="form-section-desc" data-en="Display a preview of customer reviews right after the hero on the home page — visitors see social proof immediately when scrolling down." data-th="แสดงตัวอย่างรีวิวลูกค้าทันทีหลัง Hero ในหน้าแรก — ลูกค้าจะเห็นความน่าเชื่อถือทันทีเมื่อเลื่อนลง">Display a preview of reviews on the home page right after the hero.</div>
           <div class="form-grid">
             <div class="fg full">
-              <label class="switch-label" style="padding:14px 16px;background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(201,168,76,.06) 100%);border:1.5px solid rgba(201,168,76,.3);border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
+              <label class="switch-label" style="padding:14px 16px;background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(var(--accent-rgb),.06) 100%);border:1.5px solid rgba(var(--accent-rgb),.3);border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
                 <label class="switch"><input type="checkbox" id="rev_showOnHome" onchange="toggleReviewsOnHome()"><span class="slider"></span></label>
                 <span style="flex:1">
                   <strong style="font-size:14.5px" data-en="🏠 Show reviews section on homepage" data-th="🏠 แสดงส่วนรีวิวในหน้าแรก">🏠 Show reviews section on homepage</strong>
@@ -2324,7 +2515,7 @@
 
             <!-- ③ Anonymous toggle — prominent, defaults ON for quick chat reviews -->
             <div class="fg full">
-              <label class="switch-label" style="padding:14px 16px;background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(201,168,76,.06) 100%);border:1.5px solid rgba(201,168,76,.3);border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
+              <label class="switch-label" style="padding:14px 16px;background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(var(--accent-rgb),.06) 100%);border:1.5px solid rgba(var(--accent-rgb),.3);border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
                 <label class="switch"><input type="checkbox" id="r_anon" checked onchange="onAnonChange()"><span class="slider"></span></label>
                 <span style="flex:1">
                   <strong style="font-size:14.5px" data-en="🕶 Anonymous Review (default ON)" data-th="🕶 รีวิวแบบไม่ระบุชื่อ (เปิดไว้ default)">🕶 Anonymous Review (default ON)</strong>
@@ -2545,31 +2736,31 @@
             <div class="form-section-desc">
               Scans all product images (amulets, accessories, casing banners, samples, variant photos) and applies the <em>YingYingYingSG</em> watermark. Images already watermarked are skipped automatically — safe to run multiple times.
             </div>
-            <div style="margin:14px 0 0;padding:16px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.18);border-radius:12px">
+            <div style="margin:14px 0 0;padding:16px;background:rgba(var(--accent-rgb),.05);border:1px solid rgba(var(--accent-rgb),.18);border-radius:12px">
               <div id="wmMigStatus" style="display:none">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-                  <div id="wmMigSpinner" style="width:18px;height:18px;border:2.5px solid rgba(201,168,76,.3);border-top-color:#c9a84c;border-radius:50%;animation:piSpin 0.8s linear infinite;flex-shrink:0"></div>
+                  <div id="wmMigSpinner" style="width:18px;height:18px;border:2.5px solid rgba(var(--accent-rgb),.3);border-top-color:#c9a84c;border-radius:50%;animation:piSpin 0.8s linear infinite;flex-shrink:0"></div>
                   <div id="wmMigCurrentLabel" style="font-size:12px;color:var(--text-muted);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">Preparing…</div>
                 </div>
-                <div style="height:6px;background:rgba(201,168,76,.12);border-radius:3px;margin-bottom:10px;overflow:hidden">
+                <div style="height:6px;background:rgba(var(--accent-rgb),.12);border-radius:3px;margin-bottom:10px;overflow:hidden">
                   <div id="wmMigBar" style="height:100%;width:0%;background:linear-gradient(90deg,#c9a84c,#e8c96a);border-radius:3px;transition:width .3s"></div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
                   <div style="text-align:center">
                     <div id="wmStatTotal" style="font-size:17px;font-weight:700;color:rgba(230,210,165,.9)">0</div>
-                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Total</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--accent-rgb),.45)">Total</div>
                   </div>
                   <div style="text-align:center">
                     <div id="wmStatDone" style="font-size:17px;font-weight:700;color:#4caf50">0</div>
-                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Done</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--accent-rgb),.45)">Done</div>
                   </div>
                   <div style="text-align:center">
-                    <div id="wmStatSkip" style="font-size:17px;font-weight:700;color:rgba(201,168,76,.7)">0</div>
-                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Skipped</div>
+                    <div id="wmStatSkip" style="font-size:17px;font-weight:700;color:rgba(var(--accent-rgb),.7)">0</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--accent-rgb),.45)">Skipped</div>
                   </div>
                   <div style="text-align:center">
                     <div id="wmStatFail" style="font-size:17px;font-weight:700;color:#e57373">0</div>
-                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,.45)">Failed</div>
+                    <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--accent-rgb),.45)">Failed</div>
                   </div>
                 </div>
                 <div id="wmMigErrors" style="display:none;max-height:140px;overflow-y:auto;font-size:11px;color:#e57373;background:rgba(200,50,50,.07);border:1px solid rgba(200,50,50,.18);border-radius:8px;padding:10px;margin-top:4px;line-height:1.7"></div>
@@ -2808,7 +2999,7 @@
         <div class="form-section-desc" data-en="Add items below. Each item shows as a card on the page. After saving the page, you can edit/reorder/delete items from the Custom Pages list." data-th="เพิ่มรายการด้านล่าง แต่ละรายการจะแสดงเป็นการ์ดในหน้านี้ หลังบันทึกหน้านี้แล้ว สามารถแก้/เรียง/ลบ items ได้จากรายการ Custom Pages">Add items below. Each item shows as a card.</div>
         <div id="cp_items_list" style="margin-top:12px"></div>
         <button class="btn-ol" type="button" onclick="addCpItem()" data-en="➕ Add Item" data-th="➕ เพิ่มรายการ" style="margin-top:12px">➕ Add Item</button>
-        <div id="cp_knowledge_hint" style="display:none;margin-top:10px;font-size:12.5px;color:var(--text-muted);background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:10px 14px;line-height:1.6">
+        <div id="cp_knowledge_hint" style="display:none;margin-top:10px;font-size:12.5px;color:var(--text-muted);background:rgba(var(--accent-rgb),.07);border:1px solid rgba(var(--accent-rgb),.2);border-radius:8px;padding:10px 14px;line-height:1.6">
           📖 <strong>Knowledge Center mode:</strong> Each item is an article. Set <em>Category</em>, <em>Excerpt</em>, and mark one as <em>Featured</em> to highlight it at the top.
         </div>
       </div>
@@ -2942,22 +3133,30 @@ const THEME_KEY='yyy_admin_theme';
 let lang=localStorage.getItem(LANG_KEY)||'en';
 
 // ── THEME (light / dark) ──
+// Light is the default and lives on bare :root, so light means *removing*
+// the attribute rather than setting data-theme="light". Only an explicit
+// choice of dark gets stamped — this has to stay in step with the
+// pre-paint script at the top of the file.
 function applyTheme(theme){
-  const isLight = theme==='light';
-  document.documentElement.setAttribute('data-theme', isLight?'light':'dark');
-  const icon = isLight ? '☀️' : '🌙';
+  const isDark = theme==='dark';
+  if(isDark) document.documentElement.setAttribute('data-theme','dark');
+  else       document.documentElement.removeAttribute('data-theme');
+  // The button offers the theme you'd switch TO.
+  const icon = isDark ? '☀️' : '🌙';
   const btn = document.getElementById('themeToggleBtn');
-  if(btn) btn.textContent = icon;
+  if(btn){
+    btn.textContent = icon;
+    btn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
   const btnM = document.getElementById('themeToggleBtnMobile');
   if(btnM) btnM.textContent = icon + (lang==='th' ? ' โหมดมืด / สว่าง' : ' Dark / Light Mode');
 }
 function toggleTheme(){
-  const current = localStorage.getItem(THEME_KEY)==='light' ? 'light' : 'dark';
-  const next = current==='light' ? 'dark' : 'light';
+  const next = localStorage.getItem(THEME_KEY)==='dark' ? 'light' : 'dark';
   localStorage.setItem(THEME_KEY, next);
   applyTheme(next);
 }
-applyTheme(localStorage.getItem(THEME_KEY)==='light' ? 'light' : 'dark');
+applyTheme(localStorage.getItem(THEME_KEY)==='dark' ? 'dark' : 'light');
 
 // ── COLLAPSIBLE "+ Add New" FORM CARDS ──
 // Forms start collapsed; clicking the header (or Edit on a list item) opens them.
@@ -3087,13 +3286,30 @@ function applyLang(){
   // text content
   document.querySelectorAll('[data-en]').forEach(el=>{
     const txt=el.getAttribute('data-'+lang);
-    if(txt!=null)el.textContent=txt;
+    if(txt==null)return;
+    // Some labels wrap a child element that must survive translation (the
+    // sidebar count badges, the "View Store" link inside a panel title).
+    // Setting textContent would delete it, so detach, retitle, re-attach.
+    const keep=[...el.children].filter(c=>c.matches('.side-count,.view-btn'));
+    if(keep.length){
+      el.textContent=txt;
+      keep.forEach(k=>el.appendChild(k));
+    }else{
+      el.textContent=txt;
+    }
+  });
+  // placeholders
+  document.querySelectorAll('[data-en-ph]').forEach(el=>{
+    const ph=el.getAttribute('data-'+lang+'-ph');
+    if(ph!=null)el.placeholder=ph;
   });
   // html content
   document.querySelectorAll('[data-en-html]').forEach(el=>{
     const h=el.getAttribute('data-'+lang+'-html');
     if(h!=null)el.innerHTML=h;
   });
+  // Screen readers and Google both key off this; it used to be hard-coded.
+  document.documentElement.lang = (lang==='th' ? 'th' : 'en');
 }
 
 function setLang(l){
@@ -3128,7 +3344,6 @@ function refreshDynamic(){
   else if(id==='panel-content-trust')    renderTrustList(getDB().settings.trustCards||[]);
   else if(id==='panel-content-contact')  loadContact();
   else if(id==='panel-content-payment')  loadPayment();
-  else if(id==='panel-content-featured') loadFeatured();
   else if(tabContent==='social' && tabParent==='home')    loadSocialChannels();
   else if(tabContent==='seo'    && tabParent==='settings') loadSeoPanel();
   else if(tabContent==='feed'   && tabParent==='home')     loadFeedPosts();
@@ -3250,12 +3465,6 @@ function defaultSettings(){
       {id:'services', enabled:true, label:'Service Cards'},
     ],
   };
-}
-
-function getAuth(){
-  // Legacy stub — Firebase Auth handles credentials now.
-  // Kept so old code that references this doesn't crash.
-  return {user: (FB.currentUser() && FB.currentUser().email) || 'admin', pass: ''};
 }
 
 async function doLogin(){
@@ -3603,7 +3812,6 @@ const PANEL_REDIRECTS = {
   'content-trust':      ['home', 'trust'],
   'content-contact':    ['checkout', 'contact'],
   'content-payment':    ['checkout', 'payment'],
-  'content-featured':   ['home', 'featured'],
 };
 
 function showPanel(name, el){
@@ -3640,7 +3848,7 @@ function showPanel(name, el){
   if(name==='reviews')loadReviewsPanel();
   // Composite panels — load all their sub-screens once when entered
   if(name==='home'){
-    loadHero(); loadHomeLayout(); loadServices(); loadTrust(); loadFeatured(); loadFeedPosts();
+    loadHero(); loadHomeLayout(); loadServices(); loadTrust(); loadFeedPosts();
     // Pre-load social channels data so it renders immediately when tab is opened
     loadSocialChannels();
   }
@@ -3702,6 +3910,103 @@ function showTab(panelName, tabKey){
   }
 }
 
+// ─── SIDEBAR SEARCH ────────────────────────────────────────────────────────
+// Matches against the visible label, the other language's label, and the
+// data-kw keyword list — so "ธนาคาร", "bank", "og image" and "sitemap" all
+// find their screen even though none of those words appear in a menu name.
+function filterSidebar(q){
+  const sidebar = document.querySelector('.sidebar');
+  const term = (q||'').trim().toLowerCase();
+  const items = [...sidebar.querySelectorAll('.side-item')];
+
+  if(!term){
+    sidebar.classList.remove('no-results');
+    sidebar.querySelectorAll('.filtered-out').forEach(e=>e.classList.remove('filtered-out'));
+    return;
+  }
+
+  let hits = 0;
+  items.forEach(it => {
+    const hay = [
+      it.textContent,
+      it.getAttribute('data-en')||'',
+      it.getAttribute('data-th')||'',
+      it.getAttribute('data-kw')||''
+    ].join(' ').toLowerCase();
+    const match = hay.includes(term);
+    it.classList.toggle('filtered-out', !match);
+    if(match) hits++;
+  });
+
+  // Group headers and dividers only earn their place when something under
+  // them survived the filter.
+  sidebar.querySelectorAll('.sidebar-label').forEach(label => {
+    let n = label.nextElementSibling, any = false;
+    while(n && !n.classList.contains('sidebar-label') && !n.classList.contains('side-div')){
+      if(n.classList.contains('side-item') && !n.classList.contains('filtered-out')){ any = true; break; }
+      n = n.nextElementSibling;
+    }
+    label.classList.toggle('filtered-out', !any);
+  });
+  sidebar.querySelectorAll('.side-div').forEach(d => d.classList.add('filtered-out'));
+
+  sidebar.classList.toggle('no-results', hits === 0);
+}
+
+// Enter opens the first surviving match; Escape clears and unfocuses.
+function sidebarSearchKey(ev){
+  if(ev.key === 'Escape'){
+    ev.target.value = '';
+    filterSidebar('');
+    ev.target.blur();
+    return;
+  }
+  if(ev.key === 'Enter'){
+    const first = document.querySelector('.sidebar .side-item:not(.filtered-out)');
+    if(first){
+      first.click();
+      ev.target.value = '';
+      filterSidebar('');
+      ev.target.blur();
+    }
+  }
+}
+
+// ⌘K / Ctrl-K from anywhere, and "/" when you're not already typing.
+document.addEventListener('keydown', ev => {
+  const box = document.getElementById('sideSearch');
+  if(!box) return;
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)
+              || document.activeElement.isContentEditable;
+  if((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === 'k'){
+    ev.preventDefault();
+    document.querySelector('.sidebar').classList.add('open');
+    box.focus(); box.select();
+  }else if(ev.key === '/' && !typing){
+    ev.preventDefault();
+    box.focus();
+  }
+});
+
+// ─── SIDEBAR COUNTS ────────────────────────────────────────────────────────
+// Shows how much is in each catalog section without having to open it.
+// Reads the already-loaded local DB, so it costs nothing.
+function refreshSidebarCounts(){
+  let db;
+  try{ db = getDB(); }catch(e){ return; }
+  if(!db) return;
+  const set = (id, n) => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = (n > 0 ? n : '');
+  };
+  const len = v => Array.isArray(v) ? v.length : 0;
+  set('sc-products', len(db.products));
+  set('sc-casing',   len(db.casingTypes));
+  set('sc-projects', len(db.projects));
+  set('sc-reviews',  len(db.reviews));
+  set('sc-hs',       len(db.historyStories));
+}
+
 function toggleSidebar(){
   document.querySelector('.sidebar').classList.toggle('open');
   document.getElementById('mobileOverlay').classList.toggle('open');
@@ -3740,6 +4045,100 @@ function loadDash(){
   document.getElementById('dF').textContent=(db.casingTypes||[]).length;
   document.getElementById('dP').textContent=db.projects.length;
   const _elDhs=document.getElementById('dHS'); if(_elDhs) _elDhs.textContent=(db.historyStories||[]).length;
+  refreshSidebarCounts();
+  loadNeedsAttention();
+}
+
+// ─── NEEDS ATTENTION ───────────────────────────────────────────────────────
+// Replaces the old Quick Access grid, which was eight buttons duplicating the
+// sidebar one-for-one — you had to scroll past a screenful of links that told
+// you nothing before you could start working. Every mainstream store admin
+// puts *work waiting to be done* here instead, so that's what this shows.
+// Each check is cheap and reads the already-loaded local DB.
+function loadNeedsAttention(){
+  const box = document.getElementById('needsAttention');
+  if(!box) return;
+
+  let db;
+  try{ db = getDB(); }catch(e){ return; }
+  const s = db.settings || {};
+  const th = (lang === 'th');
+  const items = [];
+
+  // Reviews waiting on a decision — the one genuinely time-sensitive queue.
+  const pending = (db.reviews||[]).filter(r => r.approved === false || r.pending === true).length;
+  if(pending){
+    items.push({sev:'warn',
+      en:`${pending} review${pending>1?'s':''} waiting for approval`,
+      th:`มีรีวิว ${pending} รายการรออนุมัติ`,
+      actEn:'Review now', actTh:'ไปอนุมัติ', go:"showPanel('reviews')"});
+  }
+
+  // Products that can't sell because they have no price.
+  const noPrice = (db.products||[]).filter(p =>
+    p.status !== 'sold' && p.hidden !== true &&
+    (p.price === '' || p.price == null) && !p.priceText && !(p.variants||[]).length
+  ).length;
+  if(noPrice){
+    items.push({sev:'warn',
+      en:`${noPrice} product${noPrice>1?'s':''} published without a price`,
+      th:`มีสินค้า ${noPrice} ชิ้นที่เผยแพร่แล้วแต่ยังไม่ได้ใส่ราคา`,
+      actEn:'Open Shop', actTh:'ไปที่ร้านค้า', go:"showPanel('products')"});
+  }
+
+  // Products with no photo — on an amulet shop this is the whole pitch.
+  const noPhoto = (db.products||[]).filter(p =>
+    p.hidden !== true && !(p.images||[]).length && !p.image
+  ).length;
+  if(noPhoto){
+    items.push({sev:'warn',
+      en:`${noPhoto} product${noPhoto>1?'s':''} have no photo`,
+      th:`มีสินค้า ${noPhoto} ชิ้นที่ยังไม่มีรูป`,
+      actEn:'Open Shop', actTh:'ไปที่ร้านค้า', go:"showPanel('products')"});
+  }
+
+  // SEO description drives the Google result snippet and every link preview.
+  const seo = s.seo || {};
+  if(!seo.description){
+    items.push({sev:'warn',
+      en:'No SEO description set — Google and LINE/WhatsApp previews will be blank',
+      th:'ยังไม่ได้ตั้งคำอธิบาย SEO — ผลค้นหา Google และ preview ตอนแชร์ LINE/WhatsApp จะว่างเปล่า',
+      actEn:'Set it', actTh:'ไปตั้งค่า', go:"showPanel('settings');showTab('settings','seo')"});
+  }
+
+  // A shop with no way to pay is not a shop.
+  const pay = s.payment || {};
+  const hasPay = pay.paynow || pay.promptpay || pay.bankAccount || pay.stripeEnabled;
+  if(!hasPay){
+    items.push({sev:'crit',
+      en:'No payment method configured — customers cannot check out',
+      th:'ยังไม่ได้ตั้งค่าวิธีชำระเงิน — ลูกค้าจะเช็คเอาต์ไม่ได้',
+      actEn:'Set up payment', actTh:'ตั้งค่าการชำระเงิน', go:"showPanel('checkout');showTab('checkout','payment')"});
+  }
+
+  if(!items.length){
+    box.innerHTML = `<div class="na-clear">
+      <span class="na-clear-icon" aria-hidden="true">✓</span>
+      <div>
+        <strong>${th ? 'ไม่มีอะไรค้างอยู่' : 'Nothing needs attention'}</strong>
+        <div class="na-clear-sub">${th
+          ? 'รีวิวอนุมัติครบ สินค้ามีราคาและรูปครบ และตั้งค่าที่จำเป็นเรียบร้อยแล้ว'
+          : 'Reviews are cleared, products have prices and photos, and the essential settings are filled in.'}</div>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Most severe first.
+  items.sort((a,b) => (a.sev === 'crit' ? -1 : 1) - (b.sev === 'crit' ? -1 : 1));
+
+  box.innerHTML = items.map(i => `
+    <div class="na-row na-${i.sev}">
+      <span class="na-dot" aria-hidden="true"></span>
+      <span class="na-text">${escapeHtml(th ? i.th : i.en)}</span>
+      <button class="na-act" onclick="${i.go}">${th ? i.actTh : i.actEn} →</button>
+    </div>
+  `).join('');
 }
 
 // BRANDING
@@ -3953,7 +4352,7 @@ function renderCpItems(){
   const c = document.getElementById('cp_items_list');
   if(!c) return;
   if(!_cpItems.length){
-    c.innerHTML = `<div style="text-align:center;padding:18px;color:var(--text-muted);font-size:13px;background:rgba(201,168,76,.05);border-radius:8px;border:1px dashed var(--border)">${lang==='th'?'ยังไม่มีรายการ — คลิก "เพิ่มรายการ" ด้านล่าง':'No items yet — click "Add Item" below'}</div>`;
+    c.innerHTML = `<div style="text-align:center;padding:18px;color:var(--text-muted);font-size:13px;background:rgba(var(--accent-rgb),.05);border-radius:8px;border:1px dashed var(--border)">${lang==='th'?'ยังไม่มีรายการ — คลิก "เพิ่มรายการ" ด้านล่าง':'No items yet — click "Add Item" below'}</div>`;
     return;
   }
   const catLabels={'monk-biographies':'🙏 Monk Biographies','amulet-history':'📿 Amulet History','meanings-beliefs':'✨ Meanings & Beliefs','katha-collection':'🕉️ Katha Collection','guides-articles':'📚 Guides & Articles'};
@@ -4132,7 +4531,7 @@ function renderGlbInfo(){
   const isUploading = _tempGlb === 'uploading';
   if(isUploading){
     el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);border-radius:8px">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(var(--accent-rgb),.15);border:1px solid rgba(var(--accent-rgb),.4);border-radius:8px">
         <div style="font-size:24px">⏫</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;color:var(--text);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(_tempGlbName)}</div>
@@ -4787,7 +5186,7 @@ function loadSections(){
         <div class="form-card">
           <div class="form-section-title">
             ${n.label}
-            ${isCustom?`<span style="font-size:11px;background:rgba(201,168,76,.15);color:var(--gold-dark);padding:3px 10px;border-radius:6px;font-weight:600;margin-left:8px">${lang==='th'?'หน้าที่สร้างเอง':'Custom Page'}</span>`:''}
+            ${isCustom?`<span style="font-size:11px;background:rgba(var(--accent-rgb),.15);color:var(--gold-dark);padding:3px 10px;border-radius:6px;font-weight:600;margin-left:8px">${lang==='th'?'หน้าที่สร้างเอง':'Custom Page'}</span>`:''}
             ${!n.visible?`<span style="font-size:11px;background:rgba(0,0,0,.08);color:var(--text-muted);padding:3px 10px;border-radius:6px;font-weight:600;margin-left:8px">${lang==='th'?'ซ่อนอยู่':'Hidden'}</span>`:''}
           </div>
           <div class="form-grid">
@@ -5035,7 +5434,7 @@ function cPlatformChange(idx, platformId){
 
 // Drag for contact list
 function cDragStart(e,idx){ _cDragIdx=idx; e.currentTarget.style.opacity='.45'; try{e.dataTransfer.effectAllowed='move';}catch(_){} }
-function cDragOver(e){ e.preventDefault(); e.currentTarget.style.background='rgba(201,168,76,.09)'; }
+function cDragOver(e){ e.preventDefault(); e.currentTarget.style.background='rgba(var(--accent-rgb),.09)'; }
 function cDragLeave(e){ e.currentTarget.style.background=''; }
 function cDrop(e,targetIdx){
   e.preventDefault(); e.currentTarget.style.background='';
@@ -5115,42 +5514,6 @@ async function savePayment(){
 }
 
 // ── FEATURED ──
-function loadFeatured(){
-  const db=getDB();const f=db.settings.featured||{};
-  document.getElementById('feat_enabled').checked=f.enabled!==false;
-  document.getElementById('feat_title').value=f.title||'';
-  document.getElementById('feat_sub').value=f.sub||'';
-  // gather featured items
-  const items=[];
-  (db.amulets||[]).forEach(a=>{if(a.featured)items.push({type:'📿 Amulet',name:a.name,id:a.id,kind:'amulets'});});
-  (db.accessories||[]).forEach(a=>{if(a.featured)items.push({type:'⛓️ Accessory',name:a.name,id:a.id,kind:'accessories'});});
-  (db.products||[]).forEach(p=>{if(p.featured)items.push({type:(PR_TYPE_ICON[p.type]||'🏷️')+' Product',name:p.name,id:p.id,kind:'products'});});
-  const list=document.getElementById('featList');
-  if(!items.length){list.innerHTML=`<div class="empty-state" style="padding:24px">No items marked as Featured yet. Edit any product and toggle "Featured product".</div>`;return;}
-  list.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
-    ${items.map(it=>`<div style="background:rgba(201,168,76,.07);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div><div style="font-size:11px;color:var(--text-muted)">${it.type}</div><div style="font-weight:600;font-size:13.5px">${it.name}</div></div>
-      <button class="btn-edit" onclick="unfeature('${it.kind}',${typeof it.id==='string'?`'${it.id}'`:it.id})">${tr('del')}</button>
-    </div>`).join('')}
-  </div>`;
-}
-async function unfeature(kind,id){
-  const db=getDB();const it=(db[kind]||[]).find(x=>x.id===id);if(!it)return;
-  it.featured=false;
-  try { await saveDB(db); loadFeatured(); } catch(err) {}
-}
-async function saveFeatured(){
-  const db=getDB();
-  db.settings.featured={
-    enabled:document.getElementById('feat_enabled').checked,
-    title:document.getElementById('feat_title').value,
-    sub:document.getElementById('feat_sub').value,
-    ids:db.settings.featured?.ids||[],
-  };
-  await persistDB(db,tr('featuredSaved'));
-  refreshDynamic();
-}
-
 // ── REVIEWS ──
 let editingReviewId=null;
 function loadReviewsPanel(){
@@ -5397,17 +5760,9 @@ async function deleteReview(id){
 // ITEMS
 function loadList(type){
   const db=getDB();const items=db[type];
-  const cid={amulets:'a_list',accessories:'ac_list',projects:'p_list'}[type];
-  const icons={amulets:'📿',accessories:'⛓️',projects:'🎯'};
-  const editFn={amulets:'editAmulet',accessories:'editAccess',projects:'editProject'}[type];
-  // Populate categories datalist
-  if(type==='amulets'||type==='accessories'){
-    const dl=document.getElementById(type==='amulets'?'a_cat_list':'ac_cat_list');
-    if(dl){
-      const cats=[...new Set(items.map(i=>i.cat).filter(Boolean))];
-      dl.innerHTML=cats.map(c=>`<option value="${c}">`).join('');
-    }
-  }
+  const cid={projects:'p_list'}[type];
+  const icons={projects:'🎯'};
+  const editFn={projects:'editProject'}[type];
   const c=document.getElementById(cid);
   if(!items.length){c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:12px">${tr('noItems')}</div>`;return;}
   // status pretty name
@@ -6126,55 +6481,99 @@ function hsRenderCoverFocus(){
 }
 
 // ─── STORE PAGES HUB ─────────────────────────────────────────────────
+// ─── PAGES HUB ─────────────────────────────────────────────────────────────
+// The fix for the single most confusing thing about this admin: the screens
+// that control one visitor-facing page were scattered across three different
+// menus, and nothing told you they were related. Editing the Library page
+// meant knowing to visit Library (the articles), Menu & Headers > Page
+// Headers (the title), and Menu & Headers > Menu Items (whether it shows at
+// all).
+//
+// So this screen is organised the way a visitor sees the site — one row per
+// page — and each row carries a direct button to EVERY screen that affects
+// it. `edits` is that mapping: [label_en, label_th, panel, tab?].
 function loadStorePages(){
   const db = getDB();
   const nav = db.settings.nav || [];
+  const custom = db.settings.customPages || [];
+
+  const HDR = ['Page title','หัวข้อหน้า','navigation','headers'];
+  const MENU = ['Menu &amp; order','เมนู &amp; ลำดับ','navigation','menu'];
+
   const pages = [
-    {id:'home',      icon:'🏠', title:'Homepage',       desc:'Hero, trust badges, service cards, featured items',  panel:'home',            builtin:true},
-    {id:'products',  icon:'🛍️', title:'Shop',            desc:'All products — amulets, accessories, bracelets, books, and more', panel:'products',       builtin:true},
-    {id:'casing',    icon:'🪬', title:'Casing Service',  desc:'Casing types, styles, and sample photos',            panel:'casing',          builtin:true},
-    {id:'history-stories',icon:'📖',title:'History & Stories',desc:'Articles about monks, amulet history, beliefs, guides',panel:'history-stories',builtin:true},
-    {id:'projects',  icon:'🎯', title:'Projects',         desc:'Community projects, events, and group activities',   panel:'projects',        builtin:true},
-    {id:'reviews',   icon:'🙏', title:'Reviews',          desc:'Customer reviews and testimonials',                  panel:'reviews',         builtin:true},
-    {id:'payment',   icon:'💳', title:'Payment & Contact',desc:'Payment info, bank details, contact channels',       panel:'checkout',        builtin:true},
-    {id:'about',     icon:'ℹ️', title:'About',            desc:'About the shop — mission, values, story',            panel:'navigation',      builtin:true},
-    {id:'contact',   icon:'☎️', title:'Contact',          desc:'Contact channels and WhatsApp buttons',              panel:'checkout',        builtin:true},
+    {id:'home', icon:'🏠', en:'Homepage', th:'หน้าแรก',
+     dEn:'Hero, trust badges, service cards, social, latest updates',
+     dTh:'Hero, ความน่าเชื่อถือ, การ์ดบริการ, โซเชียล, อัปเดตล่าสุด',
+     edits:[['Content','เนื้อหา','home'],['Layout order','ลำดับส่วน','home','layout'],MENU]},
+    {id:'shop', icon:'🛍️', en:'Shop', th:'ร้านค้า',
+     dEn:'All products — amulets, accessories, bracelets, books',
+     dTh:'สินค้าทั้งหมด — พระ, อุปกรณ์เสริม, สร้อย, หนังสือ',
+     edits:[['Products','สินค้า','products'],HDR,MENU]},
+    {id:'casing', icon:'🪬', en:'Casing Service', th:'บริการกรอบพระ',
+     dEn:'Casing types, styles, and sample photos',
+     dTh:'ประเภทกรอบ, แบบ, และรูปตัวอย่าง',
+     edits:[['Types &amp; styles','ประเภท &amp; แบบ','casing'],HDR,MENU]},
+    {id:'library', icon:'📖', en:'Library', th:'คลังบทความ',
+     dEn:'Articles — monk biographies, amulet history, beliefs, katha',
+     dTh:'บทความ — ประวัติพระเกจิ, ประวัติพระเครื่อง, ความเชื่อ, คาถา',
+     edits:[['Articles','บทความ','history-stories'],HDR,MENU]},
+    {id:'projects', icon:'🎯', en:'Projects', th:'โปรเจกต์',
+     dEn:'Community projects, events, and group amulets',
+     dTh:'โปรเจกต์ชุมชน, งานบุญ, และพระชุด',
+     edits:[['Projects','โปรเจกต์','projects'],HDR,MENU]},
+    {id:'reviews', icon:'🙏', en:'Reviews', th:'รีวิว',
+     dEn:'Customer reviews and testimonials',
+     dTh:'รีวิวและคำชมจากลูกค้า',
+     edits:[['Reviews','รีวิว','reviews'],HDR,MENU]},
+    {id:'contact', icon:'☎️', en:'Contact', th:'ติดต่อ',
+     dEn:'Contact channels — WhatsApp, Line, Facebook',
+     dTh:'ช่องทางติดต่อ — WhatsApp, Line, Facebook',
+     edits:[['Contact details','ข้อมูลติดต่อ','checkout','contact'],HDR,MENU]},
+    {id:'payment', icon:'💳', en:'Payment', th:'ชำระเงิน',
+     dEn:'Payment methods and bank details shown at checkout',
+     dTh:'วิธีชำระเงินและข้อมูลธนาคารที่แสดงตอนเช็คเอาต์',
+     edits:[['Payment methods','วิธีชำระเงิน','checkout','payment'],HDR,MENU]},
   ];
 
-  const grid = document.getElementById('store-pages-grid');
-  if(!grid) return;
+  // Pages the owner created themselves are edited in one place, so they get
+  // a shorter action row.
+  custom.forEach(p => pages.push({
+    id:p.id, icon:'📄', en:p.title||'Untitled page', th:p.titleTh||p.title||'หน้าที่ยังไม่มีชื่อ',
+    dEn:'Custom page', dTh:'หน้าที่สร้างเอง', custom:true,
+    edits:[['Edit content','แก้ไขเนื้อหา','navigation','menu'],MENU]
+  }));
 
-  grid.innerHTML = pages.map(p => {
+  const list = document.getElementById('store-pages-list');
+  if(!list) return;
+
+  const th = (lang === 'th');
+
+  list.innerHTML = pages.map(p => {
     const navItem = nav.find(n => n.id === p.id);
-    const isVisible = !navItem || navItem.visible !== false;
-    return `<div style="
-        background:var(--surface);border:1px solid var(--border);
-        border-radius:16px;padding:20px;cursor:pointer;
-        transition:border-color .2s,box-shadow .2s;
-        box-shadow:0 2px 8px rgba(0,0,0,.04)
-      " onmouseenter="this.style.borderColor='var(--gold)';this.style.boxShadow='0 4px 18px rgba(201,168,76,.14)'"
-         onmouseleave="this.style.borderColor='var(--border)';this.style.boxShadow='0 2px 8px rgba(0,0,0,.04)'"
-         onclick="showPanel('${p.panel}')">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:26px">${p.icon}</span>
-          <strong style="font-size:15px;color:var(--text)">${p.title}</strong>
+    const visible = !navItem || navItem.visible !== false;
+    const title = th ? p.th : p.en;
+    const desc  = th ? p.dTh : p.dEn;
+
+    const actions = p.edits.map(([en, thL, panel, tab]) => {
+      const call = tab
+        ? `showPanel('${panel}');showTab('${panel}','${tab}')`
+        : `showPanel('${panel}')`;
+      return `<button class="page-act" onclick="${call}">${th ? thL : en}</button>`;
+    }).join('');
+
+    return `<div class="page-row">
+      <span class="page-row-icon" aria-hidden="true">${p.icon}</span>
+      <div class="page-row-main">
+        <div class="page-row-head">
+          <strong class="page-row-title">${escapeHtml(title)}</strong>
+          <span class="pill ${visible ? 'pill-on' : 'pill-off'}">${
+            visible ? (th ? 'แสดงอยู่' : 'Visible') : (th ? 'ซ่อนอยู่' : 'Hidden')
+          }</span>
+          ${p.custom ? `<span class="pill pill-neutral">${th ? 'สร้างเอง' : 'Custom'}</span>` : ''}
         </div>
-        <span style="
-          font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
-          padding:3px 10px;border-radius:999px;
-          ${isVisible
-            ? 'background:rgba(20,140,60,.1);color:#0d7a3a;border:1px solid rgba(20,140,60,.2)'
-            : 'background:rgba(120,120,120,.1);color:#888;border:1px solid rgba(0,0,0,.1)'}
-        ">${isVisible ? '✓ Visible' : '○ Hidden'}</span>
+        <div class="page-row-desc">${escapeHtml(desc)}</div>
+        <div class="page-row-acts">${actions}</div>
       </div>
-      <div style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:14px">${p.desc}</div>
-      <div style="
-        display:inline-flex;align-items:center;gap:6px;
-        font-size:12.5px;font-weight:700;color:var(--gold-dark);
-        border:1px solid rgba(201,168,76,.3);border-radius:8px;
-        padding:6px 14px;transition:background .2s
-      ">Edit →</div>
     </div>`;
   }).join('');
 }
@@ -6463,126 +6862,6 @@ async function saveSeo(){
   db.settings.seo.twitterCard  = document.getElementById('seo_twitter_card').value;
   await persistDB(db, '✅ SEO settings saved');
   refreshDynamic();
-}
-
-async function saveAmulet(){
-  if(!ensureUploadsDone()) return;
-  const name=document.getElementById('a_name').value.trim();
-  const price=document.getElementById('a_price').value;
-  if(!name||!price){showToast(tr('needNamePrice'));return;}
-  const db=getDB();
-  const data={
-    name,
-    price:Number(price),
-    cat:document.getElementById('a_cat').value.trim()||'Other',
-    badge:document.getElementById('a_badge').value,
-    temple:document.getElementById('a_temple').value,
-    year:document.getElementById('a_year').value,
-    desc:document.getElementById('a_desc').value,
-    status:document.getElementById('a_status').value||'available',
-    hidePrice:document.getElementById('a_hidePrice').checked,
-    featured:document.getElementById('a_featured').checked,
-    imgs:captureImgs('a_imgs')
-  };
-  if(editingItemId.amulets){
-    const it=db.amulets.find(x=>x.id===editingItemId.amulets);
-    if(it)Object.assign(it,data);
-  } else {
-    db.amulets.push({id:genId(db.amulets),...data});
-  }
-  if(!(await persistDB(db,tr('saved')))) return;
-  tempImgs['a_imgs']=[];
-  cancelEditAmulet();
-  loadList('amulets');loadDash();
-}
-
-function editAmulet(id){
-  const it=getDB().amulets.find(x=>x.id===id);if(!it)return;
-  editingItemId.amulets=id;
-  document.getElementById('a_name').value=it.name||'';
-  document.getElementById('a_price').value=it.price||'';
-  document.getElementById('a_cat').value=it.cat||'';
-  document.getElementById('a_badge').value=it.badge||'';
-  document.getElementById('a_temple').value=it.temple||'';
-  document.getElementById('a_year').value=it.year||'';
-  document.getElementById('a_desc').value=it.desc||'';
-  document.getElementById('a_status').value=it.status||'available';
-  document.getElementById('a_hidePrice').checked=!!it.hidePrice;
-  document.getElementById('a_featured').checked=!!it.featured;
-  tempImgs['a_imgs']=[...(it.imgs||[])];renderPrev('a_imgs');
-  document.getElementById('a_form_title').textContent=lang==='th'?'✏️ แก้ไขพระเครื่อง':'✏️ Edit Amulet';
-  document.getElementById('a_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update Amulet';
-  document.getElementById('a_cancel_btn').style.display='inline-block';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function cancelEditAmulet(){
-  editingItemId.amulets=null;
-  clearF(['a_name','a_price','a_cat','a_badge','a_temple','a_year','a_desc'],'a_imgs');
-  document.getElementById('a_status').value='available';
-  document.getElementById('a_hidePrice').checked=false;
-  document.getElementById('a_featured').checked=false;
-  document.getElementById('a_form_title').textContent=lang==='th'?'➕ เพิ่มพระเครื่องใหม่':'➕ Add New Amulet';
-  document.getElementById('a_save_btn').textContent=lang==='th'?'✅ บันทึก':'✅ Save Amulet';
-  document.getElementById('a_cancel_btn').style.display='none';
-}
-
-async function saveAccess(){
-  if(!ensureUploadsDone()) return;
-  const name=document.getElementById('ac_name').value.trim();
-  const price=document.getElementById('ac_price').value;
-  if(!name||!price){showToast(tr('needNamePrice'));return;}
-  const db=getDB();
-  const data={
-    name,
-    price:Number(price),
-    cat:document.getElementById('ac_cat').value.trim()||'Other',
-    badge:document.getElementById('ac_badge').value,
-    desc:document.getElementById('ac_desc').value,
-    status:document.getElementById('ac_status').value||'available',
-    hidePrice:document.getElementById('ac_hidePrice').checked,
-    featured:document.getElementById('ac_featured').checked,
-    imgs:captureImgs('ac_imgs')
-  };
-  if(editingItemId.accessories){
-    const it=db.accessories.find(x=>x.id===editingItemId.accessories);
-    if(it)Object.assign(it,data);
-  } else {
-    db.accessories.push({id:genId(db.accessories),...data});
-  }
-  if(!(await persistDB(db,tr('saved')))) return;
-  tempImgs['ac_imgs']=[];
-  cancelEditAccess();
-  loadList('accessories');loadDash();
-}
-
-function editAccess(id){
-  const it=getDB().accessories.find(x=>x.id===id);if(!it)return;
-  editingItemId.accessories=id;
-  document.getElementById('ac_name').value=it.name||'';
-  document.getElementById('ac_price').value=it.price||'';
-  document.getElementById('ac_cat').value=it.cat||'';
-  document.getElementById('ac_badge').value=it.badge||'';
-  document.getElementById('ac_desc').value=it.desc||'';
-  document.getElementById('ac_status').value=it.status||'available';
-  document.getElementById('ac_hidePrice').checked=!!it.hidePrice;
-  document.getElementById('ac_featured').checked=!!it.featured;
-  tempImgs['ac_imgs']=[...(it.imgs||[])];renderPrev('ac_imgs');
-  document.getElementById('ac_form_title').textContent=lang==='th'?'✏️ แก้ไขอุปกรณ์':'✏️ Edit Accessory';
-  document.getElementById('ac_save_btn').textContent=lang==='th'?'✅ บันทึกการแก้ไข':'✅ Update';
-  document.getElementById('ac_cancel_btn').style.display='inline-block';
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function cancelEditAccess(){
-  editingItemId.accessories=null;
-  clearF(['ac_name','ac_price','ac_cat','ac_badge','ac_desc'],'ac_imgs');
-  document.getElementById('ac_status').value='available';
-  document.getElementById('ac_hidePrice').checked=false;
-  document.getElementById('ac_featured').checked=false;
-  document.getElementById('ac_form_title').textContent=lang==='th'?'➕ เพิ่มอุปกรณ์ใหม่':'➕ Add New Accessory';
-  document.getElementById('ac_save_btn').textContent=lang==='th'?'✅ บันทึก':'✅ Save';
-  document.getElementById('ac_cancel_btn').style.display='none';
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -7613,17 +7892,6 @@ function escapeText(s){
 }
 
 // Move an image left (dir=-1) or right (dir=1) within its preview list
-function moveImg(key, idx, dir){
-  const arr = tempImgs[key];
-  if(!Array.isArray(arr)) return;
-  const target = idx + dir;
-  if(target < 0 || target >= arr.length) return;
-  const tmp = arr[idx];
-  arr[idx] = arr[target];
-  arr[target] = tmp;
-  renderPrev(key);
-}
-
 function initPrevGridDrag(key){
   const el = document.getElementById(key + '_p');
   if(!el) return;
@@ -8292,9 +8560,6 @@ const EDIT_MAP = {
   '#phra3d':        {panel:'content-hero', field:'h_phra_front_p', label:'Phra Somdej 3D'},
 
   // ─── Homepage sections ───
-  '.featured-section':{panel:'content-featured', label:'Featured items'},
-  '#featuredSection': {panel:'content-featured', label:'Featured items'},
-  '#featuredGrid':    {panel:'content-featured', label:'Featured items'},
   '.home-reviews-section': {panel:'reviews', label:'Homepage reviews preview'},
   '#homeReviewsSection':   {panel:'reviews', label:'Homepage reviews preview'},
   '#homeRevGrid':          {panel:'reviews', label:'Homepage reviews preview'},

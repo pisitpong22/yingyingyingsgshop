@@ -1,0 +1,136 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Shared stylesheet for the four policy pages (privacy, terms, refunds,
+   shipping).
+
+   These are deliberately plain static pages rather than entries in the
+   hash router: policy pages need stable, crawlable, linkable URLs that
+   keep working even if the single-page app fails to boot, and payment
+   providers expect to be able to fetch them directly.
+
+   Colours mirror index.html's storefront theme so the pages don't feel
+   like they belong to a different site.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --gold:#c9a84c;
+  --gold-light:#e8c96a;
+  --deep:#0d0a06;
+  --surface:rgba(255,255,255,.04);
+  --border:rgba(201,168,76,.22);
+  /* Lifted from the storefront's .55 alpha — that landed near 3.8:1 on this
+     ground, under the 4.5:1 WCAG AA minimum for body text. */
+  --text:rgba(255,248,220,.90);
+  --text-muted:rgba(255,242,200,.72);
+  --font-display:'Cinzel',Georgia,serif;
+  --font-body:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  background:var(--deep);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:16px;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 24px 96px}
+
+/* ── header ── */
+.top{
+  border-bottom:1px solid var(--border);
+  margin-bottom:44px;
+  padding:28px 0 22px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.brand{
+  font-family:var(--font-display);
+  font-size:19px;font-weight:700;letter-spacing:.02em;
+  color:var(--gold-light);text-decoration:none;
+}
+.brand:hover{color:var(--gold)}
+.back{
+  color:var(--text-muted);text-decoration:none;font-size:14px;
+  border:1px solid var(--border);border-radius:8px;padding:7px 14px;
+  transition:border-color .2s,color .2s;
+}
+.back:hover{color:var(--gold-light);border-color:var(--gold)}
+
+h1{
+  font-family:var(--font-display);
+  font-size:clamp(27px,5vw,38px);
+  line-height:1.2;font-weight:700;color:var(--gold-light);
+  margin-bottom:10px;text-wrap:balance;
+}
+.updated{
+  color:var(--text-muted);font-size:13.5px;
+  padding-bottom:26px;margin-bottom:30px;
+  border-bottom:1px solid var(--border);
+}
+
+h2{
+  font-family:var(--font-display);
+  font-size:19px;font-weight:600;color:var(--gold);
+  margin:38px 0 12px;line-height:1.35;
+}
+h3{
+  font-size:15.5px;font-weight:650;color:var(--text);
+  margin:22px 0 8px;
+}
+
+p{margin-bottom:14px;color:var(--text-muted)}
+p strong,li strong{color:var(--text);font-weight:600}
+
+ul,ol{margin:0 0 16px;padding-left:22px;color:var(--text-muted)}
+li{margin-bottom:8px}
+
+a{color:var(--gold-light)}
+a:hover{color:var(--gold)}
+a:focus-visible,.back:focus-visible,.brand:focus-visible{
+  outline:2px solid var(--gold);outline-offset:2px;border-radius:2px;
+}
+
+/* Company identity block + anything needing to stand out from the prose. */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px 22px;
+  margin:0 0 22px;
+}
+.card p:last-child{margin-bottom:0}
+.card dl{display:grid;grid-template-columns:auto 1fr;gap:7px 18px;font-size:14.5px}
+.card dt{color:var(--text-muted)}
+.card dd{color:var(--text);font-weight:600}
+
+/* Points a customer is most likely to dispute later — kept visually
+   distinct so "you agreed to this" is defensible. */
+.notice{
+  border-left:3px solid var(--gold);
+  background:rgba(201,168,76,.07);
+  border-radius:0 10px 10px 0;
+  padding:15px 18px;
+  margin:0 0 20px;
+}
+.notice p:last-child{margin-bottom:0}
+
+/* ── footer ── */
+.foot{
+  border-top:1px solid var(--border);
+  margin-top:52px;padding-top:22px;
+  font-size:13.5px;color:var(--text-muted);
+  display:flex;gap:8px 20px;flex-wrap:wrap;align-items:center;
+}
+.foot a{color:var(--text-muted);text-decoration:none}
+.foot a:hover{color:var(--gold-light);text-decoration:underline}
+.foot .sep{opacity:.4}
+
+@media(max-width:560px){
+  body{font-size:15.5px}
+  .wrap{padding:0 18px 72px}
+  .card dl{grid-template-columns:1fr;gap:2px}
+  .card dd{margin-bottom:9px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
