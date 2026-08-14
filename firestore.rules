@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSuperAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
+        get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role == 'super_admin';
+    }
+    function isTeamMember() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
+    }
+
+    // Main site database — manifest at app/db + chunk docs at app/dbpart_...
+    match /app/{docId} {
+      allow read: if true;
+      allow write: if isTeamMember();
+    }
+
+    // Admin team records
+    match /admins/{adminId} {
+      allow read: if request.auth != null;
+      allow create: if isSuperAdmin() ||
+        (request.auth != null && request.auth.token.email.lower() == adminId);
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Customer review submissions — anyone can submit, only team can read/manage
+    match /reviewSubmissions/{id} {
+      allow create: if
+           request.resource.data.keys().hasOnly(['name','anonymous','rating','text','imgs','createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.anonymous is bool
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 0
+        && request.resource.data.rating <= 5
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.imgs is list
+        && request.resource.data.imgs.size() <= 6;
+      allow read, update, delete: if isTeamMember();
+    }
+    
+      // ── ตะกร้าสินค้า: ผูกกับอุปกรณ์ (guestId สุ่ม เก็บใน localStorage) ──
+    // ใครก็อ่าน/เขียนตะกร้าตัวเองได้ (ยังไม่มี login) — guestId เดายากมาก (UUID)
+    // จึงทำหน้าที่เหมือน token ส่วนตัว ไม่ใช่ช่องโหว่จริง
+    // ราคาที่เก็บในนี้ใช้แค่โชว์ผล ไม่ใช่ตัวตัดสินราคาจริงตอนจ่ายเงิน
+    // (เฟส Checkout/Stripe จะคำนวณราคาใหม่ฝั่ง Cloud Function เสมอ)
+    match /carts/{cartId} {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['items','updatedAt'])
+                   && request.resource.data.items is list
+                   && request.resource.data.items.size() <= 50;
+    }
+    
+    // ── คำสั่งซื้อ: Cloud Functions เขียนเท่านั้น (ใช้ Admin SDK ข้ามกฎนี้ได้) ──
+    // ไม่มีใครเขียนจาก client ได้เลย — กัน order ปลอม/ราคาปลอมเด็ดขาด
+    // อ่านได้เฉพาะแอดมิน หรือเจ้าของ order เอง (ถ้า login)
+    match /orders/{orderId} {
+      allow read: if (request.auth != null && resource.data.uid == request.auth.uid)
+                   || (request.auth != null
+                       && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())));
+      allow write: if false;
+    }
+  }
+}

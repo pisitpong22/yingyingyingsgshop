@@ -6,6 +6,12 @@
       "runtime": "nodejs20"
     }
   ],
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
   "hosting": {
     "public": ".",
     "ignore": [
@@ -18,7 +24,10 @@
       "functions-index.js",
       "cors.json",
       "README.md",
-      "*.log"
+      "*.log",
+
+      "*.rules",
+      "firestore.indexes.json"
     ],
     "headers": [
       {

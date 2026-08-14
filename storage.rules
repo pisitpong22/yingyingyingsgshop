@@ -1,0 +1,14 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /uploads/{allPaths=**} {
+      allow read: if true;
+      // Signed-in team members can upload anything (store images, 3D models, etc.)
+      // Public visitors (customers) can upload ONLY images up to 10MB — this lets
+      // them attach amulet photos to a review without needing an account.
+      allow write: if request.auth != null
+        || (request.resource.size < 10 * 1024 * 1024
+            && request.resource.contentType.matches('image/.*'));
+    }
+  }
+}

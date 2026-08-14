@@ -104,18 +104,66 @@ loadDash(); loadStorePages(); applyLang();
 
 ## What's left
 
-### 1. Firestore / Storage rules are not in git — the only remaining "important" item
+### 1. ~~Firestore / Storage rules are not in git~~ — DONE
 
-Rules are edited in the Firebase Console only. No history, no rollback, and a
-misclick could expose the `orders` collection (real customer names, phones,
-addresses) without anyone noticing.
+`firestore.rules` and `storage.rules` are now in git, byte-identical to what was
+live, and wired into `firebase.json` (`firestore.rules` / `storage.rules` keys).
+Edit the files and deploy; stop editing in the Console.
 
 ```bash
-firebase firestore:rules:get > firestore.rules
+firebase deploy --only firestore:rules,storage:rules
 ```
 
-Then wire `"firestore": {"rules": "firestore.rules"}` into `firebase.json` and
-deploy from the file. **Verify `orders` is admin-read-only while you're there.**
+Notes for next time:
+- `firebase firestore:rules:get` **does not exist** (CLI 15.x). Pull rules with
+  the Rules REST API instead: `GET firebaserules.googleapis.com/v1/projects/
+  <proj>/releases/cloud.firestore` → `rulesetName` → `GET /v1/<rulesetName>`,
+  bearer token from the CLI's own cached credentials.
+- Both `.rules` files are excluded from Hosting via `*.rules` in `ignore`.
+  **Not yet confirmed in production** — curl them after the next deploy.
+- The **hosting emulator ignores the `ignore` list** (it happily serves
+  `cors.json`, which is 404 in prod). It cannot verify this. Use a preview
+  channel or prod.
+- CI (`firebase-hosting-merge.yml`) runs `--only hosting`, so rules are never
+  deployed automatically. That is deliberate: rules changes stay manual.
+
+`orders` was verified: `allow write: if false` (Cloud Functions write via Admin
+SDK, bypassing rules), read only for an admin or the order's own `uid`. Correct.
+
+### 1b. 🔴 Anyone who signs up can make themselves an admin — NOT FIXED
+
+Found while verifying the above. Email/password, Google **and** Facebook sign-in
+are all enabled with open public sign-up. In `firestore.rules`:
+
+```
+match /admins/{adminId} {
+  allow create: if isSuperAdmin() ||
+    (request.auth != null && request.auth.token.email.lower() == adminId);
+```
+
+Any stranger can register, then write `admins/<their own email>`. `isTeamMember()`
+only checks that the doc **exists** — it does not check `role` — so that single
+write grants them:
+
+- read of every `orders` doc — real customer names, phones, addresses
+- write on `app/{docId}` — the entire storefront database
+- read/update/delete on `reviewSubmissions`
+
+The self-create clause exists for the first-run bootstrap (`ensureFirstSuperAdmin`
+in `firebase-shared.js:1822`), which only fires when zero admins exist. There are
+now 3, so the client-side path is dead code — but the *rule* is still wide open,
+and rules are the only real boundary.
+
+Fix (needs a deploy, so it will sign nobody out but takes effect instantly):
+
+```
+allow create: if isSuperAdmin();
+allow read:   if isTeamMember();   // currently `request.auth != null`,
+                                   // which leaks the admin roster
+```
+
+To bootstrap a new project after this change, add the first `admins` doc from
+the Console.
 
 ### 2. Confirm CSP on the checkout flow, then enforce it
 
