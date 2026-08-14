@@ -44,7 +44,15 @@ A live Thai amulet shop taking real card payments.
 - **Local preview:** `.claude/launch.json` defines `static-site` →
   `python3 -m http.server 8791`. Use the preview tools, not Bash.
 - **Browser caching during local testing** is aggressive; append `?v=N` when
-  verifying edits.
+  verifying edits. Production too — a plain reload of
+  `https://yingyingyingsgshop.web.app/` served the previous deploy's HTML during
+  testing. Add `?cb=N` before believing a production check.
+- **The storefront can be driven headlessly** for checks like this: stub
+  `window.FB.getDB = () => fixture`, then call `renderShop('all')`,
+  `renderP()`, `renderCasingTypes()`, `renderReviews()`, `openProd(type,id)`,
+  `openProject(id)` (async — await it), `openVariant(typeId,varId)`,
+  `openLightbox(i)`. Casing *variants* are lazy-loaded, so `casingTypes[].variants`
+  is empty in the DB object until `openCasingType()` has run.
 - **Storefront is English-only.** No language switcher. The *admin* is
   bilingual via `data-en` / `data-th` attributes + `applyLang()`.
 
@@ -202,6 +210,14 @@ Two layers:
 
 `imgAttrs()` gained a 4th argument for the fallback and now always emits an
 `alt`, so any new call site gets one for free — pass the name.
+
+**Never write a literal `alt=` next to an `imgAttrs()` call.** Duplicate
+attributes resolve to the FIRST one, and `imgAttrs` emits its `alt` before the
+hand-written one — so the hand-written value is silently discarded. This bit
+during this very change: casing type tiles, product cards, accessory cards and
+the PayNow QR each had a good alt that went empty the moment `imgAttrs` started
+emitting one. All 28 call sites now pass the description as the 4th argument.
+Caught only by checking the deployed page, not by reading the diff.
 
 The Dashboard's **Needs attention** list gained a row counting product photos
 with no alt. While wiring it up: the existing "N products have no photo" check
