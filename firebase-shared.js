@@ -185,6 +185,10 @@ let _dbItemHashes = {};
 let _snapshotSeq = 0;
 let _dbMeta = null;
 let _loadedKeys = new Set();
+// Keys whose read dropped at least one item (a doc was missing or wouldn't
+// parse). The in-memory array is then shorter than the truth in Firestore, so
+// saving it would delete whatever failed to read. Treated as "not loaded".
+let _partialLoadKeys = new Set();
 let _casingTypeIds = [];
 let _casingTypeHashes = {};
 let _casingVariantIds = {};
@@ -241,6 +245,17 @@ function initialLoadKeys(){
   return IS_ADMIN_PAGE ? DB_SPLIT_KEYS : keysForStorePage(requestedPageFromUrl());
 }
 
+// An empty array for a split key means one of two very different things:
+// either the caller genuinely deleted the last item, or the key was never
+// loaded on this page (store pages load only the keys they render, so every
+// other key sits in memory as []). Saving the second case would wipe live
+// data, so those keys keep their previous manifest. Emptiness alone can't
+// tell the two apart — only "was this key loaded?" can, which is what this
+// answers. Deleting the last product/article is a real save, not a wipe.
+function keyWasLoaded(key){
+  return _loadedKeys.has(key) && !_partialLoadKeys.has(key);
+}
+
 async function saveDB(newDb){
   // Persist as many small documents. This avoids Firestore's hard 1 MiB
   // limit for a single document while keeping FB.getDB()/saveDB() unchanged.
@@ -279,7 +294,7 @@ async function saveDB(newDb){
 
       if(key === 'historyStories'){
         const incomingStories = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
-        if(!incomingStories.length && ((_historyStoryIds && _historyStoryIds.length) || (_dbPartCounts.historyStories > 0))){
+        if(!incomingStories.length && !keyWasLoaded(key) && ((_historyStoryIds && _historyStoryIds.length) || (_dbPartCounts.historyStories > 0))){
           nextCounts[key] = _dbPartCounts.historyStories || 0;
           nextHashes[key] = _dbPartHashes.historyStories || [];
           nextItemIds[key] = [];
@@ -298,7 +313,7 @@ async function saveDB(newDb){
 
       if(DB_LAZY_ITEM_KEYS.has(key)){
         const incomingItems = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
-        if(!incomingItems.length && ((_lazyItemIds[key] && _lazyItemIds[key].length) || (_dbPartCounts[key] > 0))){
+        if(!incomingItems.length && !keyWasLoaded(key) && ((_lazyItemIds[key] && _lazyItemIds[key].length) || (_dbPartCounts[key] > 0))){
           nextCounts[key] = _dbPartCounts[key] || 0;
           nextHashes[key] = _dbPartHashes[key] || [];
           nextItemIds[key] = [];
@@ -838,6 +853,7 @@ async function loadSplitDB(meta, wantedKeys){
 
   await Promise.all(keys.map(async key => {
     if(!wanted.has(key)) return;
+    _partialLoadKeys.delete(key);   // re-reading this key: start from a clean slate
     try {
       if(key === 'casingTypes' && meta._casingTypesV2){
         out[key] = await loadCasingTypesV2(meta);
@@ -1077,7 +1093,9 @@ async function loadHistoryStoriesFullV2(meta){
       return null;
     }
   });
-  return stories.filter(Boolean);
+  const loaded = stories.filter(Boolean);
+  if(loaded.length < storyIds.length) _partialLoadKeys.add('historyStories');
+  return loaded;
 }
 
 async function loadLazyItemSummariesV2(meta, key){
@@ -1105,7 +1123,9 @@ async function loadLazyItemSummariesV2(meta, key){
       return null;
     }
   });
-  return items.filter(Boolean);
+  const loaded = items.filter(Boolean);
+  if(loaded.length < itemIds.length) _partialLoadKeys.add(key);
+  return loaded;
 }
 
 async function loadLazyItemsFullV2(meta, key){
@@ -1123,7 +1143,9 @@ async function loadLazyItemsFullV2(meta, key){
       return null;
     }
   });
-  return items.filter(Boolean);
+  const loaded = items.filter(Boolean);
+  if(loaded.length < itemIds.length) _partialLoadKeys.add(key);
+  return loaded;
 }
 
 async function readJsonRecord(ref, chunkRefForIndex, label){
@@ -1183,6 +1205,7 @@ onSnapshot(DB_DOC, async (snap) => {
       const data = snap.data();
       _dbMeta = data && data._splitVersion ? data : null;
       _loadedKeys = new Set();
+      _partialLoadKeys = new Set();
       // Reset variant cache on DB reload so stale "not found" entries don't persist
       _casingVariantsLoaded.clear();
       _historySummaryCache = null;
@@ -1201,6 +1224,7 @@ onSnapshot(DB_DOC, async (snap) => {
       _db = null;   // doc doesn't exist yet — first run
       _dbMeta = null;
       _loadedKeys = new Set();
+      _partialLoadKeys = new Set();
       _dbPartCounts = {};
       _dbPartHashes = {};
       _dbItemIds = {};
