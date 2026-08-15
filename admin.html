@@ -468,7 +468,7 @@
     background:var(--surface-2);position:relative;
   }
   .upload-zone:hover,.upload-zone.dov{border-color:var(--gold);background:rgba(var(--accent-rgb),.04);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.08)}
-  .upload-zone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .upload-zone input[type="file"]{position:absolute;top:0;right:0;bottom:0;left:0;opacity:0;cursor:pointer}
   .u-icon{font-size:28px;margin-bottom:6px}
   .u-text{color:var(--text-muted);font-size:13.5px}
   .u-hint{color:var(--text-dim);font-size:11.5px;margin-top:3px}
@@ -706,7 +706,7 @@
   /* ── SWITCHES ── */
   .switch{position:relative;display:inline-block;width:42px;height:22px;flex-shrink:0}
   .switch input{opacity:0;width:0;height:0}
-  .slider{position:absolute;cursor:pointer;inset:0;background:var(--surface-3);border-radius:22px;transition:.2s;border:1px solid var(--border)}
+  .slider{position:absolute;cursor:pointer;top:0;right:0;bottom:0;left:0;background:var(--surface-3);border-radius:22px;transition:.2s;border:1px solid var(--border)}
   .slider:before{position:absolute;content:'';height:16px;width:16px;left:2px;bottom:2px;background:var(--text-muted);border-radius:50%;transition:.2s}
   .switch input:checked + .slider{background:var(--gold);border-color:var(--gold)}
   .switch input:checked + .slider:before{transform:translateX(20px);background:var(--on-gold)}
@@ -727,7 +727,7 @@
   .ho-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-muted);font-weight:600}
 
   /* ── MODAL ── */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:opacity .18s ease-out,visibility 0s .18s}
+  .modal-overlay{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;visibility:hidden;transition:opacity .18s ease-out,visibility 0s .18s}
   .modal-overlay.open{opacity:1;visibility:visible;transition:opacity .18s ease-out,visibility 0s 0s}
   .modal{background:var(--surface-2);border-radius:18px;width:100%;max-width:760px;max-height:92vh;overflow-y:auto;padding:28px;border:1px solid var(--border-strong);box-shadow:0 30px 80px rgba(0,0,0,.6);transform:translateY(12px) scale(.98);opacity:0;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .18s ease-out;will-change:transform,opacity}
   .modal-overlay.open .modal{transform:translateY(0) scale(1);opacity:1}
@@ -838,7 +838,7 @@
   .hs-focus-val{font-size:12px;color:var(--gold);font-weight:700;text-align:right}
 
   /* ── LIVE EDITOR ── */
-  #liveEditor{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;flex-direction:column}
+  #liveEditor{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9999;background:var(--bg);display:none;flex-direction:column}
   .le-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px;height:52px;flex-shrink:0}
   .le-title{display:flex;align-items:center;gap:10px;color:var(--gold-light);font-weight:700;font-size:14.5px}
   .le-title-badge{background:rgba(var(--accent-rgb),.15);color:var(--gold);font-size:10px;font-weight:600;padding:2px 8px;border-radius:16px;border:1px solid var(--border-strong);letter-spacing:1px}
@@ -863,7 +863,7 @@
 
   /* ── MOBILE OVERLAY + HAMBURGER ── */
   .menu-btn{display:none;background:transparent;border:1px solid var(--border-strong);color:var(--gold-light);width:34px;height:34px;border-radius:7px;cursor:pointer;font-size:16px;align-items:center;justify-content:center}
-  .mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;backdrop-filter:blur(3px)}
+  .mobile-overlay{display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.6);z-index:90;backdrop-filter:blur(3px)}
   .mobile-overlay.open{display:block}
 
   /* ── MOBILE ACTION MENU ── */
@@ -1261,7 +1261,7 @@
 <div id="adminScreen">
   <div class="admin-top">
     <button class="menu-btn" id="menuBtn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
-    <div class="admin-logo" onclick="document.querySelector('.side-item[onclick*=dashboard]')?.click()" title="Dashboard">
+    <div class="admin-logo" onclick="var _d=document.querySelector('.side-item[onclick*=dashboard]'); if(_d) _d.click();" title="Dashboard">
       <div class="admin-logo-icon"><img src="/favicon/apple-touch-icon.png" alt=""></div>
       <div class="admin-logo-text">Yingyingying</div>
       <span class="admin-badge" data-en="⚙ Admin" data-th="⚙ แอดมิน">⚙ Admin</span>
@@ -3132,6 +3132,35 @@
 
 
 <script>
+// ───── OLD-BROWSER SAFETY: no `?.` or `??` in this block ─────
+// Both are ES2020. A browser older than Chrome 80 / Android WebView 80 fails
+// to PARSE them, and that discards this entire <script> — all 6,000 lines of
+// it — not just the offending line. The whole admin panel would come up as a
+// dead screen. This is exactly what broke the storefront for a customer on an
+// old Android (see .claude/HANDOFF.md item 1e). Use these helpers instead.
+//
+//   grep -n '?\.\|??\|||=\|&&=' admin.html index.html   # must print nothing
+const _NOOP_CLS = {add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}};
+function elById(id){ return document.getElementById(id); }
+function valOf(id){ const el=document.getElementById(id); return el ? el.value : undefined; }
+function checkedOf(id){ const el=document.getElementById(id); return el ? el.checked : undefined; }
+function clsOf(id){ const el=document.getElementById(id); return el ? el.classList : _NOOP_CLS; }
+function qsVal(sel){ const el=document.querySelector(sel); return el ? el.value : undefined; }
+function qsChecked(sel){ const el=document.querySelector(sel); return el ? el.checked : undefined; }
+// Walk a property path, stopping at the first null/undefined — the plain-ES5
+// equivalent of a?.b?.[c]?.d. Returns undefined rather than throwing.
+function dig(obj){
+  let cur = obj;
+  for(let i=1;i<arguments.length;i++){
+    if(cur === null || cur === undefined) return undefined;
+    cur = cur[arguments[i]];
+  }
+  return cur;
+}
+// `a ?? b` — b only when a is null/undefined (0 and '' must survive, which is
+// why `||` is not a substitute here).
+function nn(a, b){ return (a === null || a === undefined) ? b : a; }
+
 const DB_KEY='yyy_db';
 const AUTH_KEY='yyy_auth';
 const LANG_KEY='yyy_admin_lang';
@@ -3752,8 +3781,13 @@ async function saveDB(db){
 
 function currentAdminAreaLabel(){
   const activePanel=document.querySelector('.panel.active');
-  const panelTitle=activePanel?.querySelector('.panel-title')?.textContent?.trim();
-  const activeTab=activePanel?.querySelector('.tab-btn.active')?.textContent?.trim();
+  const textOfChild=(sel)=>{
+    const el = activePanel ? activePanel.querySelector(sel) : null;
+    const t = el ? el.textContent : null;
+    return t ? t.trim() : undefined;
+  };
+  const panelTitle=textOfChild('.panel-title');
+  const activeTab=textOfChild('.tab-btn.active');
   return [panelTitle, activeTab].filter(Boolean).join(' · ') || 'Website';
 }
 
@@ -4452,10 +4486,10 @@ function saveCpItem(){
   }
   _cpItems[idx].title    = document.getElementById('cpItemTitle').value.trim();
   _cpItems[idx].subtitle = document.getElementById('cpItemSubtitle').value.trim();
-  _cpItems[idx].excerpt  = (document.getElementById('cpItemExcerpt')?.value||'').trim();
-  _cpItems[idx].category = document.getElementById('cpItemCategory')?.value || '';
-  _cpItems[idx].featured = !!(document.getElementById('cpItemFeatured')?.checked);
-  _cpItems[idx].status   = document.getElementById('cpItemPublished')?.checked ? 'published' : 'draft';
+  _cpItems[idx].excerpt  = (valOf('cpItemExcerpt')||'').trim();
+  _cpItems[idx].category = valOf('cpItemCategory') || '';
+  _cpItems[idx].featured = !!(checkedOf('cpItemFeatured'));
+  _cpItems[idx].status   = checkedOf('cpItemPublished') ? 'published' : 'draft';
   _cpItems[idx].content  = rteGetHtml('cpItemContent');
   _cpItems[idx].img      = (captureImgs('cpItemImg')[0] || '');
   _cpItems[idx].updatedAt = Date.now();
@@ -5054,15 +5088,15 @@ function captureFeedPosts(){
   document.querySelectorAll('[data-fp-title]').forEach(el=>{
     const i=el.dataset.fpTitle;
     arr.push({
-      id:Number(document.querySelector(`[data-fp-id="${i}"]`)?.value)||Date.now()+Number(i||0),
-      createdAt:Number(document.querySelector(`[data-fp-created="${i}"]`)?.value)||Date.now(),
-      type:document.querySelector(`[data-fp-type="${i}"]`)?.value || 'default',
+      id:Number(qsVal(`[data-fp-id="${i}"]`))||Date.now()+Number(i||0),
+      createdAt:Number(qsVal(`[data-fp-created="${i}"]`))||Date.now(),
+      type:qsVal(`[data-fp-type="${i}"]`) || 'default',
       title:el.value.trim(),
-      text:document.querySelector(`[data-fp-text="${i}"]`)?.value || '',
-      buttonLabel:document.querySelector(`[data-fp-btn="${i}"]`)?.value.trim() || 'View',
-      buttonTarget:document.querySelector(`[data-fp-target="${i}"]`)?.value || '',
-      enabled:!!document.querySelector(`[data-fp-enabled="${i}"]`)?.checked,
-      pinned:!!document.querySelector(`[data-fp-pinned="${i}"]`)?.checked,
+      text:qsVal(`[data-fp-text="${i}"]`) || '',
+      buttonLabel:qsVal(`[data-fp-btn="${i}"]`).trim() || 'View',
+      buttonTarget:qsVal(`[data-fp-target="${i}"]`) || '',
+      enabled:!!qsChecked(`[data-fp-enabled="${i}"]`),
+      pinned:!!qsChecked(`[data-fp-pinned="${i}"]`),
       imgs:captureImgs(`feed_post_imgs_${i}`),
     });
   });
@@ -5189,7 +5223,7 @@ function loadSections(){
 
   // Ensure reviews section exists in settings (older DBs may not have it)
   if(!s.sections.reviews){
-    s.sections.reviews = {title: s.reviews?.title || 'Customer Reviews', desc: s.reviews?.sub || ''};
+    s.sections.reviews = {title: dig(s,'reviews','title') || 'Customer Reviews', desc: dig(s,'reviews','sub') || ''};
   }
 
   const nav = s.nav || [];
@@ -5200,12 +5234,12 @@ function loadSections(){
       let title, desc;
       if(isCustom){
         const p = (s.customPages || []).find(x => x.id === n.id);
-        title = p?.title || '';
-        desc  = p?.desc  || '';
+        title = dig(p,'title') || '';
+        desc  = dig(p,'desc')  || '';
       } else {
         const key = SECTION_KEY_BY_NAV_ID[n.id] || n.id;
-        title = s.sections[key]?.title || '';
-        desc  = s.sections[key]?.desc  || '';
+        title = dig(s.sections, key, 'title') || '';
+        desc  = dig(s.sections, key, 'desc')  || '';
       }
       return `
         <div class="form-card">
@@ -5236,12 +5270,12 @@ function loadSections(){
       let title = '', desc = '';
       if(isCustom){
         const p = (s.customPages || []).find(x => x.id === n.id);
-        title = p?.title || '';
-        desc  = p?.desc  || '';
+        title = dig(p,'title') || '';
+        desc  = dig(p,'desc')  || '';
       } else {
         const key = SECTION_KEY_BY_NAV_ID[n.id] || n.id;
-        title = s.sections[key]?.title || '';
-        desc  = s.sections[key]?.desc  || '';
+        title = dig(s.sections, key, 'title') || '';
+        desc  = dig(s.sections, key, 'desc')  || '';
       }
       rteSetHtml(`sec_${n.id}_title`, title);
       rteSetHtml(`sec_${n.id}_desc`, desc);
@@ -5485,10 +5519,10 @@ function captureContacts(){
       label: labelRaw,
       color: pCfg ? pCfg.accent : '#888888',
       url: urlEl ? urlEl.value.trim() : '',
-      showFloat: !!document.querySelector(`[data-c-float="${i}"]`)?.checked,
-      showOnHome: !!document.querySelector(`[data-c-home="${i}"]`)?.checked,
-      showInDetail: !!document.querySelector(`[data-c-detail="${i}"]`)?.checked,
-      message: document.querySelector(`[data-c-msg="${i}"]`)?.value.trim() || '',
+      showFloat: !!qsChecked(`[data-c-float="${i}"]`),
+      showOnHome: !!qsChecked(`[data-c-home="${i}"]`),
+      showInDetail: !!qsChecked(`[data-c-detail="${i}"]`),
+      message: qsVal(`[data-c-msg="${i}"]`).trim() || '',
     });
   });
   return arr;
@@ -5994,7 +6028,7 @@ async function saveType(){
     clearTimeout(window._adminRefreshTimer);
     const editedKey = String(curEditTypeId);
     const freshTy=(getDB().casingTypes||[]).find(t=>String(t.id)===editedKey);
-    console.log('[saveType] post-save: curEditTypeId=',curEditTypeId,'freshTy=',freshTy?.name,'_variantIds=',freshTy?._variantIds?.length,'variants=',freshTy?.variants?.length);
+    console.log('[saveType] post-save: curEditTypeId=',curEditTypeId,'freshTy=',dig(freshTy,'name'),'_variantIds=',dig(freshTy,'_variantIds','length'),'variants=',dig(freshTy,'variants','length'));
     if(freshTy){
       const crumbEl=document.getElementById('vCrumbName');
       const nameEl=document.getElementById('vTypeName');
@@ -6186,7 +6220,8 @@ function _renderVariantTable(vars, c){
   }).join('')}</div>`;
   if(_variantHighlightId!==null){
     setTimeout(()=>{
-      c.querySelector(`[data-variant-id="${CSS.escape(String(_variantHighlightId))}"]`)?.scrollIntoView({block:'nearest',behavior:'smooth'});
+      const _hl = c.querySelector(`[data-variant-id="${CSS.escape(String(_variantHighlightId))}"]`);
+      if(_hl) _hl.scrollIntoView({block:'nearest',behavior:'smooth'});
     },0);
   }
   // Re-apply any active search filter after a re-render (e.g. after add/edit/delete)
@@ -6631,7 +6666,7 @@ function loadHsPanel(){
   }
 
   // If _db not yet initialised, trigger load; onDBChange will re-render on arrival.
-  if(window.FB && !Array.isArray(window.FB.getDB()?.historyStories)){
+  if(window.FB && !Array.isArray(dig(window.FB.getDB(),'historyStories'))){
     const c = document.getElementById('hs_list');
     if(c) c.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">Loading articles…</div>`;
     window.FB.ensureDBKeys && window.FB.ensureDBKeys(['historyStories']).catch(e => console.warn('[HS]', e));
@@ -6854,8 +6889,8 @@ async function saveSocialChannels(){
   const db = getDB();
   if(!db.settings.socialChannels) db.settings.socialChannels = {};
   const sc = db.settings.socialChannels;
-  sc.enabled = !!(document.getElementById('sc_enabled')?.checked);
-  sc.title   = (document.getElementById('sc_title')?.value||'').trim() || 'Follow Us';
+  sc.enabled = !!(checkedOf('sc_enabled'));
+  sc.title   = (valOf('sc_title')||'').trim() || 'Follow Us';
   if(await persistDB(db, '✅ Social Channels saved')) refreshDynamic();
 }
 
@@ -7083,7 +7118,7 @@ function openProductForm(id){
       document.getElementById('pr_sku').value = p.sku||'';
       document.getElementById('pr_productCode').value = p.productCode||'';
       document.getElementById('pr_oneOfOne').checked = !!p.oneOfOne;
-      document.getElementById('pr_stockQty').value = p.stockQty ?? 1;
+      document.getElementById('pr_stockQty').value = nn(p.stockQty, 1);
       document.getElementById('pr_stockQty').disabled = !!p.oneOfOne;
       document.getElementById('pr_stockStatus').value = p.stockStatus||'in_stock';
       document.getElementById('pr_variantsEnabled').checked = !!p.variantsEnabled;
@@ -7302,9 +7337,9 @@ const PR_STOCK_LABEL = {
 function loadProductList(){
   const db = getDB();
   let items = [...(db.products||[])];
-  const search = (document.getElementById('pr_search')?.value || '').toLowerCase().trim();
-  const typeFilter = document.getElementById('pr_filter_type')?.value || '';
-  const statusFilter = document.getElementById('pr_filter_status')?.value || '';
+  const search = (valOf('pr_search') || '').toLowerCase().trim();
+  const typeFilter = valOf('pr_filter_type') || '';
+  const statusFilter = valOf('pr_filter_status') || '';
   if(search) items = items.filter(p => (p.name||'').toLowerCase().includes(search) || (p.sku||'').toLowerCase().includes(search));
   if(typeFilter) items = items.filter(p => p.type === typeFilter);
   if(statusFilter) items = items.filter(p => p.publishStatus === statusFilter);
@@ -8177,7 +8212,7 @@ function openModal(id){
   el.classList.add('open');
 }
 function closeModal(id){
-  if(id){document.getElementById(id)?.classList.remove('open');return;}
+  if(id){clsOf(id).remove('open');return;}
   document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open'));
 }
 function closeModals(){ closeModal(); }
@@ -8202,7 +8237,7 @@ async function loadTeamList(){
   const currentEmail = (FB.currentUser() && FB.currentUser().email || '').toLowerCase();
   // Sort: super_admins first, then by name
   const rank = { super_admin: 0, admin: 1, editor: 2 };
-  team.sort((a,b) => (rank[a.role] ?? 9) - (rank[b.role] ?? 9));
+  team.sort((a,b) => nn(rank[a.role], 9) - nn(rank[b.role], 9));
 
   const roleLabels = {
     super_admin: { en:'🦄 Super Admin', th:'🦄 ผู้ดูแลสูงสุด', color:'#8b4f9a' },
@@ -9181,14 +9216,14 @@ async function startWatermarkMigration(){
     const ty = db.casingTypes[ti];
     if(!ty) continue;
     try { await FB.ensureCasingVariants(ty.id); } catch(e){ /* skip if fails */ }
-    const freshTy = getDB().casingTypes?.[ti];
-    (freshTy?.variants || []).forEach((v, vi) => {
+    const freshTy = dig(getDB(),'casingTypes',ti);
+    (dig(freshTy,'variants') || []).forEach((v, vi) => {
       (v.imgs || []).forEach((img, ii) => {
         pushSlot(
-          () => rawUrl((getDB().casingTypes?.[ti]?.variants?.[vi]?.imgs||[])[ii]),
-          (u) => { const t=getDB().casingTypes?.[ti]; if(t?.variants?.[vi]?.imgs) t.variants[vi].imgs[ii] = u; },
-          () => (getDB().casingTypes?.[ti]?.variants?.[vi]?.imgs||[])[ii],
-          (meta) => { const t=getDB().casingTypes?.[ti]; if(t?.variants?.[vi]?.imgs) t.variants[vi].imgs[ii] = meta; }
+          () => rawUrl((dig(getDB(),'casingTypes',ti,'variants',vi,'imgs')||[])[ii]),
+          (u) => { const t=dig(getDB(),'casingTypes',ti); if(dig(t,'variants',vi,'imgs')) t.variants[vi].imgs[ii] = u; },
+          () => (dig(getDB(),'casingTypes',ti,'variants',vi,'imgs')||[])[ii],
+          (meta) => { const t=dig(getDB(),'casingTypes',ti); if(dig(t,'variants',vi,'imgs')) t.variants[vi].imgs[ii] = meta; }
         );
       });
     });
@@ -9199,9 +9234,9 @@ async function startWatermarkMigration(){
     (post.imgs || []).forEach((img, ii) => {
       pushSlot(
         () => rawUrl((db.feedPosts[pi].imgs||[])[ii]),
-        (u) => { if(db.feedPosts[pi]?.imgs) db.feedPosts[pi].imgs[ii] = u; },
+        (u) => { if(dig(db.feedPosts[pi],'imgs')) db.feedPosts[pi].imgs[ii] = u; },
         () => (db.feedPosts[pi].imgs||[])[ii],
-        (meta) => { if(db.feedPosts[pi]?.imgs) db.feedPosts[pi].imgs[ii] = meta; }
+        (meta) => { if(dig(db.feedPosts[pi],'imgs')) db.feedPosts[pi].imgs[ii] = meta; }
       );
     });
   });
@@ -9211,9 +9246,9 @@ async function startWatermarkMigration(){
     (rv.imgs || []).forEach((img, ii) => {
       pushSlot(
         () => rawUrl((db.reviews[ri].imgs||[])[ii]),
-        (u) => { if(db.reviews[ri]?.imgs) db.reviews[ri].imgs[ii] = u; },
+        (u) => { if(dig(db.reviews[ri],'imgs')) db.reviews[ri].imgs[ii] = u; },
         () => (db.reviews[ri].imgs||[])[ii],
-        (meta) => { if(db.reviews[ri]?.imgs) db.reviews[ri].imgs[ii] = meta; }
+        (meta) => { if(dig(db.reviews[ri],'imgs')) db.reviews[ri].imgs[ii] = meta; }
       );
     });
   });

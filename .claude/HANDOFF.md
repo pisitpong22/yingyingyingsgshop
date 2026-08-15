@@ -248,11 +248,29 @@ Replaced with helpers defined at the top of that block — `pageIsActive(id)`,
 > perfectly on every machine you test on. It only fails on the devices you
 > can't see. Check before every deploy:
 > ```bash
-> grep -n '?\.\|??\|||=\|&&=' index.html   # must print nothing
+> grep -n '?\.\|??\|||=\|&&=' index.html admin.html   # must print nothing
 > ```
 
-`admin.html` still has 68 `?.` and 3 `??`. It is login-gated and staff-only, so
-it was left alone — but it will break the same way on an old phone.
+`admin.html` had the same disease — 68 `?.` and 3 `??`, all inside its single
+6,000-line `<script>` — and was cleaned the same way. It carries two helpers
+that `index.html` does not need:
+
+- `dig(obj, k1, k2, …)` for deep paths. `getDB().casingTypes?.[ti]?.variants?.[vi]?.imgs`
+  became `dig(getDB(),'casingTypes',ti,'variants',vi,'imgs')`.
+- **`nn(a, b)` for `??` — do not "simplify" it to `||`.** `??` falls back only
+  on null/undefined; `||` also swallows `0` and `''`. Two live call sites
+  depend on that: `nn(p.stockQty, 1)` must keep a stock of **0** (`||` would
+  silently resell a sold-out amulet), and the team sort `nn(rank[a.role], 9)`
+  must keep rank **0**, which is `super_admin` (`||` would sort the owner last).
+
+Also `qsVal` / `qsChecked` for the `document.querySelector(\`[data-fp-…]\`)?.value`
+form-capture patterns, plus `valOf` / `checkedOf` / `clsOf` / `elById` as in
+the storefront.
+
+The admin deliberately did **not** get the boot watchdog. Its failure mode is
+different — the login screen is static HTML, so a dead script shows a login box
+that does nothing rather than a blank page — and it is staff-only, so there is
+no stranger to reassure. Add one if the admin ever gets used from a phone.
 
 **b. `inset:0` is Chrome 87+.** 24 uses, including `.fb-splash`, `#lightbox`,
 `.modal-overlay` and `.mobile-overlay`. On older browsers the declaration is
