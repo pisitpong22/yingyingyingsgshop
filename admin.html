@@ -2063,13 +2063,29 @@
               </div>
               <div class="fg" id="pr_stockQty_box"><label class="fl" data-en="Stock quantity" data-th="จำนวนสต็อก">Stock quantity</label><input class="fi" id="pr_stockQty" type="number" min="0" value="1" disabled></div>
               <div class="fg"><label class="fl" data-en="Stock status" data-th="สถานะสต็อก">Stock status</label>
-                <select class="fsel" id="pr_stockStatus">
+                <select class="fsel" id="pr_stockStatus" onchange="prTogglePreorder()">
                   <option value="in_stock" data-en="✅ In stock" data-th="✅ พร้อมจำหน่าย">✅ In stock</option>
                   <option value="low_stock" data-en="⚠️ Low stock" data-th="⚠️ ใกล้หมด">⚠️ Low stock</option>
                   <option value="reserved" data-en="⏳ Reserved" data-th="⏳ จอง">⏳ Reserved</option>
                   <option value="preorder" data-en="🕐 Pre-order" data-th="🕐 พรีออเดอร์">🕐 Pre-order</option>
                   <option value="sold_out" data-en="❌ Sold out" data-th="❌ ขายแล้ว">❌ Sold out</option>
                 </select>
+              </div>
+              <!-- PRE-ORDER — shown only while stock status is "preorder".
+                   A pre-order piece is not in hand yet, so it never goes through
+                   the cart: the storefront turns the buy button into a "reserve
+                   this piece" contact button. These three fields are the whole
+                   difference between that and an ordinary item. -->
+              <div class="fg full" id="pr_preorder_box" style="display:none">
+                <div style="background:rgba(var(--accent-rgb),.06);border:1px solid var(--border);border-radius:12px;padding:14px">
+                  <div style="font-weight:700;margin-bottom:4px" data-en="🕐 Pre-order details" data-th="🕐 รายละเอียดพรีออเดอร์">🕐 Pre-order details</div>
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" data-en="Shown on the product page. A pre-order item is reserved by message — there is no cart or card payment for it." data-th="จะแสดงในหน้าสินค้า สินค้าพรีออเดอร์จะสั่งจองผ่านแชทเท่านั้น ไม่มีตะกร้าและไม่ตัดบัตร">Shown on the product page. A pre-order item is reserved by message — there is no cart or card payment for it.</div>
+                  <div class="form-grid">
+                    <div class="fg"><label class="fl" data-en="Expected arrival" data-th="ของเข้าประมาณ">Expected arrival</label><input class="fi" id="pr_preorderEta" placeholder="e.g. late Sep 2026 / 3–4 weeks"></div>
+                    <div class="fg"><label class="fl" data-en="Deposit (SGD, optional)" data-th="มัดจำ (SGD, ถ้ามี)">Deposit (SGD, optional)</label><input class="fi" id="pr_preorderDeposit" type="number" min="0" step="0.01" placeholder="0"></div>
+                    <div class="fg full"><label class="fl" data-en="Note to the customer" data-th="หมายเหตุถึงลูกค้า">Note to the customer</label><input class="fi" id="pr_preorderNote" placeholder="e.g. Deposit is non-refundable once the piece is ordered"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -7242,6 +7258,11 @@ function prToggleOneOfOne(){
   if(isOne) qtyInput.value = 1;
 }
 
+function prTogglePreorder(){
+  const box = document.getElementById('pr_preorder_box');
+  if(box) box.style.display = (valOf('pr_stockStatus') === 'preorder') ? 'block' : 'none';
+}
+
 function prSyncEnquiryToggle(){
   if(document.getElementById('pr_allowCheckout').checked) document.getElementById('pr_allowEnquiryOnly').checked = false;
 }
@@ -7370,6 +7391,9 @@ function openProductForm(id){
       document.getElementById('pr_stockQty').value = nn(p.stockQty, 1);
       document.getElementById('pr_stockQty').disabled = !!p.oneOfOne;
       document.getElementById('pr_stockStatus').value = p.stockStatus||'in_stock';
+      document.getElementById('pr_preorderEta').value = p.preorderEta||'';
+      document.getElementById('pr_preorderDeposit').value = p.preorderDeposit||'';
+      document.getElementById('pr_preorderNote').value = p.preorderNote||'';
       document.getElementById('pr_variantsEnabled').checked = !!p.variantsEnabled;
       prVariantOptions = JSON.parse(JSON.stringify(p.variantOptions||[]));
       prVariantRows = JSON.parse(JSON.stringify(p.variants||[]));
@@ -7399,7 +7423,7 @@ function openProductForm(id){
     ['pr_name','pr_category','pr_subcat','pr_shortDesc','pr_temple','pr_master','pr_yearBE','pr_material','pr_size',
      'pr_condition','pr_certificate','pr_tags','pr_video','pr_price','pr_salePrice','pr_costPrice','pr_discountLabel',
      'pr_sku','pr_productCode','pr_weight','pr_packageSize','pr_shippingFee','pr_prepTime','pr_seoTitle','pr_seoDesc',
-     'pr_slug','pr_badgeText'].forEach(id2 => { const el=document.getElementById(id2); if(el) el.value=''; });
+     'pr_slug','pr_badgeText','pr_preorderEta','pr_preorderDeposit','pr_preorderNote'].forEach(id2 => { const el=document.getElementById(id2); if(el) el.value=''; });
     rteSetHtml('pr_fullDesc',''); rteSetHtml('pr_story','');
     document.getElementById('pr_type').value = 'amulet';
     document.getElementById('pr_oneOfOne').checked = true;
@@ -7415,6 +7439,7 @@ function openProductForm(id){
     document.getElementById('pr_duplicate_btn').style.display = 'none';
   }
   prToggleVariants();
+  prTogglePreorder();
   prRenderOptionList();
   prRenderVariantRows();
   renderPrev('pr_imgs');
@@ -7461,6 +7486,7 @@ async function saveProduct(intent){
   const imgs = captureImgs('pr_imgs');
   const isOneOfOne = document.getElementById('pr_oneOfOne').checked;
   const variantsEnabled = document.getElementById('pr_variantsEnabled').checked;
+  const isPreorder = document.getElementById('pr_stockStatus').value === 'preorder';
 
   const data = {
     name: document.getElementById('pr_name').value.trim(),
@@ -7491,6 +7517,12 @@ async function saveProduct(intent){
     oneOfOne: isOneOfOne,
     stockQty: isOneOfOne ? 1 : Number(document.getElementById('pr_stockQty').value || 0),
     stockStatus: document.getElementById('pr_stockStatus').value,
+    // Pre-order fields are cleared when the status is anything else, so an item
+    // that used to be a pre-order does not keep showing a stale arrival date
+    // once the piece is actually in hand.
+    preorderEta: isPreorder ? document.getElementById('pr_preorderEta').value.trim() : '',
+    preorderDeposit: (isPreorder && document.getElementById('pr_preorderDeposit').value) ? Number(document.getElementById('pr_preorderDeposit').value) : 0,
+    preorderNote: isPreorder ? document.getElementById('pr_preorderNote').value.trim() : '',
     variantsEnabled,
     variantOptions: variantsEnabled ? prVariantOptions : [],
     variants: variantsEnabled ? prVariantRows : [],

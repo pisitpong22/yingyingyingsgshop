@@ -2988,6 +2988,16 @@
   .status-pill.low-stock{background:#7a4b0f;color:#ffe4c2}
   .status-pill.preorder{background:#2f4a7a;color:#d6e4ff}
 
+  /* PRE-ORDER — arrival/deposit block on the product page, arrival line on the
+     card. The page is dark and cards stay dark even inside the light Featured
+     section, so this text is a LIGHT blue; the navy of .status-pill.preorder is
+     a background colour there and would be unreadable as text here. */
+  .preorder-box{margin-top:10px;padding:13px 15px;border:1px solid rgba(143,182,238,.3);border-left:3px solid #7ba3e0;border-radius:10px;background:rgba(47,74,122,.22)}
+  .preorder-head{font-weight:700;font-size:13px;color:#cfe0fb;letter-spacing:.3px}
+  .preorder-lead{font-size:13px;color:var(--text-muted);margin:4px 0 8px}
+  .preorder-note{font-size:12.5px;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px dashed rgba(143,182,238,.28);white-space:pre-wrap}
+  .card-preorder{font-size:11.5px;color:#a9c6f0;font-weight:600;margin-top:3px}
+
   /* PRICE HIDDEN (PM for price) */
   .price-pm{font-family:var(--font-display);color:var(--gold-dark);font-size:16px;font-style:italic;font-weight:600}
 
@@ -8464,6 +8474,11 @@ function buildContactMsg(item,type){
     const hidePrice=!!item.allowEnquiryOnly;
     const price=hidePrice?(s.contactPmText||'PM for price'):('S$'+prodPrice(item).toLocaleString());
     const typeLabel=item.type||'item';
+    if(prodIsPreorder(item)){
+      const eta=item.preorderEta?` Expected arrival: ${item.preorderEta}.`:'';
+      const dep=Number(item.preorderDeposit)>0?` Deposit: S$${Number(item.preorderDeposit).toLocaleString()}.`:'';
+      return `Hi! I'd like to pre-order the ${typeLabel}: "${item.name}" (${price}).${eta}${dep} Could you help me reserve it? 🙏`;
+    }
     return `Hi! I'm interested in the ${typeLabel}: "${item.name}" (${price}). Could you share more details? 🙏`;
   }
   if(type==='projects'){
@@ -8675,7 +8690,27 @@ function checkoutOn(){
   const s = getDB().settings;
   return !s || s.checkoutEnabled !== false;
 }
-function prodCanBuy(p){ return checkoutOn() && p.allowCheckout!==false && !p.allowEnquiryOnly && p.stockStatus!=='sold_out'; }
+// PRE-ORDER — the piece is not in the shop's hands yet, so it deliberately
+// never enters the cart even when card checkout is on: charging the full price
+// for something with no arrival date is not what the deposit field is for.
+// A pre-order is reserved by message instead, and preorderInfoHtml() puts what
+// the buyer needs to decide (arrival, deposit, the shop's terms) on the page.
+function prodIsPreorder(p){ return p.stockStatus==='preorder'; }
+function prodCanBuy(p){ return checkoutOn() && p.allowCheckout!==false && !p.allowEnquiryOnly && !prodIsPreorder(p) && p.stockStatus!=='sold_out'; }
+
+function preorderInfoHtml(p){
+  if(!prodIsPreorder(p)) return '';
+  const th=lang==='th';
+  const rows=[];
+  if(p.preorderEta) rows.push([th?'ของเข้าประมาณ':'Expected arrival', escapeHtml(p.preorderEta)]);
+  if(Number(p.preorderDeposit)>0) rows.push([th?'มัดจำ':'Deposit', 'S$'+Number(p.preorderDeposit).toLocaleString()]);
+  return `<div class="preorder-box">
+    <div class="preorder-head">🕐 ${th?'สินค้าพรีออเดอร์':'Pre-order item'}</div>
+    <div class="preorder-lead">${th?'ชิ้นนี้ยังไม่เข้าร้าน สั่งจองผ่านแชทได้เลย':'This piece has not arrived yet — reserve it by message.'}</div>
+    ${rows.map(r=>`<div class="spec-row"><span class="spec-k">${r[0]}</span><span class="spec-v">${r[1]}</span></div>`).join('')}
+    ${p.preorderNote?`<div class="preorder-note">${escapeHtml(p.preorderNote)}</div>`:''}
+  </div>`;
+}
 
 function buildProductCard(p,settings,idx=99){
   const icon=PR_TYPE_ICON_FE[p.type]||'🏷️';
@@ -8700,6 +8735,7 @@ function buildProductCard(p,settings,idx=99){
         <div class="card-title">${escapeHtml(p.name||'')}</div>
         <div class="card-desc">${escapeHtml((p.shortDesc||'').slice(0,70))}${p.shortDesc&&p.shortDesc.length>70?'...':''}</div>
         ${priceHtml}
+        ${prodIsPreorder(p)&&p.preorderEta?`<div class="card-preorder">🕐 ${lang==='th'?'ของเข้า':'Arrives'} ${escapeHtml(p.preorderEta)}</div>`:''}
       </div>
       <div class="card-foot">
         <span class="tag">${escapeHtml(p.category||p.type||'')}</span>
@@ -11675,6 +11711,10 @@ function renderProductModal(item,id,s){
     ?`<div class="prod-price price-pm" style="font-size:22px">${s.contactPmText||'PM for price'}</div>`
     :`<div class="prod-price">${prodHasSale(item)?`<span style="text-decoration:line-through;opacity:.5;font-size:16px;margin-right:8px">S$${Number(item.price||0).toLocaleString()}</span>`:''}S$${displayPrice.toLocaleString()}</div>`;
 
+  const preorderHtml=preorderInfoHtml(item);
+  const preorderBtnHtml=prodIsPreorder(item)?
+    `<button class="btn-gold" style="width:100%;margin-bottom:10px" onclick="openContactWithItemBtn('products','${id}')">🕐 ${lang==='th'?'สั่งจองชิ้นนี้':'Pre-order this piece'}</button>`:'';
+
   const canBuy=prodCanBuy(item);
   const addToCartBtnHtml=canBuy?
     (isInCart('products',id)?
@@ -11713,12 +11753,14 @@ function renderProductModal(item,id,s){
       <div class="prod-info">
         ${item.badgeText?`<span class="tag cbadge-gold" style="display:inline-block;margin-bottom:8px">${escapeHtml(item.badgeText)}</span>`:''}
         ${priceHtml}
+        ${preorderHtml}
         ${item.shortDesc?`<p class="prod-desc">${escapeHtml(item.shortDesc)}</p>`:''}
         ${item.fullDesc?`<div class="prod-desc">${item.fullDesc}</div>`:''}
         ${item.story?`<div class="prod-desc" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)"><strong style="color:var(--gold-dark)">${lang==='th'?'เรื่องราว / ความเชื่อ':'Story & belief'}</strong><div style="margin-top:6px">${item.story}</div></div>`:''}
         <div class="spec-box" style="margin-top:10px">${specs}</div>
         ${shippingHtml}
         ${variantHtml}
+        ${preorderBtnHtml}
         ${addToCartBtnHtml}
         ${contactBtnsHtml}
         <div class="share-row">
