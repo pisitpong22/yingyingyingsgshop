@@ -10,25 +10,37 @@ service firebase.storage {
         firestore.exists(/databases/(default)/documents/admins/$(request.auth.token.email.lower()));
     }
 
+    function isSaneImageUpload() {
+      return request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Everything under uploads/ is world-readable (product photos are shown
+    // to anonymous visitors) and, by default, WRITEABLE BY STAFF ONLY.
+    //
+    // Only the team may change or remove a file that already exists. Every
+    // product photo's exact path is public — it sits in the download URL on
+    // the storefront — so an open write let anyone silently replace the
+    // shop's photos with anything they liked, at the same URL.
     match /uploads/{allPaths=**} {
       allow read: if true;
+      allow write: if isTeamMember();
+    }
 
-      // Only the team may change or remove a file that already exists. Every
-      // product photo's exact path is public — it sits in the download URL on
-      // the storefront — so an open write let anyone silently replace the
-      // shop's photos with anything they liked, at the same URL.
-      allow update, delete: if isTeamMember();
-
-      // Customers still attach photos to a review without an account, so
-      // creating a NEW object stays open — image only, 10MB cap.
-      //
-      // `resource == null` is load-bearing: Storage evaluates an upload over
-      // an EXISTING path as `create`, not `update`, so without it this clause
-      // hands anyone a way to replace any file they can name. Verified.
-      allow create: if isTeamMember()
-        || (resource == null
-            && request.resource.size < 10 * 1024 * 1024
-            && request.resource.contentType.matches('image/.*'));
+    // The one anonymous-writeable corner: photos a customer attaches to a
+    // review. Storage rules OR together across matching paths, so this adds
+    // public `create` on top of the staff-only rule above — and only here.
+    // Anonymous uploads elsewhere under uploads/ stay closed, which keeps a
+    // stranger from turning the shop's bucket into free file hosting.
+    //
+    // `resource == null` is load-bearing: Storage evaluates an upload over
+    // an EXISTING path as `create`, not `update`, so without it this clause
+    // hands anyone a way to replace any file they can name. Verified.
+    //
+    // update/delete are deliberately NOT granted here — the staff-only rule
+    // above is the only way an existing review photo can be touched.
+    match /uploads/public/{fileName} {
+      allow create: if resource == null && isSaneImageUpload();
     }
   }
 }

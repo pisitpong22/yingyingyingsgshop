@@ -53,8 +53,14 @@ A live Thai amulet shop taking real card payments.
   `openProject(id)` (async — await it), `openVariant(typeId,varId)`,
   `openLightbox(i)`. Casing *variants* are lazy-loaded, so `casingTypes[].variants`
   is empty in the DB object until `openCasingType()` has run.
-- **Storefront is English-only.** No language switcher. The *admin* is
-  bilingual via `data-en` / `data-th` attributes + `applyLang()`.
+- **The storefront IS bilingual** (an earlier version of this file said
+  otherwise — it is wrong). `toggleLang()` and a TH button in the feed header;
+  `window.lang` is a getter derived from `body.classList.contains('th')`, so
+  every consumer stays current without being notified. But it only localises
+  text built at *render* time from `lang === 'th'` — there is no global
+  `data-en`/`data-th` applier, so static markup carrying those attributes is
+  inert outside `#reviewModal`. The *admin* is properly bilingual via
+  `data-en`/`data-th` + `applyLang()`.
 - **Never write `?.` or `??` in `index.html`.** See "Old phones saw a blank
   screen" below. One character of ES2020 anywhere in the main `<script>`
   discards the whole block on an old phone, and the whole site with it.
@@ -122,10 +128,16 @@ live, and wired into `firebase.json` (`firestore.rules` / `storage.rules` keys).
 Edit the files and deploy; stop editing in the Console.
 
 ```bash
-firebase deploy --only firestore:rules,storage:rules
+firebase deploy --only firestore:rules,storage
 ```
 
 Notes for next time:
+- **It is `storage`, not `storage:rules`.** Only `firestore` takes a `:rules`
+  suffix (it also has `:indexes`); for storage the CLI reads `foo` in
+  `storage:foo` as a *deploy target* name, so `--only storage:rules` fails with
+  the misleading `Could not find rules for the following storage targets: rules`.
+  There is one bucket and no targets configured, so plain `--only storage`
+  deploys `storage.rules`.
 - `firebase firestore:rules:get` **does not exist** (CLI 15.x). Pull rules with
   the Rules REST API instead: `GET firebaserules.googleapis.com/v1/projects/
   <proj>/releases/cloud.firestore` → `rulesetName` → `GET /v1/<rulesetName>`,
@@ -309,19 +321,140 @@ Network weight was **not** the problem — `index.html` is 615 KB raw but 118 KB
 over the wire (Firebase serves it brotli-compressed). The cost is parse and
 render on weak hardware, which is what item 4 below addresses.
 
-### 2. Confirm CSP on the checkout flow, then enforce it
+### 1f. Anyone could dump — and rewrite — every cart in the shop — FIXED
 
-The report-only policy already caught one real gap: App Check calls
-`www.google.com/recaptcha`, which was missing from `connect-src`. Fixed in
-`144d72e`. The homepage is now clean.
+Found 15 Aug 2026. `/carts` was `allow read: if true` with a comment arguing
+that the guest id is a UUID and therefore acts as a private token.
 
-**The Stripe checkout flow has not been exercised yet** — most likely place for
-a remaining violation. Place a real test order, watch DevTools Console for
-"Content Security Policy", and only then rename the header
-`Content-Security-Policy-Report-Only` → `Content-Security-Policy`.
+**`allow read` grants `get` AND `list`.** The token argument only holds if you
+have to know the id, and you did not: a single unauthenticated
+`getDocs(collection(db,'carts'))` returned every cart in the shop. Worse, once
+a customer signs in `cartKey()` switches to their **Firebase uid**, so the doc
+ids were a roster of real user ids paired with what each was about to buy.
+`allow write` had no auth check at all, so anyone could also empty or stuff
+any cart they had just listed.
 
-Note there is no `report-uri`, so violations only appear in each visitor's own
-console. Add a reporting endpoint if you want them collected.
+Now: `list` is off entirely, a uid-keyed cart is reachable only by that uid,
+and a guest cart must match the UUID shape (which is what keeps the guest
+branch from being used to reach a uid-keyed cart — Firebase uids are not
+UUIDs). `getGuestId()` in `firebase-shared.js` had a non-crypto fallback
+(`'g'+Date.now()+…`) that both failed the new shape check and was guessable;
+it now emits a real UUID v4 from `getRandomValues` and re-issues any stored id
+that predates the change.
+
+> **Read `allow read` as `get + list` every time.** Three of the four rules in
+> this file are only safe because of a condition that constrains a `list`.
+> `/orders` deliberately keeps a single `allow read` for exactly that reason —
+> Firestore permits `where('uid','==',me)` and refuses an unfiltered dump, so
+> splitting it into `get` + a team-only `list` would silently break customer
+> order history.
+
+`tests/firestore.rules.test.mjs` pins all of it down — 43 cases:
+
+```bash
+firebase emulators:exec --only firestore --project demo-fs-rules-test "node tests/firestore.rules.test.mjs"
+```
+
+The pre-fix rules score 32/43 on it; the current ones 43/43. Pass a path as
+`argv[2]` to test an older copy.
+
+### 1g. Free, permanent lockout of the entire catalogue — FIXED
+
+The chain, all of it unauthenticated and costing the attacker nothing:
+
+1. write a cart containing every available item (1f)
+2. call `createPaymentIntent` — it had **no App Check enforcement**, so it was
+   callable by anyone who knew the project id, which is in the page source
+3. the order lands as `pending_payment`, and the double-sale guard blocks
+   every real buyer on those items
+4. nothing ever expired a pending order, and `admin.html` has **no orders
+   screen at all** — clearing it meant the Firebase Console, by hand
+
+No card is ever charged in that flow. For a shop where every piece is unique,
+step 3 is the whole shop.
+
+Now: `enforceAppCheck: true` on the callable, `PENDING_TTL_MS` (30 min) after
+which a reservation lapses, stale pending orders marked `expired` in passing
+whenever someone next tries to buy that item (no scheduler, no Cloud Scheduler
+bill), `payment_intent.canceled` releases immediately, and a per-cart cap of
+3 live pending orders.
+
+Two things to know about the fix:
+
+- **The per-cart cap is weak on its own** and the code says so. A guest cart id
+  is client-generated, so it can be rotated. App Check and the TTL are what
+  actually hold. If reservation abuse ever shows up for real, require sign-in
+  at checkout so there is a rotation-proof identity to count.
+- **A payment can still arrive after its reservation lapsed.** The webhook
+  marks it `paid` regardless — money wins over the timer — and sets
+  `needsReview: true` / `expiredThenPaid: true`. Nothing surfaces that flag
+  yet; it needs an orders screen (see below).
+
+Also fixed in the same pass: the guard queried
+`status in [2] × array-contains-any [N]`, and Firestore caps a disjunctive
+query at **30 terms total**, so a cart of 16+ items failed checkout with an
+opaque INTERNAL error while the rules allowed 50. Item keys now fan out in
+batches of 10, and the cart cap is 30 in both the rules and the function —
+**keep those two numbers in step.**
+
+### 1h. Storage: public uploads confined to `uploads/public/`
+
+`uploads/` was flat, so the anonymous-create clause needed for review photos
+applied to the whole prefix — anyone could add unlimited 10 MB files anywhere
+under it. `firebase-shared.js` now routes uploads whose hint is `review`
+(plus the `m_`/`t_` variants `createImageSet` derives) to `uploads/public/`,
+and that is the only path with a public `create`. `update`/`delete` stay
+staff-only everywhere, including inside `public/`. Storage tests: 20 cases,
+20/20.
+
+### 1i. SRI on the three CDN scripts
+
+`three.min.js` (cdnjs), `GLTFLoader.js` (jsDelivr) and `heic2any` (jsDelivr,
+unpkg fallback) run as first-party script — the first two on every visitor's
+page, heic2any inside an **admin** session that can read every order. CSP
+cannot help here: those hosts must be in `script-src` for the features to work
+at all. All three now carry `integrity` + `crossorigin`.
+
+**If any of them is version-bumped the hash must be recomputed or the feature
+silently stops loading:**
+
+```bash
+curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A
+```
+
+### 2. ~~Confirm CSP on the checkout flow, then enforce it~~ — ENFORCED
+
+The header is now `Content-Security-Policy` (enforcing), plus
+`upgrade-insecure-requests`, `Cross-Origin-Opener-Policy:
+same-origin-allow-popups` (the value matters — plain `same-origin` breaks the
+Google/Facebook sign-in popup) and `X-Permitted-Cross-Domain-Policies: none`.
+
+Verified before flipping it, in the **hosting emulator** (which does apply
+headers, unlike its handling of the `ignore` list): all 11 storefront routes,
+`admin.html`, a forced `loadStripeJs()` and a forced `initPhra3D()` — zero
+violations, and both SRI-pinned 3D libraries loaded, which is also proof the
+hashes are right.
+
+```bash
+firebase emulators:start --only hosting --project demo-rules-test   # :5002
+```
+
+Two things that pass through it unchanged:
+
+- **`'unsafe-inline'` is still in `script-src`** and cannot be removed while
+  every line of JS lives in a `<script>` block inside the HTML. So the CSP does
+  **not** stop injected inline script — it stops injected *external* script,
+  plugins (`object-src 'none'`), `<base>` hijacking and off-site form posts.
+  Removing `'unsafe-inline'` becomes possible once item 4 (split JS into
+  files) is done; do them in that order.
+- **No `report-uri`**, so violations still only appear in each visitor's own
+  console.
+
+**The service worker does not register in the hosting emulator** — "An unknown
+error occurred when fetching the script", even though `/sw.js` fetches 200 with
+the right content-type. This is an emulator artifact, **not** a CSP problem:
+it fails identically with the pre-change report-only config, and registers fine
+on the plain python preview. Do not go hunting for a CSP directive to blame.
 
 ### 3. ~~alt text~~ — DONE
 
@@ -361,16 +494,67 @@ with no alt. While wiring it up: the existing "N products have no photo" check
 read `p.images` / `p.image`, fields no product has ever had (they are `coverImg`
 and `gallery`), so it could never fire. Fixed.
 
+### 3b. Language, and the cookie notice — DONE
+
+`toggleLang()` only ever toggled `body.classList`. `<html lang>` stayed nailed
+to `"en"` however the site was displayed, which is what a screen reader picks
+its voice from (Thai read by an English synthesiser is unintelligible) and what
+Google reads as the page language. It now sets `documentElement.lang`, persists
+the choice to `localStorage`, and `restoreLang()` — called first thing in
+`bootIndex()`, before anything renders — restores it, falling back to
+`navigator.language` on a first visit.
+
+A **cookie/storage notice** now sits above the footer. Deliberately a notice
+with one "Got it" button, not an Accept/Reject consent gate: there is no
+analytics, no ad pixel and no third-party tracker anywhere in this codebase —
+only the cart id, the language key, the notice's own dismissal flag, Firebase
+Auth, reCAPTCHA and Stripe, all strictly necessary. Under the PDPA that is the
+case where notification is the obligation, and a Reject button that cannot turn
+anything off would be a lie.
+
+> **If analytics or an ad pixel is ever added, this has to become a real
+> consent gate that blocks those scripts until the visitor opts in.** The
+> comment above the markup says so too.
+
+Note there is **no global `data-en`/`data-th` applier** in `index.html` —
+`body.th` only switches the font, and dynamic text is built from the `lang`
+flag at render time. Static markup carrying `data-th` is mostly inert. The
+notice therefore localises itself (`localiseCookieNote()`). `privacy.html`
+section 6 was rewritten to list what is actually stored, and section 3 now
+discloses Google reCAPTCHA, which was being loaded but never mentioned.
+
 ### 4. Split CSS/JS out of the HTML (~1 day)
 
-`index.html` is 595 KB and served `no-cache` because it's `.html`. Extracting
+`index.html` is ~620 KB and served `no-cache` because it's `.html`. Extracting
 to `.css`/`.js` files makes them eligible for the 1-year immutable cache
-already configured in `firebase.json`. Biggest available speed win.
+already configured in `firebase.json`. Biggest available speed win — **and it
+is the prerequisite for dropping `'unsafe-inline'` from the CSP** (item 2).
+
+Related, now fixed: the `**/*.html` no-cache rule matches the *filename*, and
+the homepage is requested as `/`. So the storefront was going out with
+Fastly's default `max-age=3600` — which is why a reload after a deploy kept
+serving the previous build, and why a security fix could take an hour to reach
+visitors. `firebase.json` now carries an explicit `"source": "/"` rule as well.
+**Both patterns are needed.** Verified in the hosting emulator.
 
 ### 5. Hash routing → History API (multi-day)
 
 All 13 pages share one URL, so Google indexes one page. Needed before
 individual products or articles can rank. Requires a Hosting rewrite rule.
+
+### 5b. The admin panel has no orders screen
+
+`grep -n "'orders'" admin.html` returns nothing. The shop takes real card
+payments and there is no way to see, search or cancel an order without opening
+the Firebase Console. That was already awkward; two things now make it a gap
+worth closing:
+
+- `expiredThenPaid` / `needsReview` (item 1g) is set by the webhook when money
+  arrives after a reservation lapsed, and **nothing surfaces it**.
+- Releasing a stuck reservation by hand has no UI.
+
+`firestore.rules` already allows a team member to list `orders`, so this is
+front-end work only.
 
 ### 6. Legal review
 
@@ -399,7 +583,25 @@ for p in privacy.html terms.html refunds.html shipping.html robots.txt sitemap.x
   echo "$p -> $(curl -s -o /dev/null -w '%{http_code}' https://yingyingyingsgshop.web.app/$p)"
 done   # expect all 200
 
-curl -sI https://yingyingyingsgshop.web.app/ | grep -iE 'content-security|x-frame|referrer-policy'
+curl -sI https://yingyingyingsgshop.web.app/ | grep -iE 'content-security|x-frame|referrer-policy|cross-origin|cache-control'
+# CSP must be enforcing (no "-Report-Only"), Cache-Control on `/` must be no-cache
+
+# Rules tests — run BOTH before touching either .rules file
+firebase emulators:exec --only firestore --project demo-fs-rules-test \
+  "node tests/firestore.rules.test.mjs"                       # expect 43/43
+firebase emulators:exec --only storage,firestore --project demo-rules-test \
+  "node tests/storage.rules.test.mjs"                         # expect 20/20
+# (npm i --no-save @firebase/rules-unit-testing firebase, first time only)
+
+# ES2019 guard — must print nothing but comments
+grep -n '?\.\|??\|||=\|&&=' index.html admin.html
+```
+
+**Rules are not deployed by CI** (`--only hosting`). After changing either
+`.rules` file:
+
+```bash
+firebase deploy --only firestore:rules,storage
 ```
 
 Full review with priorities:

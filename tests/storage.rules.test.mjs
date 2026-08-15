@@ -35,9 +35,10 @@ const anon  = env.unauthenticatedContext().storage();
 const rando = env.authenticatedContext('stranger', { email: 'stranger@gmail.com', email_verified: true }).storage();
 const staff = env.authenticatedContext('staff',    { email: 'staff@shop.com',     email_verified: true }).storage();
 
-// Seed an existing object the way a real upload would have created it.
+// Seed existing objects the way a real upload would have created them.
 await env.withSecurityRulesDisabled(async ctx => {
   await uploadBytes(ref(ctx.storage(), 'uploads/existing-product-photo.png'), png, { contentType: 'image/png' });
+  await uploadBytes(ref(ctx.storage(), 'uploads/public/existing-review-photo.png'), png, { contentType: 'image/png' });
 });
 
 const results = [];
@@ -52,15 +53,23 @@ const check = async (label, want, fn) => {
 
 const up = (s, path, opts) => () => uploadBytes(ref(s, path), opts?.data || png, { contentType: opts?.type || 'image/png' });
 
-await check('customer uploads a new review photo',      'allow', up(anon, 'uploads/new-review-' + Date.now() + '.png'));
-await check('customer uploads a non-image',             'deny',  up(anon, 'uploads/evil.html', { type: 'text/html' }));
-await check('customer uploads 11MB',                    'deny',  up(anon, 'uploads/huge.png', { data: big }));
+await check('customer uploads a new review photo',      'allow', up(anon, 'uploads/public/new-review-' + Date.now() + '.png'));
+await check('customer uploads a non-image',             'deny',  up(anon, 'uploads/public/evil.html', { type: 'text/html' }));
+await check('customer uploads 11MB',                    'deny',  up(anon, 'uploads/public/huge.png', { data: big }));
+// The public corner is uploads/public/ ONLY — anonymous writes anywhere else
+// under uploads/ would make the shop's bucket free file hosting.
+await check('anon uploads outside uploads/public',      'deny',  up(anon, 'uploads/not-public-' + Date.now() + '.png'));
+await check('anon uploads into a deeper public subdir', 'deny',  up(anon, 'uploads/public/sub/nested.png'));
+await check('anon OVERWRITES an existing review photo',  'deny',  up(anon, 'uploads/public/existing-review-photo.png'));
+await check('anon DELETES an existing review photo',     'deny',  () => deleteObject(ref(anon, 'uploads/public/existing-review-photo.png')));
 await check('anon OVERWRITES an existing product photo', 'deny',  up(anon, 'uploads/existing-product-photo.png'));
 await check('anon DELETES an existing product photo',    'deny',  () => deleteObject(ref(anon, 'uploads/existing-product-photo.png')));
 await check('signed-up stranger overwrites a photo',     'deny',  up(rando, 'uploads/existing-product-photo.png'));
 await check('signed-up stranger deletes a photo',        'deny',  () => deleteObject(ref(rando, 'uploads/existing-product-photo.png')));
 await check('signed-up stranger uploads a .exe',         'deny',  up(rando, 'uploads/x.exe', { type: 'application/octet-stream' }));
+await check('signed-up stranger uploads to public/',     'allow', up(rando, 'uploads/public/stranger-review-' + Date.now() + '.png'));
 await check('STAFF uploads a new image',                 'allow', up(staff, 'uploads/staff-new-' + Date.now() + '.png'));
+await check('STAFF replaces a review photo',             'allow', up(staff, 'uploads/public/existing-review-photo.png'));
 await check('STAFF uploads a non-image (3D model etc.)', 'allow', up(staff, 'uploads/model.glb', { type: 'model/gltf-binary' }));
 await check('STAFF replaces an existing photo',          'allow', up(staff, 'uploads/existing-product-photo.png'));
 await check('STAFF deletes a photo',                     'allow', () => deleteObject(ref(staff, 'uploads/existing-product-photo.png')));

@@ -32,7 +32,13 @@ service cloud.firestore {
       allow create, update, delete: if isSuperAdmin();
     }
 
-    // Customer review submissions — anyone can submit, only team can read/manage
+    // Customer review submissions — anyone can submit, only team can read/manage.
+    //
+    // NOTE ON `imgs`: rules cannot type-check the ELEMENTS of a list, so each
+    // entry is only bounded by the 6-item cap and Firestore's 1 MB document
+    // limit. Every render path treats these as hostile input and escapes them
+    // (see the storefront's escapeHtml and the admin's safePreviewUrl +
+    // escapeAttr). Keep it that way.
     match /reviewSubmissions/{id} {
       allow create: if
            request.resource.data.keys().hasOnly(['name','anonymous','rating','text','imgs','createdAt'])
@@ -45,29 +51,69 @@ service cloud.firestore {
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 2000
         && request.resource.data.imgs is list
-        && request.resource.data.imgs.size() <= 6;
+        && request.resource.data.imgs.size() <= 6
+        // serverTimestamp() only — stops a submitter backdating themselves to
+        // the top of the admin's oldest-first queue.
+        && request.resource.data.createdAt == request.time;
       allow read, update, delete: if isTeamMember();
     }
-    
-      // ── ตะกร้าสินค้า: ผูกกับอุปกรณ์ (guestId สุ่ม เก็บใน localStorage) ──
-    // ใครก็อ่าน/เขียนตะกร้าตัวเองได้ (ยังไม่มี login) — guestId เดายากมาก (UUID)
-    // จึงทำหน้าที่เหมือน token ส่วนตัว ไม่ใช่ช่องโหว่จริง
+
+    // ── ตะกร้าสินค้า ──────────────────────────────────────────────────────
+    //
+    // Two kinds of cart id:
+    //   • signed in  → the id IS the user's Firebase uid
+    //   • guest      → the id is a random UUID v4 held in localStorage
+    //
+    // The guest UUID works as a bearer token: unguessable, so knowing it is
+    // the authorisation. That argument ONLY holds while nobody can list the
+    // collection — `allow read` grants both `get` AND `list`, so the previous
+    // `allow read: if true` let anyone query /carts and walk away with every
+    // cart in the shop, keyed by real customer uids. `list` is now off, and
+    // a signed-in customer's cart is reachable by that customer alone.
+    //
+    // The uid branch is what stops a stranger writing into a logged-in
+    // customer's cart; the UUID shape is what stops the guest branch from
+    // being used to reach a uid-keyed cart (Firebase uids are not UUIDs).
+    //
     // ราคาที่เก็บในนี้ใช้แค่โชว์ผล ไม่ใช่ตัวตัดสินราคาจริงตอนจ่ายเงิน
-    // (เฟส Checkout/Stripe จะคำนวณราคาใหม่ฝั่ง Cloud Function เสมอ)
-    match /carts/{cartId} {
-      allow read: if true;
-      allow write: if request.resource.data.keys().hasOnly(['items','updatedAt'])
-                   && request.resource.data.items is list
-                   && request.resource.data.items.size() <= 50;
+    // (Cloud Function คำนวณราคาใหม่จาก canonical record เสมอ)
+    function isGuestCartId(cartId) {
+      return cartId.matches('^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
     }
-    
+    // A signed-in user still needs the guest branch: mergeGuestCartIntoUser()
+    // reads and clears the device's guest cart immediately after login.
+    function canUseCart(cartId) {
+      return (request.auth != null && cartId == request.auth.uid) || isGuestCartId(cartId);
+    }
+    function cartShapeOk() {
+      return request.resource.data.keys().hasOnly(['items','updatedAt'])
+        && request.resource.data.items is list
+        // 30, not 50: the checkout's double-sale query fans out over these
+        // and Firestore caps a disjunctive query at 30 terms. Keeping the two
+        // numbers apart is how a large cart turned into an INTERNAL error.
+        && request.resource.data.items.size() <= 30
+        && request.resource.data.updatedAt is timestamp;
+    }
+    match /carts/{cartId} {
+      allow get: if canUseCart(cartId);
+      allow list: if false;
+      allow create, update: if canUseCart(cartId) && cartShapeOk();
+      allow delete: if request.auth != null && cartId == request.auth.uid;
+    }
+
     // ── คำสั่งซื้อ: Cloud Functions เขียนเท่านั้น (ใช้ Admin SDK ข้ามกฎนี้ได้) ──
     // ไม่มีใครเขียนจาก client ได้เลย — กัน order ปลอม/ราคาปลอมเด็ดขาด
     // อ่านได้เฉพาะแอดมิน หรือเจ้าของ order เอง (ถ้า login)
+    //
+    // `read` covers get AND list. That is safe here and must stay written
+    // this way: on a `list`, Firestore only allows the query if every possible
+    // result provably satisfies the rule, so `where('uid','==',myUid)` (the
+    // customer's own order history, firebase-shared.js:1751) passes while an
+    // unfiltered dump of the collection is refused. Splitting this into
+    // `get` + a team-only `list` would break order history for customers.
     match /orders/{orderId} {
       allow read: if (request.auth != null && resource.data.uid == request.auth.uid)
-                   || (request.auth != null
-                       && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())));
+                   || isTeamMember();
       allow write: if false;
     }
   }

@@ -1310,11 +1310,24 @@ async function uploadImageSet(fileOrBlob, pathHint, opts={}){
   return opts.stringOnly ? url : { url, type: blob.type || '', bytes: blob.size || 0 };
 }
 
+// Which pathHints come from an anonymous visitor rather than from staff.
+// storage.rules only accepts unauthenticated uploads under uploads/public/,
+// so anything a stranger can trigger has to be routed there — everywhere else
+// under uploads/ is staff-only, which is what stops the shop's bucket being
+// used as free file hosting. `m_` / `t_` prefixes are added by
+// createImageSet() for the medium and thumbnail variants.
+const PUBLIC_UPLOAD_HINTS = ['review'];
+function isPublicUploadHint(pathHint){
+  const base = String(pathHint || '').replace(/^[mt]_/, '');
+  return PUBLIC_UPLOAD_HINTS.indexOf(base) !== -1;
+}
+
 async function uploadBlob(blob, pathHint){
   const ext = guessExtFromBlobOrHint(blob, pathHint);
   const safeHint = (pathHint || 'file').replace(/[^a-z0-9_-]+/gi, '_').slice(0, 40);
   const fname = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeHint}.${ext}`;
-  const ref = storageRef(stg, `uploads/${fname}`);
+  const folder = isPublicUploadHint(pathHint) ? 'uploads/public' : 'uploads';
+  const ref = storageRef(stg, `${folder}/${fname}`);
   await uploadBytes(ref, blob, blob.type ? {
     contentType: blob.type,
     // Long browser cache (1 year) — files are content-addressed via the
@@ -1480,9 +1493,19 @@ async function optimiseImage(blob, maxDim=1920){
       // fall back to unpkg if it fails (rare network issue).
       if(!window.heic2any){
         console.log('[FB] loading heic2any library…');
+        // Subresource Integrity: this is third-party code from a public CDN
+        // running with full access to an ADMIN's page. CSP cannot help — the
+        // CDN host is on the allowlist by definition — so the hash is the
+        // only thing standing between a compromised/hijacked CDN and a script
+        // that can read every order. Both mirrors serve the same bytes, hence
+        // one hash. If heic2any is ever version-bumped, recompute:
+        //   curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A
+        const HEIC2ANY_SRI = 'sha384-OTofQ0MEeiSgh62havBcemCIK0gqj809wX6UA0uPISNMRnR6NZyCdGzX3SbLrgwL';
         const tryLoad = (src) => new Promise((res, rej) => {
           const s = document.createElement('script');
           s.src = src;
+          s.integrity = HEIC2ANY_SRI;
+          s.crossOrigin = 'anonymous';
           s.onload = () => { console.log('[FB] heic2any loaded from', src); res(); };
           s.onerror = () => rej(new Error('failed to load ' + src));
           document.head.appendChild(s);
@@ -2189,10 +2212,46 @@ async function loadFullItem(key, id){
 // there is no quantity to increment. Adding an item already in the cart is
 // a no-op, and "remove" deletes it from the array entirely.
 const GUEST_ID_KEY = 'yyy_guest_id';
+const GUEST_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+// A guest cart id is a bearer token: firestore.rules refuses to list /carts,
+// so knowing the id is the only way to reach that cart. Two consequences:
+//
+//   1. It must be UNGUESSABLE. The old fallback ('g' + Date.now() + a couple
+//      of Math.random digits) was neither long nor unpredictable, and it is
+//      the branch OLD phones take — exactly the visitors least able to notice
+//      someone else reading their cart.
+//   2. It must match the UUID shape firestore.rules enforces, or an old phone
+//      gets permission-denied on every cart write. The rule needs that shape
+//      to tell a guest id apart from a Firebase uid (uids are not UUIDs), so
+//      the format is load-bearing, not cosmetic.
+function randomUuid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  var bytes = new Uint8Array(16);
+  if(window.crypto && crypto.getRandomValues){
+    crypto.getRandomValues(bytes);
+  } else {
+    // Last resort for browsers with no crypto at all. Weaker than
+    // getRandomValues, but still 128 bits of Math.random rather than a
+    // readable timestamp.
+    for(var i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;   // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;   // variant 1
+  var hex = [];
+  for(var j = 0; j < 16; j++) hex.push((bytes[j] + 0x100).toString(16).slice(1));
+  return hex.slice(0,4).join('') + '-' + hex.slice(4,6).join('') + '-' +
+         hex.slice(6,8).join('') + '-' + hex.slice(8,10).join('') + '-' +
+         hex.slice(10,16).join('');
+}
+
 function getGuestId(){
   let id = localStorage.getItem(GUEST_ID_KEY);
-  if(!id){
-    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('g'+Date.now()+Math.random().toString(16).slice(2));
+  // Re-issue anything that predates the UUID requirement — those ids are now
+  // rejected by the rules, so an unmigrated device would silently lose its
+  // cart on every write.
+  if(!id || !GUEST_ID_RE.test(id)){
+    id = randomUuid();
     localStorage.setItem(GUEST_ID_KEY, id);
   }
   return id;

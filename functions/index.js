@@ -94,9 +94,54 @@ async function getCanonicalItem(type, id) {
   }
 }
 
+// A cart id is either the signed-in user's uid or a guest UUID v4 — same
+// shapes firestore.rules accepts. Anything else is not a cart this shop
+// issued, and must not reach a Firestore lookup.
+const GUEST_CART_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+// A pending order holds its items hostage against every other buyer (see the
+// double-sale guard below). Nothing here charges a card, so without an expiry
+// a stranger could reserve the whole catalogue for free and permanently — the
+// shop sells one-of-a-kind pieces, so that is the whole shop. 30 minutes is
+// well past the time it takes to type a card in, and the reservation is
+// released the moment it lapses.
+const PENDING_TTL_MS = 30 * 60 * 1000;
+
+// How many live pending orders one cart may hold at once. A real customer
+// needs one; retries after a declined card make a couple plausible.
+//
+// Be clear about what this is worth: a guest cart id is client-generated, so
+// anyone determined can rotate to a fresh UUID and get a fresh allowance.
+// This stops double-submits and naive loops, nothing more. The two things
+// actually holding the line against item-reservation abuse are
+// enforceAppCheck (the caller has to present a real reCAPTCHA token) and
+// PENDING_TTL_MS (a reservation lapses on its own). If reservation abuse ever
+// shows up in the order log for real, the fix is to require sign-in at
+// checkout so there is a rotation-proof identity to count against.
+const MAX_LIVE_PENDING_PER_CART = 3;
+
+// Firestore caps a disjunctive query at 30 terms TOTAL. This query already
+// spends 2 on `status in [...]`, so an `array-contains-any` over 15+ item
+// keys was rejected outright — a 16-item cart used to fail checkout with an
+// opaque INTERNAL error. Fan out in small batches instead.
+const ITEM_KEY_BATCH = 10;
+
+function trimField(value, max, label) {
+  const s = String(value == null ? "" : value).trim();
+  if (!s) throw new HttpsError("invalid-argument", `Missing ${label}`);
+  return s.slice(0, max);
+}
+
 // ─── createPaymentIntent ────────────────────────────────────────────────────
 exports.createPaymentIntent = onCall(
-  { secrets: [STRIPE_SECRET_KEY] },
+  {
+    secrets: [STRIPE_SECRET_KEY],
+    // This endpoint writes to Firestore and reserves stock without anyone
+    // having paid anything, and it is callable by name from anywhere once the
+    // project id is known (it is — it's in the page source). App Check is what
+    // makes the caller prove it is the real storefront rather than a script.
+    enforceAppCheck: true,
+  },
   async (request) => {
     const stripe = Stripe(STRIPE_SECRET_KEY.value());
     const { cartKey, shipping } = request.data || {};
@@ -109,8 +154,37 @@ exports.createPaymentIntent = onCall(
     }
     // If the customer is logged in, their cart key MUST be their own uid —
     // stops one logged-in user from paying against another user's cart.
-    if (request.auth && request.auth.uid !== cartKey) {
-      throw new HttpsError("permission-denied", "Cart does not belong to this account");
+    // If they are not, it must be a guest UUID, never someone else's uid.
+    if (request.auth) {
+      if (request.auth.uid !== cartKey) {
+        throw new HttpsError("permission-denied", "Cart does not belong to this account");
+      }
+    } else if (!GUEST_CART_RE.test(cartKey)) {
+      throw new HttpsError("invalid-argument", "Invalid cartKey");
+    }
+
+    // Bound everything that lands in Firestore. These strings come straight
+    // off a form; without a cap a caller can write megabytes per request.
+    const shipName = trimField(shipping.name, 120, "shipping name");
+    const shipPhone = trimField(shipping.phone, 40, "shipping phone");
+    const shipAddress = trimField(shipping.address, 500, "shipping address");
+    const shipNotes = String(shipping.notes == null ? "" : shipping.notes).slice(0, 1000);
+
+    // Rate limit per cart. Single-field equality only, so this needs no
+    // composite index; the status/age filtering happens in memory.
+    const liveSnap = await db.collection("orders").where("cartKey", "==", cartKey).limit(25).get();
+    const now = Date.now();
+    const livePending = liveSnap.docs.filter((d) => {
+      const o = d.data();
+      if (o.status !== "pending_payment") return false;
+      const created = o.createdAt && o.createdAt.toMillis ? o.createdAt.toMillis() : 0;
+      return created && now - created < PENDING_TTL_MS;
+    });
+    if (livePending.length >= MAX_LIVE_PENDING_PER_CART) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "There are already several unfinished payments for this cart. Please complete or wait a few minutes before trying again."
+      );
     }
 
     const cartSnap = await db.collection("carts").doc(cartKey).get();
@@ -118,7 +192,8 @@ exports.createPaymentIntent = onCall(
     if (!items.length) {
       throw new HttpsError("failed-precondition", "Cart is empty");
     }
-    if (items.length > 50) {
+    // Matches the 30-item cap in firestore.rules. Keep the two in step.
+    if (items.length > 30) {
       throw new HttpsError("invalid-argument", "Too many items in cart");
     }
 
@@ -149,13 +224,42 @@ exports.createPaymentIntent = onCall(
     // Double-sale guard: block checkout if any of these items already has a
     // pending or paid order in flight (see the scope note at the top of this
     // file for why we don't auto-flip catalog status to "sold").
-    const conflictSnap = await db
-      .collection("orders")
-      .where("status", "in", ["pending_payment", "paid"])
-      .where("itemKeys", "array-contains-any", itemKeys)
-      .limit(1)
-      .get();
-    if (!conflictSnap.empty) {
+    //
+    // `paid` blocks forever — the piece is gone. `pending_payment` blocks only
+    // until PENDING_TTL_MS, and lapsed ones are marked `expired` on the way
+    // past so the reservation is actually released rather than re-checked on
+    // every future checkout. Doing the expiry here means no scheduler and no
+    // Cloud Scheduler bill; the trade is that a lapsed order is only cleaned
+    // up once someone tries to buy that item again, which is exactly when it
+    // matters.
+    const stale = [];
+    let conflict = null;
+    for (let i = 0; i < itemKeys.length && !conflict; i += ITEM_KEY_BATCH) {
+      const batch = itemKeys.slice(i, i + ITEM_KEY_BATCH);
+      const snap = await db
+        .collection("orders")
+        .where("status", "in", ["pending_payment", "paid"])
+        .where("itemKeys", "array-contains-any", batch)
+        .limit(30)
+        .get();
+      for (const d of snap.docs) {
+        const o = d.data();
+        if (o.status === "paid") { conflict = d; break; }
+        const created = o.createdAt && o.createdAt.toMillis ? o.createdAt.toMillis() : 0;
+        // No createdAt at all: treat as live rather than release the item on
+        // the strength of a missing field.
+        if (!created || now - created < PENDING_TTL_MS) { conflict = d; break; }
+        stale.push(d.ref);
+      }
+    }
+
+    if (stale.length) {
+      const batch = db.batch();
+      stale.forEach((ref) => batch.update(ref, { status: "expired", expiredAt: admin.firestore.FieldValue.serverTimestamp() }));
+      await batch.commit().catch((err) => console.warn("[checkout] expiring stale orders failed:", err.message));
+    }
+
+    if (conflict) {
       throw new HttpsError(
         "failed-precondition",
         "One or more items in your cart were just purchased by someone else. Please refresh your cart."
@@ -174,9 +278,9 @@ exports.createPaymentIntent = onCall(
       currency: "sgd",
       metadata: { orderId: orderRef.id, cartKey },
       shipping: {
-        name: shipping.name,
-        phone: shipping.phone,
-        address: { line1: String(shipping.address).slice(0, 500) },
+        name: shipName,
+        phone: shipPhone,
+        address: { line1: shipAddress },
       },
     });
 
@@ -188,10 +292,10 @@ exports.createPaymentIntent = onCall(
       total,
       currency: "sgd",
       shipping: {
-        name: shipping.name,
-        phone: shipping.phone,
-        address: shipping.address,
-        notes: shipping.notes || "",
+        name: shipName,
+        phone: shipPhone,
+        address: shipAddress,
+        notes: shipNotes,
       },
       status: "pending_payment",
       paymentIntentId: paymentIntent.id,
@@ -230,10 +334,19 @@ exports.stripeWebhook = onRequest(
           const orderRef = db.collection("orders").doc(orderId);
           const orderSnap = await orderRef.get();
           if (orderSnap.exists && orderSnap.data().status !== "paid") {
+            const wasExpired = orderSnap.data().status === "expired";
             await orderRef.update({
               status: "paid",
               paidAt: admin.firestore.FieldValue.serverTimestamp(),
+              // The reservation had already lapsed when the money arrived, so
+              // the same piece may have been sold to someone else in between.
+              // Money always wins over the timer — the order is marked paid —
+              // but flag it, because a human has to decide who gets the item.
+              ...(wasExpired ? { needsReview: true, expiredThenPaid: true } : {}),
             });
+            if (wasExpired) {
+              console.warn(`[stripeWebhook] order ${orderId} was paid after its reservation expired — needs manual review`);
+            }
           }
         }
         if (cartKey) {
@@ -250,6 +363,18 @@ exports.stripeWebhook = onRequest(
             .collection("orders")
             .doc(orderId)
             .update({ status: "payment_failed" })
+            .catch(() => {});
+        }
+      } else if (event.type === "payment_intent.canceled") {
+        // Release the item reservation immediately rather than waiting out
+        // PENDING_TTL_MS — the customer is definitively not paying.
+        const pi = event.data.object;
+        const orderId = pi.metadata && pi.metadata.orderId;
+        if (orderId) {
+          await db
+            .collection("orders")
+            .doc(orderId)
+            .update({ status: "expired", expiredAt: admin.firestore.FieldValue.serverTimestamp() })
             .catch(() => {});
         }
       }
