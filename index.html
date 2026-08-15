@@ -9001,11 +9001,11 @@ function renderCheckout(){
     <div class="co-form">
       <div>
         <label>${lang==='th'?'ชื่อผู้รับ':'Recipient name'}</label>
-        <input type="text" id="coName" class="login-input" value="${_authUser&&_authUser.displayName||''}">
+        <input type="text" id="coName" class="login-input" value="${escapeHtml(_authUser&&_authUser.displayName||'')}">
       </div>
       <div>
         <label>${lang==='th'?'เบอร์โทร':'Phone number'}</label>
-        <input type="tel" id="coPhone" class="login-input" value="${_authUser&&_authUser.phoneNumber||''}" placeholder="+6591234567">
+        <input type="tel" id="coPhone" class="login-input" value="${escapeHtml(_authUser&&_authUser.phoneNumber||'')}" placeholder="+6591234567">
       </div>
       <div>
         <label>${lang==='th'?'ที่อยู่จัดส่ง':'Shipping address'}</label>
@@ -12105,7 +12105,7 @@ window.__yyyAppBooted = true;
   let initInFlight = null;
   let phraResizeObserver = null;                 // watches #phra3d for the 0×0 → real-size jump
 
-  function loadScriptOnce(src, test){
+  function loadScriptOnce(src, test, integrity){
     if(test && test()) return Promise.resolve();
     return new Promise((resolve, reject) => {
       const existing = document.querySelector(`script[data-src="${src}"]`);
@@ -12118,21 +12118,35 @@ window.__yyyAppBooted = true;
       s.src = src;
       s.async = true;
       s.dataset.src = src;
+      if(integrity){ s.integrity = integrity; s.crossOrigin = 'anonymous'; }
       s.onload = resolve;
       s.onerror = reject;
       document.head.appendChild(s);
     });
   }
 
+  // Subresource Integrity for the two CDN-hosted 3D libraries. These run as
+  // first-party script on every visitor's page, so a compromised CDN — or a
+  // hijacked package version — would own the storefront outright. CSP is no
+  // defence: both hosts have to be on the script-src allowlist for the hero
+  // to work at all. The hash is what actually pins the bytes; if either
+  // library is version-bumped, recompute with
+  //   curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A
+  // and update here, or the 3D hero silently stops loading.
+  const THREE_SRI  = 'sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu';
+  const GLTF_SRI   = 'sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E';
+
   function loadPhra3DLibs(){
     if(window.THREE && window.THREE.GLTFLoader) return Promise.resolve();
     if(phraLibsPromise) return phraLibsPromise;
     phraLibsPromise = loadScriptOnce(
       'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-      () => !!window.THREE
+      () => !!window.THREE,
+      THREE_SRI
     ).then(() => loadScriptOnce(
       'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',
-      () => !!(window.THREE && window.THREE.GLTFLoader)
+      () => !!(window.THREE && window.THREE.GLTFLoader),
+      GLTF_SRI
     )).catch(err => {
       console.warn('[phra3d] failed to lazy-load 3D libraries:', err);
       phraLibsPromise = null;
