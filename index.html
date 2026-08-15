@@ -2397,6 +2397,7 @@
   .sbadge{font-size:12px;padding:4px 12px;border-radius:25px;font-weight:600}
   .s-active{background:#d4edda;color:#155724}.s-done{background:#fff3cd;color:#856404}.s-soon{background:#d1ecf1;color:#0c5460}
   .s-open{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep)}
+  .s-closed{background:#4a4a4a;color:#e8e8e8}
   .s-urgent{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--deep);box-shadow:0 0 0 rgba(232,201,106,.6);animation:sUrgentPulse 1.8s ease-in-out infinite}
   @keyframes sUrgentPulse{0%,100%{box-shadow:0 0 0 rgba(232,201,106,.5)}50%{box-shadow:0 0 14px rgba(232,201,106,.85)}}
   .proj-title{font-family:var(--font-display);font-size:17px;font-weight:800;margin-bottom:6px;color:rgba(240,225,185,.95)}
@@ -2444,6 +2445,7 @@
   .prj-price{font-family:var(--font-display);font-weight:700;color:var(--gold-light);font-size:16px}
   .prj-price small{font-size:11px;color:var(--text-muted);font-weight:400}
   .prj-cta-btn{font-size:11.5px;letter-spacing:.5px;color:var(--deep);background:linear-gradient(135deg,var(--gold-light),var(--gold));padding:8px 16px;border-radius:999px;font-weight:700;white-space:nowrap}
+  .prj-cta-btn.prj-cta-off{background:#4a4a4a;color:#e8e8e8}
   .s-offer{background:#8b2a2a;color:#ffe4d6}
   .prj-modal-price{font-family:var(--font-display);font-size:28px;font-weight:800;color:var(--gold-light);margin:16px 0}
   .prj-modal-price span{font-size:13px;color:var(--text-muted);font-weight:400}
@@ -11219,8 +11221,8 @@ function renderP(){
     return;
   }
   renderPrjChips(db.projects);
-  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year'};
-  const sc={urgent:'s-urgent',active:'s-active',done:'s-done',soon:'s-soon',open:'s-open'};
+  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year',closed:lang==='th'?'⛔ ปิดรับแล้ว':'⛔ Closed'};
+  const sc={urgent:'s-urgent',active:'s-active',done:'s-done',soon:'s-soon',open:'s-open',closed:'s-closed'};
   const filtered=db.projects.filter(p=>{
     if(_prjFilter==='all')return true;
     if(_prjFilter==='campaign')return (p.type||'campaign')==='campaign';
@@ -11241,7 +11243,17 @@ function renderP(){
     let badgeHtml,footHtml;
     const tiers=Array.isArray(p.priceTiers)?p.priceTiers.filter(t=>t&&t.name):[];
     if(type==='offering'){
-      badgeHtml=`<span class="prj-badge sbadge s-offer">${lang==='th'?'ชุดทำบุญ':'Merit Set'}</span>`;
+      // Merit sets always carry the "Merit Set" badge; when the shop has paused
+      // or closed one, its status rides alongside so nobody orders a set that
+      // is no longer being taken.
+      const offStatus=(p.status&&p.status!=='open')?p.status:'';
+      badgeHtml=`<span class="prj-badge" style="display:flex;gap:6px;flex-wrap:wrap">
+        <span class="sbadge s-offer">${lang==='th'?'ชุดทำบุญ':'Merit Set'}</span>
+        ${offStatus?`<span class="sbadge ${sc[offStatus]||'s-closed'}">${sm[offStatus]||offStatus}</span>`:''}
+      </span>`;
+      const ctaHtml=offStatus
+        ?`<div class="prj-cta-btn prj-cta-off">${sm[offStatus]||offStatus}</div>`
+        :`<div class="prj-cta-btn">${lang==='th'?'ร่วมทำบุญ':'Make Merit'}</div>`;
       if(tiers.length){
         const shown=tiers.slice(0,3);
         footHtml=`<div class="prj-offer-foot" style="align-items:flex-end">
@@ -11249,10 +11261,10 @@ function renderP(){
             ${shown.map(t=>`<div class="prj-tier-row"><span class="prj-tier-name">${t.name}</span><span class="prj-tier-price">S$${Number(t.price||0).toLocaleString()}</span></div>`).join('')}
             ${tiers.length>shown.length?`<div class="prj-tier-more">+${tiers.length-shown.length} ${lang==='th'?'ตัวเลือกอื่น':'more option'}${tiers.length-shown.length>1&&lang!=='th'?'s':''}</div>`:''}
           </div>
-          <div class="prj-cta-btn">${lang==='th'?'ร่วมทำบุญ':'Make Merit'}</div>
+          ${ctaHtml}
         </div>`;
       } else {
-        footHtml=`<div class="prj-offer-foot"><div class="prj-price">S$${Number(p.price||0).toLocaleString()}${p.unit?` <small>/ ${p.unit}</small>`:''}</div><div class="prj-cta-btn">${lang==='th'?'ร่วมทำบุญ':'Make Merit'}</div></div>`;
+        footHtml=`<div class="prj-offer-foot"><div class="prj-price">S$${Number(p.price||0).toLocaleString()}${p.unit?` <small>/ ${p.unit}</small>`:''}</div>${ctaHtml}</div>`;
       }
     }else{
       badgeHtml=`<span class="prj-badge sbadge ${sc[p.status]||'s-active'}">${sm[p.status]||p.status}</span>`;
@@ -11297,8 +11309,8 @@ async function openProject(id){
   if(!p) p=db.projects.find(x=>String(x.id)===String(id));
   if(!p)return;
   const type=p.type||'campaign';
-  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year'};
-  const sc={urgent:'s-urgent',active:'s-active',done:'s-done',soon:'s-soon',open:'s-open'};
+  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year',closed:lang==='th'?'⛔ ปิดรับแล้ว':'⛔ Closed'};
+  const sc={urgent:'s-urgent',active:'s-active',done:'s-done',soon:'s-soon',open:'s-open',closed:'s-closed'};
   const imgs=p.imgs||[];
   window._lbImages=imgs;
   window._lbAltName=p.name||'';
@@ -11346,7 +11358,9 @@ async function openProject(id){
       <div class="modal-title-wrap">
         <div class="modal-title" style="font-size:24px">${p.name}</div>
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          ${type==='offering'?`<span class="sbadge s-offer">${lang==='th'?'ชุดทำบุญ':'Merit Set'}</span>`:`<span class="sbadge ${sc[p.status]||'s-active'}">${sm[p.status]||p.status}</span>`}
+          ${type==='offering'
+            ?`<span class="sbadge s-offer">${lang==='th'?'ชุดทำบุญ':'Merit Set'}</span>${(p.status&&p.status!=='open')?`<span class="sbadge ${sc[p.status]||'s-closed'}">${sm[p.status]||p.status}</span>`:''}`
+            :`<span class="sbadge ${sc[p.status]||'s-active'}">${sm[p.status]||p.status}</span>`}
           ${catLabel?`<span class="tag">${catLabel}</span>`:''}
           ${p.date?`<span class="tag">${p.date}</span>`:''}
           ${imgs.length?`<span style="font-size:12px;color:var(--text-muted)">📷 ${imgs.length} photo${imgs.length>1?'s':''}</span>`:''}

@@ -2368,6 +2368,14 @@
             </div>
 
             <div id="p_offering_box" style="display:none">
+              <div class="fg">
+                <label class="fl" data-en="Status" data-th="สถานะ">Status</label>
+                <select class="fsel" id="p_offer_status">
+                  <option value="open" data-en="🔁 Open All Year" data-th="🔁 เปิดรับตลอด">🔁 Open All Year</option>
+                  <option value="soon" data-en="🔵 Coming Soon" data-th="🔵 เร็วๆ นี้">🔵 Coming Soon</option>
+                  <option value="closed" data-en="⛔ Closed" data-th="⛔ ปิดรับแล้ว">⛔ Closed</option>
+                </select>
+              </div>
               <div class="fg"><label class="fl" data-en="Price (S$)" data-th="ราคา (S$)">Price (S$)</label><input class="fi" type="number" min="0" id="p_price"></div>
               <div class="fg"><label class="fl" data-en="Unit (e.g. set, bucket)" data-th="หน่วย (เช่น ชุด, ถัง)">Unit (e.g. set, bucket)</label><input class="fi" id="p_unit"></div>
               <div class="fg full" style="color:var(--text-muted);font-size:12px;margin-top:-6px">
@@ -5834,8 +5842,8 @@ function loadList(type){
   const c=document.getElementById(cid);
   if(!items.length){c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:12px">${tr('noItems')}</div>`;return;}
   // status pretty name
-  const statusLabels={urgent:'🔥 Urgent',active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year'};
-  const statusLabelsTh={urgent:'🔥 เร่งด่วน',active:'🟢 กำลังดำเนินการ',done:'✅ เสร็จสิ้น',soon:'🔵 เร็วๆ นี้',open:'🔁 เปิดรับตลอด'};
+  const statusLabels={urgent:'🔥 Urgent',active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',open:'🔁 Open All Year',closed:'⛔ Closed'};
+  const statusLabelsTh={urgent:'🔥 เร่งด่วน',active:'🟢 กำลังดำเนินการ',done:'✅ เสร็จสิ้น',soon:'🔵 เร็วๆ นี้',open:'🔁 เปิดรับตลอด',closed:'⛔ ปิดรับแล้ว'};
   const prjCatLabels={wat:{en:'Temple',th:'วัด'},education:{en:'Education',th:'การศึกษา'},elderly:{en:'Elderly',th:'ผู้สูงอายุ'},health:{en:'Health',th:'สุขภาพ'},animal:{en:'Animals',th:'สัตว์'},poor:{en:'Underprivileged',th:'ผู้ยากไร้'}};
   if(type==='projects'){
     c.innerHTML=`<table class="dtable">
@@ -5847,8 +5855,10 @@ function loadList(type){
           :`<span class="tag">${lang==='th'?'🎯 แคมเปญ':'🎯 Campaign'}</span>`;
         const catLabel=prjCatLabels[item.category]?prjCatLabels[item.category][lang==='th'?'th':'en']:'-';
         const tierCount=Array.isArray(item.priceTiers)?item.priceTiers.filter(t=>t&&t.name).length:0;
+        const offerStatusTag=(item.status&&item.status!=='open')
+          ?`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status}</span> `:'';
         const statusOrPrice=isOffering
-          ?(tierCount?`${tierCount} ${lang==='th'?'ราคา':'price options'}`:`S$${Number(item.price||0).toLocaleString()}${item.unit?` / ${item.unit}`:''}`)
+          ?`${offerStatusTag}${tierCount?`${tierCount} ${lang==='th'?'ราคา':'price options'}`:`S$${Number(item.price||0).toLocaleString()}${item.unit?` / ${item.unit}`:''}`}`
           :`<span class="tag">${(lang==='th'?statusLabelsTh:statusLabels)[item.status]||item.status||'-'}</span>${item.hideStats?` <span class="tag" style="opacity:.7">🙈</span>`:''}`;
         return `<tr draggable="true"
           ondragstart="prjDragStart(event,'${escapeHtml(String(item.id))}')"
@@ -7537,7 +7547,8 @@ async function saveProject(){
     data.price=Number(document.getElementById('p_price').value)||0;
     data.unit=document.getElementById('p_unit').value.trim();
     data.priceTiers=captureProjTiers();
-    data.status='open';data.goal=0;data.raised=0;data.donors=0;data.closing='';data.hideStats=false;
+    data.status=document.getElementById('p_offer_status').value||'open';
+    data.goal=0;data.raised=0;data.donors=0;data.closing='';data.hideStats=false;
   } else {
     data.status=document.getElementById('p_status').value;
     data.goal=Number(document.getElementById('p_goal').value)||0;
@@ -7626,6 +7637,12 @@ function editProject(id){
   document.getElementById('p_date').value=it.date||'';
   document.getElementById('p_desc').value=it.desc||'';
   document.getElementById('p_status').value=it.status||'active';
+  // Merit sets use their own shorter status list. Older sets were all saved as
+  // 'open', and campaign-only values ('active', 'urgent'…) would leave the
+  // select blank — so anything outside the list falls back to Open.
+  const offerStatus=it.status||'open';
+  document.getElementById('p_offer_status').value=
+    ['open','soon','closed'].indexOf(offerStatus)>=0?offerStatus:'open';
   document.getElementById('p_goal').value=it.goal||'';
   document.getElementById('p_raised').value=it.raised||'';
   document.getElementById('p_donors').value=it.donors||'';
@@ -7652,6 +7669,7 @@ function cancelEditProject(){
   document.getElementById('p_category').value='';
   document.getElementById('p_size').value='normal';
   document.getElementById('p_status').value='active';
+  document.getElementById('p_offer_status').value='open';
   document.getElementById('p_hideStats').checked=false;
   renderProjTiers([]);
   _prjFocusPosX=50; _prjFocusPosY=50;
