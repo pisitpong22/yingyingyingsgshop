@@ -6624,6 +6624,64 @@
   </div>
 </footer>
 
+<!-- ══════════════════════════════════════════════════════════════════════
+     COOKIE / STORAGE NOTICE
+     Deliberately a NOTICE, not a consent gate with Accept/Reject buttons.
+     Every cookie and storage key this site sets is strictly necessary for
+     it to work — the cart id, the language choice, Firebase Auth's session,
+     Google reCAPTCHA (App Check) and Stripe's fraud checks at payment. There
+     is no analytics, no advertising, and no third-party tracking pixel
+     anywhere in this codebase. Under Singapore's PDPA that is the case where
+     notification is the obligation and opt-in consent is not required, and a
+     Reject button that cannot actually turn anything off would be a lie.
+     If any analytics or ad pixel is EVER added, this has to become a real
+     consent gate that blocks those scripts until the visitor opts in.
+     ══════════════════════════════════════════════════════════════════ -->
+<style>
+  .cookie-note{
+    position:fixed;z-index:9000;
+    left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));
+    max-width:560px;margin:0 auto;
+    display:none;
+    gap:14px;align-items:flex-start;
+    padding:16px 18px;
+    border:1px solid rgba(201,168,76,.32);
+    border-radius:14px;
+    background:#151009;
+    box-shadow:0 12px 40px rgba(0,0,0,.55);
+    color:rgba(255,242,200,.86);
+    font-size:13.5px;line-height:1.65;
+  }
+  .cookie-note.show{display:flex}
+  .cookie-note a{color:#e8c96a;text-decoration:underline}
+  .cookie-note a:focus-visible,
+  .cookie-note button:focus-visible{outline:2px solid #c9a84c;outline-offset:3px;border-radius:4px}
+  .cookie-note-btn{
+    flex:none;align-self:center;
+    padding:8px 18px;border-radius:999px;
+    border:1px solid rgba(201,168,76,.5);
+    background:rgba(201,168,76,.14);
+    color:#e8c96a;font:inherit;font-weight:600;cursor:pointer;
+  }
+  .cookie-note-btn:hover{background:rgba(201,168,76,.24)}
+  @media(max-width:900px){
+    /* Clear of the fixed mobile tab bar. */
+    .cookie-note{bottom:calc(88px + env(safe-area-inset-bottom));flex-direction:column;gap:12px}
+    .cookie-note-btn{align-self:stretch}
+  }
+</style>
+<div class="cookie-note" id="cookieNote" role="region" aria-label="Cookie notice">
+  <div>
+    <span data-en="This site stores only what it needs to work — your cart, your language choice, and sign-in and payment security from Google and Stripe. No advertising or analytics tracking."
+          data-th="เว็บนี้เก็บข้อมูลเฉพาะที่จำเป็นต่อการใช้งาน — ตะกร้าสินค้า ภาษาที่เลือก และระบบความปลอดภัยของการเข้าสู่ระบบและการชำระเงินจาก Google และ Stripe ไม่มีการติดตามเพื่อโฆษณาหรือวิเคราะห์พฤติกรรม">This
+      site stores only what it needs to work — your cart, your language choice, and sign-in and payment
+      security from Google and Stripe. No advertising or analytics tracking.</span>
+    <a href="/privacy.html" data-en="Privacy Policy" data-th="นโยบายความเป็นส่วนตัว">Privacy Policy</a>
+  </div>
+  <button class="cookie-note-btn" type="button" onclick="dismissCookieNote()"
+          data-en="Got it" data-th="รับทราบ">Got it</button>
+</div>
+
 <!-- MODAL -->
 <div class="modal-overlay" id="modal" onclick="closeModal(event)">
   <div class="modal" id="modalContent"></div>
@@ -7213,11 +7271,74 @@ function feedImages(imgs){
   return (Array.isArray(imgs) ? imgs : []).filter(isUsableImage);
 }
 
+// Keeping <html lang> in step with the visible language is not cosmetic:
+// it is what tells a screen reader which voice to use (Thai read aloud by an
+// English synthesiser is unintelligible), what Google uses to decide the
+// page's language, and what drives browser translation offers. It used to be
+// nailed to "en" no matter what this button did.
+const LANG_KEY = 'yyy_lang';
+function applyLangAttr(){
+  document.documentElement.setAttribute('lang', lang === 'th' ? 'th' : 'en');
+}
+
 function toggleLang(){
   document.body.classList.toggle('th');
+  applyLangAttr();
+  try{ localStorage.setItem(LANG_KEY, lang); }catch(e){}
+  localiseCookieNote();
   applySettings();
   const active=document.querySelector('.page.active');
   if(active && active.id === 'page-feed') renderFeed();
+}
+
+// ── Cookie / storage notice ──
+// Note this site has no global data-en/data-th applier — `body.th` only
+// switches the font, and dynamic text is built from the `lang` flag at render
+// time. So the notice localises itself explicitly.
+const COOKIE_NOTE_KEY = 'yyy_cookie_note_seen';
+
+function localiseCookieNote(){
+  const note = document.getElementById('cookieNote');
+  if(!note) return;
+  const th = lang === 'th';
+  const nodes = note.querySelectorAll('[data-en][data-th]');
+  for(let i = 0; i < nodes.length; i++){
+    nodes[i].textContent = th ? nodes[i].getAttribute('data-th') : nodes[i].getAttribute('data-en');
+  }
+}
+
+function dismissCookieNote(){
+  const note = document.getElementById('cookieNote');
+  if(note) note.classList.remove('show');
+  try{ localStorage.setItem(COOKIE_NOTE_KEY, '1'); }catch(e){}
+}
+
+function initCookieNote(){
+  let seen = null;
+  // A browser with storage blocked entirely would re-show this on every load,
+  // which is worse than not showing it — treat that as already dismissed.
+  try{ seen = localStorage.getItem(COOKIE_NOTE_KEY); }catch(e){ seen = '1'; }
+  localiseCookieNote();
+  if(seen) return;
+  const note = document.getElementById('cookieNote');
+  // Hold it back until the splash is gone, so it isn't the first thing a
+  // visitor sees on a slow phone.
+  if(note) setTimeout(function(){ note.classList.add('show'); }, 1200);
+}
+
+// Restore the visitor's choice. Without this the site silently snapped back
+// to English on every reload and on every internal link.
+function restoreLang(){
+  let saved = null;
+  try{ saved = localStorage.getItem(LANG_KEY); }catch(e){}
+  if(saved !== 'th' && saved !== 'en'){
+    // No stored choice yet — follow the browser, which is the better guess
+    // for a shop whose stock comes from Thailand.
+    const nav = (navigator.language || (navigator.languages && navigator.languages[0]) || '').toLowerCase();
+    saved = nav.indexOf('th') === 0 ? 'th' : 'en';
+  }
+  document.body.classList.toggle('th', saved === 'th');
+  applyLangAttr();
 }
 
 function isImageSet(img){
@@ -11925,6 +12046,10 @@ applySettings();
 
 // Wait for Firebase to load + initial data, then re-render the page.
 async function bootIndex(){
+  // Before anything renders — every render path reads `lang`, and <html lang>
+  // must be right for the first paint, not corrected afterwards.
+  restoreLang();
+  initCookieNote();
   let tries = 0;
   while(!window.FB && tries < 100){ await new Promise(r => setTimeout(r, 50)); tries++; }
   if(!window.FB){
