@@ -126,6 +126,35 @@ const MAX_LIVE_PENDING_PER_CART = 3;
 // opaque INTERNAL error. Fan out in small batches instead.
 const ITEM_KEY_BATCH = 10;
 
+// ─── Enquiry mode gate ──────────────────────────────────────────────────────
+// `settings.checkoutEnabled === false` means the shop is running chat-to-order:
+// the catalogue and prices stay up, but no card is charged. index.html hides
+// every buy button, and this is the half that makes it true — the callable is
+// reachable by name from anywhere once the project id is known (it is in the
+// page source), so a hidden button stops nobody.
+//
+// `settings` is a normal split-DB key: JSON chunked across app/dbpart_settings_N
+// with the count in the app/db manifest (firebase-shared.js: dbChunkDoc).
+async function isCheckoutEnabled() {
+  const metaSnap = await db.collection("app").doc("db").get();
+  if (!metaSnap.exists) throw new Error("missing app/db manifest");
+  const counts = (metaSnap.data() || {})._partCounts || {};
+  const n = Math.max(0, Number(counts.settings) || 0);
+  if (!n) throw new Error("settings has no chunks in the manifest");
+  const parts = await Promise.all(
+    Array.from({ length: n }, (_, idx) => db.collection("app").doc(`dbpart_settings_${idx}`).get())
+  );
+  const json = parts
+    .map((p, idx) => {
+      if (!p.exists) throw new Error(`missing settings chunk ${idx}`);
+      return p.data().json || "";
+    })
+    .join("");
+  const settings = JSON.parse(json);
+  // Absent means enabled — every shop predates this flag.
+  return settings.checkoutEnabled !== false;
+}
+
 function trimField(value, max, label) {
   const s = String(value == null ? "" : value).trim();
   if (!s) throw new HttpsError("invalid-argument", `Missing ${label}`);
@@ -145,6 +174,28 @@ exports.createPaymentIntent = onCall(
   async (request) => {
     const stripe = Stripe(STRIPE_SECRET_KEY.value());
     const { cartKey, shipping } = request.data || {};
+
+    // First thing, before any Stripe object or order doc exists.
+    //
+    // Fails CLOSED: if the setting cannot be read we refuse rather than charge.
+    // The alternative is taking a customer's money in a shop whose owner
+    // believes payments are switched off, which is far worse than a checkout
+    // that errors. This costs nothing in practice — the function already reads
+    // Firestore for every cart item below, so a Firestore outage fails this
+    // request either way.
+    let checkoutOpen;
+    try {
+      checkoutOpen = await isCheckoutEnabled();
+    } catch (err) {
+      console.error("[checkout] could not read settings.checkoutEnabled:", err.message);
+      throw new HttpsError("unavailable", "Checkout is temporarily unavailable. Please contact the shop.");
+    }
+    if (!checkoutOpen) {
+      throw new HttpsError(
+        "failed-precondition",
+        "This shop is taking orders by message right now. Please contact us to purchase."
+      );
+    }
 
     if (!cartKey || typeof cartKey !== "string") {
       throw new HttpsError("invalid-argument", "Missing cartKey");

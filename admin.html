@@ -1327,6 +1327,9 @@
       <div class="side-item active" onclick="showPanel('dashboard',this)"
            data-en="📊 Dashboard" data-th="📊 แดชบอร์ด"
            data-kw="home overview stats แดชบอร์ด ภาพรวม สรุป">📊 Dashboard</div>
+      <div class="side-item" onclick="showPanel('orders',this)"
+           data-en="📦 Orders" data-th="📦 คำสั่งซื้อ"
+           data-kw="orders order paid pending shipping address customer refund stripe คำสั่งซื้อ ออเดอร์ จ่ายแล้ว รอชำระ ที่อยู่ ลูกค้า จัดส่ง">📦 Orders<span class="side-count" id="sc-orders"></span></div>
       <div class="side-item" onclick="showPanel('store-pages',this)"
            data-en="📄 Pages" data-th="📄 หน้าเว็บทั้งหมด"
            data-kw="pages sitemap visible hidden custom page หน้าเว็บ หน้า ซ่อน แสดง สร้างหน้า">📄 Pages</div>
@@ -1850,6 +1853,28 @@
         <div class="save-bar"><button class="btn-gold" onclick="savePayment()" data-en="💾 Save Payment" data-th="💾 บันทึก">💾 Save Payment</button></div>
       </div>
 
+      <!-- ORDERS -->
+      <div class="panel" id="panel-orders">
+        <div class="panel-title" data-en="📦 Orders" data-th="📦 คำสั่งซื้อ">📦 Orders
+          <button class="view-btn" style="font-size:13px" onclick="loadOrders()" data-en="🔄 Refresh" data-th="🔄 โหลดใหม่">🔄 Refresh</button>
+        </div>
+        <div class="panel-sub"
+             data-en="Real orders paid by card. Written by the server only — nothing here can be edited from this screen, by design."
+             data-th="คำสั่งซื้อจริงที่จ่ายผ่านบัตร เขียนโดยเซิร์ฟเวอร์เท่านั้น — หน้านี้ดูได้อย่างเดียว แก้ไขไม่ได้โดยตั้งใจ">Real orders paid by card. View only.</div>
+
+        <div class="form-card">
+          <div class="ord-filters" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+            <button class="tab-btn active" data-ord-filter="needs" onclick="setOrderFilter('needs',this)"
+                    data-en="⚠️ Needs action" data-th="⚠️ ต้องจัดการ">⚠️ Needs action</button>
+            <button class="tab-btn" data-ord-filter="paid" onclick="setOrderFilter('paid',this)"
+                    data-en="✅ Paid" data-th="✅ จ่ายแล้ว">✅ Paid</button>
+            <button class="tab-btn" data-ord-filter="all" onclick="setOrderFilter('all',this)"
+                    data-en="📋 All" data-th="📋 ทั้งหมด">📋 All</button>
+          </div>
+          <div id="ordersList"></div>
+        </div>
+      </div>
+
       <!-- FEATURED -->
       <!-- AMULETS -->
       <!-- STORE PAGES HUB -->
@@ -1880,6 +1905,23 @@
               <input type="checkbox" id="b_shopEnabled" style="width:18px;height:18px" onchange="saveShopStatus()">
               <span data-en="Shop is open to customers" data-th="เปิดร้านค้าให้ลูกค้าเข้าดูได้">Shop is open to customers</span>
             </label>
+          </div>
+
+          <div class="form-card">
+            <div class="form-section-title" data-en="💬 How Customers Buy" data-th="💬 วิธีที่ลูกค้าสั่งซื้อ">💬 How Customers Buy</div>
+            <div class="form-section-desc"
+                 data-en="Switch between taking card payments and having customers message you. Prices and the whole catalogue stay visible either way — only the cart and the card form change."
+                 data-th="สลับระหว่างรับเงินผ่านบัตร กับให้ลูกค้าทักแชทมาสั่ง ราคาและสินค้าทั้งหมดยังแสดงเหมือนเดิมทั้งสองแบบ — เปลี่ยนแค่ตะกร้ากับช่องกรอกบัตร">Switch between card payments and chat-to-order.</div>
+            <label class="switch-label" style="padding:14px 16px;background:linear-gradient(135deg,rgba(232,201,106,.12) 0%,rgba(var(--accent-rgb),.06) 100%);border:1.5px solid rgba(var(--accent-rgb),.3);border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
+              <label class="switch"><input type="checkbox" id="b_checkoutEnabled" onchange="saveCheckoutMode()"><span class="slider"></span></label>
+              <span style="flex:1">
+                <strong style="font-size:14.5px" data-en="💳 Accept card payments on the website" data-th="💳 รับชำระเงินด้วยบัตรบนเว็บ">💳 Accept card payments on the website</strong>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:3px;font-weight:400"
+                     data-en="ON — customers add to cart and pay by card. OFF — no cart, no card form; every item shows your contact buttons so customers message you to buy. Saves right away."
+                     data-th="เปิด — ลูกค้าหยิบใส่ตะกร้าและจ่ายด้วยบัตร · ปิด — ไม่มีตะกร้า ไม่มีช่องกรอกบัตร ทุกชิ้นจะขึ้นปุ่มติดต่อให้ลูกค้าทักมาสั่ง บันทึกทันทีที่กด">ON — card checkout. OFF — chat to order.</div>
+              </span>
+            </label>
+            <div id="checkoutModeNote" style="margin-top:10px;font-size:12.5px;line-height:1.7;display:none"></div>
           </div>
 
           <div class="form-card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
@@ -3890,6 +3932,7 @@ function showPanel(name, el){
 
   // Load data for each panel
   if(name==='dashboard')loadDash();
+  if(name==='orders')loadOrders();
   if(name==='products'){ closeProductForm(); loadProductList(); loadShopStatus(); }
   if(name==='casing'){exitTypeView();loadPanelPageIntro('casing');loadCasingTypes();}
   if(name==='projects'){loadPanelPageIntro('projects');loadList('projects');}
@@ -4208,6 +4251,168 @@ function loadNeedsAttention(){
   `).join('');
 }
 
+// ═══ ORDERS ══════════════════════════════════════════════════════════════
+// Read-only by design. `orders` is `allow write: if false` in firestore.rules
+// — Cloud Functions write it with the Admin SDK, bypassing rules. Adding an
+// edit button here would mean opening that rule, which is the one thing
+// standing between a compromised admin session and forged/repriced orders.
+// If an order genuinely has to change, do it in the Firebase Console.
+//
+// EVERYTHING rendered below is customer-typed input that reached Firestore
+// through createPaymentIntent (name/phone/address/notes are form fields, only
+// length-capped server-side). It is exactly as hostile as reviewSubmissions.
+// Escape it all — see the stored-XSS note in .claude/HANDOFF.md item 1c.
+var _orders = [];
+var _orderFilter = 'needs';
+
+// Statuses the shop still owes someone an action on.
+// `paid` is here because a paid order that has not shipped is the whole point
+// of this screen — there is no shipped/delivered status yet (see HANDOFF 5b),
+// so every paid order stays in this list. Once fulfilment states exist, filter
+// on those instead.
+var ORDER_NEEDS_ACTION = ['paid', 'pending_payment'];
+
+function orderStatusMeta(status){
+  var map = {
+    paid:            {en:'Paid',            th:'จ่ายแล้ว',    color:'#1a7f45', bg:'rgba(46,204,113,.14)'},
+    pending_payment: {en:'Pending payment', th:'รอชำระเงิน',  color:'#8a6d1f', bg:'rgba(201,168,76,.16)'},
+    payment_failed:  {en:'Payment failed',  th:'จ่ายไม่สำเร็จ', color:'#a3283c', bg:'rgba(224,116,138,.16)'},
+    expired:         {en:'Expired',         th:'หมดเวลา',     color:'#666',    bg:'rgba(120,120,120,.14)'}
+  };
+  return map[status] || {en:status||'—', th:status||'—', color:'#666', bg:'rgba(120,120,120,.14)'};
+}
+
+function orderDateText(ts){
+  if(!ts || typeof ts.toDate !== 'function') return '—';
+  try{
+    return ts.toDate().toLocaleString(lang==='th'?'th-TH':'en-SG',
+      {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  }catch(e){ return '—'; }
+}
+
+async function loadOrders(){
+  var listEl = document.getElementById('ordersList');
+  if(!listEl) return;
+  if(!window.FB || typeof window.FB.listAllOrders !== 'function'){
+    listEl.innerHTML = '<div class="empty-state">Order loading is unavailable — firebase-shared.js is out of date.</div>';
+    return;
+  }
+  listEl.innerHTML = '<div class="empty-state">'+(lang==='th'?'กำลังโหลด…':'Loading…')+'</div>';
+  _orders = await window.FB.listAllOrders(200);
+  renderOrdersList();
+  refreshOrdersBadge();
+}
+
+function setOrderFilter(key, el){
+  _orderFilter = key;
+  var btns = document.querySelectorAll('[data-ord-filter]');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  if(el) el.classList.add('active');
+  renderOrdersList();
+}
+
+// Sidebar badge: how many orders still need a human. Deliberately only
+// refreshed when the panel loads — this collection is not in getDB(), so
+// refreshSidebarCounts() cannot see it, and polling it on every render would
+// spend Firestore reads for a number nobody is watching.
+function refreshOrdersBadge(){
+  var badge = document.getElementById('sc-orders');
+  if(!badge) return;
+  var n = _orders.filter(function(o){ return ORDER_NEEDS_ACTION.indexOf(o.status) >= 0; }).length;
+  badge.textContent = n ? String(n) : '';
+}
+
+function ordersMatchingFilter(){
+  if(_orderFilter === 'all') return _orders;
+  if(_orderFilter === 'paid') return _orders.filter(function(o){ return o.status === 'paid'; });
+  return _orders.filter(function(o){ return ORDER_NEEDS_ACTION.indexOf(o.status) >= 0; });
+}
+
+function renderOrdersList(){
+  var listEl = document.getElementById('ordersList');
+  if(!listEl) return;
+  var th = lang === 'th';
+  var rows = ordersMatchingFilter();
+
+  if(!rows.length){
+    listEl.innerHTML = '<div class="empty-state">' +
+      (th ? 'ไม่มีคำสั่งซื้อในหมวดนี้' : 'No orders in this view') + '</div>';
+    return;
+  }
+
+  listEl.innerHTML = rows.map(function(o){
+    var meta = orderStatusMeta(o.status);
+    var ship = o.shipping || {};
+    var items = o.items || [];
+
+    // Set by stripeWebhook when money arrived after the reservation lapsed —
+    // the same piece may already have gone to someone else. A human decides.
+    var reviewFlag = o.needsReview
+      ? '<div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(224,116,138,.14);border:1px solid rgba(224,116,138,.4);font-size:12.5px;line-height:1.6">' +
+        (th ? '⚠️ <strong>ต้องตรวจสอบ</strong> — เงินเข้ามาหลังการจองหมดอายุแล้ว พระองค์นี้อาจถูกขายให้คนอื่นไปแล้ว ต้องตัดสินใจว่าจะให้ใคร'
+            : '⚠️ <strong>Needs review</strong> — payment arrived after the reservation expired. This piece may already have gone to another buyer; decide who gets it.') +
+        '</div>'
+      : '';
+
+    var itemRows = items.map(function(i){
+      return '<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--border)">' +
+        '<span>' + escapeHtml(i.name || i.id || '—') + '</span>' +
+        '<span style="white-space:nowrap">S$' + Number(i.price||0).toLocaleString() + '</span>' +
+        '</div>';
+    }).join('');
+
+    // One block the owner can copy straight onto a parcel label.
+    var addressBlock = [ship.name||'', ship.phone||'', ship.address||''].filter(Boolean).join('\n');
+
+    return '<div style="border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--bg-soft,#fff)">' +
+      '<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:15px">#' + escapeHtml(String(o.id).slice(0,8).toUpperCase()) + '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-top:2px">' + escapeHtml(orderDateText(o.createdAt)) + '</div>' +
+        '</div>' +
+        '<span style="padding:5px 12px;border-radius:99px;font-size:12.5px;font-weight:700;color:' + meta.color + ';background:' + meta.bg + '">' +
+          escapeHtml(th ? meta.th : meta.en) + '</span>' +
+      '</div>' +
+      reviewFlag +
+      '<div style="margin-top:12px">' + itemRows + '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-weight:700;color:var(--gold-dark);margin-top:8px;font-size:14px">' +
+        '<span>' + (th ? 'ยอดรวม' : 'Total') + '</span>' +
+        '<span>S$' + Number(o.total||0).toLocaleString() + '</span>' +
+      '</div>' +
+      '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;line-height:1.7">' +
+        '<div style="font-weight:600;margin-bottom:4px">' + (th ? '📮 ที่อยู่จัดส่ง' : '📮 Shipping') + '</div>' +
+        '<div>' + escapeHtml(ship.name || '—') + '</div>' +
+        '<div>' + escapeHtml(ship.phone || '—') + '</div>' +
+        '<div style="white-space:pre-wrap">' + escapeHtml(ship.address || '—') + '</div>' +
+        (ship.notes ? '<div style="margin-top:6px;color:var(--text-muted);white-space:pre-wrap">' +
+          (th ? 'หมายเหตุ: ' : 'Notes: ') + escapeHtml(ship.notes) + '</div>' : '') +
+        '<button class="view-btn" style="margin-top:10px;font-size:12px" data-addr="' + escapeAttr(addressBlock) + '" onclick="copyOrderAddress(this)">' +
+          (th ? '📋 คัดลอกที่อยู่' : '📋 Copy address') + '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function copyOrderAddress(btn){
+  var text = btn.getAttribute('data-addr') || '';
+  if(!text) return;
+  var done = function(){ showToast(lang==='th' ? 'คัดลอกที่อยู่แล้ว' : 'Address copied'); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, function(){ showToast('Copy failed'); });
+    return;
+  }
+  // Older WebViews (the admin gets opened on phones too) have no async
+  // clipboard API — fall back rather than silently doing nothing.
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); done(); } catch(e){ showToast('Copy failed'); }
+  document.body.removeChild(ta);
+}
+
 // BRANDING
 // ── DISPLAY FONT PRESETS ──
 // Each preset: family (Google Fonts name), label, vibe (short description).
@@ -4249,11 +4454,45 @@ function selectFont(family){
 function loadShopStatus(){
   const s=getDB().settings;
   document.getElementById('b_shopEnabled').checked=s.shopEnabled!==false;
+  document.getElementById('b_checkoutEnabled').checked=s.checkoutEnabled!==false;
+  renderCheckoutModeNote();
 }
 async function saveShopStatus(){
   const db=getDB();
   db.settings.shopEnabled=document.getElementById('b_shopEnabled').checked;
   await persistDB(db,tr('brandingSaved'));
+}
+
+// Enquiry mode. The storefront reads settings.checkoutEnabled through
+// checkoutOn() in index.html; the Cloud Function reads the same field straight
+// out of Firestore before it will create a PaymentIntent. Both sides, one
+// switch — turning this off here really does stop cards being charged, it does
+// not merely hide the button.
+async function saveCheckoutMode(){
+  const db=getDB();
+  db.settings.checkoutEnabled=document.getElementById('b_checkoutEnabled').checked;
+  renderCheckoutModeNote();
+  await persistDB(db,tr('brandingSaved'));
+}
+
+function renderCheckoutModeNote(){
+  const box=document.getElementById('checkoutModeNote');
+  if(!box) return;
+  const on=document.getElementById('b_checkoutEnabled').checked;
+  const th=lang==='th';
+  if(on){
+    box.style.display='none';
+    box.innerHTML='';
+    return;
+  }
+  box.style.display='';
+  box.style.padding='12px 14px';
+  box.style.borderRadius='8px';
+  box.style.background='rgba(var(--accent-rgb),.08)';
+  box.style.border='1px solid rgba(var(--accent-rgb),.3)';
+  box.innerHTML = th
+    ? '💬 <strong>โหมดทักแชท</strong> — ลูกค้ายังเห็นพระและราคาครบทุกองค์ แต่จะไม่มีตะกร้าและไม่มีการตัดบัตร ทุกชิ้นจะขึ้นปุ่มติดต่อของคุณแทน<br>ตรวจให้แน่ใจว่าตั้งค่าช่องทางติดต่อไว้แล้วที่ <strong>ชำระเงิน &amp; ติดต่อ → ติดต่อ</strong> ไม่งั้นลูกค้าจะไม่มีปุ่มให้กด'
+    : '💬 <strong>Chat-to-order mode</strong> — customers still see every item and every price, but there is no cart and no card payment. Each item shows your contact buttons instead.<br>Make sure your channels are set up under <strong>Payment &amp; Contact → Contact</strong>, or customers will have nothing to click.';
 }
 
 function loadBranding(){

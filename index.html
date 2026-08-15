@@ -6809,6 +6809,14 @@ function safeWatchImages(root=document){
 function defaultSettings(){
   return {
     shopEnabled:true, // when false, /shop shows a "coming soon" placeholder instead of the product grid
+    // When false the shop runs in ENQUIRY MODE: the catalogue and every price
+    // stay fully visible, but there is no cart and no card payment — each item
+    // shows the contact buttons instead, so the customer messages the shop to
+    // buy. Nothing about the Stripe integration is removed, only gated, so
+    // flipping this back on restores card checkout with no other change.
+    // The server enforces this too (functions/index.js) — hiding the button is
+    // not the same as refusing to charge.
+    checkoutEnabled:true,
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
     logoIcon:'/favicon/apple-touch-icon.png',
     logoText:'YingyingyingSG',
@@ -6945,6 +6953,7 @@ function applyDbMigrations(d){
   if(!d.casingTypes)d.casingTypes=[];
   if(!d.settings)d.settings=defaultSettings();
   if(d.settings.shopEnabled===undefined)d.settings.shopEnabled=true;
+  if(d.settings.checkoutEnabled===undefined)d.settings.checkoutEnabled=true;
   if(!d.settings.customPages)d.settings.customPages=[];
   // historyStories: dedicated module (migrated from customPages if needed)
   if(!d.historyStories) d.historyStories = [];
@@ -7485,6 +7494,9 @@ function applySettings(){
   db.feedPosts = Array.isArray(db.feedPosts) ? db.feedPosts : [];
   db.historyStories = Array.isArray(db.historyStories) ? db.historyStories : [];
   document.getElementById('pageTitle').textContent=(s.seo&&s.seo.title)||s.pageTitle||'Yingyingying Amulet';
+  // Settings have landed — the cart button's visibility depends on them, and
+  // the button is in static markup so it is on screen before this point.
+  updateCartBadge();
   // Apply SEO meta tags from admin settings
   const _seo=s.seo||{};
   const _setMeta=(name,val,prop='name')=>{
@@ -8218,6 +8230,20 @@ async function goPage(name, opts={}){
   const db=getDB();
   const navItem=(db.settings.nav||[]).find(n=>n.id===name);
   if(navItem && !navItem.enabled)return;
+  // Enquiry mode: /#cart and /#checkout are still real pages in the markup and
+  // stay reachable by URL — an old bookmark, a shared link, a back button.
+  // Send those visitors to the shop rather than to an empty cart they cannot
+  // check out of.
+  if(!checkoutOn() && (name==='cart' || name==='checkout')){
+    // Shop is the useful destination, but it can be switched off in the menu —
+    // and goPage() returns silently for a disabled nav item, which would leave
+    // the visitor on whatever was on screen (or, arriving cold at /#cart, on
+    // the static home page by accident). Home is always enabled.
+    const shopNav=(db.settings.nav||[]).find(n=>n.id==='shop');
+    const dest=(shopNav && !shopNav.enabled) ? 'home' : 'shop';
+    await goPage(dest, {updateUrl: opts.updateUrl});
+    return;
+  }
   setNavClearance();
   // Switch page with luxury transition: exit current → enter next
   const currentPg = document.querySelector('.page.active');
@@ -8636,7 +8662,20 @@ const PR_STOCK_PILL_FE = {
 };
 function prodPrice(p){ return (p.salePrice!=null && p.salePrice!=='' && Number(p.salePrice)>0) ? Number(p.salePrice) : Number(p.price||0); }
 function prodHasSale(p){ return p.salePrice!=null && p.salePrice!=='' && Number(p.salePrice)>0 && Number(p.salePrice)<Number(p.price||0); }
-function prodCanBuy(p){ return p.allowCheckout!==false && !p.allowEnquiryOnly && p.stockStatus!=='sold_out'; }
+// ENQUIRY MODE — the shop-wide switch (admin → Shop → Shop Status).
+// When settings.checkoutEnabled is false there is no cart and no card payment
+// anywhere on the site; every item shows the contact buttons instead. Prices
+// stay visible — that is the difference between this and the per-product
+// `allowEnquiryOnly` flag, which also replaces the price with "PM for price".
+//
+// Read through a function rather than caching a boolean: settings arrive
+// asynchronously and can change under a live page via the Firestore listener,
+// and a stale cached `true` here would put a buy button back on the page.
+function checkoutOn(){
+  const s = getDB().settings;
+  return !s || s.checkoutEnabled !== false;
+}
+function prodCanBuy(p){ return checkoutOn() && p.allowCheckout!==false && !p.allowEnquiryOnly && p.stockStatus!=='sold_out'; }
 
 function buildProductCard(p,settings,idx=99){
   const icon=PR_TYPE_ICON_FE[p.type]||'🏷️';
@@ -8698,7 +8737,7 @@ function buildCard(a,type,settings,idx=99){
       <div class="card-foot">
         <span class="tag">${tag||a.cat||''}</span>
         <div style="display:flex;gap:6px">
-          ${(!a.hidePrice && status==='available')?`<button class="btn-sm" onclick="addToCart('${type}',${a.id},event)" title="${lang==='th'?'หยิบใส่ตะกร้า':'Add to cart'}">🛒</button>`:''}
+          ${(checkoutOn() && !a.hidePrice && status==='available')?`<button class="btn-sm" onclick="addToCart('${type}',${a.id},event)" title="${lang==='th'?'หยิบใส่ตะกร้า':'Add to cart'}">🛒</button>`:''}
           <button class="btn-sm" onclick="event.stopPropagation();openProd('${type}',${a.id})">Details</button>
         </div>
       </div>
@@ -8771,6 +8810,10 @@ function initCartWatcher(){
 }
 
 function updateCartBadge(){
+  // The cart button lives in static markup, so it has to be hidden here rather
+  // than simply not rendered. applySettings() calls this after settings load.
+  const cartBtn = document.getElementById('cartBtn');
+  if(cartBtn) cartBtn.style.display = checkoutOn() ? '' : 'none';
   const badge = document.getElementById('cartBadge');
   if(!badge) return;
   const n = _cartItems.length;
@@ -8784,6 +8827,11 @@ function isInCart(type, id){
 
 async function addToCart(type, id, ev){
   if(ev) ev.stopPropagation();
+  // Belt and braces: every button that calls this is already hidden in enquiry
+  // mode, but the function is global and reachable from an old cached page or
+  // the console. A cart written now would still be there when checkout is
+  // switched back on.
+  if(!checkoutOn()) return;
   if(!window.FB || typeof window.FB.cartAdd !== 'function') return;
   const db = getDB();
   const item = (db[type]||[]).find(i => String(i.id)===String(id));
@@ -11534,7 +11582,7 @@ async function openProd(type,id){
 
   const priceHtml=item.hidePrice?`<div class="prod-price price-pm" style="font-size:22px">${s.contactPmText||'PM for price'}</div>`:`<div class="prod-price">S$${Number(item.price||0).toLocaleString()}</div>`;
 
-  const addToCartBtnHtml=(!item.hidePrice && status==='available')?
+  const addToCartBtnHtml=(checkoutOn() && !item.hidePrice && status==='available')?
     (isInCart(type,id)?
       `<button class="btn-ol" style="width:100%;margin-bottom:10px" onclick="removeFromCart('${type}','${id}')">✓ ${lang==='th'?'อยู่ในตะกร้าแล้ว (นำออก)':'In cart (remove)'}</button>`:
       `<button class="btn-gold" style="width:100%;margin-bottom:10px" onclick="addToCart('${type}',${id})">🛒 ${lang==='th'?'หยิบใส่ตะกร้า':'Add to cart'}</button>`

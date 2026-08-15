@@ -32,7 +32,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
-  addDoc, serverTimestamp, query, where, orderBy, writeBatch
+  addDoc, serverTimestamp, query, where, orderBy, limit, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import {
   getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject
@@ -1804,6 +1804,30 @@ async function getMyOrders(){
   }
 }
 
+// ─── ORDER LIST (admin-facing) ──────────────────────────────────────────────
+// An unfiltered read of `orders`. The rule permits this ONLY for a team
+// member (firestore.rules: `allow read: if ... || isTeamMember()`), so a
+// signed-in customer calling this gets permission-denied — which is correct,
+// and why the failure is swallowed into [] rather than thrown at the UI.
+//
+// Deliberately capped. Orders are small docs, but this collection only grows,
+// and the admin screen shows a reverse-chronological list — nobody scrolls to
+// order 500. Raise MAX if the shop ever outgrows it and add paging then.
+async function listAllOrders(max){
+  try{
+    const q = query(
+      collection(fs, 'orders'),
+      orderBy('createdAt', 'desc'),
+      limit(Math.max(1, Math.min(500, Number(max) || 200)))
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }catch(err){
+    console.error('[FB] listAllOrders failed:', err);
+    return [];
+  }
+}
+
 // ─── ADMIN ROLES ───────────────────────────────────────────────────────────
 // Each admin is stored as a doc under `admins/{lowercased-email}` with
 // shape: { email, role, addedBy, addedAt, displayName? }
@@ -2369,6 +2393,7 @@ window.FB = {
   customerSignOut,
   createPaymentIntent,
   getMyOrders,
+  listAllOrders,
   onAuthChange,
   currentUser,
   // Customer review submissions

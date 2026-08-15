@@ -542,19 +542,76 @@ visitors. `firebase.json` now carries an explicit `"source": "/"` rule as well.
 All 13 pages share one URL, so Google indexes one page. Needed before
 individual products or articles can rank. Requires a Hosting rewrite rule.
 
-### 5b. The admin panel has no orders screen
+### 5b. ~~The admin panel has no orders screen~~ — DONE (read-only)
 
-`grep -n "'orders'" admin.html` returns nothing. The shop takes real card
-payments and there is no way to see, search or cancel an order without opening
-the Firebase Console. That was already awkward; two things now make it a gap
-worth closing:
+`admin.html` now has an **Orders** panel (sidebar, under Overview) backed by
+`FB.listAllOrders(max)` in `firebase-shared.js`. Three filters — *Needs action*
+(paid + pending_payment, the default), *Paid*, *All* — plus a copy-address
+button for parcel labels, and the `needsReview` / `expiredThenPaid` flag from
+item 1g is finally surfaced as a red banner on the order.
 
-- `expiredThenPaid` / `needsReview` (item 1g) is set by the webhook when money
-  arrives after a reservation lapsed, and **nothing surfaces it**.
-- Releasing a stuck reservation by hand has no UI.
+**It is deliberately read-only.** `orders` is `allow write: if false`; the
+Cloud Functions write it with the Admin SDK, bypassing rules. An edit button
+here would mean opening that rule, which is the only thing standing between a
+stolen admin session and forged or repriced orders. Genuine corrections go
+through the Firebase Console.
 
-`firestore.rules` already allows a team member to list `orders`, so this is
-front-end work only.
+Everything on an order is customer-typed (`shipping.name/phone/address/notes`
+are form fields, only length-capped server-side) — as hostile as
+`reviewSubmissions`, see item 1c. Every field is escaped at render. Verified by
+rendering an order whose name and item name carried
+`"><img src=x onerror=…>`: nothing executed, no `<img>` reached the DOM.
+
+Still missing, and still worth doing: no fulfilment states (packed / shipped /
+delivered / tracking number), so a paid order stays in *Needs action* forever.
+`ORDER_NEEDS_ACTION` in `admin.html` is where that changes when they exist.
+
+The sidebar badge is filled by `refreshOrdersBadge()` on panel load only —
+`orders` is not part of `getDB()`, so `refreshSidebarCounts()` cannot see it,
+and polling it would spend Firestore reads on a number nobody is watching.
+
+### 5c. Enquiry mode — the shop-wide chat-to-order switch
+
+`settings.checkoutEnabled` (admin → **Shop → How Customers Buy**). When false
+the catalogue and **every price stay visible**, but there is no cart and no
+card payment: each item shows the shop's contact buttons instead, so the
+customer messages to buy. This is what the shop is running on now.
+
+Do not confuse it with the two neighbouring flags:
+
+| Flag | Effect |
+|---|---|
+| `settings.shopEnabled=false` | whole Shop page becomes "coming soon" |
+| product `allowEnquiryOnly` | that one item hides its price → "PM for price" |
+| `settings.checkoutEnabled=false` | **whole shop**, prices stay, cart/card gone |
+
+Enforced in two places, and it needs both:
+
+- `checkoutOn()` in `index.html` — folded into `prodCanBuy()`, plus the legacy
+  `buildCard`/`openProd` paths for `amulets`/`accessories`, `addToCart()`
+  itself, the nav cart button (hidden in `updateCartBadge()`, which
+  `applySettings()` now calls), and a redirect out of `/#cart` and
+  `/#checkout`. It reads `getDB()` on every call rather than caching a
+  boolean — settings arrive async and change live via the Firestore listener.
+- `isCheckoutEnabled()` in `functions/index.js` — `createPaymentIntent`
+  refuses before it touches Stripe. **The callable is reachable by name from
+  anywhere once the project id is known (it is in the page source), so hiding
+  buttons stops nobody.** It reads `settings` the same way the client does:
+  chunk count from the `app/db` manifest, JSON from `app/dbpart_settings_N`.
+  It **fails closed** — if the setting cannot be read it refuses rather than
+  charging a card in a shop whose owner believes payments are off.
+
+Nothing about Stripe was removed, only gated. Flipping the toggle back on
+restores card checkout with no other change — server-side price verification,
+the double-sale guard and the webhook are all still wired.
+
+**The Cloud Function half does not ship with a hosting deploy.** CI runs
+`--only hosting`, so until someone runs the command below, the storefront hides
+the buttons while the server would still happily charge a card:
+
+```bash
+firebase deploy --only functions
+```
 
 ### 6. Legal review
 
