@@ -3521,8 +3521,9 @@ function defaultSettings(){
       about:{title:'About Yingyingying Amulet',desc:'We are a specialist amulet shop dedicated to authenticity and quality.'},
     },
     trustCards:[
-      {icon:'🏆',stat:'100%',title:'Certified Authentic',desc:'Every amulet verified by specialists'},
-      {icon:'✅',stat:'5★',title:'100% Guaranteed',desc:'Full authenticity guarantee'},
+      // One card, not two: "Certified Authentic" and "100% Guaranteed" were the
+      // same promise written twice. Keep index.html's defaults in step.
+      {icon:'🏆',stat:'100%',title:'Certified Authentic',desc:'Verified by specialists — every piece guaranteed genuine'},
       {icon:'🪬',stat:'99+',title:'Casing Styles',desc:'High-quality casings, custom made'},
       {icon:'🚚',stat:'3+',title:'Countries Served',desc:'SG · TH · MY and beyond'},
       {icon:'💬',stat:'24h',title:'Fast Reply',desc:'Expert advice at no charge'},
