@@ -6141,8 +6141,11 @@
     <section class="lens-hero">
       <div class="lens-copy">
         <div class="lens-crest"><img id="socialAvatarImg" loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
-        <div class="lens-kicker lg" id="socialKicker">Certified Genuine · Worldwide Shipping</div>
-        <h1 class="lens-title" id="socialTitle">Yingyingying Amulet</h1>
+        <!-- No kicker here: it echoed `topbar`, which already runs across the
+             top of the page on desktop, and its "Certified Genuine · Worldwide
+             Shipping" wording was repeated word-for-word by the trust chips a
+             few hundred pixels below. -->
+        <h1 class="lens-title" id="socialTitle">Authentic Thai Amulets</h1>
         <p class="lens-desc" id="socialDesc">Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.</p>
         <!-- socialActions hidden — Explore Collection button removed -->
         <div id="socialActions" style="display:none"></div>
@@ -6740,16 +6743,6 @@
   }
   .lens-crest img{width:100%;height:100%;object-fit:cover;border-radius:23px;display:block}
 
-  .lens-kicker{
-    --r:999px;
-    display:inline-flex;align-items:center;gap:8px;
-    padding:8px 16px;margin-bottom:20px;
-    font-family:var(--font-display);
-    font-size:10.5px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;
-    line-height:1.35;color:#f6e7bb;
-    background:linear-gradient(rgba(16,11,4,.42),rgba(16,11,4,.42)),rgba(255,240,205,.06);
-    box-shadow:0 8px 24px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,245,220,.2);
-  }
   .lens-title{
     font-family:var(--font-display);font-weight:700;
     font-size:clamp(30px,7.4vw,64px);line-height:1.04;letter-spacing:-.025em;
@@ -6891,8 +6884,7 @@
   /* Frosted glass is the single most expensive thing for a weak GPU, and lite
      mode already strips backdrop-filter globally — keep the sheets legible. */
   html.lite-mode .lens-panel,
-  html.lite-mode .sg-chip,
-  html.lite-mode .lens-kicker{background:rgba(20,15,7,.92) !important}
+  html.lite-mode .sg-chip{background:rgba(20,15,7,.92) !important}
   /* ═══════════ LITE MODE ═══════════
      Set by the liteMode() probe in <head> on low-memory / low-core devices.
      Layout, colours and content are untouched — only the GPU-heavy decoration
@@ -7201,8 +7193,9 @@ function defaultSettings(){
       about:{title:'About Yingyingying Amulet',desc:'We are a specialist amulet shop dedicated to authenticity and quality. Every piece carefully verified by experts. Professional casing service available for all amulet types.'},
     },
     trustCards:[
-      {icon:'🏆',title:'Certified Authentic',desc:'Every amulet verified by specialists with documentation'},
-      {icon:'✅',title:'100% Guaranteed',desc:'Full authenticity guarantee on every item we sell'},
+      // "Certified Authentic" and "100% Guaranteed" used to be two cards saying
+      // the same thing in different words — one card now carries both halves.
+      {icon:'🏆',title:'Certified Authentic',desc:'Verified by specialists with documentation — every piece guaranteed genuine'},
       {icon:'🪬',title:'Casing Service',desc:'High-quality casings in multiple styles, custom made'},
       {icon:'🚚',title:'Worldwide Shipping',desc:'Careful packaging, fast and secure delivery'},
       {icon:'💬',title:'Free Consultation',desc:'Expert advice on amulets and casings at no charge'},
@@ -7778,15 +7771,9 @@ function setRich(id, value){
 // ── APPLY SETTINGS ──
 function renderTrustStrip(){
   const db = getDB();
-  let cards = (db.settings && db.settings.trustCards) || [];
+  const cards = (db.settings && db.settings.trustCards) || [];
   const el = document.getElementById('trustStrip');
   if(!el) return;
-  cards = [
-    {icon:'🏆',title:'Certified Authentic',desc:'Every amulet verified by specialists'},
-    {icon:'✅',title:'100% Guaranteed',desc:'Full authenticity guarantee'},
-    {icon:'🚚',title:'Worldwide Shipping',desc:'Careful packaging, fast delivery'},
-    {icon:'💬',title:'Free Consultation',desc:'Expert advice at no charge'}
-  ];
   if(!cards.length){ el.style.display='none'; return; }
   el.style.display='';
   // sg-* class names, not the old trust-strip-* ones: a long tail of legacy
@@ -8126,8 +8113,13 @@ function renderSocialHomeBase(){
   const s=db.settings||{};
   const logo=imageUrl(s.logoIcon) || '/favicon/apple-touch-icon.png';
   const cover=imageUrl(s.hero && s.hero.bgImage,'medium') || imageUrl(s.hero && s.hero.heroImage,'medium') || '';
-  const title=s.logoText || 'Yingyingying Amulet';
-  const desc=(s.hero && (s.hero.desc || s.hero.sub)) || 'Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.';
+  // The nav pill above already carries the shop name in the script logotype,
+  // so the headline takes the tagline instead of printing the name a second
+  // time — the name only comes back when no tagline is set.
+  const heroSub=(s.hero && s.hero.sub) || '';
+  const title=heroSub || s.logoText || 'Yingyingying Amulet';
+  // heroSub can no longer stand in for a missing desc: it is the headline now.
+  const desc=(s.hero && s.hero.desc) || (heroSub ? '' : 'Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.');
 
   const coverEl=document.getElementById('socialCoverBg');
   if(coverEl && cover){
@@ -8145,8 +8137,6 @@ function renderSocialHomeBase(){
   if(mini) mini.innerHTML=`<img src="${escapeHtml(logo)}" alt="">`;
   const titleEl=document.getElementById('socialTitle');
   if(titleEl) titleEl.textContent=title;
-  const kicker=document.getElementById('socialKicker');
-  if(kicker) kicker.textContent=s.topbar || 'Certified Genuine · Worldwide Shipping';
   const descEl=document.getElementById('socialDesc');
   if(descEl) descEl.textContent=String(desc || '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
   // No global data-en/data-th applier exists on this site, so the reliquary's
