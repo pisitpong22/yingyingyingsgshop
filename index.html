@@ -12674,6 +12674,7 @@ window.__yyyAppBooted = true;
   let loadedGlbUrl = '';                         // remember what we loaded so we can detect changes
   let initInFlight = null;
   let phraResizeObserver = null;                 // watches #phra3d for the 0×0 → real-size jump
+  let resizeRenderer = null;                     // buildScene's resize(), for the post-load settle pass
 
   function loadScriptOnce(src, test, integrity){
     if(test && test()) return Promise.resolve();
@@ -12861,6 +12862,7 @@ window.__yyyAppBooted = true;
       }
     }
     resize();
+    resizeRenderer = resize;
     window.addEventListener('resize', resize);
     // Switching pages toggles `display:none/block` via a CSS class — that
     // doesn't fire a window 'resize' event. ResizeObserver does fire when
@@ -13092,8 +13094,14 @@ window.__yyyAppBooted = true;
       // The model can render before its textures finish decoding, which
       // briefly shows it as dark/black. We schedule additional renders
       // over the next ~600ms to make sure the first paint is correct.
+      // Also re-measure the canvas on this pass. The reliquary sizes the model
+      // box with `width:100%` off a grid column, so unlike the old hero — whose
+      // box was pure `min(46vw,…)` and final the moment CSS parsed — this one
+      // can still be settling (web fonts, scrollbar) when buildScene ran. A
+      // stale measurement leaves camera.aspect wrong and the statue stretched.
       [50, 150, 350, 600].forEach(delay => {
         setTimeout(() => {
+          if(resizeRenderer) resizeRenderer();
           if(renderer && scene && camera) renderer.render(scene, camera);
         }, delay);
       });
