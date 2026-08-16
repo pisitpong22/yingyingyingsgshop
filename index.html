@@ -6123,32 +6123,41 @@
 <!-- HOME -->
 <div id="page-home" class="page active">
   <div class="social-home">
-    <section class="social-cover">
-      <div class="social-cover-bg" id="socialCoverBg"></div>
-      <div class="social-profile-card">
-        <div class="social-brand-block">
-          <div class="social-avatar"><img id="socialAvatarImg" loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
-          <div>
-            <div class="social-kicker" id="socialKicker">Certified Genuine · Worldwide Shipping</div>
-            <h1 class="social-title" id="socialTitle">Yingyingying Amulet</h1>
-            <p class="social-desc" id="socialDesc">Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.</p>
-          </div>
-        </div>
-        <div class="social-visual">
-          <div class="hero-3d social-3d">
-            <canvas id="phra3d"></canvas>
-          </div>
-          <!-- socialActions hidden — Explore Collection button removed -->
-        <div id="socialActions" style="display:none"></div>
-        </div>
-      </div>
-      <div class="social-tabs" id="socialTabs"></div>
-    </section>
+    <!-- ═══ LENS HOME ═══
+         The cover photo is fixed behind the whole page; every block below is a
+         glass sheet that slides over it, so the photo is re-lit as you scroll.
 
-    <!-- LUXURY TRUST STRIP — dark glass bar below hero -->
-    <div class="trust-wrap-outer">
-      <div class="trust-strip" id="trustStrip"></div>
+         Deliberately NOT liquid-glass refraction (backdrop-filter:url(#warp)):
+         measured, it cost 18% dropped frames while plain frosted glass matched
+         the no-glass baseline. See .lg in the stylesheet.
+
+         Two hero layouts, set in applySettings() via .no-visual on .lens-hero:
+           default    → copy beside the model
+           .no-visual → one centred column with the crest (3D off / lite mode) -->
+    <div class="lens-bg" aria-hidden="true">
+      <div class="lens-photo" id="socialCoverBg"></div>
+      <i></i><i></i>
     </div>
+    <section class="lens-hero">
+      <div class="lens-copy">
+        <div class="lens-crest"><img id="socialAvatarImg" loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
+        <div class="lens-kicker lg" id="socialKicker">Certified Genuine · Worldwide Shipping</div>
+        <h1 class="lens-title" id="socialTitle">Yingyingying Amulet</h1>
+        <p class="lens-desc" id="socialDesc">Authentic Thai amulets, casing service, accessories, projects, and customer reviews in one living shop feed.</p>
+        <!-- socialActions hidden — Explore Collection button removed -->
+        <div id="socialActions" style="display:none"></div>
+      </div>
+      <div class="lens-stage">
+        <div class="hero-3d lens-model">
+          <canvas id="phra3d"></canvas>
+        </div>
+        <div class="lens-hint" id="sgDragHint">Drag to turn</div>
+      </div>
+    </section>
+    <!-- TRUST — four glass lozenges, populated by renderTrustStrip() -->
+    <div class="lens-chips" id="trustStrip"></div>
+    <!-- kept as .social-tabs: the legacy rule that hides it lives on that class -->
+    <div class="social-tabs" id="socialTabs"></div>
   </div>
 
   <!-- MAIN CONTENT SECTIONS: services, featured, reviews
@@ -6156,7 +6165,7 @@
        Hero → Trust → Services → Featured → Reviews → Feed -->
   <div id="homeSections">
   <!-- REVIEWS PREVIEW (homepage) -->
-  <section class="home-reviews-section home-section" id="homeReviewsSection" data-home-section="reviews" style="display:none">
+  <section class="home-reviews-section home-section lens-panel lg" id="homeReviewsSection" data-home-section="reviews" style="display:none">
     <div class="home-reviews-inner">
       <div class="home-reviews-head">
         <div class="home-reviews-eyebrow" data-en="✦ WHAT THEY SAY ✦" data-th="✦ ลูกค้าพูดถึงเรา ✦">✦ WHAT THEY SAY ✦</div>
@@ -6172,7 +6181,7 @@
   </section>
 
   <!-- FEATURED ITEMS -->
-  <section class="featured-section home-section" id="featuredSection" data-home-section="featured" style="display:none">
+  <section class="featured-section home-section lens-panel lg" id="featuredSection" data-home-section="featured" style="display:none">
     <div class="featured-inner">
       <div class="featured-head">
         <h2 id="featuredTitle"></h2>
@@ -6184,7 +6193,7 @@
   </section>
 
   <!-- HOMEPAGE SERVICE CARDS -->
-  <section class="home-services-section home-section" id="homeServicesSection" data-home-section="services">
+  <section class="home-services-section home-section lens-panel lg" id="homeServicesSection" data-home-section="services">
     <div style="max-width:1100px;margin:0 auto;padding:0 8px">
       <div style="text-align:center;margin-bottom:32px">
         <p style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:8px">✦ Products & Services ✦</p>
@@ -6197,7 +6206,7 @@
   </div>
 
   <!-- SOCIAL CHANNELS SECTION — grouped circular layout -->
-  <section class="social-channels-section" id="socialChannelsSection" style="display:none">
+  <section class="social-channels-section lens-panel lg" id="socialChannelsSection" style="display:none">
     <div class="social-channels-wrap">
       <div class="social-channels-head">
         <div class="sc-eyebrow">✦ Stay Connected ✦</div>
@@ -6212,7 +6221,7 @@
   </section>
 
   <!-- LATEST UPDATES — premium article card grid -->
-  <section class="latest-updates-section" id="latestUpdatesSection">
+  <section class="latest-updates-section lens-panel lg" id="latestUpdatesSection">
     <div class="latest-updates-inner">
       <div class="latest-updates-head">
         <div class="latest-updates-eyebrow">✦ LATEST UPDATES ✦</div>
@@ -6653,6 +6662,237 @@
     .site-footer-inner{flex-direction:column;gap:18px}
   }
 
+  /* ═══════════ LENS HOME ═══════════
+     The cover photo is fixed behind the page; every block is a glass sheet
+     sliding over it. Own `lens-`/`lg` namespace on purpose — the legacy
+     .social-cover / .social-profile-card / .social-visual rules carry well
+     over a hundred `!important` declarations across a dozen breakpoints and
+     the new layout loses every one of those fights.
+
+     ── Why frosted and not refracting ──
+     A `backdrop-filter:url(#svgDisplacement)` version was built and measured
+     against this one on the same page and machine:
+
+       full refraction   68 fps, 32 of 177 frames over 20 ms  (18% dropped)
+       frosted only     115 fps,  0 dropped
+       no glass at all  119 fps,  1 dropped
+
+     Frosted glass is free; the refraction is not, and most of this shop's
+     customers are on phones slower than the machine that produced those
+     numbers. So: blur + saturate + a static specular rim, no displacement
+     map, no per-frame sheen animation. */
+
+  .lg{
+    position:relative;
+    -webkit-backdrop-filter:blur(14px) saturate(1.7) brightness(1.04);
+    backdrop-filter:blur(14px) saturate(1.7) brightness(1.04);
+    border-radius:var(--r,28px);
+    isolation:isolate;
+  }
+  /* Static specular rim: one paint, not one per frame. */
+  .lg::before{
+    content:'';position:absolute;inset:0;border-radius:inherit;padding:1.2px;
+    background:linear-gradient(135deg,
+      rgba(255,244,214,.8) 0%,transparent 38%,
+      transparent 62%,rgba(255,244,214,.26) 100%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask-composite:exclude;
+    pointer-events:none;z-index:2;
+  }
+  .lg>*{position:relative;z-index:3}
+
+  /* ── fixed backdrop ── */
+  /* Lives inside #page-home, so it stops rendering on its own when the page
+     is display:none — no JS needed to hide it on other pages. */
+  .lens-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .lens-photo{
+    position:absolute;inset:0;
+    background-position:center;background-size:cover;background-repeat:no-repeat;
+    filter:saturate(.7) brightness(.46);
+  }
+  .lens-photo::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(9,6,2,.6),rgba(9,6,2,.3) 40%,rgba(9,6,2,.8));
+  }
+  .lens-bg i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5}
+  .lens-bg i:nth-of-type(1){width:70vw;height:70vw;left:-18vw;top:-16vw;
+    background:radial-gradient(circle,rgba(201,168,76,.34),transparent 66%)}
+  .lens-bg i:nth-of-type(2){width:56vw;height:56vw;right:-16vw;bottom:-12vw;
+    background:radial-gradient(circle,rgba(168,84,20,.3),transparent 66%)}
+
+  .social-home{position:relative;z-index:1}
+
+  /* ── hero: nothing boxed in, the model breathes ── */
+  .lens-hero{
+    position:relative;z-index:1;
+    max-width:1180px;margin:0 auto;
+    padding:clamp(86px,11vh,132px) 20px 0;
+    text-align:center;
+  }
+  .lens-crest{display:none}
+  .lens-hero.no-visual .lens-crest{
+    display:block;width:84px;height:84px;margin:0 auto 22px;border-radius:26px;
+    overflow:hidden;padding:3px;
+    background:linear-gradient(140deg,#f6e7bb,#c9a84c 55%,#8a6a1c);
+    box-shadow:0 0 0 1px rgba(255,240,200,.4),0 16px 40px rgba(0,0,0,.5);
+  }
+  .lens-crest img{width:100%;height:100%;object-fit:cover;border-radius:23px;display:block}
+
+  .lens-kicker{
+    --r:999px;
+    display:inline-flex;align-items:center;gap:8px;
+    padding:8px 16px;margin-bottom:20px;
+    font-family:var(--font-display);
+    font-size:10.5px;font-weight:700;letter-spacing:2.2px;text-transform:uppercase;
+    line-height:1.35;color:#f6e7bb;
+    background:linear-gradient(rgba(16,11,4,.42),rgba(16,11,4,.42)),rgba(255,240,205,.06);
+    box-shadow:0 8px 24px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,245,220,.2);
+  }
+  .lens-title{
+    font-family:var(--font-display);font-weight:700;
+    font-size:clamp(30px,7.4vw,64px);line-height:1.04;letter-spacing:-.025em;
+    margin:0;color:#fffaee;
+    text-shadow:0 2px 22px rgba(0,0,0,.5);
+  }
+  .lens-desc{
+    max-width:46ch;margin:18px auto 0;
+    font-size:14.5px;line-height:1.85;font-weight:300;
+    color:rgba(246,238,220,.62);text-shadow:0 1px 8px rgba(0,0,0,.4);
+    /* The shop description in settings is a full paragraph. Unclamped it ran
+       to 322px on a phone and pushed the statue off the first screen, which
+       is the "cramped" problem all over again. Clamped here; the full text
+       still shows on the About page. */
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;
+    overflow:hidden;
+  }
+  @media(min-width:900px){.lens-desc{-webkit-line-clamp:6}}
+
+  .lens-stage{
+    position:relative;margin:0 auto;width:100%;max-width:520px;
+    display:grid;place-items:center;touch-action:pan-y;
+  }
+  .lens-model{
+    position:relative;z-index:2;
+    /* The legacy mobile rule for .hero-3d sets order:2, which in this grid
+       floated the drag hint above the statue. */
+    order:0;
+    width:100%;height:clamp(320px,48vh,520px);max-height:none;
+    animation:heroFloat 6s ease-in-out infinite;
+    filter:drop-shadow(0 26px 46px rgba(0,0,0,.6));
+  }
+  .lens-model::before,.lens-model::after{display:none}
+  .lens-model canvas{width:100%;height:100%;display:block;cursor:grab}
+  /* gold pool under the model, so it doesn't float in nothing */
+  .lens-stage::after{
+    content:'';position:absolute;left:26%;right:26%;bottom:8%;height:7%;z-index:1;
+    background:radial-gradient(ellipse,rgba(232,201,106,.38),transparent 70%);
+    filter:blur(16px);pointer-events:none;
+  }
+  .lens-stage .hero-still-img{
+    position:relative;z-index:2;max-width:80%;max-height:80%;
+    width:auto;height:auto;object-fit:contain;border-radius:18px;
+    filter:drop-shadow(0 22px 40px rgba(0,0,0,.55));
+  }
+  .lens-hint{
+    font-size:10px;letter-spacing:2.4px;text-transform:uppercase;
+    color:rgba(246,231,187,.36);margin-top:2px;transition:opacity .35s;
+    pointer-events:none;
+  }
+  .lens-stage.is-dragging .lens-hint{opacity:0}
+  .lens-stage.is-still .lens-hint{display:none}
+
+  /* no hero visual → single centred column with the crest */
+  .lens-hero.no-visual .lens-stage{display:none}
+
+  /* ── trust chips ── */
+  .lens-chips{
+    position:relative;z-index:1;
+    max-width:1180px;margin:26px auto 0;padding:0 20px;
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  }
+  .sg-chip{
+    --r:20px;
+    display:flex;align-items:center;gap:10px;padding:14px 15px;
+    border-radius:20px;text-align:left;
+    background:linear-gradient(rgba(16,11,4,.4),rgba(16,11,4,.4)),rgba(255,240,205,.06);
+    -webkit-backdrop-filter:blur(14px) saturate(1.7);
+    backdrop-filter:blur(14px) saturate(1.7);
+    box-shadow:0 8px 26px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,245,220,.18);
+    transition:transform .24s cubic-bezier(.2,.8,.2,1),background .24s;
+  }
+  .sg-chip:hover{background:linear-gradient(rgba(16,11,4,.32),rgba(16,11,4,.32)),rgba(255,240,205,.11);transform:translateY(-3px)}
+  .sg-chip-icon{font-size:18px;flex-shrink:0;line-height:1}
+  .sg-chip-text{min-width:0}
+  .sg-chip-stat{
+    font-family:var(--font-display);font-size:15px;font-weight:800;line-height:1;margin-bottom:3px;
+    background:linear-gradient(135deg,#f6e7bb,#c9a84c);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .sg-chip-title{font-size:12px;color:#fff8e6;font-weight:600;line-height:1.25}
+  .sg-chip-desc{font-size:10.5px;color:rgba(240,228,200,.5);margin-top:2px;line-height:1.35}
+
+  /* ── every home section becomes a glass sheet over the photo ── */
+  .social-home ~ #homeSections .lens-panel,
+  .lens-panel{
+    --r:30px;
+    position:relative;z-index:1;
+    max-width:1180px;
+    margin:14px auto !important;
+    border-radius:30px;
+    background:linear-gradient(rgba(14,10,4,.5),rgba(14,10,4,.5)),rgba(255,240,205,.05) !important;
+    box-shadow:0 16px 44px rgba(0,0,0,.44),inset 0 1px 0 rgba(255,245,220,.16);
+    border:none !important;
+    overflow:hidden;
+  }
+  /* The services section was deliberately styled as a borderless run of the
+     page by two ID-level rules — `#homeSections #homeServicesSection.home-section`
+     (border/radius/shadow none) and `#homeServicesSection` inside a
+     max-width:999px block (margin:0). Both carry !important and outrank a
+     class selector, so it alone stayed edge-to-edge while every other panel
+     became a glass sheet. Matched here at ID+class so it lines up again. */
+  #homeSections #homeServicesSection.lens-panel{
+    -webkit-backdrop-filter:blur(14px) saturate(1.7) brightness(1.04) !important;
+    backdrop-filter:blur(14px) saturate(1.7) brightness(1.04) !important;
+    border-radius:30px !important;
+    box-shadow:0 16px 44px rgba(0,0,0,.44),inset 0 1px 0 rgba(255,245,220,.16) !important;
+    background:linear-gradient(rgba(14,10,4,.5),rgba(14,10,4,.5)),rgba(255,240,205,.05) !important;
+    border:none !important;
+    margin:14px auto !important;
+  }
+
+  @media(max-width:900px){
+    .lens-panel{margin:12px 12px !important;border-radius:26px}
+    #homeSections #homeServicesSection.lens-panel{margin:12px !important;border-radius:26px !important}
+    .lens-chips{grid-template-columns:1fr 1fr}
+  }
+
+  @media(min-width:900px){
+    .lens-hero{
+      display:grid;grid-template-columns:1.02fr .98fr;gap:44px;
+      align-items:center;text-align:left;
+      padding-top:clamp(104px,13vh,150px);
+    }
+    .lens-hero.no-visual{grid-template-columns:1fr;text-align:center;max-width:900px}
+    .lens-copy{order:1}
+    .lens-stage{order:2;max-width:none}
+    .lens-desc{margin-left:0;margin-right:0}
+    .lens-chips{grid-template-columns:repeat(4,1fr);margin-top:40px}
+  }
+  @media(max-width:520px){
+    .lens-chips{grid-template-columns:1fr}
+  }
+
+  /* Lite mode drops .hero-3d, so the stage would be an empty gap; applySettings
+     also forces .no-visual there. Belt and braces. */
+  html.lite-mode .lens-stage{display:none !important}
+  html.lite-mode .lens-bg i{display:none !important}
+  /* Frosted glass is the single most expensive thing for a weak GPU, and lite
+     mode already strips backdrop-filter globally — keep the sheets legible. */
+  html.lite-mode .lens-panel,
+  html.lite-mode .sg-chip,
+  html.lite-mode .lens-kicker{background:rgba(20,15,7,.92) !important}
   /* ═══════════ LITE MODE ═══════════
      Set by the liteMode() probe in <head> on low-memory / low-core devices.
      Layout, colours and content are untouched — only the GPU-heavy decoration
@@ -7549,16 +7789,19 @@ function renderTrustStrip(){
   ];
   if(!cards.length){ el.style.display='none'; return; }
   el.style.display='';
+  // sg-* class names, not the old trust-strip-* ones: a long tail of legacy
+  // responsive rules still carries `!important` on those, and they fight the
+  // Sacred Glass chip styling at almost every breakpoint.
   el.innerHTML = cards.map(c => `
-    <div class="trust-strip-card" onclick="${c.target?`goPage('${c.target}')`:''}" ${c.target?'':'style="cursor:default"'}>
-      <span class="trust-strip-icon">${c.icon||'✦'}</span>
-      <div class="trust-strip-text">
-        ${c.stat ? `<div class="trust-strip-stat">${escapeHtml(c.stat)}</div>` : ''}
-        <div class="trust-strip-title">${escapeHtml(c.title||'')}</div>
-        <div class="trust-strip-desc">${escapeHtml(c.desc||'')}</div>
+    <div class="sg-chip" onclick="${c.target?`goPage('${c.target}')`:''}" ${c.target?'':'style="cursor:default"'}>
+      <span class="sg-chip-icon">${c.icon||'✦'}</span>
+      <div class="sg-chip-text">
+        ${c.stat ? `<div class="sg-chip-stat">${escapeHtml(c.stat)}</div>` : ''}
+        <div class="sg-chip-title">${escapeHtml(c.title||'')}</div>
+        <div class="sg-chip-desc">${escapeHtml(c.desc||'')}</div>
       </div>
     </div>`).join('');
-  el.querySelectorAll('.trust-strip-card').forEach(card => {
+  el.querySelectorAll('.sg-chip').forEach(card => {
     card.addEventListener('mouseenter', () => card.classList.add('is-hovered'));
     card.addEventListener('mouseleave', () => card.classList.remove('is-hovered'));
     card.addEventListener('focus', () => card.classList.add('is-hovered'));
@@ -7643,8 +7886,24 @@ function applySettings(){
   const heroSection = document.querySelector('.hero');
   const has3D = !!(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG));
   const hasHeroVisual = !!(heroImage || has3D);
+
+  // ─── Sacred Glass hero: pick the layout ───
+  // With a hero visual the card is copy | reliquary. Without one — admin turned
+  // the 3D off and uploaded no still image, or we're in lite mode where the
+  // canvas is display:none — it collapses to a single centred column with the
+  // crest, so the niche is never left as an empty lit box.
+  const sgCard = document.querySelector('.lens-hero');
+  if(sgCard){
+    sgCard.classList.toggle('no-visual', !hasHeroVisual || !!window.__yyyLite);
+  }
+  const sgVisual = document.querySelector('.lens-stage');
+  if(sgVisual){
+    // "Drag to turn" only applies to the 3D modes, not a flat still image.
+    sgVisual.classList.toggle('is-still', !has3D);
+  }
+
   if(hero3dBlock){
-    const isSocial3d = hero3dBlock.classList.contains('social-3d');
+    const isSocial3d = hero3dBlock.classList.contains('lens-model');
     const shouldUseStillImage = !!heroImage && !(isSocial3d && has3D);
     // Clean previous content (image element or canvas leftover)
     const existingImg = hero3dBlock.querySelector('.hero-still-img');
@@ -7890,6 +8149,10 @@ function renderSocialHomeBase(){
   if(kicker) kicker.textContent=s.topbar || 'Certified Genuine · Worldwide Shipping';
   const descEl=document.getElementById('socialDesc');
   if(descEl) descEl.textContent=String(desc || '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+  // No global data-en/data-th applier exists on this site, so the reliquary's
+  // drag hint localises itself here — applySettings() reruns on toggleLang().
+  const dragHint=document.getElementById('sgDragHint');
+  if(dragHint) dragHint.textContent = lang==='th' ? 'ลากเพื่อหมุน' : 'Drag to turn';
 
   const visible=feedVisibleNav(s);
   const tabs=document.getElementById('socialTabs');
@@ -12403,6 +12666,7 @@ window.__yyyAppBooted = true;
   let loadedGlbUrl = '';                         // remember what we loaded so we can detect changes
   let initInFlight = null;
   let phraResizeObserver = null;                 // watches #phra3d for the 0×0 → real-size jump
+  let resizeRenderer = null;                     // buildScene's resize(), for the post-load settle pass
 
   function loadScriptOnce(src, test, integrity){
     if(test && test()) return Promise.resolve();
@@ -12590,6 +12854,7 @@ window.__yyyAppBooted = true;
       }
     }
     resize();
+    resizeRenderer = resize;
     window.addEventListener('resize', resize);
     // Switching pages toggles `display:none/block` via a CSS class — that
     // doesn't fire a window 'resize' event. ResizeObserver does fire when
@@ -12728,7 +12993,12 @@ window.__yyyAppBooted = true;
       const size = new THREE.Vector3(); box.getSize(size);
       const center = new THREE.Vector3(); box.getCenter(center);
       const maxDim = Math.max(size.x, size.y, size.z) || 1;
-      const targetSize = 3.5;
+      // The Lens hero frames the model tighter than the old full-bleed hero
+      // did, and the CSS heroFloat bob moves it ±12px on top of that — at 3.5
+      // the statue's base clipped the bottom edge at the low point of the
+      // float. 3.05 leaves roughly 7% clearance underneath.
+      const inLensStage = !!(canvas && canvas.closest('.lens-stage'));
+      const targetSize = inLensStage ? 3.05 : 3.5;
       const scale = targetSize / maxDim;
       model.scale.setScalar(scale);
       model.position.x = -center.x * scale;
@@ -12816,8 +13086,14 @@ window.__yyyAppBooted = true;
       // The model can render before its textures finish decoding, which
       // briefly shows it as dark/black. We schedule additional renders
       // over the next ~600ms to make sure the first paint is correct.
+      // Also re-measure the canvas on this pass. The reliquary sizes the model
+      // box with `width:100%` off a grid column, so unlike the old hero — whose
+      // box was pure `min(46vw,…)` and final the moment CSS parsed — this one
+      // can still be settling (web fonts, scrollbar) when buildScene ran. A
+      // stale measurement leaves camera.aspect wrong and the statue stretched.
       [50, 150, 350, 600].forEach(delay => {
         setTimeout(() => {
+          if(resizeRenderer) resizeRenderer();
           if(renderer && scene && camera) renderer.render(scene, camera);
         }, delay);
       });
@@ -12988,7 +13264,13 @@ window.__yyyAppBooted = true;
     let startY = 0;
     let startRotX = 0;
     let startRotY = 0;
-    const hitTarget = canvas.closest('.hero-3d') || canvas;
+    // Grab anywhere in the reliquary, not just the canvas box — the niche is
+    // noticeably bigger than the model, and aiming at the canvas felt fiddly.
+    const reliquary = canvas.closest('.lens-stage');
+    const hitTarget = reliquary || canvas.closest('.hero-3d') || canvas;
+    const setDragState = (on) => {
+      if(reliquary) reliquary.classList.toggle('is-dragging', on);
+    };
 
     canvas.style.cursor = 'grab';
     canvas.style.touchAction = isMobile3D() ? 'pan-y' : 'none';
@@ -13009,6 +13291,7 @@ window.__yyyAppBooted = true;
       startY = p.y;
       startRotX = targetRotX;
       startRotY = targetRotY;
+      setDragState(true);
       canvas.style.cursor = 'grabbing';
       hitTarget.style.cursor = 'grabbing';
       if(e.pointerId !== undefined && hitTarget.setPointerCapture){
@@ -13040,6 +13323,7 @@ window.__yyyAppBooted = true;
       dragging = false;
       canvas.style.cursor = 'grab';
       hitTarget.style.cursor = 'grab';
+      setDragState(false);
       targetRotX *= 0.45;
       targetRotY = clamp(targetRotY, isMobile3D() ? -0.48 : -0.62, isMobile3D() ? 0.48 : 0.62);
     }

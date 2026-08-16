@@ -4539,54 +4539,71 @@ function loadNav(){
   // For non-builtin (custom) pages we show a clear "Edit Content" button
   // right in the nav row so admins don't have to hunt for the Custom Pages
   // section further down the panel.
+  // Every row is keyed by its page id, never by its position. Reordering
+  // moves rows around, so an index captured when the row was drawn goes stale
+  // the moment the order changes — and pasting the on-screen values back by
+  // index would then land a label on somebody else's page.
   list.innerHTML=(s.nav||[]).map((n,i)=>`
-    <div class="rep-row" data-idx="${i}">
+    <div class="rep-row" data-idx="${i}" data-nav-id="${n.id}">
       <div class="rep-handle">
-        <button onclick="moveNav(${i},-1)" ${i===0?'disabled':''}>▲</button>
-        <button onclick="moveNav(${i},1)" ${i===(s.nav.length-1)?'disabled':''}>▼</button>
+        <button onclick="moveNav('${n.id}',-1)" ${i===0?'disabled':''}>▲</button>
+        <button onclick="moveNav('${n.id}',1)" ${i===(s.nav.length-1)?'disabled':''}>▼</button>
       </div>
       <div class="rep-fields">
         <div class="fg"><label class="fl">${tr('pageId')} <span class="fl-hint">— ${n.builtin?tr('builtin'):tr('custom')}</span></label><input class="fi" value="${n.id}" disabled style="background:#f0e8d0;color:var(--text-muted)"></div>
-        <div class="fg"><label class="fl">${tr('menuLabel')}</label><input class="fi" data-nav-label="${i}" value="${n.label}"></div>
+        <div class="fg"><label class="fl">${tr('menuLabel')}</label><input class="fi" data-nav-label="${n.id}" value="${n.label}"></div>
         <div class="fg" style="display:flex;flex-direction:row;gap:14px;align-items:end;padding-bottom:8px;flex-wrap:wrap">
-          <label class="switch-label"><label class="switch"><input type="checkbox" data-nav-vis="${i}" ${(n.visible!==false && n.enabled!==false)?'checked':''}><span class="slider"></span></label><span data-en="Show in menu" data-th="แสดงในเมนู">${lang==='th'?'แสดงในเมนู':'Show in menu'}</span></label>
+          <label class="switch-label"><label class="switch"><input type="checkbox" data-nav-vis="${n.id}" ${(n.visible!==false && n.enabled!==false)?'checked':''}><span class="slider"></span></label><span data-en="Show in menu" data-th="แสดงในเมนู">${lang==='th'?'แสดงในเมนู':'Show in menu'}</span></label>
           ${!n.builtin?`<button class="btn-edit" onclick="editCustomPage('${n.id}')" style="padding:7px 13px;font-size:12px" data-en="✏️ Edit Page Content" data-th="✏️ แก้ไขเนื้อหา">✏️ Edit Page Content</button>`:''}
         </div>
       </div>
-      ${!n.builtin?`<button class="rep-rm" onclick="rmNavItem(${i})">✕</button>`:''}
+      ${!n.builtin?`<button class="rep-rm" onclick="rmNavItem('${n.id}')">✕</button>`:''}
     </div>
   `).join('');
   loadCustomPagesList();
 }
 
+// Read the label/visibility fields currently on screen back into the DB.
+// Rows are matched to nav entries by page id, so this stays correct even if
+// the array has been reordered since the row was drawn.
 function captureNavValues(){
-  const db=getDB();const arr=db.settings.nav;
-  arr.forEach((n,i)=>{
-    const lbl=document.querySelector(`[data-nav-label="${i}"]`);
-    const vis=document.querySelector(`[data-nav-vis="${i}"]`);
-    if(lbl)n.label=lbl.value;
-    if(vis){
-      n.visible=vis.checked;
-      n.enabled=vis.checked;
-    }
+  const db=getDB();
+  const byId={};
+  (db.settings.nav||[]).forEach(n=>{ byId[n.id]=n; });
+  document.querySelectorAll('#navList [data-nav-label]').forEach(lbl=>{
+    const n=byId[lbl.dataset.navLabel];
+    if(n) n.label=lbl.value;
+  });
+  document.querySelectorAll('#navList [data-nav-vis]').forEach(vis=>{
+    const n=byId[vis.dataset.navVis];
+    if(!n) return;
+    n.visible=vis.checked;
+    n.enabled=vis.checked;
   });
   return db;
 }
 
-async function moveNav(idx,dir){
+async function moveNav(id,dir){
   const db=captureNavValues();const arr=db.settings.nav;
+  const idx=arr.findIndex(n=>n.id===id);if(idx<0)return;
   const ni=idx+dir;if(ni<0||ni>=arr.length)return;
   [arr[idx],arr[ni]]=[arr[ni],arr[idx]];
-  try { await saveDB(db); loadNav(); } catch(err) {}
+  // Redraw before the save, not after: saving takes a moment, and until the
+  // list is redrawn the screen still shows the old order. A second click in
+  // that window would move the wrong row.
+  loadNav();
+  try { await saveDB(db); } catch(err) {}
+  loadNav();
 }
 
-async function rmNavItem(idx){
+async function rmNavItem(id){
   if(!tConfirm('confirmDeleteNav'))return;
   const db=captureNavValues();
-  const item=db.settings.nav[idx];
+  const item=db.settings.nav.find(n=>n.id===id);
+  if(!item)return;
   if(item.builtin){showToast(tr('builtinNoDelete'));return;}
   db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==item.id);
-  db.settings.nav.splice(idx,1);
+  db.settings.nav=db.settings.nav.filter(n=>n.id!==item.id);
   if(!(await persistDB(db,tr('deleted')))) return;
   loadNav();
   if(typeof loadSections === 'function') loadSections();
