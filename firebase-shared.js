@@ -1352,12 +1352,23 @@ async function uploadBlob(blob, pathHint){
   const fname = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeHint}.${ext}`;
   const folder = isPublicUploadHint(pathHint) ? 'uploads/public' : 'uploads';
   const ref = storageRef(stg, `${folder}/${fname}`);
-  await uploadBytes(ref, blob, blob.type ? {
-    contentType: blob.type,
-    // Long browser cache (1 year) — files are content-addressed via the
-    // random filename, so they never change after upload.
-    cacheControl: 'public,max-age=31536000,immutable',
-  } : undefined);
+  // Long browser cache (1 year) — files are content-addressed via the random
+  // filename, so they never change after upload.
+  //
+  // The cacheControl used to be attached only `if (blob.type)`. Browsers hand
+  // back an empty `type` for extensions they don't recognise — .glb among them
+  // — so the whole metadata object went undefined for exactly those files and
+  // they were stored with Firebase's default `private, max-age=0`. The hero's
+  // 3D model was being re-downloaded in full on every single page view. Always
+  // send the metadata; only contentType is conditional.
+  const metadata = { cacheControl: 'public,max-age=31536000,immutable' };
+  if(blob.type) metadata.contentType = blob.type;
+  else {
+    // Give Storage a usable type rather than letting it guess from bytes.
+    const byExt = { glb:'model/gltf-binary', gltf:'model/gltf+json' };
+    if(byExt[ext]) metadata.contentType = byExt[ext];
+  }
+  await uploadBytes(ref, blob, metadata);
   const fbUrl = await getDownloadURL(ref);
   // Direct Firebase Storage URL — bucket is in Singapore, so Asian
   // visitors get sub-100ms delivery without any CDN proxy.
