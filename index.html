@@ -6708,7 +6708,19 @@
 
   /* ── fixed backdrop ── */
   /* Lives inside #page-home, so it stops rendering on its own when the page
-     is display:none — no JS needed to hide it on other pages. */
+     is display:none — no JS needed to hide it on other pages.
+
+     But a descendant can only anchor to the viewport if no ancestor is a
+     containing block, and #page-home was two of them at once: `.page` carries
+     will-change:opacity,transform, and pgIn's `both` fill-mode leaves an
+     identity transform on the element forever after the entry animation ends.
+     So the "fixed" photo was really absolute inside a 2950px-tall page — it
+     scrolled away and left the bottom of the page black. Undo both, scoped to
+     home so the other pages keep the transition hint. `backwards` still plays
+     pgIn from its start frame; it just stops persisting the end frame, which
+     is the no-op transform anyway. */
+  #page-home.page{will-change:auto}
+  #page-home.page.active{animation-fill-mode:backwards}
   .lens-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
   .lens-photo{
     position:absolute;inset:0;
