@@ -6874,16 +6874,33 @@
   }
 
   @media(min-width:900px){
+    /* .social-home is 100svh, but hero + chips only add up to their own
+       content height — on a tall monitor that left a few hundred pixels of
+       bare cover photo under the chips before the first glass panel. Make the
+       column fill the screen instead: the hero takes whatever is left over and
+       centres its two tracks inside it, so the chips ride the bottom edge and
+       the model grows with the room it is given. */
+    .social-home{
+      display:flex;flex-direction:column;
+      padding-bottom:clamp(28px,5vh,64px) !important;
+    }
     .lens-hero{
       display:grid;grid-template-columns:1.02fr .98fr;gap:44px;
-      align-items:center;text-align:left;
+      align-items:center;align-content:center;text-align:left;
+      flex:1 0 auto;
       padding-top:clamp(104px,13vh,150px);
+      padding-bottom:clamp(16px,3vh,40px);
     }
     .lens-hero.no-visual{grid-template-columns:1fr;text-align:center;max-width:900px}
     .lens-copy{order:1}
     .lens-stage{order:2;max-width:none}
+    /* Scale the statue with the room the screen actually has: tall monitors
+       used to keep it at its 520px cap and pad the difference with empty
+       photo. Capped against 46vw too, so a short-and-wide window doesn't hand
+       it a height the column can't fit. */
+    .lens-model{height:clamp(320px,min(52vh,46vw),640px)}
     .lens-desc{margin-left:0;margin-right:0}
-    .lens-chips{grid-template-columns:repeat(4,1fr);margin-top:40px}
+    .lens-chips{grid-template-columns:repeat(4,1fr);margin-top:0}
   }
   @media(max-width:520px){
     .lens-chips{grid-template-columns:1fr}
