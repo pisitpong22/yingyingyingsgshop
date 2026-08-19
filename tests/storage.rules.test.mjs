@@ -34,6 +34,8 @@ await env.withSecurityRulesDisabled(async ctx => {
 const anon  = env.unauthenticatedContext().storage();
 const rando = env.authenticatedContext('stranger', { email: 'stranger@gmail.com', email_verified: true }).storage();
 const staff = env.authenticatedContext('staff',    { email: 'staff@shop.com',     email_verified: true }).storage();
+// Registered a seeded admin email via open sign-up, but never verified it.
+const unverifiedStaff = env.authenticatedContext('imposter', { email: 'staff@shop.com', email_verified: false }).storage();
 
 // Seed existing objects the way a real upload would have created them.
 await env.withSecurityRulesDisabled(async ctx => {
@@ -73,6 +75,8 @@ await check('STAFF replaces a review photo',             'allow', up(staff, 'upl
 await check('STAFF uploads a non-image (3D model etc.)', 'allow', up(staff, 'uploads/model.glb', { type: 'model/gltf-binary' }));
 await check('STAFF replaces an existing photo',          'allow', up(staff, 'uploads/existing-product-photo.png'));
 await check('STAFF deletes a photo',                     'allow', () => deleteObject(ref(staff, 'uploads/existing-product-photo.png')));
+await check('UNVERIFIED-email staff writes a photo',     'deny',  up(unverifiedStaff, 'uploads/imposter.png'));
+await check('UNVERIFIED-email staff replaces a photo',   'deny',  up(unverifiedStaff, 'uploads/existing-product-photo.png'));
 await env.withSecurityRulesDisabled(async ctx => {   // STAFF delete above removed it
   await uploadBytes(ref(ctx.storage(), 'uploads/existing-product-photo.png'), png, { contentType: 'image/png' });
 });

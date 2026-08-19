@@ -1,13 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // The `admins` docs ARE the permission system, and they are keyed on the
+    // caller's email claim — so that claim must be one the caller has PROVEN
+    // they own. Sign-up is open and includes email/password, whose tokens
+    // carry email_verified:false: a stranger can register any address they do
+    // not own and get a token bearing it. Requiring email_verified here is
+    // what stops that token from matching a seeded admin doc. Google/Facebook
+    // logins already arrive verified, so this only ever rejects an unproven
+    // email. Keep this check on EVERY path that reads an admin doc.
+    function hasVerifiedEmail() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
     function isSuperAdmin() {
-      return request.auth != null &&
+      return hasVerifiedEmail() &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())) &&
         get(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())).data.role == 'super_admin';
     }
     function isTeamMember() {
-      return request.auth != null &&
+      return hasVerifiedEmail() &&
         exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
     }
 

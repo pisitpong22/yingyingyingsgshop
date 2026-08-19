@@ -49,6 +49,10 @@ const anon     = env.unauthenticatedContext().firestore();
 const customer = env.authenticatedContext(CUSTOMER_UID, { email: 'buyer@gmail.com', email_verified: true }).firestore();
 const stranger = env.authenticatedContext(OTHER_UID,    { email: 'stranger@gmail.com', email_verified: true }).firestore();
 const staff    = env.authenticatedContext('staff',      { email: 'staff@shop.com', email_verified: true }).firestore();
+// Same email as a real admin doc, but the email was never verified — the
+// shape of an attacker who registered a seeded admin address via open
+// email/password sign-up. Admin power must NOT follow an unproven email.
+const unverifiedStaff = env.authenticatedContext('imposter', { email: 'staff@shop.com', email_verified: false }).firestore();
 
 const results = [];
 const check = async (label, want, fn) => {
@@ -97,11 +101,13 @@ await check('stranger makes themselves an admin',       'deny',  () => setDoc(do
 await check('stranger reads the admin roster',          'deny',  () => getDocs(collection(stranger, 'admins')));
 await check('staff reads the admin roster',             'allow', () => getDocs(collection(staff, 'admins')));
 await check('staff (not super) adds an admin',          'deny',  () => setDoc(doc(staff, 'admins/new@shop.com'), { role: 'admin' }));
+await check('UNVERIFIED-email admin reads roster',      'deny',  () => getDocs(collection(unverifiedStaff, 'admins')));
 
 // ── /app — public catalogue, staff-only writes ──────────────────────────────
 await check('anyone reads the site database',           'allow', () => getDoc(doc(anon, 'app/db')));
 await check('stranger writes the site database',        'deny',  () => setDoc(doc(stranger, 'app/db'), { json: 'pwned' }));
 await check('staff writes the site database',           'allow', () => setDoc(doc(staff, 'app/db'), { json: '{}' }));
+await check('UNVERIFIED-email admin writes site DB',    'deny',  () => setDoc(doc(unverifiedStaff, 'app/db'), { json: 'pwned' }));
 
 // ── /reviewSubmissions — public input ───────────────────────────────────────
 const goodReview = { name: 'Somchai', anonymous: false, rating: 5, text: 'great', imgs: [], createdAt: serverTimestamp() };

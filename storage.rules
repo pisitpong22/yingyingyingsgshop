@@ -5,8 +5,14 @@ service firebase.storage {
     // (email/password + Google + Facebook), so `request.auth != null` is just
     // a stranger with an account. Team membership lives in Firestore, same
     // check as firestore.rules.
+    // Mirror firestore.rules: admin identity is an email claim, so it must be
+    // a verified one. Open email/password sign-up hands out tokens with
+    // email_verified:false bearing any address the registrant typed; without
+    // this check such a token could match a seeded admin doc and unlock the
+    // staff-only writes below.
     function isTeamMember() {
       return request.auth != null &&
+        request.auth.token.email_verified == true &&
         firestore.exists(/databases/(default)/documents/admins/$(request.auth.token.email.lower()));
     }
 
