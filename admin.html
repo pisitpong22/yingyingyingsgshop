@@ -8906,6 +8906,21 @@ async function bootAdmin(){
 
   FB.onAuthChange(async (user) => {
     if(user){
+      // Admin access requires a verified email (firestore.rules now checks
+      // email_verified, so an unverified email/password token can't read the
+      // admins collection at all). New/never-verified admins land here: mail
+      // them a verification link and stop, rather than the misleading
+      // "not authorized". Google/Facebook logins arrive verified and skip this.
+      if(!user.emailVerified){
+        let sent = false;
+        try { await FB.sendAdminEmailVerification(); sent = true; }
+        catch(e){ console.warn('[admin] verification email failed:', e); }
+        await FB.signOut();
+        alert(sent
+          ? 'Your email (' + user.email + ') needs to be verified before you can open the admin panel.\n\nWe just sent a verification link to your inbox — open it, then sign in again.'
+          : 'Your email (' + user.email + ') is not verified yet, and we could not send the link automatically.\n\nPlease verify this address, then sign in again.');
+        return;
+      }
       // Determine the user's role. Bootstrap the very first signer to
       // super_admin if no admins exist yet (avoids needing manual setup).
       let record = await FB.getAdminRecord(user.email);
