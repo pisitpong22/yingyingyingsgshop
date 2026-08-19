@@ -28,7 +28,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/fireba
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
   GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, createUserWithEmailAndPassword,
-  fetchSignInMethodsForEmail, linkWithCredential
+  fetchSignInMethodsForEmail, linkWithCredential, sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
@@ -1695,6 +1695,17 @@ async function signOutUser(){
   await signOut(auth);
 }
 
+// Admin access requires a verified email (firestore.rules: hasVerifiedEmail).
+// Admin login is email/password, and those accounts start unverified, so a
+// brand-new or never-verified admin would be locked out. Call this while the
+// user is still signed in to mail them a verification link; they click it,
+// sign in again, and the rules let them through. Google/Facebook admins are
+// already verified and never reach this path.
+async function sendAdminEmailVerification(){
+  if(!auth.currentUser) throw new Error('not signed in');
+  await sendEmailVerification(auth.currentUser);
+}
+
 function onAuthChange(cb){
   _authListeners.push(cb);
   return onAuthStateChanged(auth, cb);
@@ -2397,6 +2408,7 @@ window.FB = {
   uploadFile, uploadImageSet, deleteFile, applyWatermark,
   signIn: signInUser,
   signOut: signOutUser,
+  sendAdminEmailVerification,
   // Customer login (Google / Facebook / Email+Password) — separate from admin signIn/signOut above
   signInWithGoogle, signInWithFacebook,
   linkPendingCredentialWithPassword,
