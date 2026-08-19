@@ -272,86 +272,125 @@ exports.createPaymentIntent = onCall(
       itemKeys.push(key);
     }
 
-    // Double-sale guard: block checkout if any of these items already has a
-    // pending or paid order in flight (see the scope note at the top of this
-    // file for why we don't auto-flip catalog status to "sold").
-    //
-    // `paid` blocks forever — the piece is gone. `pending_payment` blocks only
-    // until PENDING_TTL_MS, and lapsed ones are marked `expired` on the way
-    // past so the reservation is actually released rather than re-checked on
-    // every future checkout. Doing the expiry here means no scheduler and no
-    // Cloud Scheduler bill; the trade is that a lapsed order is only cleaned
-    // up once someone tries to buy that item again, which is exactly when it
-    // matters.
-    const stale = [];
-    let conflict = null;
-    for (let i = 0; i < itemKeys.length && !conflict; i += ITEM_KEY_BATCH) {
-      const batch = itemKeys.slice(i, i + ITEM_KEY_BATCH);
-      const snap = await db
-        .collection("orders")
-        .where("status", "in", ["pending_payment", "paid"])
-        .where("itemKeys", "array-contains-any", batch)
-        .limit(30)
-        .get();
-      for (const d of snap.docs) {
-        const o = d.data();
-        if (o.status === "paid") { conflict = d; break; }
-        const created = o.createdAt && o.createdAt.toMillis ? o.createdAt.toMillis() : 0;
-        // No createdAt at all: treat as live rather than release the item on
-        // the strength of a missing field.
-        if (!created || now - created < PENDING_TTL_MS) { conflict = d; break; }
-        stale.push(d.ref);
-      }
-    }
-
-    if (stale.length) {
-      const batch = db.batch();
-      stale.forEach((ref) => batch.update(ref, { status: "expired", expiredAt: admin.firestore.FieldValue.serverTimestamp() }));
-      await batch.commit().catch((err) => console.warn("[checkout] expiring stale orders failed:", err.message));
-    }
-
-    if (conflict) {
-      throw new HttpsError(
-        "failed-precondition",
-        "One or more items in your cart were just purchased by someone else. Please refresh your cart."
-      );
-    }
-
     const amountCents = Math.round(total * 100); // SGD — Stripe wants smallest unit (cents)
     if (amountCents < 50) {
       // Stripe's practical minimum charge is roughly S$0.50 equivalent.
       throw new HttpsError("failed-precondition", "Order total is too low to charge");
     }
 
+    // Double-sale guard: block checkout if any of these items already has a
+    // pending or paid order in flight (see the scope note at the top of this
+    // file for why we don't auto-flip catalog status to "sold").
+    //
+    // This runs in a TRANSACTION on purpose. The previous version read the
+    // conflicting orders and wrote the new reservation in two separate steps,
+    // so two checkouts for the same one-of-a-kind piece could BOTH pass the
+    // check and BOTH reserve it — a genuine double-charge on unique stock. A
+    // Firestore transaction re-runs its reads when a concurrent write touches
+    // the same query, so the second writer is forced to retry and then sees
+    // the first reservation. The Stripe PaymentIntent cannot live inside a
+    // Firestore transaction (it is an external call), so we reserve here first
+    // and create/attach the PaymentIntent only once the reservation is held.
+    //
+    // `paid` blocks forever — the piece is gone. `pending_payment` blocks only
+    // until PENDING_TTL_MS, and lapsed ones are marked `expired` inside the
+    // same transaction so the reservation is actually released rather than
+    // re-checked on every future checkout — no scheduler, no Cloud Scheduler
+    // bill; a lapsed order is cleaned up the next time someone buys that item.
     const orderRef = db.collection("orders").doc();
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: "sgd",
-      metadata: { orderId: orderRef.id, cartKey },
-      shipping: {
-        name: shipName,
-        phone: shipPhone,
-        address: { line1: shipAddress },
-      },
-    });
+    try {
+      await db.runTransaction(async (tx) => {
+        // All reads first — Firestore transactions forbid a read after a write.
+        const conflictDocs = [];
+        for (let i = 0; i < itemKeys.length; i += ITEM_KEY_BATCH) {
+          const batch = itemKeys.slice(i, i + ITEM_KEY_BATCH);
+          const snap = await tx.get(
+            db.collection("orders")
+              .where("status", "in", ["pending_payment", "paid"])
+              .where("itemKeys", "array-contains-any", batch)
+              .limit(30)
+          );
+          snap.docs.forEach((d) => conflictDocs.push(d));
+        }
 
-    await orderRef.set({
-      cartKey,
-      uid: request.auth ? request.auth.uid : null,
-      items: verifiedItems,
-      itemKeys,
-      total,
-      currency: "sgd",
-      shipping: {
-        name: shipName,
-        phone: shipPhone,
-        address: shipAddress,
-        notes: shipNotes,
-      },
-      status: "pending_payment",
-      paymentIntentId: paymentIntent.id,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+        const staleRefs = [];
+        for (const d of conflictDocs) {
+          const o = d.data();
+          if (o.status === "paid") {
+            throw new HttpsError(
+              "failed-precondition",
+              "One or more items in your cart were just purchased by someone else. Please refresh your cart."
+            );
+          }
+          const created = o.createdAt && o.createdAt.toMillis ? o.createdAt.toMillis() : 0;
+          // No createdAt at all: treat as live rather than release the item on
+          // the strength of a missing field.
+          if (!created || Date.now() - created < PENDING_TTL_MS) {
+            throw new HttpsError(
+              "failed-precondition",
+              "One or more items in your cart were just purchased by someone else. Please refresh your cart."
+            );
+          }
+          staleRefs.push(d.ref);
+        }
+
+        // Reads done — now the writes.
+        staleRefs.forEach((ref) =>
+          tx.update(ref, { status: "expired", expiredAt: admin.firestore.FieldValue.serverTimestamp() })
+        );
+        tx.set(orderRef, {
+          cartKey,
+          uid: request.auth ? request.auth.uid : null,
+          items: verifiedItems,
+          itemKeys,
+          total,
+          currency: "sgd",
+          shipping: {
+            name: shipName,
+            phone: shipPhone,
+            address: shipAddress,
+            notes: shipNotes,
+          },
+          status: "pending_payment",
+          // Filled in right after Stripe returns; the webhook keys off the
+          // PaymentIntent's metadata.orderId, not this field, so a brief null
+          // window is safe.
+          paymentIntentId: null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (err) {
+      // A conflict is an intentional HttpsError — surface it as-is. Anything
+      // else is contention/backend trouble: fail rather than reserve blindly.
+      if (err instanceof HttpsError) throw err;
+      console.error("[checkout] reservation transaction failed:", err.message);
+      throw new HttpsError("aborted", "Could not reserve your items. Please try again.");
+    }
+
+    // The items are reserved. Create the PaymentIntent and attach it; if Stripe
+    // fails, release the reservation we just took so the piece is not stranded
+    // (payment_failed is not a conflicting status, so the item frees up).
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.create({
+        amount: amountCents,
+        currency: "sgd",
+        metadata: { orderId: orderRef.id, cartKey },
+        shipping: {
+          name: shipName,
+          phone: shipPhone,
+          address: { line1: shipAddress },
+        },
+      });
+    } catch (err) {
+      console.error("[checkout] Stripe PaymentIntent creation failed:", err.message);
+      await orderRef
+        .update({ status: "payment_failed" })
+        .catch((e) => console.warn("[checkout] releasing reservation after Stripe failure failed:", e.message));
+      throw new HttpsError("internal", "Could not start payment. Please try again.");
+    }
+
+    await orderRef.update({ paymentIntentId: paymentIntent.id });
 
     return { clientSecret: paymentIntent.client_secret, orderId: orderRef.id, amount: total };
   }
