@@ -2412,7 +2412,7 @@
                   <option value="active" data-en="In Progress" data-th="กำลังดำเนินการ">In Progress</option>
                   <option value="done" data-en="Completed" data-th="เสร็จสิ้น">Completed</option>
                   <option value="soon" data-en="Coming Soon" data-th="เร็วๆ นี้">Coming Soon</option>
-                  <option value="openNow" data-en="🟡 Open Now (limited period)" data-th="🟡 เปิดรับอยู่ (ช่วงเวลาจำกัด)">🟡 Open Now (limited period)</option>
+                  <option value="openNow" data-en="🔓 Open Now (limited period)" data-th="🔓 เปิดรับอยู่ (ช่วงเวลาจำกัด)">🔓 Open Now (limited period)</option>
                   <option value="open" data-en="Open All Year" data-th="เปิดรับตลอด">Open All Year</option>
                   <option value="closed" data-en="⛔ Closed" data-th="⛔ ปิดรับแล้ว">⛔ Closed</option>
                 </select>
@@ -2432,7 +2432,7 @@
                 <label class="fl" data-en="Status" data-th="สถานะ">Status</label>
                 <select class="fsel" id="p_offer_status">
                   <option value="open" data-en="🔁 Open All Year" data-th="🔁 เปิดรับตลอด">🔁 Open All Year</option>
-                  <option value="openNow" data-en="🟡 Open Now (limited period)" data-th="🟡 เปิดรับอยู่ (ช่วงเวลาจำกัด)">🟡 Open Now (limited period)</option>
+                  <option value="openNow" data-en="🔓 Open Now (limited period)" data-th="🔓 เปิดรับอยู่ (ช่วงเวลาจำกัด)">🔓 Open Now (limited period)</option>
                   <option value="soon" data-en="🔵 Coming Soon" data-th="🔵 เร็วๆ นี้">🔵 Coming Soon</option>
                   <option value="closed" data-en="⛔ Closed" data-th="⛔ ปิดรับแล้ว">⛔ Closed</option>
                 </select>
@@ -6118,8 +6118,8 @@ function loadList(type){
   const c=document.getElementById(cid);
   if(!items.length){c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:12px">${tr('noItems')}</div>`;return;}
   // status pretty name
-  const statusLabels={urgent:'🔥 Urgent',active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',openNow:'🟡 Open Now',open:'🔁 Open All Year',closed:'⛔ Closed'};
-  const statusLabelsTh={urgent:'🔥 เร่งด่วน',active:'🟢 กำลังดำเนินการ',done:'✅ เสร็จสิ้น',soon:'🔵 เร็วๆ นี้',openNow:'🟡 เปิดรับอยู่',open:'🔁 เปิดรับตลอด',closed:'⛔ ปิดรับแล้ว'};
+  const statusLabels={urgent:'🔥 Urgent',active:'🟢 In Progress',done:'✅ Completed',soon:'🔵 Coming Soon',openNow:'🔓 Open Now',open:'🔁 Open All Year',closed:'⛔ Closed'};
+  const statusLabelsTh={urgent:'🔥 เร่งด่วน',active:'🟢 กำลังดำเนินการ',done:'✅ เสร็จสิ้น',soon:'🔵 เร็วๆ นี้',openNow:'🔓 เปิดรับอยู่',open:'🔁 เปิดรับตลอด',closed:'⛔ ปิดรับแล้ว'};
   const prjCatLabels={wat:{en:'Temple',th:'วัด'},education:{en:'Education',th:'การศึกษา'},elderly:{en:'Elderly',th:'ผู้สูงอายุ'},health:{en:'Health',th:'สุขภาพ'},animal:{en:'Animals',th:'สัตว์'},poor:{en:'Underprivileged',th:'ผู้ยากไร้'}};
   if(type==='projects'){
     c.innerHTML=`<table class="dtable">
