@@ -11793,7 +11793,7 @@ function renderP(){
     return;
   }
   renderPrjChips(db.projects);
-  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',openNow:lang==='th'?'🔓 เปิดรับอยู่':'🔓 Open Now',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year',closed:lang==='th'?'⛔ ปิดรับแล้ว':'⛔ Closed'};
+  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',openNow:lang==='th'?'🟢 เปิดรับอยู่':'🟢 Open Now',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year',closed:lang==='th'?'⛔ ปิดรับแล้ว':'⛔ Closed'};
   const sc={urgent:'s-urgent',active:'s-active',done:'s-done',soon:'s-soon',openNow:'s-opennow',open:'s-open',closed:'s-closed'};
   const filtered=db.projects.filter(p=>{
     if(_prjFilter==='all')return true;
@@ -11884,7 +11884,7 @@ async function openProject(id){
   if(!p) p=db.projects.find(x=>String(x.id)===String(id));
   if(!p)return;
   const type=p.type||'campaign';
-  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',openNow:lang==='th'?'🔓 เปิดรับอยู่':'🔓 Open Now',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year',closed:lang==='th'?'⛔ ปิดรับแล้ว':'⛔ Closed'};
+  const sm={urgent:lang==='th'?'🔥 เร่งด่วน':'🔥 Urgent',active:lang==='th'?'🟢 กำลังดำเนินการ':'🟢 In Progress',done:lang==='th'?'✅ สำเร็จแล้ว':'✅ Completed',soon:lang==='th'?'🔵 เร็วๆ นี้':'🔵 Coming Soon',openNow:lang==='th'?'🟢 เปิดรับอยู่':'🟢 Open Now',open:lang==='th'?'🔁 เปิดรับตลอด':'🔁 Open All Year',closed:lang==='th'?'⛔ ปิดรับแล้ว':'⛔ Closed'};
   const sc={urgent:'s-urgent',active:'s-active',done:'s-done',soon:'s-soon',openNow:'s-opennow',open:'s-open',closed:'s-closed'};
   const imgs=p.imgs||[];
   window._lbImages=imgs;
