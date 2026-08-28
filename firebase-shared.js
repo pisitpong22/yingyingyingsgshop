@@ -283,6 +283,25 @@ async function saveDB(newDb){
 
     DB_SPLIT_KEYS.forEach(key => {
       if(key === 'casingTypes'){
+        // Casing types went without this guard until a flaky load wiped the
+        // whole index on 2026-08-27: every type doc survived in Firestore,
+        // but the manifest that names them was rewritten empty, so the site
+        // rendered "No casing types available yet." Never rewrite the index
+        // from a list this page did not load cleanly.
+        if(!keyWasLoaded(key) && _casingTypeIds && _casingTypeIds.length){
+          console.warn('[FB] casingTypes not fully loaded — preserving existing manifest');
+          nextCounts[key] = 0;
+          nextHashes[key] = [];
+          nextItemIds[key] = [];
+          nextItemHashes[key] = {};
+          nextCasingMeta = {
+            typeIds: [..._casingTypeIds],
+            typeHashes: {...(_casingTypeHashes || {})},
+            variantIds: {...(_casingVariantIds || {})},
+            variantHashes: {...(_casingVariantHashes || {})},
+          };
+          return;
+        }
         const casingMeta = queueCasingTypeWrites(newDb && newDb[key], writes);
         nextCounts[key] = 0;
         nextHashes[key] = [];
@@ -294,7 +313,9 @@ async function saveDB(newDb){
 
       if(key === 'historyStories'){
         const incomingStories = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
-        if(!incomingStories.length && !keyWasLoaded(key) && ((_historyStoryIds && _historyStoryIds.length) || (_dbPartCounts.historyStories > 0))){
+        // Not just the empty case: a partial load (some stories read, some
+        // failed) would otherwise drop the missing ones from the index.
+        if(!keyWasLoaded(key) && ((_historyStoryIds && _historyStoryIds.length) || (_dbPartCounts.historyStories > 0))){
           nextCounts[key] = _dbPartCounts.historyStories || 0;
           nextHashes[key] = _dbPartHashes.historyStories || [];
           nextItemIds[key] = [];
@@ -313,7 +334,7 @@ async function saveDB(newDb){
 
       if(DB_LAZY_ITEM_KEYS.has(key)){
         const incomingItems = Array.isArray(newDb && newDb[key]) ? newDb[key] : [];
-        if(!incomingItems.length && !keyWasLoaded(key) && ((_lazyItemIds[key] && _lazyItemIds[key].length) || (_dbPartCounts[key] > 0))){
+        if(!keyWasLoaded(key) && ((_lazyItemIds[key] && _lazyItemIds[key].length) || (_dbPartCounts[key] > 0))){
           nextCounts[key] = _dbPartCounts[key] || 0;
           nextHashes[key] = _dbPartHashes[key] || [];
           nextItemIds[key] = [];
@@ -906,6 +927,12 @@ async function loadSplitDB(meta, wantedKeys){
       }).join('');
       out[key] = JSON.parse(json || 'null') ?? defaultDbValueForKey(key);
     } catch(err) {
+      // A failed read leaves this key sitting in memory as its empty default,
+      // which is indistinguishable from "the admin deleted everything" — and
+      // the next save would then write that emptiness into the manifest and
+      // orphan every document. Mark the key partial so keyWasLoaded() says no
+      // and saveDB preserves whatever the manifest already points at.
+      _partialLoadKeys.add(key);
       console.warn(`[FB] load ${key} failed; using fallback value:`, err);
       if(key === 'historyStories' && !IS_ADMIN_PAGE){
         try {
@@ -962,7 +989,11 @@ async function loadCasingTypesV2(meta){
     }
   });
 
-  return types.filter(Boolean);
+  const loaded = types.filter(Boolean);
+  // Same reasoning as the per-key catch in loadSplitDB: a type that failed to
+  // read must never look like a type the admin deleted.
+  if(loaded.length < typeIds.length) _partialLoadKeys.add('casingTypes');
+  return loaded;
 }
 
 // Phase 2: load variants for a specific casing type on-demand
