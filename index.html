@@ -7166,15 +7166,22 @@ function defaultSettings(){
     logoText:'YingyingyingSG',
     logoSub:'AUTHENTIC THAI AMULETS',
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
+    // `visible:false` here is the shop's own menu, not a placeholder: Shop,
+    // About Us and Reviews are pages the owner keeps closed. Defaults matter
+    // more than they look — settings fall back to this whole object whenever
+    // the stored copy cannot be read, so a default of "show everything" turns
+    // any hiccup into pages going live that the owner had deliberately shut.
+    // The admin panel still toggles all of these freely; this only decides
+    // where an install that has never been configured starts.
     nav:[
       {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
       {id:'feed',label:'Feed',visible:true,enabled:true,builtin:true},
-      {id:'shop',label:'Shop',visible:true,enabled:true,builtin:true},
+      {id:'shop',label:'Shop',visible:false,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
       {id:'contact',label:'Contact',visible:true,enabled:true,builtin:true},
       {id:'projects',label:'Projects',visible:true,enabled:true,builtin:true},
-      {id:'about',label:'About Us',visible:true,enabled:true,builtin:true},
-      {id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true},
+      {id:'about',label:'About Us',visible:false,enabled:true,builtin:true},
+      {id:'reviews',label:'Reviews',visible:false,enabled:true,builtin:true},
       {id:'payment',label:'Payment',visible:true,enabled:true,builtin:true},
     ],
     customPages:[], // [{id,label,title,desc,content}]
@@ -7403,7 +7410,7 @@ function applyDbMigrations(d){
     if(!d.settings.nav.find(n=>n.id==='reviews')){
       const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
       const insertAt=aboutIdx>=0?aboutIdx+1:d.settings.nav.length;
-      d.settings.nav.splice(insertAt,0,{id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true});
+      d.settings.nav.splice(insertAt,0,{id:'reviews',label:'Reviews',visible:false,enabled:true,builtin:true});
     }
     // Merge legacy separate "Amulets" + "Accessories" nav entries into one
     // combined "Shop" entry (single browsing page now covers both).
@@ -7412,7 +7419,7 @@ function applyDbMigrations(d){
       const old = d.settings.nav[amuletsNavIdx];
       d.settings.nav[amuletsNavIdx] = { ...old, id:'shop', label: old.label==='Amulets' ? 'Shop' : old.label };
     } else if(!d.settings.nav.find(n=>n.id==='shop')){
-      d.settings.nav.unshift({id:'shop',label:'Shop',visible:true,enabled:true,builtin:true});
+      d.settings.nav.unshift({id:'shop',label:'Shop',visible:false,enabled:true,builtin:true});
     }
     d.settings.nav = d.settings.nav.filter(n=>n.id!=='accessories');
   }
