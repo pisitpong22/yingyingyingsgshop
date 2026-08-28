@@ -3476,16 +3476,22 @@ function defaultSettings(){
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
     logoIcon:'/favicon/apple-touch-icon.png',logoText:'Yingyingying Amulet',logoSub:'AUTHENTIC THAI AMULETS',
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
+    // Keep these `visible` flags in step with index.html's copy of the same
+    // defaults — Shop, About Us and Reviews are pages the owner keeps closed,
+    // and a default of "show everything" would quietly reopen them whenever
+    // settings fall back to this object. 'amulets' is the entry the migration
+    // below renames to 'shop', so its flag is the one Shop inherits. The admin
+    // panel still toggles all of these freely.
     nav:[
       {id:'home',label:'Home',visible:true,enabled:true,builtin:true},
       {id:'feed',label:'Latest Updates',visible:true,enabled:true,builtin:true},
-      {id:'amulets',label:'Amulets',visible:true,enabled:true,builtin:true},
-      {id:'accessories',label:'Accessories',visible:true,enabled:true,builtin:true},
+      {id:'amulets',label:'Amulets',visible:false,enabled:true,builtin:true},
+      {id:'accessories',label:'Accessories',visible:false,enabled:true,builtin:true},
       {id:'casing',label:'Casing Service',visible:true,enabled:true,builtin:true},
       {id:'contact',label:'Contact',visible:true,enabled:true,builtin:true},
       {id:'projects',label:'Projects',visible:true,enabled:true,builtin:true},
-      {id:'about',label:'About Us',visible:true,enabled:true,builtin:true},
-      {id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true},
+      {id:'about',label:'About Us',visible:false,enabled:true,builtin:true},
+      {id:'reviews',label:'Reviews',visible:false,enabled:true,builtin:true},
       {id:'payment',label:'Payment',visible:true,enabled:true,builtin:true},
     ],
     customPages:[],
@@ -3679,7 +3685,7 @@ function applyDbMigrations(d){
     if(!d.settings.nav.find(n=>n.id==='reviews')){
       const aboutIdx=d.settings.nav.findIndex(n=>n.id==='about');
       const insertAt=aboutIdx>=0?aboutIdx+1:d.settings.nav.length;
-      d.settings.nav.splice(insertAt,0,{id:'reviews',label:'Reviews',visible:true,enabled:true,builtin:true});
+      d.settings.nav.splice(insertAt,0,{id:'reviews',label:'Reviews',visible:false,enabled:true,builtin:true});
     }
     // Merge legacy separate "Amulets" + "Accessories" nav entries into one
     // combined "Shop" entry (single browsing page now covers both) — mirrors
@@ -3689,7 +3695,7 @@ function applyDbMigrations(d){
       const old = d.settings.nav[amuletsNavIdx];
       d.settings.nav[amuletsNavIdx] = { ...old, id:'shop', label: old.label==='Amulets' ? 'Shop' : old.label };
     } else if(!d.settings.nav.find(n=>n.id==='shop')){
-      d.settings.nav.unshift({id:'shop',label:'Shop',visible:true,enabled:true,builtin:true});
+      d.settings.nav.unshift({id:'shop',label:'Shop',visible:false,enabled:true,builtin:true});
     }
     d.settings.nav = d.settings.nav.filter(n=>n.id!=='accessories');
     // History & Stories — dedicated module, treat as builtin so it shows in nav
