@@ -1529,79 +1529,87 @@ async function applyWatermark(blob){
 }
 // ─── END WATERMARK ────────────────────────────────────────────────────────────
 
+// Decoding a HEIC costs seconds of CPU, and createImageSet() runs
+// optimiseImage() three times over the very same source blob (full, medium,
+// thumb). Remember the JPEG we got out of it so that's paid once per file
+// rather than three times. A HEIC that the browser decodes natively maps to
+// itself — that's the "nothing to do here" marker. Keyed weakly, so the entry
+// disappears with the File the picker handed us.
+const _heicDecodeCache = new WeakMap();
+
 async function optimiseImage(blob, maxDim=1920){
   const MAX_DIM = maxDim;     // longest side
   const QUALITY = 0.85;       // 0–1; 0.85 looks identical to humans for most photos
 
   // ─── HEIC / HEIF handling ───
-  // Apple devices (iPhone, iPad) save photos as HEIC by default. Most
-  // desktop browsers (Chrome, Firefox, Edge) CANNOT decode HEIC at all —
-  // createImageBitmap throws, <img> shows broken. The only reliable fix
-  // is to convert HEIC → JPEG before processing using a dedicated library.
+  // Apple devices (iPhone, iPad) save photos as HEIC by default. Safari
+  // decodes them natively; Chrome, Firefox and Edge cannot — createImageBitmap
+  // throws, <img> shows broken — so there we decode with a library.
   //
-  // We lazy-load heic2any from a CDN only when needed, to keep the page's
-  // initial bundle small. The library produces an ordinary Blob that
-  // createImageBitmap can then read.
+  // That library is heic-to's "csp" build, vendored under /vendor rather than
+  // pulled from a CDN. Both parts of that matter:
+  //   1. Our CSP has no 'unsafe-eval'. The library this replaced (heic2any) is
+  //      asm.js and calls `new Function` internally, so on Chrome every HEIC
+  //      upload died with an uncaught EvalError — uncaught, so the conversion
+  //      promise never settled and the admin's upload sat on "Uploading…"
+  //      forever. The csp build is compiled through wasm2js: plain JS, no
+  //      eval, no WebAssembly, nothing the policy has to be loosened for.
+  //   2. Served from our own origin, script-src 'self' covers it, and an SRI
+  //      hash is no longer the only thing between a hijacked CDN and a script
+  //      running in an admin session that can read every order.
+  // It spawns a blob: worker internally — allowed by worker-src 'self' blob:.
+  // See vendor/README.md before bumping the version.
   const isHeic =
     blob.type === 'image/heic' ||
     blob.type === 'image/heif' ||
     blob.type === '' ||  // some browsers leave HEIC type blank
     (blob.name && /\.(heic|heif)$/i.test(blob.name));
 
-  if(isHeic){
-    console.log('[FB] HEIC detected, converting to JPEG…', {
-      type: blob.type,
-      size: blob.size,
-      name: blob.name,
-    });
+  if(isHeic && _heicDecodeCache.has(blob)){
+    blob = _heicDecodeCache.get(blob);
+  } else if(isHeic){
+    const source = blob;
+    // Ask the browser first. On Safari/iOS — the device the photos were taken
+    // on — this succeeds and the 3 MB library is never downloaded. It also
+    // means a type-less file that isn't HEIC at all (browsers blank out `type`
+    // for anything they don't recognise) just decodes and carries on.
+    let nativeDecodes = false;
     try {
-      // Load heic2any from CDN if not already loaded. Try jsDelivr first,
-      // fall back to unpkg if it fails (rare network issue).
-      if(!window.heic2any){
-        console.log('[FB] loading heic2any library…');
-        // Subresource Integrity: this is third-party code from a public CDN
-        // running with full access to an ADMIN's page. CSP cannot help — the
-        // CDN host is on the allowlist by definition — so the hash is the
-        // only thing standing between a compromised/hijacked CDN and a script
-        // that can read every order. Both mirrors serve the same bytes, hence
-        // one hash. If heic2any is ever version-bumped, recompute:
-        //   curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A
-        const HEIC2ANY_SRI = 'sha384-OTofQ0MEeiSgh62havBcemCIK0gqj809wX6UA0uPISNMRnR6NZyCdGzX3SbLrgwL';
-        const tryLoad = (src) => new Promise((res, rej) => {
-          const s = document.createElement('script');
-          s.src = src;
-          s.integrity = HEIC2ANY_SRI;
-          s.crossOrigin = 'anonymous';
-          s.onload = () => { console.log('[FB] heic2any loaded from', src); res(); };
-          s.onerror = () => rej(new Error('failed to load ' + src));
-          document.head.appendChild(s);
-        });
-        try {
-          await tryLoad('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js');
-        } catch(e){
-          console.warn('[FB] jsDelivr failed, trying unpkg…');
-          await tryLoad('https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js');
-        }
-        if(!window.heic2any){
-          throw new Error('heic2any loaded but window.heic2any is undefined');
-        }
-      }
-      console.log('[FB] calling heic2any…');
-      const converted = await window.heic2any({
-        blob: blob,
-        toType: 'image/jpeg',
-        quality: 0.92,
+      const probe = await createImageBitmap(blob);
+      if(probe && probe.close) probe.close();
+      nativeDecodes = true;
+    } catch(_){ /* expected on Chrome/Firefox/Edge for a real HEIC */ }
+
+    if(!nativeDecodes){
+      console.log('[FB] HEIC detected, converting to JPEG…', {
+        type: blob.type,
+        size: blob.size,
+        name: blob.name,
       });
-      // heic2any can return Blob or Blob[]; coalesce to single Blob
-      blob = Array.isArray(converted) ? converted[0] : converted;
-      console.log('[FB] HEIC → JPEG conversion done, size:', blob.size, 'type:', blob.type);
-    } catch(e){
-      console.error('[FB] HEIC conversion failed:', e);
-      throw new Error(
-        'HEIC conversion failed: ' + (e.message || e) +
-        '. Please check internet connection or use a JPEG/PNG image instead.'
-      );
+      try {
+        const { heicTo } = await import('/vendor/heic-to-1.5.2.js');
+        console.log('[FB] heic-to loaded, converting…');
+        // Hard cap on the decode. Whatever goes wrong in there, the upload has
+        // to end in a visible error rather than a spinner that never stops.
+        let timer;
+        const converted = await Promise.race([
+          heicTo({ blob: blob, type: 'image/jpeg', quality: 0.92 }),
+          new Promise((_, rej) => {
+            timer = setTimeout(() => rej(new Error('conversion timed out after 90s')), 90000);
+          }),
+        ]).finally(() => clearTimeout(timer));
+        // Coalesce to a single Blob in case a build ever returns an array.
+        blob = Array.isArray(converted) ? converted[0] : converted;
+        console.log('[FB] HEIC → JPEG conversion done, size:', blob.size, 'type:', blob.type);
+      } catch(e){
+        console.error('[FB] HEIC conversion failed:', e);
+        throw new Error(
+          'HEIC conversion failed: ' + (e.message || e) +
+          '. Please use a JPEG/PNG image instead.'
+        );
+      }
     }
+    _heicDecodeCache.set(source, blob);
   }
 
   // Decode the source image. We use createImageBitmap when available — it's
