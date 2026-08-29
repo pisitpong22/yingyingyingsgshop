@@ -28,7 +28,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/fireba
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
   GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, createUserWithEmailAndPassword,
-  fetchSignInMethodsForEmail, linkWithCredential, sendEmailVerification
+  fetchSignInMethodsForEmail, linkWithCredential, sendEmailVerification,
+  sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, getDocs,
@@ -1745,6 +1746,15 @@ async function sendAdminEmailVerification(){
   await sendEmailVerification(auth.currentUser);
 }
 
+// Password changes go through this rather than an in-place edit: Firebase
+// refuses updatePassword() without a recent re-authentication, and the reset
+// email is that re-authentication. The caller must not branch its message on
+// whether this resolves or throws — doing so turns any signed-in session into
+// a way to ask Firebase which addresses it knows.
+async function sendPasswordReset(email){
+  await sendPasswordResetEmail(auth, email);
+}
+
 function onAuthChange(cb){
   _authListeners.push(cb);
   return onAuthStateChanged(auth, cb);
@@ -2448,6 +2458,7 @@ window.FB = {
   signIn: signInUser,
   signOut: signOutUser,
   sendAdminEmailVerification,
+  sendPasswordReset,
   // Customer login (Google / Facebook / Email+Password) — separate from admin signIn/signOut above
   signInWithGoogle, signInWithFacebook,
   linkPendingCredentialWithPassword,
