@@ -2037,76 +2037,6 @@ async function deleteReviewSubmission(id){
 }
 
 // ─── EXPOSE GLOBALLY ───────────────────────────────────────────────────────
-// ─── HISTORY & STORIES CRUD ────────────────────────────────────────────────
-// historyStories is stored as db.historyStories[] — same pattern as reviews/amulets.
-// Each article: { id, title, slug, category, excerpt, content, coverImage,
-//   videoUrl, gallery:[], featured, status:'published'|'draft', seoTitle, seoDescription,
-//   createdAt, updatedAt }
-
-function hsGenId(arr){
-  const ids = (Array.isArray(arr) ? arr : []).map(x => Number(x.id)||0);
-  return ids.length ? Math.max(...ids) + 1 : 1;
-}
-
-function hsGetAll(){
-  return (window.FB.getDB().historyStories || []);
-}
-
-async function hsSaveAll(articles){
-  const db = window.FB.getDB();
-  db.historyStories = articles;
-  await window.FB.saveDB(db);
-}
-
-async function hsAddArticle(data){
-  const db = window.FB.getDB();
-  if(!db.historyStories) db.historyStories = [];
-  const id = hsGenId(db.historyStories);
-  const article = {
-    id,
-    title: data.title || '',
-    slug:  data.slug  || '',
-    category: data.category || 'guides-articles',
-    excerpt: data.excerpt || '',
-    content: data.content || '',
-    coverImage: data.coverImage || '',
-    videoUrl: data.videoUrl || '',
-    gallery: Array.isArray(data.gallery) ? data.gallery : [],
-    featured: !!data.featured,
-    status: data.status || 'published',
-    seoTitle: data.seoTitle || '',
-    seoDescription: data.seoDescription || '',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-  db.historyStories.push(article);
-  await window.FB.saveDB(db);
-  return article;
-}
-
-async function hsUpdateArticle(id, data){
-  const db = window.FB.getDB();
-  if(!db.historyStories) db.historyStories = [];
-  const idx = db.historyStories.findIndex(x => String(x.id) === String(id));
-  if(idx < 0) throw new Error('Article not found: ' + id);
-  db.historyStories[idx] = {
-    ...db.historyStories[idx],
-    ...data,
-    id: db.historyStories[idx].id,
-    createdAt: db.historyStories[idx].createdAt,
-    updatedAt: Date.now(),
-  };
-  await window.FB.saveDB(db);
-  return db.historyStories[idx];
-}
-
-async function hsDeleteArticle(id){
-  const db = window.FB.getDB();
-  if(!db.historyStories) return;
-  db.historyStories = db.historyStories.filter(x => String(x.id) !== String(id));
-  await window.FB.saveDB(db);
-}
-
 let _historyStoriesJsonCache = '';
 let _historySummaryCache = null;
 
@@ -2437,9 +2367,6 @@ async function cartRemove(type, id){
   await setDoc(cartDocRef(), { items: next, updatedAt: serverTimestamp() });
   return next;
 }
-async function cartClear(){
-  await setDoc(cartDocRef(), { items: [], updatedAt: serverTimestamp() });
-}
 function onCartChange(cb){
   return onSnapshot(cartDocRef(), snap => {
     cb(snap.exists() ? (snap.data().items || []) : []);
@@ -2449,7 +2376,7 @@ function onCartChange(cb){
 window.FB = {
   getDB, saveDB, onDBChange, ready,
   // Cart (guest-device based — see comment above)
-  getGuestId, cartGet, cartAdd, cartRemove, cartClear, onCartChange,
+  cartAdd, cartRemove, onCartChange,
   ensureDBKeys,
   loadHistorySummaries,
   loadHistoryArticle,
@@ -2509,12 +2436,6 @@ window.FB = {
     await Promise.all(batches);
     return toDelete.length;
   },
-  // History & Stories
-  hsGetAll,
-  hsAddArticle,
-  hsUpdateArticle,
-  hsDeleteArticle,
-  hsSaveAll,
 };
 
 // Optional debug helper
