@@ -2748,7 +2748,7 @@
             <div class="form-section-title">📤 Export Data</div>
             <div class="form-section-desc">Download a full JSON backup of all your store data — products, settings, reviews, and articles.</div>
             <div style="margin-top:16px">
-              <button class="btn-gold" onclick="exportDB()">📤 Export Data (JSON)</button>
+              <button class="btn-gold" onclick="exportDB(this)">📤 Export Data (JSON)</button>
             </div>
           </div>
           <div class="form-card">
@@ -8674,12 +8674,78 @@ async function removeTeamMember(email){
   }
 }
 
-function exportDB(){
-  const blob=new Blob([JSON.stringify(getDB(),null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='yyy_backup_'+Date.now()+'.json';a.click();URL.revokeObjectURL(url);
-  showToast(tr('exported'));
+// A backup is only a backup if it contains the casing styles — the shop's
+// main asset, and by far the largest thing in the database.
+//
+// `getDB()` on its own does NOT contain them. loadCasingTypesV2() sets every
+// type's `variants` to [] and they are filled in one type at a time by
+// ensureCasingVariants(), when someone opens that type. So dumping getDB()
+// straight to a file produced a backup whose completeness depended on which
+// screens the admin happened to have visited first in that session — usually
+// none of them, i.e. zero styles — with nothing on screen to say so. The file
+// downloaded, the toast said "Exported", and you found out on the day you
+// needed to restore.
+async function exportDB(btn){
+  const original = btn ? btn.textContent : '';
+  const say = (msg) => { if(btn) btn.textContent = msg; };
+  if(btn) btn.disabled = true;
+  try {
+    say(lang==='th' ? '⏳ กำลังรวบรวม…' : '⏳ Collecting…');
+    await window.FB.ensureDBKeys(['settings','products','amulets','accessories',
+      'casingTypes','projects','reviews','feedPosts','historyStories']);
+
+    // Pull every type's styles in. This is the whole point of the function.
+    const types = getDB().casingTypes || [];
+    for(let i = 0; i < types.length; i++){
+      say((lang==='th' ? '⏳ กรอบพระ ' : '⏳ Casing ') + (i+1) + '/' + types.length);
+      await window.FB.ensureCasingVariants(types[i].id);
+    }
+
+    // Then check we actually got them, rather than trusting the loop. The
+    // manifest knows how many styles each type has; compare against what is
+    // in memory and refuse to hand over a file that is quietly short.
+    const known = window.FB._casingVariantIds || {};
+    const short = (getDB().casingTypes || []).filter(t => {
+      const expect = known[String(t.id)];
+      const got = Array.isArray(t.variants) ? t.variants.length : 0;
+      return expect && expect.length > got;
+    });
+    if(short.length){
+      const names = short.map(t => (t.name || t.id)).join(', ');
+      const go = confirm(lang==='th'
+        ? `⚠️ โหลดแบบกรอบไม่ครบ ${short.length} ประเภท (${names})\n\n`
+          + 'ไฟล์สำรองจะไม่มีแบบเหล่านั้น กด OK เพื่อดาวน์โหลดเท่าที่มี หรือ Cancel เพื่อยกเลิกแล้วลองใหม่'
+        : `⚠️ Styles for ${short.length} casing type(s) could not be loaded (${names}).\n\n`
+          + 'The backup will be missing them. OK to download anyway, Cancel to stop and retry.');
+      if(!go) return;
+    }
+
+    const db = getDB();
+    const styleCount = (db.casingTypes || []).reduce(
+      (n, t) => n + (Array.isArray(t.variants) ? t.variants.length : 0), 0);
+
+    const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `yyy_backup_${stamp}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Say what is actually in the file, so a wrong number is visible here
+    // rather than months later.
+    showToast(lang==='th'
+      ? `✅ สำรองแล้ว — สินค้า ${(db.products||[]).length} · กรอบ ${(db.casingTypes||[]).length} ประเภท / ${styleCount} แบบ · บทความ ${(db.historyStories||[]).length}`
+      : `✅ Exported — ${(db.products||[]).length} products · ${(db.casingTypes||[]).length} casing types / ${styleCount} styles · ${(db.historyStories||[]).length} articles`);
+  } catch(err){
+    console.error('[export] failed:', err);
+    showToast(lang==='th' ? '❌ สำรองข้อมูลไม่สำเร็จ' : '❌ Export failed');
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = original; }
+  }
 }
+
 function importDB(event){
   const file=event.target.files[0];if(!file)return;
   const r=new FileReader();r.onload=e=>{
@@ -8687,8 +8753,20 @@ function importDB(event){
       if(!data.casingTypes && data.frameTypes){data.casingTypes=data.frameTypes;}
       if(!data.casingTypes)data.casingTypes=[];
       if(!data.settings)data.settings=defaultSettings();
-      if(data.amulets&&data.accessories&&data.projects){saveDB(data);loadDash();showToast(tr('imported'));}
-      else showToast(tr('invalidFile'));
+      // The gate used to be `data.amulets && data.accessories && data.projects`
+      // — the shape of a backup from before the unified catalog, which never
+      // looked at `products` at all. A current backup has no `amulets` key to
+      // find. Accept either generation: settings plus at least one catalog.
+      const looksLikeBackup = data.settings &&
+        (Array.isArray(data.products) || Array.isArray(data.amulets) || Array.isArray(data.casingTypes));
+      if(!looksLikeBackup){ showToast(tr('invalidFile')); return; }
+      const styleCount = (data.casingTypes||[]).reduce(
+        (n,t)=>n+(Array.isArray(t.variants)?t.variants.length:0), 0);
+      const ok = confirm(lang==='th'
+        ? `นำเข้าข้อมูลนี้ทับของเดิม?\n\nสินค้า ${(data.products||[]).length} · กรอบ ${(data.casingTypes||[]).length} ประเภท / ${styleCount} แบบ · บทความ ${(data.historyStories||[]).length}`
+        : `Replace current data with this file?\n\n${(data.products||[]).length} products · ${(data.casingTypes||[]).length} casing types / ${styleCount} styles · ${(data.historyStories||[]).length} articles`);
+      if(!ok) return;
+      saveDB(data);loadDash();showToast(tr('imported'));
     }catch(err){showToast(tr('cantRead'));}
   };r.readAsText(file);event.target.value='';
 }
