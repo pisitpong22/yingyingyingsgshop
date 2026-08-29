@@ -2729,16 +2729,21 @@
 
         <!-- Account tab -->
         <div class="tab-content active" data-tab-content="account" data-parent="settings">
+          <!-- This used to be three password boxes and a "Change Password"
+               button. Nothing read the boxes: the handler only showed a toast
+               telling you to go to the Firebase Console. Changing a password
+               in place needs re-authentication, which is exactly what the
+               reset email does — so send the email instead of pretending. -->
           <div class="form-card">
-            <div class="form-section-title">🔐 Change Password</div>
-            <div class="form-section-desc">Update your admin account password. Minimum 6 characters.</div>
-            <div class="form-grid">
-              <div class="fg"><label class="fl">Current Password</label><input class="fi" id="pw_old" type="password" autocomplete="current-password"></div>
-              <div class="fg"></div>
-              <div class="fg"><label class="fl">New Password (min 6)</label><input class="fi" id="pw_new" type="password" autocomplete="new-password"></div>
-              <div class="fg"><label class="fl">Confirm New Password</label><input class="fi" id="pw_cf" type="password" autocomplete="new-password"></div>
-            </div>
-            <div style="margin-top:20px"><button class="btn-gold" onclick="changePw()">🔒 Change Password</button></div>
+            <div class="form-section-title" data-en="🔐 Password" data-th="🔐 รหัสผ่าน">🔐 Password</div>
+            <div class="form-section-desc"
+                 data-en="We email you a link to set a new password. The link goes to your admin address and expires after an hour."
+                 data-th="ระบบจะส่งลิงก์ตั้งรหัสผ่านใหม่ไปที่อีเมลแอดมินของคุณ ลิงก์จะหมดอายุใน 1 ชั่วโมง">We email you a link to set a new password. The link goes to your admin address and expires after an hour.</div>
+            <div style="margin-top:14px;font-size:13px;color:var(--text-muted)"
+                 data-en="Signed in as" data-th="เข้าสู่ระบบในชื่อ">Signed in as</div>
+            <div id="pwAccountEmail" style="font-weight:700;margin-top:2px">—</div>
+            <div style="margin-top:20px"><button class="btn-gold" onclick="requestPasswordReset(this)"
+                 data-en="✉️ Email me a reset link" data-th="✉️ ส่งลิงก์ตั้งรหัสผ่านใหม่">✉️ Email me a reset link</button></div>
           </div>
         </div>
 
@@ -2748,7 +2753,7 @@
             <div class="form-section-title">📤 Export Data</div>
             <div class="form-section-desc">Download a full JSON backup of all your store data — products, settings, reviews, and articles.</div>
             <div style="margin-top:16px">
-              <button class="btn-gold" onclick="exportDB()">📤 Export Data (JSON)</button>
+              <button class="btn-gold" onclick="exportDB(this)">📤 Export Data (JSON)</button>
             </div>
           </div>
           <div class="form-card">
@@ -2859,25 +2864,18 @@
             <div style="margin:14px 0 0;padding:14px;background:rgba(200,100,0,.06);border:1px solid rgba(200,100,0,.18);border-radius:10px">
               <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Step 1: Export data first (Data Management tab), then click below.</div>
               <button class="btn-del" style="background:#b35200;border-color:#b35200" onclick="confirmResetCasingStyles()">🗑️ Reset Casing Styles Only</button>
-              <div id="resetCasingStatus" style="margin-top:10px;font-size:13px;color:var(--text-muted)"></div>
             </div>
           </div>
 
-          <!-- DANGER: Reset All Data -->
-          <div class="form-card" style="border-color:rgba(200,50,50,.2)">
-            <div class="form-section-title" style="color:#c0392b">⚠️ Danger Zone</div>
-            <div class="form-section-desc">These actions cannot be undone. Please export your data first before performing any reset.</div>
-            <div style="margin-top:20px;padding:16px;background:rgba(200,50,50,.06);border:1px solid rgba(200,50,50,.15);border-radius:12px">
-              <div style="font-weight:700;color:#c0392b;margin-bottom:6px">Reset Casing Styles Only</div>
-              <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Clears ALL casing styles from every casing type. Casing type names, prices, descriptions, and banner images are preserved. All other data (amulets, reviews, history, settings) is untouched. Storage files are NOT deleted.</div>
-              <button class="btn-del" onclick="confirmResetCasingStyles()">🧹 Reset Casing Styles</button>
-            </div>
-            <div style="margin-top:12px;padding:16px;background:rgba(200,50,50,.06);border:1px solid rgba(200,50,50,.15);border-radius:12px">
-              <div style="font-weight:700;color:#c0392b;margin-bottom:6px">Reset All Data</div>
-              <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Permanently deletes all products, settings, reviews, and articles. Your Firebase account and login will remain intact.</div>
-              <button class="btn-del" onclick="confirmReset()">⚠️ Reset All Data</button>
-            </div>
-          </div>
+          <!-- The "Danger Zone" card that used to sit here held two buttons.
+               One was a second copy of Reset Casing Styles, already above.
+               The other, "Reset All Data", described itself as permanently
+               deleting every product, setting, review and article — and then
+               called localStorage.removeItem('yyy_db'), a key left over from
+               before this shop moved to Firestore. It deleted nothing and
+               reported success. A destructive button that lies about having
+               fired is worse than one that works, so it is gone. Wiping the
+               shop for real is a Firebase Console job, deliberately. -->
         </div>
       </div>
 
@@ -3230,7 +3228,6 @@ function dig(obj){
 // why `||` is not a substitute here).
 function nn(a, b){ return (a === null || a === undefined) ? b : a; }
 
-const DB_KEY='yyy_db';
 const AUTH_KEY='yyy_auth';
 const LANG_KEY='yyy_admin_lang';
 const THEME_KEY='yyy_admin_theme';
@@ -3609,13 +3606,42 @@ async function doLogout(){
   document.getElementById('lu').value='';document.getElementById('lp').value='';
 }
 
-async function changePw(){
-  // Firebase Auth password change requires re-authentication for security.
-  // For now we show a message directing users to Firebase console or use
-  // the "forgot password" email flow. (Full in-place change can be added later.)
-  showToast(lang === 'th'
-    ? 'การเปลี่ยนรหัสผ่านทำผ่าน Firebase Console หรืออีเมล "ลืมรหัสผ่าน"'
-    : 'Password change is done via Firebase Console or "forgot password" email');
+// Replaces changePw(), which showed a toast telling you to go and do it
+// somewhere else while three password boxes sat above it collecting nothing.
+// Firebase requires a recent re-authentication before it will change a
+// password in place; the reset email IS that re-authentication, so this is
+// the honest version of the same feature rather than a lesser one.
+//
+// Deliberately says the same thing whether or not the send succeeded for a
+// reason the user can see: no signed-in admin should be told which addresses
+// Firebase does and does not know about.
+async function requestPasswordReset(btn){
+  const user = FB.currentUser();
+  const email = user && user.email;
+  if(!email){
+    showToast(lang==='th' ? 'กรุณาเข้าสู่ระบบใหม่' : 'Please sign in again');
+    return;
+  }
+  const original = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = lang==='th' ? '⏳ กำลังส่ง…' : '⏳ Sending…'; }
+  try {
+    await FB.sendPasswordReset(email);
+  } catch(err){
+    console.error('[auth] password reset failed:', err);
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = original; }
+  }
+  showToast(lang==='th'
+    ? '✉️ ส่งลิงก์ไปที่ ' + email + ' แล้ว (ตรวจกล่องสแปมด้วย)'
+    : '✉️ Link sent to ' + email + ' — check spam too');
+}
+
+// Fills the "Signed in as" line on the Password card.
+function showAccountEmail(){
+  const el = document.getElementById('pwAccountEmail');
+  if(!el) return;
+  const user = FB.currentUser();
+  el.textContent = (user && user.email) || '—';
 }
 
 // Migration helper — applies all the legacy migrations to a DB object.
@@ -3989,6 +4015,7 @@ function showPanel(name, el){
     loadTeamList();
   }
   if(name==='settings'){
+    showAccountEmail();
     // Load SEO panel data
     setTimeout(()=>{ if(typeof loadSeoPanel==='function') loadSeoPanel(); },80);
     if(!hasPerm('viewSettings')){
@@ -4174,7 +4201,7 @@ function loadDash(){
 // you nothing before you could start working. Every mainstream store admin
 // puts *work waiting to be done* here instead, so that's what this shows.
 // Each check is cheap and reads the already-loaded local DB.
-function loadNeedsAttention(){
+async function loadNeedsAttention(){
   const box = document.getElementById('needsAttention');
   if(!box) return;
 
@@ -4185,7 +4212,32 @@ function loadNeedsAttention(){
   const items = [];
 
   // Reviews waiting on a decision — the one genuinely time-sensitive queue.
-  const pending = (db.reviews||[]).filter(r => r.approved === false || r.pending === true).length;
+  //
+  // This used to read `db.reviews.filter(r => r.approved === false || r.pending
+  // === true)`. Neither field exists on anything: `db.reviews` holds reviews
+  // that are ALREADY approved and published, and a customer submission lives
+  // in a different collection entirely (`reviewSubmissions`, which only staff
+  // can read). So the count was always 0 and the dashboard stayed silent while
+  // real submissions waited — the exact failure this panel exists to prevent.
+  //
+  // Worth one extra read per dashboard open: unlike the orders badge, this is
+  // a queue where nobody else will notice the backlog.
+  //
+  // Read it fresh every time rather than reusing whatever the Reviews panel
+  // last fetched. A cached count only ever goes stale in the direction that
+  // matters — you clear the queue, come back to the dashboard, and it still
+  // says three are waiting. The result is shared back so the Reviews panel
+  // starts from the same numbers.
+  let pending = 0;
+  try {
+    if(window.FB && window.FB.listReviewSubmissions){
+      _pendingReviews = await window.FB.listReviewSubmissions();
+      pending = _pendingReviews.length;
+    }
+  } catch(err){
+    // A failed read must not blank the rest of the panel.
+    console.warn('[dash] could not count review submissions:', err);
+  }
   if(pending){
     items.push({sev:'warn',
       en:`${pending} review${pending>1?'s':''} waiting for approval`,
@@ -4194,9 +4246,14 @@ function loadNeedsAttention(){
   }
 
   // Products that can't sell because they have no price.
+  // `p.status`, `p.hidden` and `p.priceText` are fields no product has ever
+  // had — leftovers from the amulets/accessories schema — so all three tests
+  // passed unconditionally and drafts were counted alongside live listings.
+  // A product is published when `publishStatus === 'active'`.
+  const isLive = p => p && p.publishStatus === 'active';
   const noPrice = (db.products||[]).filter(p =>
-    p.status !== 'sold' && p.hidden !== true &&
-    (p.price === '' || p.price == null) && !p.priceText && !(p.variants||[]).length
+    isLive(p) && (p.price === '' || p.price == null || Number(p.price) === 0) &&
+    !(p.variants||[]).length
   ).length;
   if(noPrice){
     items.push({sev:'warn',
@@ -4210,7 +4267,7 @@ function loadNeedsAttention(){
   // existed, so this check silently never fired.
   const productPhotos = p => [p.coverImg, ...(p.gallery||[])].filter(Boolean);
   const noPhoto = (db.products||[]).filter(p =>
-    p.hidden !== true && !productPhotos(p).length
+    isLive(p) && !productPhotos(p).length
   ).length;
   if(noPhoto){
     items.push({sev:'warn',
@@ -4223,7 +4280,7 @@ function loadNeedsAttention(){
   // and it reads the alt; so does every screen reader. The storefront falls
   // back to the product name, which is better than nothing but describes the
   // listing rather than the photo.
-  const noAlt = (db.products||[]).reduce((n, p) => p.hidden === true ? n :
+  const noAlt = (db.products||[]).reduce((n, p) => !isLive(p) ? n :
     n + productPhotos(p).filter(im => !(im && typeof im === 'object' && String(im.alt||'').trim())).length
   , 0);
   if(noAlt){
@@ -4243,8 +4300,14 @@ function loadNeedsAttention(){
   }
 
   // A shop with no way to pay is not a shop.
+  //
+  // This checked `pay.paynow || pay.promptpay || pay.bankAccount ||
+  // pay.stripeEnabled` — four names nothing has ever written. savePayment()
+  // writes paynowName / paynowUEN / shipFromTo / shipFee / policy / qrImage.
+  // So the red "customers cannot check out" banner was permanent, PayNow fully
+  // configured or not, and the whole panel stopped being worth reading.
   const pay = s.payment || {};
-  const hasPay = pay.paynow || pay.promptpay || pay.bankAccount || pay.stripeEnabled;
+  const hasPay = (pay.paynowUEN && String(pay.paynowUEN).trim()) || pay.qrImage;
   if(!hasPay){
     items.push({sev:'crit',
       en:'No payment method configured — customers cannot check out',
@@ -8674,12 +8737,78 @@ async function removeTeamMember(email){
   }
 }
 
-function exportDB(){
-  const blob=new Blob([JSON.stringify(getDB(),null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='yyy_backup_'+Date.now()+'.json';a.click();URL.revokeObjectURL(url);
-  showToast(tr('exported'));
+// A backup is only a backup if it contains the casing styles — the shop's
+// main asset, and by far the largest thing in the database.
+//
+// `getDB()` on its own does NOT contain them. loadCasingTypesV2() sets every
+// type's `variants` to [] and they are filled in one type at a time by
+// ensureCasingVariants(), when someone opens that type. So dumping getDB()
+// straight to a file produced a backup whose completeness depended on which
+// screens the admin happened to have visited first in that session — usually
+// none of them, i.e. zero styles — with nothing on screen to say so. The file
+// downloaded, the toast said "Exported", and you found out on the day you
+// needed to restore.
+async function exportDB(btn){
+  const original = btn ? btn.textContent : '';
+  const say = (msg) => { if(btn) btn.textContent = msg; };
+  if(btn) btn.disabled = true;
+  try {
+    say(lang==='th' ? '⏳ กำลังรวบรวม…' : '⏳ Collecting…');
+    await window.FB.ensureDBKeys(['settings','products','amulets','accessories',
+      'casingTypes','projects','reviews','feedPosts','historyStories']);
+
+    // Pull every type's styles in. This is the whole point of the function.
+    const types = getDB().casingTypes || [];
+    for(let i = 0; i < types.length; i++){
+      say((lang==='th' ? '⏳ กรอบพระ ' : '⏳ Casing ') + (i+1) + '/' + types.length);
+      await window.FB.ensureCasingVariants(types[i].id);
+    }
+
+    // Then check we actually got them, rather than trusting the loop. The
+    // manifest knows how many styles each type has; compare against what is
+    // in memory and refuse to hand over a file that is quietly short.
+    const known = window.FB._casingVariantIds || {};
+    const short = (getDB().casingTypes || []).filter(t => {
+      const expect = known[String(t.id)];
+      const got = Array.isArray(t.variants) ? t.variants.length : 0;
+      return expect && expect.length > got;
+    });
+    if(short.length){
+      const names = short.map(t => (t.name || t.id)).join(', ');
+      const go = confirm(lang==='th'
+        ? `⚠️ โหลดแบบกรอบไม่ครบ ${short.length} ประเภท (${names})\n\n`
+          + 'ไฟล์สำรองจะไม่มีแบบเหล่านั้น กด OK เพื่อดาวน์โหลดเท่าที่มี หรือ Cancel เพื่อยกเลิกแล้วลองใหม่'
+        : `⚠️ Styles for ${short.length} casing type(s) could not be loaded (${names}).\n\n`
+          + 'The backup will be missing them. OK to download anyway, Cancel to stop and retry.');
+      if(!go) return;
+    }
+
+    const db = getDB();
+    const styleCount = (db.casingTypes || []).reduce(
+      (n, t) => n + (Array.isArray(t.variants) ? t.variants.length : 0), 0);
+
+    const blob = new Blob([JSON.stringify(db, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `yyy_backup_${stamp}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Say what is actually in the file, so a wrong number is visible here
+    // rather than months later.
+    showToast(lang==='th'
+      ? `✅ สำรองแล้ว — สินค้า ${(db.products||[]).length} · กรอบ ${(db.casingTypes||[]).length} ประเภท / ${styleCount} แบบ · บทความ ${(db.historyStories||[]).length}`
+      : `✅ Exported — ${(db.products||[]).length} products · ${(db.casingTypes||[]).length} casing types / ${styleCount} styles · ${(db.historyStories||[]).length} articles`);
+  } catch(err){
+    console.error('[export] failed:', err);
+    showToast(lang==='th' ? '❌ สำรองข้อมูลไม่สำเร็จ' : '❌ Export failed');
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = original; }
+  }
 }
+
 function importDB(event){
   const file=event.target.files[0];if(!file)return;
   const r=new FileReader();r.onload=e=>{
@@ -8687,8 +8816,20 @@ function importDB(event){
       if(!data.casingTypes && data.frameTypes){data.casingTypes=data.frameTypes;}
       if(!data.casingTypes)data.casingTypes=[];
       if(!data.settings)data.settings=defaultSettings();
-      if(data.amulets&&data.accessories&&data.projects){saveDB(data);loadDash();showToast(tr('imported'));}
-      else showToast(tr('invalidFile'));
+      // The gate used to be `data.amulets && data.accessories && data.projects`
+      // — the shape of a backup from before the unified catalog, which never
+      // looked at `products` at all. A current backup has no `amulets` key to
+      // find. Accept either generation: settings plus at least one catalog.
+      const looksLikeBackup = data.settings &&
+        (Array.isArray(data.products) || Array.isArray(data.amulets) || Array.isArray(data.casingTypes));
+      if(!looksLikeBackup){ showToast(tr('invalidFile')); return; }
+      const styleCount = (data.casingTypes||[]).reduce(
+        (n,t)=>n+(Array.isArray(t.variants)?t.variants.length:0), 0);
+      const ok = confirm(lang==='th'
+        ? `นำเข้าข้อมูลนี้ทับของเดิม?\n\nสินค้า ${(data.products||[]).length} · กรอบ ${(data.casingTypes||[]).length} ประเภท / ${styleCount} แบบ · บทความ ${(data.historyStories||[]).length}`
+        : `Replace current data with this file?\n\n${(data.products||[]).length} products · ${(data.casingTypes||[]).length} casing types / ${styleCount} styles · ${(data.historyStories||[]).length} articles`);
+      if(!ok) return;
+      saveDB(data);loadDash();showToast(tr('imported'));
     }catch(err){showToast(tr('cantRead'));}
   };r.readAsText(file);event.target.value='';
 }
@@ -8697,7 +8838,6 @@ function importDB(event){
 // Preserves: type names, prices, descriptions, banner images, sampleImgs.
 // Deletes: all dbcasing_variant_* and dbcasing_variantchunk_* docs,
 //          clears variants/variantIds from casingTypes in main DB.
-function confirmReset(){if(tConfirm('confirmReset')){localStorage.removeItem(DB_KEY);loadDash();showToast(tr('reset'));}}
 
 let _toastTimer = null;
 function showToast(msg, opts={}){

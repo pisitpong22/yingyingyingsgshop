@@ -94,6 +94,63 @@ async function getCanonicalItem(type, id) {
   }
 }
 
+// ─── What may actually be sold, and for how much ────────────────────────────
+//
+// There are TWO item schemas in this database and they share almost no field
+// names. Everything here has to know which one it is looking at:
+//
+//   legacy `amulets` / `accessories` — `status: 'available'|'sold'|'reserved'`
+//                                      and a single `price`
+//   current `products`              — `publishStatus`, `stockStatus`,
+//                                      `allowCheckout`, `allowEnquiryOnly`,
+//                                      and `price` + optional `salePrice`
+//
+// This used to read `canonical.status` for everything. A product has no
+// `status` field at all, so the guard was `undefined && …` — falsy — and every
+// products-schema item walked straight through, sold out or not. Keep these
+// two helpers in step with `prodCanBuy()` / `prodPrice()` in index.html: the
+// browser decides which buttons to draw, this decides whether a card is
+// charged, and they must agree.
+function whyNotBuyable(type, item) {
+  if (type === "products") {
+    // A draft was never published; `sold_out` as a publish state means the
+    // owner has retired the listing. Only `active` is on sale.
+    if (item.publishStatus !== "active") return "Item is not on sale";
+    if (item.stockStatus === "sold_out") return "Item already sold";
+    // `reserved` is stricter here than the storefront, deliberately. Every
+    // piece is one of a kind, so letting a card through on something the owner
+    // has set aside for a named buyer costs a refund and an apology; blocking it
+    // costs one message. If the reservation lapsed, the owner clears the flag.
+    if (item.stockStatus === "reserved") return "Item is reserved";
+    // Pre-orders are taken by message, never by card — see preorderInfoHtml()
+    // in index.html for why (no arrival date, deposit is not the full price).
+    if (item.stockStatus === "preorder") return "Pre-order items are arranged by message";
+    if (item.allowCheckout === false) return "Item is not available for checkout";
+    if (item.allowEnquiryOnly) return "Item is enquiry-only";
+    return null;
+  }
+  // Legacy schema — unchanged behaviour.
+  if (item.status && item.status !== "available") {
+    return "Item already sold/reserved";
+  }
+  return null;
+}
+
+// The cart stores `prodPrice()`, which prefers `salePrice`. The server used to
+// re-verify against `price` alone, so an item on sale was charged at its FULL
+// price — the customer saw one number and their card was debited a larger one.
+// Server-side verification exists to stop a tampered browser paying less; it
+// must not quietly charge more than the shop advertised.
+function canonicalPrice(type, item) {
+  if (type === "products") {
+    const sale = Number(item.salePrice);
+    if (item.salePrice !== null && item.salePrice !== "" && Number.isFinite(sale) && sale > 0) {
+      return sale;
+    }
+  }
+  return Number(item.price || 0);
+}
+
 // A cart id is either the signed-in user's uid or a guest UUID v4 — same
 // shapes firestore.rules accepts. Anything else is not a cart this shop
 // issued, and must not reach a Firestore lookup.
@@ -259,13 +316,14 @@ exports.createPaymentIntent = onCall(
       if (!canonical) {
         throw new HttpsError("not-found", `Item no longer exists: ${it.type}/${it.id}`);
       }
-      if (canonical.status && canonical.status !== "available") {
+      const blocked = whyNotBuyable(it.type, canonical);
+      if (blocked) {
         throw new HttpsError(
           "failed-precondition",
-          `Item already sold/reserved: ${canonical.name || it.id}`
+          `${blocked}: ${canonical.name || it.id}`
         );
       }
-      const price = Number(canonical.price || 0);
+      const price = canonicalPrice(it.type, canonical);
       total += price;
       const key = `${it.type}:${it.id}`;
       verifiedItems.push({ type: it.type, id: it.id, name: canonical.name || "", price });
