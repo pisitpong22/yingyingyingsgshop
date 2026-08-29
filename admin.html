@@ -4201,7 +4201,7 @@ function loadDash(){
 // you nothing before you could start working. Every mainstream store admin
 // puts *work waiting to be done* here instead, so that's what this shows.
 // Each check is cheap and reads the already-loaded local DB.
-function loadNeedsAttention(){
+async function loadNeedsAttention(){
   const box = document.getElementById('needsAttention');
   if(!box) return;
 
@@ -4212,7 +4212,32 @@ function loadNeedsAttention(){
   const items = [];
 
   // Reviews waiting on a decision — the one genuinely time-sensitive queue.
-  const pending = (db.reviews||[]).filter(r => r.approved === false || r.pending === true).length;
+  //
+  // This used to read `db.reviews.filter(r => r.approved === false || r.pending
+  // === true)`. Neither field exists on anything: `db.reviews` holds reviews
+  // that are ALREADY approved and published, and a customer submission lives
+  // in a different collection entirely (`reviewSubmissions`, which only staff
+  // can read). So the count was always 0 and the dashboard stayed silent while
+  // real submissions waited — the exact failure this panel exists to prevent.
+  //
+  // Worth one extra read per dashboard open: unlike the orders badge, this is
+  // a queue where nobody else will notice the backlog.
+  //
+  // Read it fresh every time rather than reusing whatever the Reviews panel
+  // last fetched. A cached count only ever goes stale in the direction that
+  // matters — you clear the queue, come back to the dashboard, and it still
+  // says three are waiting. The result is shared back so the Reviews panel
+  // starts from the same numbers.
+  let pending = 0;
+  try {
+    if(window.FB && window.FB.listReviewSubmissions){
+      _pendingReviews = await window.FB.listReviewSubmissions();
+      pending = _pendingReviews.length;
+    }
+  } catch(err){
+    // A failed read must not blank the rest of the panel.
+    console.warn('[dash] could not count review submissions:', err);
+  }
   if(pending){
     items.push({sev:'warn',
       en:`${pending} review${pending>1?'s':''} waiting for approval`,
@@ -4221,9 +4246,14 @@ function loadNeedsAttention(){
   }
 
   // Products that can't sell because they have no price.
+  // `p.status`, `p.hidden` and `p.priceText` are fields no product has ever
+  // had — leftovers from the amulets/accessories schema — so all three tests
+  // passed unconditionally and drafts were counted alongside live listings.
+  // A product is published when `publishStatus === 'active'`.
+  const isLive = p => p && p.publishStatus === 'active';
   const noPrice = (db.products||[]).filter(p =>
-    p.status !== 'sold' && p.hidden !== true &&
-    (p.price === '' || p.price == null) && !p.priceText && !(p.variants||[]).length
+    isLive(p) && (p.price === '' || p.price == null || Number(p.price) === 0) &&
+    !(p.variants||[]).length
   ).length;
   if(noPrice){
     items.push({sev:'warn',
@@ -4237,7 +4267,7 @@ function loadNeedsAttention(){
   // existed, so this check silently never fired.
   const productPhotos = p => [p.coverImg, ...(p.gallery||[])].filter(Boolean);
   const noPhoto = (db.products||[]).filter(p =>
-    p.hidden !== true && !productPhotos(p).length
+    isLive(p) && !productPhotos(p).length
   ).length;
   if(noPhoto){
     items.push({sev:'warn',
@@ -4250,7 +4280,7 @@ function loadNeedsAttention(){
   // and it reads the alt; so does every screen reader. The storefront falls
   // back to the product name, which is better than nothing but describes the
   // listing rather than the photo.
-  const noAlt = (db.products||[]).reduce((n, p) => p.hidden === true ? n :
+  const noAlt = (db.products||[]).reduce((n, p) => !isLive(p) ? n :
     n + productPhotos(p).filter(im => !(im && typeof im === 'object' && String(im.alt||'').trim())).length
   , 0);
   if(noAlt){
@@ -4270,8 +4300,14 @@ function loadNeedsAttention(){
   }
 
   // A shop with no way to pay is not a shop.
+  //
+  // This checked `pay.paynow || pay.promptpay || pay.bankAccount ||
+  // pay.stripeEnabled` — four names nothing has ever written. savePayment()
+  // writes paynowName / paynowUEN / shipFromTo / shipFee / policy / qrImage.
+  // So the red "customers cannot check out" banner was permanent, PayNow fully
+  // configured or not, and the whole panel stopped being worth reading.
   const pay = s.payment || {};
-  const hasPay = pay.paynow || pay.promptpay || pay.bankAccount || pay.stripeEnabled;
+  const hasPay = (pay.paynowUEN && String(pay.paynowUEN).trim()) || pay.qrImage;
   if(!hasPay){
     items.push({sev:'crit',
       en:'No payment method configured — customers cannot check out',
