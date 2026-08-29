@@ -11054,36 +11054,6 @@ window.addEventListener('appinstalled',()=>{
 });
 
 // Inline minimal manifest via blob (no separate file needed)
-(function setupManifest(){
-  // Skip on file:// — manifest needs http(s) and would just spam errors
-  if(location.protocol === 'file:') return;
-  try{
-    const settings=getDB().settings;
-    const name=settings.logoText||'Yingyingying Amulet';
-    const manifest={
-      name:name,
-      short_name:name.split(' ')[0],
-      description:settings.logoSub||'Authentic Thai Amulets',
-      start_url:'./',
-      display:'standalone',
-      background_color:'#fdf6e3',
-      theme_color:'#c9a84c',
-      icons:[
-        {src:'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 192 192%22><rect width=%22192%22 height=%22192%22 fill=%22%2312100a%22/><text x=%2296%22 y=%22128%22 font-size=%22120%22 text-anchor=%22middle%22 fill=%22%23e8c96a%22>📿</text></svg>',sizes:'192x192',type:'image/svg+xml'},
-        {src:'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22><rect width=%22512%22 height=%22512%22 fill=%22%2312100a%22/><text x=%22256%22 y=%22340%22 font-size=%22320%22 text-anchor=%22middle%22 fill=%22%23e8c96a%22>📿</text></svg>',sizes:'512x512',type:'image/svg+xml'}
-      ]
-    };
-    const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);
-    const link=document.createElement('link');
-    link.rel='manifest';link.href=url;
-    document.head.appendChild(link);
-    // theme color — reuse existing meta to avoid duplicate
-    const existingTheme=document.querySelector('meta[name="theme-color"]');
-    if(existingTheme){existingTheme.content='#0d0a06';}
-    else{const theme=document.createElement('meta');theme.name='theme-color';theme.content='#0d0a06';document.head.appendChild(theme);}
-  }catch(e){console.warn('manifest setup failed',e);}
-})();
 
 // Sentinel for the watchdog in <head>. Reaching this line means the whole
 // block above parsed AND ran. If a future edit reintroduces syntax an old

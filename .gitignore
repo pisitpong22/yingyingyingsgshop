@@ -20,3 +20,8 @@ Thumbs.db
 serviceAccountKey.json
 .env
 .env.local
+
+# Local design scratch — 20 MB of layout prototypes and a 19 MB .glb.
+# Not deployed (firebase.json ignores dot-directories via **/.*/**), but it
+# showed up as untracked in every `git status`.
+.preview/
