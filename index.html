@@ -171,36 +171,6 @@
 })();
 </script>
 
-<script>
-// ───── DIAGNOSTIC: trace what causes "Unsafe attempt to load URL" errors ─────
-// This patches Image.src and CSS backgroundImage so we can see who's loading
-// the page URL itself (which is what triggers the file:// CORS error).
-(function diagnose(){
-  if(location.protocol !== 'file:') return; // only run when debugging file://
-  const pageURL = location.href;
-
-  // Patch Image.src
-  const desc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
-  if(desc && desc.set){
-    Object.defineProperty(HTMLImageElement.prototype, 'src', {
-      configurable: true,
-      enumerable: true,
-      get: desc.get,
-      set: function(v){
-        if(v === '' || v == null || v === pageURL){
-          console.warn('[DIAG] Image.src set to suspicious value:', JSON.stringify(v));
-          console.trace('[DIAG] stack trace:');
-        } else if(typeof v === 'string' && v.length < 200){
-          console.log('[DIAG] Image.src ←', v.slice(0,100));
-        } else {
-          console.log('[DIAG] Image.src ← (long URL,', typeof v === 'string' ? v.length : '?', 'chars)');
-        }
-        return desc.set.call(this, v);
-      }
-    });
-  }
-})();
-</script>
 <style>
   :root{
     --gold:#c9a84c;--gold-light:#e8c96a;--gold-dark:#c9a84c;
@@ -7126,12 +7096,10 @@
 // `?.` anywhere below leaves an old phone on a dead, empty screen forever.
 // Use these helpers instead. Same for admin.html if it is ever shared.
 const _NOOP_CLS = {add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}};
-function elById(id){ return document.getElementById(id); }
 function pageIsActive(id){ const el=document.getElementById(id); return !!(el && el.classList.contains('active')); }
 function clsOf(id){ const el=document.getElementById(id); return el ? el.classList : _NOOP_CLS; }
 function valOf(id){ const el=document.getElementById(id); return el ? el.value : undefined; }
 
-const DB_KEY = 'yyy_db';
 let curCasingType=null;
 const loadState = {
   homeFeed: 'idle', // idle | loading | loaded | empty | error
@@ -7552,10 +7520,6 @@ Object.defineProperty(window, 'lang', {
   configurable: true,
 });
 
-// index.html never writes to the DB — admin.html is the only writer.
-// Keep this stub so any legacy call sites don't crash.
-function saveDB(/*db*/){}
-
 function escapeHtml(s){
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -7609,10 +7573,6 @@ function contactIconSvg(c){
 
 function contactLabel(c){
   return stripContactIcon(c && c.label);
-}
-
-function contactDisplay(c){
-  return `${contactIcon(c)} ${contactLabel(c)}`.trim();
 }
 
 function contactGroupBtnInner(c){
@@ -8404,8 +8364,6 @@ const HS_CATS = [
   {id:'katha-collection', label:'Katha Collection',  icon:'🕉️'},
   {id:'guides-articles',  label:'Guides & Articles', icon:'📚'},
 ];
-let _hsCatFilter = 'all';
-let _hsSearch = '';
 
 function renderCustomPages(){
   const db=getDB();const cp=db.settings.customPages||[];
@@ -8494,7 +8452,6 @@ function openCpItem(pageId, itemId){
 
 function animN(id,target){const el=document.getElementById(id);if(!el)return;let c=0;const iv=setInterval(()=>{c=Math.min(c+1,target);el.textContent=c;if(c>=target)clearInterval(iv);},60);}
 
-const PAGE_IDS = new Set(['home','feed','shop','casing','contact','projects','reviews','payment','cart','checkout','orders','about','library']);
 
 function navIcon(id){
   return ({
@@ -9754,9 +9711,6 @@ function shopProductList(){
   if(curStype==='accessory') return all.filter(p=>p.type==='accessory'||p.type==='bracelet');
   return all.filter(p=>p.type===curStype);
 }
-// Backward-compatible alias — old name kept in case any other code still calls it.
-function combinedShopList(){ return shopProductList(); }
-
 function filterSTypeByValue(type){
   document.querySelectorAll('#shopCatWindows .shop-cat-win').forEach(t=>t.classList.remove('active'));
   const win=document.querySelector(`#shopCatWindows .shop-cat-win[data-stype="${type}"]`);
@@ -10490,32 +10444,6 @@ function renderVariants(typeId){
 }
 
 let _variantScrollFlushToken = 0;
-function _attachVariantScrollFlush(grid, renderToken){
-  _variantScrollFlushToken = renderToken;
-  let _ticking = false;
-  const flush = () => {
-    if(!_ticking){
-      _ticking = true;
-      requestAnimationFrame(() => {
-        _ticking = false;
-        // Stop if a new type was opened
-        if(_variantScrollFlushToken !== renderToken) return;
-        grid.querySelectorAll('img[data-src]').forEach(img => {
-          const r = img.getBoundingClientRect();
-          if(r.top < window.innerHeight + 400 && r.bottom > -400){
-            img.src = img.dataset.src;
-            img.removeAttribute('data-src');
-            if(_imgObserver) _imgObserver.unobserve(img);
-          }
-        });
-      });
-    }
-  };
-  window.removeEventListener('scroll', window._variantScrollFlush);
-  window._variantScrollFlush = flush;
-  window.addEventListener('scroll', flush, {passive:true});
-}
-
 function variantPhotoHtml(img, i, name='', total=0){
   return `<button type="button" class="variant-photo" onclick="openLightbox(${i},this)" aria-label="${lang==='th'?'เปิดรูปตัวอย่างขนาดใหญ่':'Open sample photo full size'}"><img loading="${i<6?'eager':'lazy'}" ${i<3?'fetchpriority="high"':''} decoding="async" ${imgAttrs(img,i<4?'medium':'thumb','(max-width: 700px) 50vw, 260px',photoAlt(name,i,total))}></button>`;
 }
@@ -11002,7 +10930,6 @@ const HS_CATEGORIES = [
 
 let _hsCat = 'all';
 let _hsQ   = '';
-let _hsLoadingRequested = false;
 let _hsVisible = 0;
 let _hsLoaded = false;
 
@@ -11511,46 +11438,6 @@ function buildProductFeedPosts(db){
         score:((p.coverImg?1:0)+(p.gallery||[]).length),
       };
     });
-}
-
-function buildAmuletFeedPosts(db){
-  return (db.amulets||[])
-    .filter(a=>a && (a.imgs&&a.imgs.length) && a.status!=='sold')
-    .slice(0,8)
-    .map(a=>({
-      type:'amulet',
-      badge:'📿 New Arrival',
-      badgeCls:'feed-badge-amulet',
-      kicker:'New Amulet In Stock',
-      title:a.name || 'New Amulet',
-      text:[a.desc||'', a.price?`S$${Number(a.price).toLocaleString()}`:''].filter(Boolean).join(' · '),
-      imgs:feedImages(a.imgs),
-      action:`openProd('amulets',${a.id})`,
-      cta:'View Amulet',
-      pinned:false,
-      ts:Number(a.updatedAt||a.createdAt||0)||0,
-      score:(a.imgs||[]).length,
-    }));
-}
-
-function buildAccessoriesFeedPosts(db){
-  return (db.accessories||[])
-    .filter(a=>a && (a.imgs&&a.imgs.length))
-    .slice(0,6)
-    .map(a=>({
-      type:'accessory',
-      badge:'⛓️ Accessory',
-      badgeCls:'feed-badge-accessory',
-      kicker:'New Accessory',
-      title:a.name || 'New Accessory',
-      text:[a.desc||'', a.price?`S$${Number(a.price).toLocaleString()}`:''].filter(Boolean).join(' · '),
-      imgs:feedImages(a.imgs),
-      action:`openProd('accessories',${a.id})`,
-      cta:'View Accessory',
-      pinned:false,
-      ts:Number(a.updatedAt||a.createdAt||0)||0,
-      score:(a.imgs||[]).length,
-    }));
 }
 
 function buildProjectFeedPosts(db){

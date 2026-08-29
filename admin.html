@@ -3208,7 +3208,6 @@
 //
 //   grep -n '?\.\|??\|||=\|&&=' admin.html index.html   # must print nothing
 const _NOOP_CLS = {add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}};
-function elById(id){ return document.getElementById(id); }
 function valOf(id){ const el=document.getElementById(id); return el ? el.value : undefined; }
 function checkedOf(id){ const el=document.getElementById(id); return el ? el.checked : undefined; }
 function clsOf(id){ const el=document.getElementById(id); return el ? el.classList : _NOOP_CLS; }
@@ -3228,7 +3227,6 @@ function dig(obj){
 // why `||` is not a substitute here).
 function nn(a, b){ return (a === null || a === undefined) ? b : a; }
 
-const AUTH_KEY='yyy_auth';
 const LANG_KEY='yyy_admin_lang';
 const THEME_KEY='yyy_admin_theme';
 
@@ -3293,17 +3291,10 @@ const TR = {
   trustSaved:{en:'✅ Trust cards saved',th:'✅ บันทึกการ์ดแล้ว'},
   contactSaved:{en:'✅ Contact saved',th:'✅ บันทึกการติดต่อแล้ว'},
   pageSaved:{en:'✅ Page saved',th:'✅ บันทึกหน้าแล้ว'},
-  pwChanged:{en:'✅ Password changed',th:'✅ เปลี่ยนรหัสผ่านแล้ว'},
   deleted:{en:'🗑️ Deleted',th:'🗑️ ลบแล้ว'},
-  reset:{en:'🔄 Reset',th:'🔄 รีเซ็ตแล้ว'},
-  exported:{en:'📤 Exported',th:'📤 ส่งออกแล้ว'},
   imported:{en:'📥 Imported!',th:'📥 นำเข้าแล้ว!'},
-  needNamePrice:{en:'⚠️ Name and price required',th:'⚠️ ต้องกรอกชื่อและราคา'},
   needName:{en:'⚠️ Name required',th:'⚠️ ต้องกรอกชื่อ'},
   needLabel:{en:'⚠️ Menu Label required',th:'⚠️ ต้องกรอกป้ายเมนู'},
-  pwShort:{en:'⚠️ Min 6 characters',th:'⚠️ อย่างน้อย 6 ตัวอักษร'},
-  pwMismatch:{en:'⚠️ Passwords do not match',th:'⚠️ รหัสผ่านไม่ตรงกัน'},
-  pwWrong:{en:'❌ Current password incorrect',th:'❌ รหัสผ่านปัจจุบันไม่ถูกต้อง'},
   invalidFile:{en:'❌ Invalid file',th:'❌ ไฟล์ไม่ถูกต้อง'},
   cantRead:{en:'❌ Could not read',th:'❌ อ่านไฟล์ไม่ได้'},
   builtinNoDelete:{en:'❌ Built-in pages cannot be deleted',th:'❌ หน้าเริ่มต้นลบไม่ได้'},
@@ -3313,10 +3304,11 @@ const TR = {
   confirmDeletePage:{en:'Delete this page?',th:'ลบหน้านี้?'},
   confirmDeleteType:{en:'Delete this casing type and all its styles?',th:'ลบประเภทและแบบทั้งหมด?'},
   confirmDeleteStyle:{en:'Delete this style?',th:'ลบแบบนี้?'},
-  confirmReset:{en:'⚠️ Reset ALL data?',th:'⚠️ รีเซ็ตข้อมูลทั้งหมด?'},
+  // These two were called but never defined, and tr() falls back to the key
+  // itself — so the casing style modal was titled "addStyle" / "editStyle".
+  addStyle:{en:'Add Style',th:'เพิ่มแบบ'},
+  editStyle:{en:'Edit Style',th:'แก้ไขแบบ'},
   // Inline UI
-  show:{en:'Show',th:'แสดง'},
-  enabled:{en:'Enabled',th:'ใช้งาน'},
   builtin:{en:'built-in',th:'เริ่มต้น'},
   custom:{en:'custom',th:'กำหนดเอง'},
   pageId:{en:'Page ID',th:'ID หน้า'},
@@ -3334,12 +3326,7 @@ const TR = {
   name:{en:'Name',th:'ชื่อ'},
   category:{en:'Category',th:'หมวดหมู่'},
   price:{en:'Price',th:'ราคา'},
-  status:{en:'Status',th:'สถานะ'},
-  year:{en:'Year',th:'ปี'},
-  action:{en:'Action',th:'การจัดการ'},
   actions:{en:'Actions',th:'การจัดการ'},
-  photos:{en:'Photos',th:'รูปภาพ'},
-  images:{en:'image(s)',th:'รูป'},
   // Hero/services
   buttonText:{en:'Button Text',th:'ข้อความปุ่ม'},
   linksTo:{en:'Links to',th:'ลิงก์ไปยัง'},
@@ -3356,24 +3343,12 @@ const TR = {
   icon:{en:'Icon',th:'ไอคอน'},
   title:{en:'Title',th:'ชื่อ'},
   desc:{en:'Description',th:'คำอธิบาย'},
-  color:{en:'Color',th:'สี'},
-  clickMessage:{en:'Click Message',th:'ข้อความเมื่อคลิก'},
   // ── NEW translations ──
-  contactUrl:{en:'Link URL (wa.me, m.me, line.me…)',th:'ลิงก์ (wa.me, m.me, line.me…)'},
-  contactUrlHint:{en:'Optional. If empty, button shows toast message instead.',th:'ไม่บังคับ ถ้าเว้นว่างจะแสดงข้อความ toast แทน'},
   paymentSaved:{en:'✅ Payment info saved',th:'✅ บันทึกข้อมูลชำระเงินแล้ว'},
-  featuredSaved:{en:'✅ Featured saved',th:'✅ บันทึกรายการแนะนำแล้ว'},
   reviewSaved:{en:'✅ Review saved',th:'✅ บันทึกรีวิวแล้ว'},
   reviewDeleted:{en:'🗑️ Review deleted',th:'🗑️ ลบรีวิวแล้ว'},
-  itemStatus:{en:'Status',th:'สถานะ'},
-  available:{en:'✅ Available',th:'✅ พร้อมจำหน่าย'},
-  reserved:{en:'⏳ Reserved',th:'⏳ จอง'},
-  sold:{en:'❌ Sold',th:'❌ ขายแล้ว'},
-  hidePrice:{en:'Hide price (show "PM for price")',th:'ซ่อนราคา (แสดง "ทักแชท")'},
-  featured:{en:'Show as Featured on Home',th:'แสดงในหน้าแรก (Featured)'},
   rating:{en:'Rating',th:'คะแนน'},
   reviewerName:{en:'Reviewer Name',th:'ชื่อผู้รีวิว'},
-  reviewerLocation:{en:'Location (e.g. Singapore)',th:'ที่อยู่ (เช่น Singapore)'},
   reviewText:{en:'Review Text',th:'ข้อความรีวิว'},
   reviewDate:{en:'Date / Year',th:'วันที่ / ปี'},
   noReviews:{en:'No reviews yet.',th:'ยังไม่มีรีวิว'},
