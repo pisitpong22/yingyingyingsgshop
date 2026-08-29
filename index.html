@@ -6283,25 +6283,46 @@ function toggleLang(){
   document.body.classList.toggle('th');
   applyLangAttr();
   try{ localStorage.setItem(LANG_KEY, lang); }catch(e){}
-  localiseCookieNote();
+  applyStaticLang();
   applySettings();
-  const active=document.querySelector('.page.active');
+}
+
+// ── Static bilingual labels ──
+// Text this page builds at render time already reads the `lang` getter, so it
+// switches for free. Text written straight into the markup does not: it
+// carried data-en/data-th attributes that nothing applied. Of the 48 in the
+// file, exactly three places were localised by hand — the cookie notice, the
+// review form, and one button — and the rest sat in English however the site
+// was displayed. Pressing TH left the Shop filters and sort menu, the
+// cart/checkout/order headings, the account menu, the casing header and the
+// library eyebrow untranslated, next to Thai text the renderers had produced.
+//
+// One applier now covers every one of them, so a new `data-th` in the markup
+// works without anyone remembering to wire it up.
+//
+// Only elements with no element children are touched, so markup like
+// `<h2>🛒 <span data-th="…">` keeps its emoji and its span. (Nothing in the
+// file currently needs that guard — it is there so the next `data-th` added
+// to a wrapper does not silently blow away its contents.)
+function applyStaticLang(root){
+  const scope = root || document;
+  const th = lang === 'th';
+  scope.querySelectorAll('[data-en][data-th]').forEach(el => {
+    if(el.children.length) return;
+    const val = th ? el.getAttribute('data-th') : el.getAttribute('data-en');
+    if(val !== null) el.textContent = val;
+  });
+  scope.querySelectorAll('[data-ph-en][data-ph-th]').forEach(el => {
+    const val = th ? el.getAttribute('data-ph-th') : el.getAttribute('data-ph-en');
+    if(val !== null) el.placeholder = val;
+  });
 }
 
 // ── Cookie / storage notice ──
-// Note this site has no global data-en/data-th applier — `body.th` only
-// switches the font, and dynamic text is built from the `lang` flag at render
-// time. So the notice localises itself explicitly.
 const COOKIE_NOTE_KEY = 'yyy_cookie_note_seen';
 
 function localiseCookieNote(){
-  const note = document.getElementById('cookieNote');
-  if(!note) return;
-  const th = lang === 'th';
-  const nodes = note.querySelectorAll('[data-en][data-th]');
-  for(let i = 0; i < nodes.length; i++){
-    nodes[i].textContent = th ? nodes[i].getAttribute('data-th') : nodes[i].getAttribute('data-en');
-  }
+  applyStaticLang(document.getElementById('cookieNote'));
 }
 
 function dismissCookieNote(){
@@ -6336,6 +6357,7 @@ function restoreLang(){
   }
   document.body.classList.toggle('th', saved === 'th');
   applyLangAttr();
+  applyStaticLang();
 }
 
 function isImageSet(img){
@@ -10630,21 +10652,12 @@ function rfRenderStars(){
     s.classList.toggle('on', on);
   });
 }
+// The review form is static markup, so applyStaticLang() already covers it on
+// load and on every toggle. This stays because the modal can be opened after
+// a language change that happened while it was closed, and re-running is
+// cheap.
 function applyReviewFormPlaceholders(){
-  const th = lang === 'th';
-  // Placeholders
-  document.querySelectorAll('#reviewModal [data-ph-en]').forEach(el => {
-    el.placeholder = th ? el.getAttribute('data-ph-th') : el.getAttribute('data-ph-en');
-  });
-  // Visible labels / buttons — set text from data-en/data-th so the form
-  // localises with the rest of the UI (this page renders dynamic text from
-  // the `lang` flag rather than swapping data-attributes globally).
-  document.querySelectorAll('#reviewModal [data-en][data-th]').forEach(el => {
-    el.textContent = th ? el.getAttribute('data-th') : el.getAttribute('data-en');
-  });
-  // Also localise the trigger button on the reviews page.
-  const trigger = document.querySelector('#page-reviews [data-en][data-th]');
-  if(trigger) trigger.textContent = th ? trigger.getAttribute('data-th') : trigger.getAttribute('data-en');
+  applyStaticLang(document.getElementById('reviewModal'));
 }
 document.addEventListener('click', (e) => {
   const star = e.target.closest('#rfStars span');
