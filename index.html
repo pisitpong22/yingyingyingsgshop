@@ -998,13 +998,13 @@
   /* Hint browser to skip layout for off-screen sections — paints faster */
   .home-section,
   #page-amulets,#page-accessories,#page-projects,#page-reviews,
-  #page-library,#page-feed,#page-about,#page-contact,#page-payment,#page-reviews{
+  #page-library,#page-about,#page-contact,#page-payment,#page-reviews{
     content-visibility:auto;
     contain-intrinsic-size:auto 800px;
   }
   /* All non-home pages: warm cream luxury background */
   #page-amulets,#page-accessories,#page-projects,#page-reviews,
-  #page-library,#page-feed,#page-about,#page-contact,#page-payment{
+  #page-library,#page-about,#page-contact,#page-payment{
     background:#0d0a06;
   }
 
@@ -3319,7 +3319,6 @@
 
   /* ─── LUXURY SOCIAL HOME ─────────────────────────────────────────────── */
   .legacy-home{display:none}
-  #page-feed{display:none !important}
   .social-home{
     min-height:100vh;
     background:
@@ -3705,191 +3704,6 @@
     .social-post-actions button{font-size:12.5px}
   }
 
-  /* ─── FACEBOOK-LIKE FEED PAGE ─────────────────────────────────────────── */
-  .feed-page{
-    min-height:100vh;
-    background:
-      linear-gradient(180deg,#fff8e8 0%,#f2ead8 48%,#fff8e8 100%);
-    padding:18px 20px 90px;
-  }
-  .feed-shell{
-    max-width:1240px;
-    margin:0 auto;
-    display:grid;
-    grid-template-columns:220px minmax(0,680px) 240px;
-    gap:18px;
-    align-items:start;
-  }
-  .feed-sidebar,
-  .feed-card,
-  .feed-composer,
-  .feed-top-card{
-    background:rgba(255,251,239,.92);
-    border:1px solid rgba(201,168,76,.22);
-    border-radius:28px;
-    box-shadow:0 10px 30px rgba(91,62,13,.08);
-  }
-  .feed-sidebar{
-    position:sticky;
-    top:92px;
-    padding:12px;
-  }
-  .feed-profile{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:8px;
-    border-radius:14px;
-    background:linear-gradient(135deg,rgba(232,201,106,.18),rgba(255,255,255,.45));
-  }
-  .feed-avatar{
-    width:44px;height:44px;border-radius:50%;overflow:hidden;
-    background:linear-gradient(135deg,var(--gold-light),var(--gold-dark));
-    display:flex;align-items:center;justify-content:center;flex-shrink:0;
-    box-shadow:0 0 18px rgba(201,168,76,.22);
-  }
-  .feed-avatar img{width:100%;height:100%;object-fit:cover;display:block}
-  .feed-name{font-family:var(--font-display);font-weight:800;color:var(--text);line-height:1.15}
-  .feed-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
-  .feed-nav-list{display:grid;gap:6px;margin-top:14px}
-  .feed-nav-pill{
-    border:none;background:transparent;color:var(--text);font:inherit;font-weight:800;
-    display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;text-align:left;
-  }
-  .feed-nav-pill:hover{background:rgba(201,168,76,.12)}
-  .feed-main{display:grid;gap:12px;min-width:0}
-  .feed-top-card{padding:12px}
-  .feed-search-row{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px;gap:8px;align-items:center;margin-bottom:10px}
-  .feed-search-pill{
-    min-height:44px;border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.72);
-    display:flex;align-items:center;gap:10px;padding:0 16px;color:#a1a0a0;font-size:14px;font-weight:900;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
-  }
-  .feed-search-pill span:first-child{font-size:13px;color:#b58d29}
-  .feed-round-btn{
-    width:44px;height:44px;border-radius:50%;border:1px solid rgba(120,94,48,.14);background:rgba(255,255,255,.72);
-    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#201609;
-    box-shadow:0 8px 22px rgba(91,62,13,.08);
-    cursor:pointer;
-  }
-  .feed-composer{padding:12px}
-  .feed-composer-row{display:flex;align-items:center;gap:10px}
-  .feed-composer-fake{
-    flex:1;border:1px solid rgba(120,94,48,.14);border-radius:999px;background:rgba(255,255,255,.62);color:#7a6040;
-    padding:12px 16px;text-align:left;font:inherit;font-size:14px;font-weight:900;cursor:pointer;
-  }
-  .feed-story-strip{
-    display:flex;gap:10px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;
-  }
-  .feed-story-strip::-webkit-scrollbar{display:none}
-  .feed-story{
-    flex:0 0 104px;height:132px;border-radius:16px;overflow:hidden;position:relative;
-    border:1px solid rgba(201,168,76,.22);background:#181005;cursor:pointer;
-    box-shadow:0 10px 24px rgba(77,48,5,.14);
-  }
-  .feed-story img{width:100%;height:100%;object-fit:cover;display:block;opacity:.9}
-  .feed-story::after{content:'';position:absolute;top:0;right:0;bottom:0;left:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.72))}
-  .feed-story-label{position:absolute;left:10px;right:10px;bottom:10px;color:#fff;font-weight:900;font-size:12px;z-index:1;line-height:1.2}
-  .feed-story-nav{
-    display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(145deg,#261901 0%,#7b6424 100%);
-  }
-  .feed-story-nav.alt{background:linear-gradient(145deg,#263431 0%,#75807a 100%)}
-  .feed-story-nav.red{background:linear-gradient(145deg,#421019 0%,#8d4150 100%)}
-  .feed-story-icon{
-    width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    background:rgba(255,246,207,.78);font-size:20px;color:#171006;position:relative;z-index:1;
-    box-shadow:0 0 0 9px rgba(217,185,78,.35);
-  }
-  .feed-card{overflow:hidden;border-radius:18px}
-  .feed-type-badge{
-    display:inline-flex;align-items:center;gap:5px;
-    font-size:9.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;
-    padding:4px 12px;border-radius:999px;margin:12px 16px 0;
-    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  }
-  .feed-badge-casing{background:rgba(139,0,139,.12);color:#8b008b;border:1px solid rgba(139,0,139,.2)}
-  .feed-badge-amulet{background:rgba(184,134,11,.12);color:#8b6914;border:1px solid rgba(184,134,11,.25)}
-  .feed-badge-project{background:rgba(0,100,180,.1);color:#005a9e;border:1px solid rgba(0,100,180,.18)}
-  .feed-badge-review{background:rgba(20,140,60,.1);color:#0d7a3a;border:1px solid rgba(20,140,60,.2)}
-  .feed-badge-article{background:rgba(100,60,0,.1);color:#6b3a00;border:1px solid rgba(100,60,0,.2)}
-  .feed-badge-announcement{background:rgba(180,0,0,.1);color:#9a0000;border:1px solid rgba(180,0,0,.2)}
-  .feed-badge-default{background:rgba(201,168,76,.12);color:#8b6914;border:1px solid rgba(201,168,76,.25)}
-  .feed-cta-bar{padding:10px 16px 14px;display:flex;gap:8px;flex-wrap:wrap}
-  .feed-cta-btn{
-    flex:1;min-width:80px;
-    background:linear-gradient(135deg,var(--gold-light),var(--gold));
-    color:var(--deep);border:none;padding:9px 14px;
-    border-radius:999px;font-size:12.5px;font-weight:800;cursor:pointer;
-    font-family:inherit;transition:box-shadow .2s;
-  }
-  .feed-cta-btn:hover{box-shadow:0 4px 16px rgba(201,168,76,.4)}
-  .feed-cta-btn.sec{background:transparent;color:var(--text);border:1px solid rgba(201,168,76,.35)}
-  .feed-card-head{display:flex;align-items:center;gap:10px;padding:14px 16px 6px}
-  .feed-card-menu{margin-left:auto;color:#8b743d;font-weight:900}
-  .feed-post-name{font-weight:900;color:var(--text)}
-  .feed-post-meta{font-size:12px;color:var(--text-muted);margin-top:2px}
-  .feed-card-body{padding:0 16px 12px}
-  .feed-post-title{font-family:'DM Sans',sans-serif;font-size:20px;font-weight:950;color:var(--text);margin:8px 0 6px;line-height:1.18}
-  .feed-post-text{font-size:15px;font-weight:800;color:#57442a;line-height:1.5;margin:0 0 10px}
-  .feed-media{
-    background:#120d05;display:grid;gap:2px;overflow:hidden;
-    border-top:1px solid rgba(201,168,76,.14);
-    border-bottom:1px solid rgba(201,168,76,.14);
-  }
-  .feed-media.one{grid-template-columns:1fr}
-  .feed-media.two{grid-template-columns:1fr 1fr}
-  .feed-media.three{grid-template-columns:1.2fr .8fr}
-  .feed-media.three img:first-child{grid-row:span 2}
-  .feed-media.four{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
-  .feed-media.four img{min-height:160px !important}
-  .feed-media img{width:100%;height:100%;min-height:320px;object-fit:cover;display:block}
-  .feed-media.two img,.feed-media.three img{min-height:230px}
-  .feed-actions{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:8px 12px 10px;
-    border-top:1px solid rgba(201,168,76,.14);
-  }
-  .feed-action{
-    border:none;background:transparent;border-radius:10px;padding:10px 8px;cursor:pointer;
-    color:#765b27;font:inherit;font-size:13px;font-weight:900;
-  }
-  .feed-action:hover{background:rgba(201,168,76,.12)}
-  .feed-right-card{padding:14px}
-  .feed-right-title{font-weight:900;color:var(--text);margin-bottom:10px}
-  .feed-mini-list{display:grid;gap:10px}
-  .feed-mini{display:flex;gap:10px;align-items:center;cursor:pointer;padding:6px;border-radius:12px}
-  .feed-mini:hover{background:rgba(201,168,76,.1)}
-  .feed-mini-img{width:48px;height:48px;border-radius:10px;object-fit:cover;background:#efe2bd;flex-shrink:0}
-  .feed-mini-name{font-weight:800;font-size:13px;color:var(--text);line-height:1.25}
-  .feed-mini-meta{font-size:11px;color:var(--text-muted);margin-top:2px}
-  .feed-empty{padding:40px 18px;text-align:center;color:var(--text-muted)}
-  .feed-load-more{
-    border:1px solid rgba(201,168,76,.36);background:rgba(255,251,239,.92);border-radius:18px;
-    padding:14px 18px;color:#73551b;font:inherit;font-weight:900;cursor:pointer;
-    box-shadow:0 10px 30px rgba(91,62,13,.08);
-  }
-  .feed-load-more:hover{background:#fff7df}
-  .feed-skeleton-card{
-    min-height:180px;
-    padding:16px;
-  }
-  .feed-skel-line,
-  .feed-skel-avatar,
-  .feed-skel-media,
-  .feed-skel-story{
-    background:linear-gradient(90deg,rgba(120,94,48,.08),rgba(255,255,255,.64),rgba(120,94,48,.08));
-    background-size:220% 100%;
-    animation:feedShimmer 1.25s ease-in-out infinite;
-  }
-  .feed-skel-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-  .feed-skel-avatar{width:44px;height:44px;border-radius:50%;flex-shrink:0}
-  .feed-skel-line{height:12px;border-radius:999px;margin:8px 0}
-  .feed-skel-line.short{width:42%}
-  .feed-skel-line.mid{width:68%}
-  .feed-skel-media{height:260px;border-radius:14px;margin-top:16px}
-  .feed-skel-story{flex:0 0 104px;height:132px;border-radius:16px}
-  @keyframes feedShimmer{to{background-position:-220% 0}}
-
   /* ─── CONTACT PAGE — "Gilded Glass" ──────────────────────────────────── */
   .contact-page{
     position:relative;overflow:hidden;
@@ -4009,8 +3823,6 @@
     .hero-inner{padding:28px;border-radius:24px}
     #homeSections{display:block;margin:18px auto 0;padding:0 16px 88px}
     #homeSections .home-section{border-radius:22px;padding:24px !important}
-    .feed-shell{grid-template-columns:1fr;max-width:680px}
-    .feed-sidebar,.feed-right{display:none}
     .contact-shell{max-width:680px}
     .contact-links-card{grid-template-columns:1fr}
     .contact-hero-card{position:relative;top:auto;padding:42px 26px;border-radius:26px}
@@ -4215,26 +4027,7 @@
     .mobile-tab.active{
       background:linear-gradient(135deg,rgba(232,201,106,.9),rgba(201,168,76,.85));
       color:#140d04;
-    }
-    .feed-page{padding:0 0 calc(74px + env(safe-area-inset-bottom,0px))}
-    .feed-shell{max-width:none}
-    .feed-main{gap:10px}
-    .feed-top-card{padding:12px;border-radius:0;border-left:none;border-right:none}
-    .feed-search-row{grid-template-columns:minmax(0,1fr) 58px 58px;gap:10px;margin-bottom:4px}
-    .feed-search-pill{min-height:58px;padding:0 18px;font-size:18px}
-    .feed-round-btn{width:58px;height:58px;font-size:20px}
-    .feed-composer{margin:0 14px;padding:18px}
-    .feed-composer-fake{padding:16px 18px;font-size:18px}
-    .feed-composer,.feed-card{border-radius:16px}
-    .feed-story{flex-basis:104px;height:136px}
-    .feed-card-head{padding:12px 12px 6px}
-    .feed-card-body{padding:0 12px 10px}
-    .feed-post-title{font-size:19px}
-    .feed-media img{min-height:260px}
-    .feed-media.two img,.feed-media.three img{min-height:160px}
-    .feed-actions{padding:6px 8px 10px}
-    .feed-action{font-size:12.5px;padding:9px 4px}
-    .contact-page{padding:22px 12px calc(100px + env(safe-area-inset-bottom,0px))}
+    }    .feed-media.two img,.feed-media.three img{min-height:160px}    .contact-page{padding:22px 12px calc(100px + env(safe-area-inset-bottom,0px))}
     .contact-hero-card{padding:32px 22px;border-radius:24px;margin-bottom:20px}
     .contact-links-card{gap:12px}
     .contact-link{grid-template-columns:48px minmax(0,1fr) auto;gap:14px;padding:14px;border-radius:18px}
@@ -4778,8 +4571,7 @@
   }
   .page:not(#page-home) .content,
   .page:not(#page-home) .pay-wrap,
-  .page:not(#page-home) .contact-shell,
-  .page:not(#page-home) .feed-shell{
+  .page:not(#page-home) .contact-shell{
     max-width:1100px !important;
     margin:0 auto !important;
   }
@@ -4843,10 +4635,8 @@
   .search-input::placeholder,
   .hs-search::placeholder{color:rgba(255,248,220,.38) !important}
   .cat-tab,
-  .hs-cat,
-  .casing-style-chip,
-  .feed-story,
-  .feed-round-btn{
+.hs-cat,
+.casing-style-chip{
     background:rgba(255,255,255,.055) !important;
     color:rgba(255,248,200,.66) !important;
     border:1px solid rgba(255,255,255,.12) !important;
@@ -4877,62 +4667,58 @@
   .var-card{background:#120e05 !important;border:none !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;box-shadow:none !important}
   .var-card:hover{background:#1a1508 !important}
   .card:hover,
-  .prod-card:hover,
-  .proj-card:hover,
-  .rev-card:hover,
-  .feed-card:hover,
-  .hs-card:hover,
-  .casing-quick-card:hover{
+.prod-card:hover,
+.proj-card:hover,
+.rev-card:hover,
+.hs-card:hover,
+.casing-quick-card:hover{
     background:#1a1508 !important;
     border-color:rgba(201,168,76,.4) !important;
     transform:translateY(-3px) !important;
   }
   .card-title,
-  .prod-title,
-  .ftype-name,
-  .var-name,
-  .proj-title,
-  .rev-name,
-  .pay-title,
-  .trust-title,
-  .contact-title,
-  .contact-link-title,
-  .feed-title,
-  .hs-title,
-  .hs-featured-title,
-  .casing-detail-title,
-  .var-grid-title{
+.prod-title,
+.ftype-name,
+.var-name,
+.proj-title,
+.rev-name,
+.pay-title,
+.trust-title,
+.contact-title,
+.contact-link-title,
+.hs-title,
+.hs-featured-title,
+.casing-detail-title,
+.var-grid-title{
     color:rgba(255,248,220,.92) !important;
   }
   .card-desc,
-  .prod-desc,
-  .ftype-desc,
-  .var-desc,
-  .proj-desc,
-  .rev-text,
-  .pay-desc,
-  .trust-desc,
-  .contact-desc,
-  .contact-link-sub,
-  .feed-text,
-  .hs-excerpt,
-  .hs-featured-excerpt,
-  .casing-detail-desc,
-  .result-count{
+.prod-desc,
+.ftype-desc,
+.var-desc,
+.proj-desc,
+.rev-text,
+.pay-desc,
+.trust-desc,
+.contact-desc,
+.contact-link-sub,
+.hs-excerpt,
+.hs-featured-excerpt,
+.casing-detail-desc,
+.result-count{
     color:rgba(255,248,220,.52) !important;
   }
   .card-price,
-  .prod-price,
-  .ftype-from strong,
-  .var-price,
-  .proj-status,
-  .rev-stars,
-  .pay-amount,
-  .trust-stat,
-  .hs-badge,
-  .feed-badge,
-  .casing-detail-price-badge,
-  .casing-timeframe{
+.prod-price,
+.ftype-from strong,
+.var-price,
+.proj-status,
+.rev-stars,
+.pay-amount,
+.trust-stat,
+.hs-badge,
+.casing-detail-price-badge,
+.casing-timeframe{
     color:#e8c96a !important;
   }
   .card-img,
@@ -4942,15 +4728,13 @@
   .hs-card-img{
     background:linear-gradient(145deg,#2d1e06,#0d0a06) !important;
   }
-  .btn-gold,
-  .feed-composer-fake{
+  .btn-gold{
     background:linear-gradient(135deg,rgba(232,201,106,.92),rgba(201,168,76,.82)) !important;
     color:#160f05 !important;
     border:0 !important;
     box-shadow:0 10px 30px rgba(201,168,76,.18) !important;
   }
-  .contact-page,
-  .feed-page{
+  .contact-page{
     background:transparent !important;
     padding:0 !important;
   }
@@ -4969,8 +4753,6 @@
     .card-grid,.proj-grid,.rev-grid{grid-template-columns:minmax(0,1fr) !important}
     .var-grid{grid-template-columns:repeat(2,1fr) !important}
     .ftype-grid{grid-template-columns:repeat(2,1fr) !important;gap:1px !important}
-    .feed-shell{display:block !important}
-    .feed-sidebar,.feed-right{display:none !important}
   }
   @media(max-width:560px){
     /* ftype-grid stays 2-col on small phones */
@@ -6249,56 +6031,6 @@
 </div>
 
 <!-- FEED -->
-<div id="page-feed" class="page">
-  <div class="feed-page">
-    <div class="feed-shell">
-      <aside class="feed-sidebar">
-        <div class="feed-profile">
-          <div class="feed-avatar"><img loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
-          <div>
-            <div class="feed-name" id="feedStoreName">Yingyingying</div>
-            <div class="feed-sub">Authentic Thai Amulets</div>
-          </div>
-        </div>
-        <div class="feed-nav-list" id="feedNavList"></div>
-      </aside>
-
-      <main class="feed-main">
-        <div class="feed-top-card">
-          <div class="feed-search-row">
-            <div class="feed-search-pill"><span>⌕</span><span>Search amulets, casing, colors...</span></div>
-            <button class="feed-round-btn" type="button" onclick="toggleLang()">TH</button>
-            <button class="feed-round-btn" type="button" onclick="goPage('contact')">💬</button>
-          </div>
-          <div class="feed-story-strip" id="feedStories"></div>
-        </div>
-        <div class="feed-composer">
-          <div class="feed-composer-row">
-            <div class="feed-avatar"><img loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
-            <button class="feed-composer-fake" onclick="goPage('casing')">What are you looking for today?</button>
-          </div>
-        </div>
-        <div id="feedList"></div>
-      </main>
-
-      <aside class="feed-right">
-        <div class="feed-sidebar feed-right-card">
-          <div class="feed-right-title">Popular now</div>
-          <div class="feed-mini-list" id="feedPopular"></div>
-        </div>
-        <div class="feed-sidebar feed-right-card" style="margin-top:12px">
-          <div class="feed-right-title">Quick preview</div>
-          <div class="feed-mini-list" id="feedQuickPreview"></div>
-        </div>
-        <div class="feed-sidebar feed-right-card" style="margin-top:12px">
-          <div class="feed-right-title">Trust</div>
-          <div class="feed-mini-list" id="feedTrust"></div>
-        </div>
-      </aside>
-    </div>
-  </div>
-</div>
-
 <!-- CONTACT -->
 <div id="page-contact" class="page">
   <div class="contact-page">
@@ -7609,7 +7341,6 @@ function toggleLang(){
   localiseCookieNote();
   applySettings();
   const active=document.querySelector('.page.active');
-  if(active && active.id === 'page-feed') renderFeed();
 }
 
 // ── Cookie / storage notice ──
@@ -10780,87 +10511,6 @@ if(_lbEl){
 }
 
 // ── FEED PAGE ──
-let _feedVisible = 10;
-
-function renderFeed(){
-  const db=getDB();
-  const s=db.settings||{};
-  const logo=imageUrl(s.logoIcon) || '/favicon/apple-touch-icon.png';
-  document.querySelectorAll('.feed-avatar img').forEach(img=>{ img.src=logo; });
-  const nameEl=document.getElementById('feedStoreName');
-  if(nameEl) nameEl.textContent=s.logoText || 'Yingyingying Amulet';
-
-  const nav=document.getElementById('feedNavList');
-  if(nav){
-    const visibleNav=feedVisibleNav(s);
-    nav.innerHTML=visibleNav.map(n=>`
-      <button class="feed-nav-pill" onclick="goPage('${escapeHtml(n.id)}')"><span>${navIcon(n.id)}</span><span>${escapeHtml(n.label)}</span></button>
-    `).join('');
-  }
-
-  const posts=buildFeedPosts(db);
-  const list=document.getElementById('feedList');
-  if(list){
-    const shown=posts.slice(0,_feedVisible);
-    list.innerHTML=shown.length
-      ? shown.map(renderFeedPost).join('') + (posts.length>shown.length ? `<button class="feed-load-more" onclick="loadMoreFeed()">${lang==='th'?'โหลดอัปเดตเพิ่ม':'Load more updates'}</button>` : '')
-      : `<div class="feed-card feed-empty">No feed posts yet. Add amulets, casing styles, projects, or reviews in admin.</div>`;
-    safeWatchImages(list);
-  }
-
-  const stories=document.getElementById('feedStories');
-  if(stories){
-    const storyItems=buildFeedStories(db, posts);
-    stories.innerHTML=storyItems.map(renderFeedStory).join('');
-    safeWatchImages(stories);
-  }
-
-  const popular=document.getElementById('feedPopular');
-  if(popular){
-    const minis=posts.filter(p=>p.type==='casing' && p.imgs&&p.imgs[0]).slice(0,5);
-    popular.innerHTML=minis.length ? minis.map(p=>`
-      <div class="feed-mini" onclick="${p.action}">
-        <img class="feed-mini-img" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','64px',photoAlt(p.title,0,1))}>
-        <div>
-          <div class="feed-mini-name">${escapeHtml(p.title)}</div>
-          <div class="feed-mini-meta">${escapeHtml(p.kicker)}</div>
-        </div>
-      </div>
-    `).join('') : `<div class="feed-mini-meta">Add photos to show popular items.</div>`;
-    safeWatchImages(popular);
-  }
-
-  const quick=document.getElementById('feedQuickPreview');
-  if(quick){
-    const quickItems=posts.filter(p=>p.imgs&&p.imgs[0]).slice(0,2);
-    quick.innerHTML=quickItems.length ? quickItems.map(p=>`
-      <div class="feed-mini" onclick="${p.action}" style="display:block">
-        <img class="feed-mini-img" style="width:100%;height:86px;border-radius:12px;margin-bottom:8px" loading="lazy" decoding="async" ${imgAttrs(p.imgs[0],'thumb','220px',photoAlt(p.title,0,1))}>
-        <div class="feed-mini-name">${escapeHtml(p.title)}</div>
-      </div>
-    `).join('') : `<div class="feed-mini-meta">Add photos to show previews.</div>`;
-    safeWatchImages(quick);
-  }
-
-  const trust=document.getElementById('feedTrust');
-  if(trust){
-    trust.innerHTML=[
-      ['Certified','Genuine'],
-      ['Shipping','Worldwide'],
-      ['Contact','Facebook']
-    ].map(([a,b])=>`
-      <div class="feed-mini" style="justify-content:space-between;cursor:default">
-        <div class="feed-mini-name">${a}</div>
-        <div class="feed-mini-meta" style="font-weight:900;color:#9a741c">${b}</div>
-      </div>
-    `).join('');
-  }
-}
-
-function loadMoreFeed(){
-  _feedVisible += 10;
-  renderFeed();
-}
 
 function feedVisibleNav(settings){
   return (settings.nav||[])
@@ -10868,51 +10518,14 @@ function feedVisibleNav(settings){
     .slice(0,10);
 }
 
-function buildFeedStories(db, posts){
-  const nav=feedVisibleNav(db.settings||{});
-  const preferred=['shop','casing','projects','reviews','contact','about'];
-  const ordered=preferred
-    .map(id=>nav.find(n=>n.id===id))
-    .filter(Boolean)
-    .concat(nav.filter(n=>!preferred.includes(n.id) && n.id !== 'feed' && n.id !== 'home'));
-  const navStories=ordered
-    .slice(0,8)
-    .map((n,i)=>({
-      type:'nav',
-      label:n.id === 'shop' ? 'New Arrivals' : n.label,
-      icon:navIcon(n.id),
-      tone:i%3===1?'alt':i%3===2?'red':'',
-      action:`goPage('${String(n.id).replace(/'/g,"\\'")}')`
-    }));
-  if(navStories.length) return navStories;
-  return posts.filter(p=>p.imgs&&p.imgs.length).slice(0,8);
-}
-
-function renderFeedStory(st){
-  if(st.type === 'nav'){
-    return `
-      <button type="button" class="feed-story feed-story-nav ${st.tone||''}" onclick="${st.action}">
-        <span class="feed-story-icon">${st.icon}</span>
-        <span class="feed-story-label">${escapeHtml(st.label)}</span>
-      </button>
-    `;
-  }
-  return `
-    <button type="button" class="feed-story" onclick="${st.action}">
-      <img loading="lazy" decoding="async" ${imgAttrs(st.imgs[0],'thumb','120px',photoAlt(st.title,0,1))}>
-      <span class="feed-story-label">${escapeHtml(st.title)}</span>
-    </button>
-  `;
-}
-
 const FEED_TYPE_META = {
-  casing:       {badge:'🪬 Casing Style',   cls:'feed-badge-casing',       kicker:'New Casing Available'},
-  amulet:       {badge:'📿 New Arrival',    cls:'feed-badge-amulet',       kicker:'New Amulet In Stock'},
-  project:      {badge:'🚀 Project Update', cls:'feed-badge-project',      kicker:'Project Update'},
-  review:       {badge:'⭐ Customer Review', cls:'feed-badge-review',       kicker:'Customer Review'},
-  article:      {badge:'📖 Article',        cls:'feed-badge-article',      kicker:'Read This'},
-  announcement: {badge:'📢 Announcement',   cls:'feed-badge-announcement', kicker:'Announcement'},
-  default:      {badge:'🏪 Shop Update',    cls:'feed-badge-default',      kicker:'Shop Update'},
+  casing:       {badge:'🪬 Casing Style', kicker:'New Casing Available'},
+  amulet:       {badge:'📿 New Arrival', kicker:'New Amulet In Stock'},
+  project:      {badge:'🚀 Project Update', kicker:'Project Update'},
+  review:       {badge:'⭐ Customer Review', kicker:'Customer Review'},
+  article:      {badge:'📖 Article', kicker:'Read This'},
+  announcement: {badge:'📢 Announcement', kicker:'Announcement'},
+  default:      {badge:'🏪 Shop Update', kicker:'Shop Update'},
 };
 function feedTypeMeta(type){return FEED_TYPE_META[type]||FEED_TYPE_META.default;}
 
@@ -11385,7 +10998,6 @@ function buildFeedPosts(db){
       return {
         type,
         badge: p.badgeOverride || meta.badge,
-        badgeCls: meta.cls,
         kicker: p.pinned ? 'Pinned' : meta.kicker,
         title: p.title || 'Shop update',
         text: p.text || '',
@@ -11412,12 +11024,12 @@ function buildFeedPosts(db){
 
 function buildProductFeedPosts(db){
   const meta = {
-    amulet:    {badge:'📿 New Arrival', cls:'feed-badge-amulet',    kicker:'New Amulet In Stock'},
-    accessory: {badge:'⛓️ Accessory',   cls:'feed-badge-accessory', kicker:'New Accessory'},
-    bracelet:  {badge:'📿 Bracelet',    cls:'feed-badge-accessory', kicker:'New Bracelet'},
-    book:      {badge:'📖 Book',        cls:'feed-badge-accessory', kicker:'New Book'},
-    service:   {badge:'🛠️ Service',    cls:'feed-badge-accessory', kicker:'Service'},
-    other:     {badge:'🏷️ New Item',   cls:'feed-badge-accessory', kicker:'New Item'},
+    amulet:    {badge:'📿 New Arrival', kicker:'New Amulet In Stock'},
+    accessory: {badge:'⛓️ Accessory', kicker:'New Accessory'},
+    bracelet:  {badge:'📿 Bracelet', kicker:'New Bracelet'},
+    book:      {badge:'📖 Book', kicker:'New Book'},
+    service:   {badge:'🛠️ Service', kicker:'Service'},
+    other:     {badge:'🏷️ New Item', kicker:'New Item'},
   };
   return (db.products||[])
     .filter(p=>p && p.publishStatus==='active' && (p.coverImg || (p.gallery&&p.gallery.length)))
@@ -11427,7 +11039,7 @@ function buildProductFeedPosts(db){
       const price=prodPrice(p);
       return {
         type:p.type||'other',
-        badge:m.badge, badgeCls:m.cls, kicker:m.kicker,
+        badge:m.badge, kicker:m.kicker,
         title:p.name || 'New Product',
         text:[p.shortDesc||'', price?`S$${Number(price).toLocaleString()}`:''].filter(Boolean).join(' · '),
         imgs:feedImages([p.coverImg,...(p.gallery||[])].filter(Boolean)),
@@ -11447,7 +11059,6 @@ function buildProjectFeedPosts(db){
     .map(p=>({
       type:'project',
       badge:'🚀 Project Update',
-      badgeCls:'feed-badge-project',
       kicker:'Project Update',
       title:p.name || 'New Project',
       text:p.desc ? String(p.desc).replace(/<[^>]+>/g,' ').trim().slice(0,160) : '',
@@ -11467,7 +11078,6 @@ function buildReviewFeedPosts(db){
     .map(r=>({
       type:'review',
       badge:'⭐ Customer Review',
-      badgeCls:'feed-badge-review',
       kicker:'Customer Review',
       title:(r.rating?'★'.repeat(Math.min(5,Math.max(0,r.rating)))+' ':'')+( r.name || 'Happy Customer'),
       text:r.text ? String(r.text).slice(0,200) : '',
@@ -11494,7 +11104,6 @@ function buildHistoryStoriesFeedPosts(db){
     .map(a=>({
       type:'hs',
       badge:'📖 '+(CAT_LABELS[a.category]||'History & Stories'),
-      badgeCls:'feed-badge-article',
       kicker:'History & Stories',
       title:a.title||'Article',
       text:a.excerpt||'Read more about this article.',
@@ -11523,7 +11132,6 @@ function buildCasingUpdatePosts(db){
       const post={
         type:'casing',
         badge:'🪬 Casing Style',
-        badgeCls:'feed-badge-casing',
         kicker:'Available Now',
         title,
         text:[`${imgs.length} sample photo${imgs.length===1?'':'s'}`, price].filter(Boolean).join(' · '),
@@ -11550,7 +11158,6 @@ function buildCasingUpdatePosts(db){
       const post={
         type:'casing',
         badge:'🪬 New Casing',
-        badgeCls:'feed-badge-casing',
         kicker:'New Casing Available',
         title: typeName,
         text:[`${typeImgs.length} sample photo${typeImgs.length===1?'':'s'}`, priceText].filter(Boolean).join(' · '),
@@ -11593,39 +11200,6 @@ function feedPostAction(p){
   if(target === 'feed') return `goPage('home')`;
   if(target && /^[a-z0-9_-]+$/i.test(target)) return `goPage('${target}')`;
   return `copyFeedLink('feed')`;
-}
-
-function renderFeedPost(p){
-  const imgs=feedImages(p.imgs).slice(0,4);
-  const mediaClass=imgs.length===1?'one':imgs.length===2?'two':imgs.length===3?'three':'four';
-  const badge=p.badge||(feedTypeMeta(p.type||'default').badge);
-  const badgeCls=p.badgeCls||(feedTypeMeta(p.type||'default').cls);
-  const hasMedia=imgs.length>0;
-  return `
-    <article class="feed-card">
-      <div class="feed-type-badge ${badgeCls}">${badge}</div>
-      <div class="feed-card-head">
-        <div class="feed-avatar"><img loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
-        <div style="min-width:0;flex:1">
-          <div class="feed-post-name">Yingyingying Amulet</div>
-          <div class="feed-post-meta">${escapeHtml(feedTimeLabel(p.ts))}</div>
-        </div>
-      </div>
-      <div class="feed-card-body">
-        <h3 class="feed-post-title">${escapeHtml(p.title)}</h3>
-        ${p.text?`<p class="feed-post-text">${escapeHtml(p.text)}</p>`:''}
-      </div>
-      ${hasMedia?`
-        <div class="feed-media ${mediaClass}" onclick="${p.action}" style="cursor:pointer">
-          ${imgs.map((img,i)=>`<img loading="lazy" decoding="async" ${imgAttrs(img,i===0?'medium':'thumb','(max-width: 700px) 100vw, 640px',photoAlt(p.title,i,imgs.length))}>`).join('')}
-        </div>
-      `:''}
-      <div class="feed-cta-bar">
-        <button class="feed-cta-btn" onclick="${p.action}">${escapeHtml(p.cta||'View Details')} →</button>
-        <button class="feed-cta-btn sec" onclick="copyFeedLink('${escapeHtml(p.type||'')}')" title="Share">↗ Share</button>
-      </div>
-    </article>
-  `;
 }
 
 function copyFeedLink(type){
@@ -12354,7 +11928,7 @@ function removeBrokenFeedImage(img){
   if(!img || img.dataset._brokenRemoved) return;
   img.dataset._brokenRemoved = '1';
 
-  const media = img.closest('.social-post-media,.feed-media');
+  const media = img.closest('.social-post-media');
   if(media){
     img.remove();
     const left = media.querySelectorAll('img').length;
@@ -12367,7 +11941,7 @@ function removeBrokenFeedImage(img){
     return;
   }
 
-  const smallCard = img.closest('.feed-mini,.feed-story,.social-preview-grid > div');
+  const smallCard = img.closest('.social-preview-grid > div');
   if(smallCard){
     smallCard.remove();
     return;
