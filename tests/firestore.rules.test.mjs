@@ -17,7 +17,8 @@
 
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import {
-  doc, setDoc, getDoc, deleteDoc, collection, getDocs, query, where, serverTimestamp,
+  doc, setDoc, getDoc, deleteDoc, collection, getDocs, query, where, orderBy, limit,
+  serverTimestamp,
 } from 'firebase/firestore';
 import fs from 'node:fs';
 
@@ -43,6 +44,8 @@ await env.withSecurityRulesDisabled(async ctx => {
   await setDoc(doc(db, 'orders/order-of-customer'), { uid: CUSTOMER_UID, status: 'paid', shipping: { name: 'A', phone: 'B', address: 'C' } });
   await setDoc(doc(db, 'orders/order-of-guest'), { uid: null, status: 'paid', shipping: { name: 'D', phone: 'E', address: 'F' } });
   await setDoc(doc(db, 'reviewSubmissions/sub1'), { name: 'x', anonymous: true, rating: 5, text: 'hi', imgs: [], createdAt: new Date() });
+  await setDoc(doc(db, 'fbPosts/123_456'), { fbId: '123_456', pageId: '123', pageName: 'Guardian House', message: 'hello', imgs: [], createdAt: Date.now(), hidden: false });
+  await setDoc(doc(db, 'fbSync/status'), { ok: true, error: null });
 });
 
 const anon     = env.unauthenticatedContext().firestore();
@@ -121,6 +124,23 @@ await check('stranger READS pending submissions',       'deny',  () => getDocs(c
 await check('staff reads pending submissions',          'allow', () => getDocs(collection(staff, 'reviewSubmissions')));
 await check('anon deletes a submission',                'deny',  () => deleteDoc(doc(anon, 'reviewSubmissions/sub1')));
 await check('staff deletes a submission',               'allow', () => deleteDoc(doc(staff, 'reviewSubmissions/sub1')));
+
+// ── /fbPosts — Facebook mirror: world-readable, Cloud-Function-only writes ──
+// The storefront runs this exact query unauthenticated, so `list` must pass.
+await check('anon LISTS the Facebook feed',             'allow', () => getDocs(query(collection(anon, 'fbPosts'), orderBy('createdAt', 'desc'), limit(20))));
+await check('anon reads one Facebook post',             'allow', () => getDoc(doc(anon, 'fbPosts/123_456')));
+await check('anon writes a Facebook post',              'deny',  () => setDoc(doc(anon, 'fbPosts/forged'), { message: 'spam' }));
+await check('stranger writes a Facebook post',          'deny',  () => setDoc(doc(stranger, 'fbPosts/forged2'), { message: 'spam' }));
+// Even staff: this collection is a mirror, and the only writer is the
+// scheduled function's Admin SDK client, which bypasses rules entirely.
+await check('staff writes a Facebook post',             'deny',  () => setDoc(doc(staff, 'fbPosts/forged3'), { message: 'spam' }));
+await check('staff deletes a Facebook post',            'deny',  () => deleteDoc(doc(staff, 'fbPosts/123_456')));
+
+// ── /fbSync — sync status carries the Graph API's raw error text ────────────
+await check('anon reads the sync status',               'deny',  () => getDoc(doc(anon, 'fbSync/status')));
+await check('stranger reads the sync status',           'deny',  () => getDoc(doc(stranger, 'fbSync/status')));
+await check('staff reads the sync status',              'allow', () => getDoc(doc(staff, 'fbSync/status')));
+await check('staff writes the sync status',             'deny',  () => setDoc(doc(staff, 'fbSync/status'), { ok: false }));
 
 console.log('\n  ' + rulesPath);
 for (const [st, label, want, err] of results) {

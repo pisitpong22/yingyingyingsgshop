@@ -127,5 +127,31 @@ service cloud.firestore {
                    || isTeamMember();
       allow write: if false;
     }
+
+    // ── โพสจากเพจ Facebook (ดึงมาโดย Cloud Function เท่านั้น) ──────────────
+    //
+    // Written ONLY by the syncFacebookPosts scheduled function via the Admin
+    // SDK, which bypasses these rules. `write: if false` therefore closes the
+    // collection to every client — including a signed-in admin, who has no
+    // reason to hand-edit a mirror of Facebook's own data. To hide one post
+    // from the storefront, flip its `hidden` field in the Firebase Console;
+    // the sync preserves that flag across runs.
+    //
+    // `read: if true` grants get AND list, deliberately: the storefront runs
+    // an unauthenticated `orderBy('createdAt','desc')` query over the whole
+    // collection. Nothing private is in here — every field is a copy of a
+    // post the shop already published publicly on Facebook.
+    match /fbPosts/{postId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Last-run status of that sync (timestamps, counts, and the Graph API's
+    // own error text). Staff-only: an expired-token message is operational
+    // detail, not something to leak to visitors.
+    match /fbSync/{docId} {
+      allow read: if isTeamMember();
+      allow write: if false;
+    }
   }
 }

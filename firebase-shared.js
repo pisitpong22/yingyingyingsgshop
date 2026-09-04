@@ -2036,6 +2036,57 @@ async function deleteReviewSubmission(id){
   await deleteDoc(doc(fs, REVIEW_SUBMISSIONS_COL, id));
 }
 
+// ─── FACEBOOK PAGE POSTS ───────────────────────────────────────────────────
+//  Mirrored out of EVERY Facebook Page the shop runs, once an hour, by the
+//  syncFacebookPosts Cloud Function (functions/index.js). Each doc carries
+//  the `pageId`/`pageName` it came from so the feed can label and interleave
+//  them. Read-only here — firestore.rules refuses every client write to this
+//  collection.
+//
+//  Deliberately NOT part of the main `app/db` manifest. That store is a
+//  hand-tuned chunked-JSON format written by the admin panel's save path; a
+//  server job writing into it would race the admin and risk corrupting real
+//  item records. These posts are disposable, re-fetchable data, so they live
+//  in their own flat collection with their own loader.
+//
+//  Cached for the page's lifetime: the storefront re-renders the feed on
+//  every DB change, and none of those need a fresh network round-trip for
+//  posts that only change once an hour.
+const FB_POSTS_COL = 'fbPosts';
+// Enough for several pages at once: the feed shows at most two posts per
+// page, so this only has to be deep enough that a quiet page's newest post is
+// still in the window when a busy one has posted twenty times since.
+const FB_POSTS_LIMIT = 40;
+let _fbPostsCache = null;
+let _fbPostsPromise = null;
+
+async function loadFacebookPosts(){
+  if(_fbPostsCache) return _fbPostsCache;
+  // Concurrent callers (the home feed and its lazy re-render) share one query.
+  if(_fbPostsPromise) return _fbPostsPromise;
+  _fbPostsPromise = (async () => {
+    try {
+      const q = query(
+        collection(fs, FB_POSTS_COL),
+        orderBy('createdAt', 'desc'),
+        limit(FB_POSTS_LIMIT)
+      );
+      const snap = await getDocs(q);
+      _fbPostsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return _fbPostsCache;
+    } catch(err){
+      // Never let a missing collection or a rules change take the feed down —
+      // the rest of it is our own content and must still render.
+      console.warn('[FB] Facebook posts unavailable:', err && err.message);
+      _fbPostsCache = [];
+      return _fbPostsCache;
+    } finally {
+      _fbPostsPromise = null;
+    }
+  })();
+  return _fbPostsPromise;
+}
+
 // ─── EXPOSE GLOBALLY ───────────────────────────────────────────────────────
 let _historyStoriesJsonCache = '';
 let _historySummaryCache = null;
@@ -2400,6 +2451,8 @@ window.FB = {
   submitReview,
   listReviewSubmissions,
   deleteReviewSubmission,
+  // Facebook Page posts (mirrored server-side — see loadFacebookPosts above)
+  loadFacebookPosts,
   // Admin role management
   getAdminRecord,
   listAdmins,

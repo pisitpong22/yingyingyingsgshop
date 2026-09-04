@@ -35,9 +35,11 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onRequest } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 const Stripe = require("stripe");
 
 admin.initializeApp();
@@ -531,6 +533,407 @@ exports.stripeWebhook = onRequest(
       console.error("[stripeWebhook] handler error:", err);
       // Return 500 so Stripe retries the webhook automatically.
       res.status(500).send("Internal error");
+    }
+  }
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FACEBOOK PAGE FEED SYNC — SEVERAL PAGES INTO ONE FEED
+//
+//  Pulls posts from EVERY Facebook Page the shop runs (Genuine Thai Buddha,
+//  Yingyingying Amulet, Guardian House, …) into one Firestore collection, so
+//  the storefront can render them as ordinary feed cards
+//  (index.html: buildFacebookFeedPosts) mixed in with amulets, casing styles,
+//  projects and reviews. Each card is labelled with the page it came from.
+//
+//  Why a server job instead of Facebook's <iframe> Page Plugin:
+//    • the plugin is one un-styleable white box PER PAGE — six pages would be
+//      six separate boxes that cannot be interleaved by date
+//    • Page access tokens must never reach the browser. They can read and
+//      post as the Page; anyone who views source would have them.
+//    • Facebook's CDN image URLs expire after a few days. Every image is
+//      therefore COPIED into our own Storage bucket here; the storefront only
+//      ever loads firebasestorage.googleapis.com URLs, which is also the only
+//      image host the site's CSP allows.
+//
+//  Setup (must be done BEFORE `firebase deploy --only functions`, because a
+//  missing secret fails the whole deploy):
+//     firebase functions:secrets:set FB_PAGE_TOKENS
+//  The value is ONE PAGE ACCESS TOKEN PER LINE — add a line to add a page.
+//  See .claude/FACEBOOK_FEED_SETUP.md for how to mint them.
+//
+//  This job only ever READS from Facebook. It never posts, likes or comments.
+// ════════════════════════════════════════════════════════════════════════════
+
+const FB_PAGE_TOKENS = defineSecret("FB_PAGE_TOKENS");
+
+// Bump this when Meta retires a version (they support each for ~2 years; the
+// current list is at developers.facebook.com/docs/graph-api/changelog).
+// A retired version does not hard-fail — calls fall back to the oldest live
+// one — but the response shape can shift under you, so keep it current.
+const GRAPH_VERSION = "v21.0";
+
+const FB_POSTS_COL = "fbPosts";      // one doc per post — publicly readable
+const FB_SYNC_COL = "fbSync";        // last-run status — staff readable
+const FB_FETCH_LIMIT = 15;           // newest N posts asked of EACH page
+const FB_KEEP_PER_PAGE = 20;         // stored cap, PER PAGE — one busy page
+                                     // must not push the quieter ones out
+const FB_MAX_IMAGES = 4;             // per post — the card shows one, the
+                                     // rest are for the post detail/lightbox
+const FB_MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const FB_MIRROR_PREFIX = "uploads-v2/social/facebook";
+
+// One Page access token per line. Blank lines and #-comments are ignored so
+// the secret can be kept readable — `# Guardian House` above its token.
+function parsePageTokens(raw) {
+  const seen = new Set();
+  return String(raw || "")
+    .split(/[\r\n,]+/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"))
+    .filter((tok) => {
+      // The same token pasted twice would sync the page twice and fight
+      // itself over the same documents.
+      if (seen.has(tok)) return false;
+      seen.add(tok);
+      return true;
+    });
+}
+
+// ─── Graph API ──────────────────────────────────────────────────────────────
+// NOTE: the access token is a query parameter, so this URL must never be
+// logged — not in an error message, not in a console.warn. Only `err.message`
+// from Graph's own JSON body goes anywhere near the logs.
+async function graphGet(path, params, token) {
+  const url = new URL(`https://graph.facebook.com/${GRAPH_VERSION}/${path}`);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
+  url.searchParams.set("access_token", token);
+
+  let res;
+  try {
+    res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  } catch (err) {
+    throw new Error(`Graph API unreachable: ${err.message}`);
+  }
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.error) {
+    const e = (body && body.error) || {};
+    const err = new Error(e.message || `Graph API returned HTTP ${res.status}`);
+    err.fbCode = e.code;
+    throw err;
+  }
+  return body;
+}
+
+// A post's photos, in the order Facebook lists them.
+//
+// An album/carousel post carries its images in attachments[].subattachments;
+// a single-photo post carries one in attachments[].media. `full_picture` is
+// the last resort — for a link post it is the link's preview thumbnail, which
+// is still the right image to show on a card.
+function facebookPostImages(post) {
+  const urls = [];
+  const push = (u) => {
+    if (typeof u === "string" && /^https:\/\//i.test(u) && !urls.includes(u)) urls.push(u);
+  };
+  const attachments = (post.attachments && post.attachments.data) || [];
+  for (const att of attachments) {
+    const subs = (att.subattachments && att.subattachments.data) || [];
+    if (subs.length) {
+      for (const sub of subs) push(sub.media && sub.media.image && sub.media.image.src);
+    } else {
+      push(att.media && att.media.image && att.media.image.src);
+    }
+  }
+  if (!urls.length) push(post.full_picture);
+  return urls.slice(0, FB_MAX_IMAGES);
+}
+
+// ─── Copy one Facebook CDN image into our own bucket ────────────────────────
+// Returns a tokenised firebasestorage.googleapis.com download URL — the same
+// shape getDownloadURL() hands the admin panel, and the same shape the CSP's
+// img-src allows. Storage rules do not gate tokenised URLs, which is why the
+// storefront can read these while `uploads-v2/**` has no public read rule.
+async function mirrorFacebookImage(srcUrl, destPathNoExt) {
+  const res = await fetch(srcUrl, { signal: AbortSignal.timeout(30000) });
+  if (!res.ok) throw new Error(`image fetch returned HTTP ${res.status}`);
+
+  const contentType = String(res.headers.get("content-type") || "").split(";")[0].trim();
+  if (!/^image\//i.test(contentType)) throw new Error(`not an image (${contentType || "no type"})`);
+
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (!buf.length) throw new Error("empty image");
+  if (buf.length > FB_MAX_IMAGE_BYTES) throw new Error(`image too large (${buf.length} bytes)`);
+
+  const ext = contentType === "image/png" ? "png"
+    : contentType === "image/webp" ? "webp"
+    : contentType === "image/gif" ? "gif"
+    : "jpg";
+  const downloadToken = crypto.randomUUID();
+  const bucket = admin.storage().bucket();
+  const file = bucket.file(`${destPathNoExt}.${ext}`);
+
+  await file.save(buf, {
+    resumable: false,
+    contentType,
+    metadata: {
+      cacheControl: "public,max-age=31536000,immutable",
+      metadata: { firebaseStorageDownloadTokens: downloadToken },
+    },
+  });
+
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/` +
+    `${encodeURIComponent(file.name)}?alt=media&token=${downloadToken}`;
+}
+
+async function deleteMirroredImages(docId) {
+  try {
+    await admin.storage().bucket().deleteFiles({ prefix: `${FB_MIRROR_PREFIX}/${docId}/` });
+  } catch (err) {
+    // A leftover file costs a few KB; a thrown error costs the whole sync.
+    console.warn(`[fbSync] could not clear mirrored images for ${docId}:`, err.message);
+  }
+}
+
+// Identity of a post AS WE STORED IT. If this is unchanged we skip the post
+// entirely — no Storage writes, no Firestore write. Without it every run would
+// re-download every image of every post of every page, forever.
+function facebookPostHash(post, srcUrls) {
+  return crypto
+    .createHash("sha1")
+    .update(JSON.stringify({
+      m: post.message || "",
+      t: post.created_time || "",
+      p: post.permalink_url || "",
+      i: srcUrls,
+    }))
+    .digest("hex");
+}
+
+// ─── One page ───────────────────────────────────────────────────────────────
+// `existing` is every stored post, keyed by doc id — shared across pages so
+// the whole collection is read once per run rather than once per page.
+//
+// Returns what this page owns now, so the caller can prune PER PAGE. Pruning
+// across all pages at once would be wrong: page A posting today would make
+// every post of quiet page B look "deleted on Facebook".
+async function syncOnePage(token, existing) {
+  // A Page token's `me` IS the Page, so the page id and name come free and
+  // always match what Facebook shows — nothing to keep in step by hand.
+  const page = await graphGet("me", { fields: "id,name" }, token);
+  const pageId = String(page.id || "");
+  const pageName = String(page.name || "").slice(0, 80);
+  if (!pageId) throw new Error("token did not resolve to a page");
+
+  const body = await graphGet(
+    "me/posts",
+    {
+      // `/me/posts` is posts BY the page (not visitors' posts on it — that is
+      // /feed, which would put strangers' text on the storefront).
+      fields: "id,created_time,message,permalink_url,full_picture," +
+        "attachments{media_type,media,subattachments{media}}",
+      limit: FB_FETCH_LIMIT,
+    },
+    token
+  );
+
+  const fetched = Array.isArray(body.data) ? body.data : [];
+  const seen = new Set();
+  const createdAtById = new Map();
+  let written = 0;
+  let skipped = 0;
+  let oldestFetchedAt = Infinity;
+
+  for (const post of fetched) {
+    const docId = safeDocId(post.id);
+    if (!docId || seen.has(docId)) continue;
+
+    const srcUrls = facebookPostImages(post);
+    const message = String(post.message || "").slice(0, 2000);
+    // A post with neither text nor a picture (a bare share, a profile-picture
+    // change) has nothing a card could show.
+    if (!message && !srcUrls.length) continue;
+
+    const createdAt = Date.parse(post.created_time || "") || 0;
+    seen.add(docId);
+    createdAtById.set(docId, createdAt);
+    if (createdAt) oldestFetchedAt = Math.min(oldestFetchedAt, createdAt);
+
+    const prev = existing.get(docId);
+    const srcHash = facebookPostHash(post, srcUrls);
+    if (prev && prev.srcHash === srcHash && prev.pageId === pageId &&
+        Array.isArray(prev.imgs) && prev.imgs.length === srcUrls.length) {
+      skipped++;
+      continue;
+    }
+
+    // Re-mirroring: clear the old files first so a post edited from 5 photos
+    // down to 2 does not leave 3 orphans in the bucket.
+    if (prev) await deleteMirroredImages(docId);
+
+    const imgs = [];
+    for (let i = 0; i < srcUrls.length; i++) {
+      try {
+        imgs.push(await mirrorFacebookImage(srcUrls[i], `${FB_MIRROR_PREFIX}/${docId}/${i}`));
+      } catch (err) {
+        // One unreachable photo must not cost us the post's text.
+        console.warn(`[fbSync] image ${i} of ${docId} skipped:`, err.message);
+      }
+    }
+    if (!message && !imgs.length) continue;
+
+    await db.collection(FB_POSTS_COL).doc(docId).set({
+      fbId: String(post.id),
+      // Which page this came from. The card shows `pageName` on its badge, so
+      // a visitor can tell Guardian House's posts from the gallery's.
+      pageId,
+      pageName,
+      message,
+      permalink: String(post.permalink_url || ""),
+      createdAt,
+      imgs,
+      srcHash,
+      // Set `hidden: true` by hand in the Firestore console to drop one post
+      // from the storefront without deleting it — the next sync preserves it.
+      hidden: prev ? prev.hidden === true : false,
+      syncedAt: Date.now(),
+    });
+    written++;
+  }
+
+  // ─── Prune, within this page only ─────────────────────────────────────────
+  // A stored post of THIS page that Facebook no longer returns, but which is
+  // newer than the oldest post it did return, was deleted on Facebook — drop
+  // it. Anything older simply fell out of the FB_FETCH_LIMIT window and must
+  // be left alone, or every run would delete the page's back catalogue.
+  //
+  // `oldestFetchedAt === Infinity` means this page returned nothing usable.
+  // That is the one case where the rule above would delete the page entirely,
+  // so it deletes nothing instead.
+  const removals = new Set();
+  for (const [docId, data] of existing) {
+    if (data.pageId !== pageId || seen.has(docId)) continue;
+    const ts = Number(data.createdAt) || 0;
+    if (oldestFetchedAt !== Infinity && ts >= oldestFetchedAt) removals.add(docId);
+  }
+
+  // Then keep this page bounded, newest first. Posts written for the first
+  // time this run are ranked by the timestamp just read from Graph — they are
+  // not in `existing` yet, and ranking them at 0 would prune the newest posts.
+  const mine = new Set([...seen]);
+  for (const [docId, data] of existing) if (data.pageId === pageId) mine.add(docId);
+  const ranked = [...mine]
+    .filter((id) => !removals.has(id))
+    .map((id) => ({
+      id,
+      ts: createdAtById.has(id)
+        ? createdAtById.get(id)
+        : Number((existing.get(id) || {}).createdAt) || 0,
+    }));
+  ranked.sort((a, b) => b.ts - a.ts);
+  for (const extra of ranked.slice(FB_KEEP_PER_PAGE)) removals.add(extra.id);
+
+  for (const docId of removals) {
+    await deleteMirroredImages(docId);
+    await db.collection(FB_POSTS_COL).doc(docId).delete().catch(() => {});
+  }
+
+  return { pageId, pageName, fetched: fetched.length, written, skipped, removed: removals.size };
+}
+
+// ─── All pages ──────────────────────────────────────────────────────────────
+// One page's failure must never take down the others: a revoked token on
+// Guardian House cannot be allowed to stop the gallery's posts from syncing,
+// and — just as important — must not delete the posts already stored for it.
+// A page that threw is simply skipped this run, its documents untouched.
+async function runFacebookSync(tokens) {
+  const existingSnap = await db.collection(FB_POSTS_COL).get();
+  const existing = new Map(existingSnap.docs.map((d) => [d.id, d.data() || {}]));
+
+  const pages = [];
+  const failures = [];
+  const donePageIds = new Set();
+
+  for (const token of tokens) {
+    try {
+      const result = await syncOnePage(token, existing);
+      if (donePageIds.has(result.pageId)) {
+        // Two different tokens for the same page — the second pass would
+        // just redo the first's work. Report it so the secret gets tidied.
+        failures.push({ page: result.pageName, error: "duplicate token for a page already synced" });
+        continue;
+      }
+      donePageIds.add(result.pageId);
+      pages.push(result);
+    } catch (err) {
+      // Which page? We may not know — the failure can be the /me call itself.
+      // Never put the token in this message.
+      const hint = err.fbCode === 190
+        ? " (token expired or revoked — mint a new one for this page)"
+        : "";
+      failures.push({ page: `token #${tokens.indexOf(token) + 1}`, error: `${err.message}${hint}` });
+      console.error("[fbSync] page failed:", err.message);
+    }
+  }
+
+  return {
+    pages,
+    failures,
+    pagesOk: pages.length,
+    pagesFailed: failures.length,
+    written: pages.reduce((n, p) => n + p.written, 0),
+    removed: pages.reduce((n, p) => n + p.removed, 0),
+  };
+}
+
+exports.syncFacebookPosts = onSchedule(
+  {
+    schedule: "every 60 minutes",
+    timeZone: "Asia/Singapore",
+    secrets: [FB_PAGE_TOKENS],
+    timeoutSeconds: 540,
+    memory: "512MiB",
+    retryCount: 0,   // it runs again in an hour anyway; a retry storm on an
+                     // expired token would just burn image bandwidth
+  },
+  async () => {
+    const statusRef = db.collection(FB_SYNC_COL).doc("status");
+    const startedAt = Date.now();
+    const tokens = parsePageTokens(FB_PAGE_TOKENS.value());
+
+    if (!tokens.length) {
+      await statusRef.set({
+        ok: false, startedAt, finishedAt: Date.now(),
+        error: "FB_PAGE_TOKENS is empty — set it (one Page access token per line) with " +
+          "`firebase functions:secrets:set FB_PAGE_TOKENS`.",
+      });
+      return;
+    }
+
+    try {
+      const result = await runFacebookSync(tokens);
+      await statusRef.set({
+        // Partial success is still a failure worth seeing in the console: one
+        // of the shop's pages stopped syncing and somebody has to notice.
+        ok: result.pagesFailed === 0 && result.pagesOk > 0,
+        startedAt,
+        finishedAt: Date.now(),
+        error: result.pagesFailed
+          ? `${result.pagesFailed} of ${tokens.length} page(s) failed — see \`failures\`.`
+          : null,
+        ...result,
+      });
+      console.log("[fbSync] done:", JSON.stringify({
+        pagesOk: result.pagesOk, pagesFailed: result.pagesFailed,
+        written: result.written, removed: result.removed,
+      }));
+      if (result.pagesOk === 0) throw new Error("every Facebook page failed to sync");
+    } catch (err) {
+      await statusRef.set({
+        ok: false, startedAt, finishedAt: Date.now(), error: err.message,
+      }, { merge: true }).catch(() => {});
+      console.error("[fbSync] failed:", err.message);
+      throw err;   // surface it in the Cloud Functions error dashboard
     }
   }
 );
