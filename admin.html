@@ -24,7 +24,7 @@
 <meta name="apple-mobile-web-app-title" content="YYYSG">
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;600;700&family=Sarabun:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=Cinzel:wght@400;600;700&family=Marcellus&family=Bodoni+Moda:ital,wght@0,400;0,700;1,400;1,700&family=Crimson+Pro:ital,wght@0,400;0,700;1,400;1,700&family=DM+Serif+Display:ital@0;1&family=Libre+Caslon+Text:ital@0;1&display=swap" rel="stylesheet">
-<script type="module" src="firebase-shared.js?v=20260724a"></script>
+<script type="module" src="firebase-shared.js?v=20260829a"></script>
 <style>
   /* ═══════════════════════════════════════════════════════════════
      YINGYINGYINGSG ADMIN — 2026 redesign
@@ -3446,7 +3446,7 @@ function tConfirm(key){return _confirm(tr(key));}
 function defaultSettings(){
   return {
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
-    logoIcon:'/favicon/apple-touch-icon.png',logoText:'Yingyingying Amulet',logoSub:'AUTHENTIC THAI AMULETS',
+    logoIcon:'/favicon/logo-180.webp',logoText:'Yingyingying Amulet',logoSub:'AUTHENTIC THAI AMULETS',
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
     // Keep these `visible` flags in step with index.html's copy of the same
     // defaults — Shop, About Us and Reviews are pages the owner keeps closed,
@@ -3654,6 +3654,10 @@ function applyDbMigrations(d){
   if(d.settings.displayFont===undefined)d.settings.displayFont=def.displayFont;
   // Auto-upgrade old emoji logo to the favicon image
   if(d.settings.logoIcon === '📿') d.settings.logoIcon = def.logoIcon;
+  // Mirrors index.html: the 180x180 logo now ships as WebP (9 KB vs 49 KB).
+  // Keep both files in step or the admin form saves the heavy path straight
+  // back over the storefront's normalised one.
+  if(d.settings.logoIcon === '/favicon/apple-touch-icon.png') d.settings.logoIcon = '/favicon/logo-180.webp';
   if(!Array.isArray(d.settings.homeOrder)){
     d.settings.homeOrder = def.homeOrder.slice();
   } else {

@@ -67,8 +67,24 @@
 <meta name="theme-color" content="#0d0a06">
 <link rel="manifest" href="/favicon/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=Sarabun:wght@300;400;500;600&family=Noto+Serif:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600;1,700&display=swap" rel="stylesheet">
+<!-- Nothing on this page renders until Firestore answers, and the browser
+     cannot discover these six modules until firebase-shared.js has been
+     downloaded AND parsed — one full round trip to gstatic.com (a fresh DNS +
+     TLS handshake on mobile data) that happens after ours has finished.
+     modulepreload starts them during the head parse instead, in parallel.
+
+     KEEP THE VERSION IN SYNC with the imports at the top of
+     firebase-shared.js. If these drift apart the browser downloads BOTH
+     versions — the preloaded one is then dead weight, which is the exact
+     opposite of the point. The list mirrors that file's import block. -->
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.2/firebase-functions.js" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-check.js" crossorigin>
 <!-- Firebase shared module — provides window.FB API -->
-<script type="module" src="firebase-shared.js?v=20260724a"></script>
+<script type="module" src="firebase-shared.js?v=20260829a"></script>
 <!-- Stripe.js is loaded lazily (see loadStripeJs()) only when a visitor
      actually opens Checkout — it's ~1MB of JS that most page views never
      need, so we don't make every mobile visitor pay for it upfront. -->
@@ -106,6 +122,26 @@
     document.documentElement.className += ' lite-mode';
     window.__yyyLite = true;
   }
+
+  // ───── SLOW-NETWORK GATE ─────
+  // Deliberately NOT folded into `weak` above. Lite mode also strips ~150
+  // backdrop-filters and the gradient background, which visibly changes the
+  // design — that trade is worth it to stop an OOM kill on a 1 GB phone, but
+  // it is the wrong price to charge someone whose only problem is being on
+  // mobile data. This flag gates ONE thing: the 3D hero download, which is
+  // 1.6 MB of .glb plus 144 KB of three.js — 45% of a cold page load, for a
+  // decoration. Everything else renders exactly as it does on wifi.
+  //
+  // navigator.connection is Chromium-only; Safari/iOS reports nothing and
+  // falls through to the normal path. The durable fix for those visitors is
+  // compressing the .glb itself, not this gate.
+  try {
+    var c = navigator.connection;
+    if(c && (c.saveData === true || /^(slow-2g|2g|3g)$/.test(c.effectiveType || ''))){
+      document.documentElement.className += ' slow-net';
+      window.__yyySlowNet = true;
+    }
+  } catch(e){}
 })();
 
 (function bootWatchdog(){
@@ -350,6 +386,7 @@
   .social-home .update-badge-review{background:rgba(220,180,0,.15);color:#ffe066;border:none}
   .social-home .update-badge-hs{background:rgba(160,80,220,.15);color:#d4a8ff;border:none}
   .social-home .update-badge-accessory{background:rgba(50,200,220,.15);color:#7af0ff;border:none}
+  .social-home .update-badge-facebook{background:rgba(24,119,242,.18);color:#8fbcff;border:none}
   /* ── Design A: service cards dark glass ── */
   .social-home .svc-card{
     background:rgba(255,255,255,.055);
@@ -1389,6 +1426,7 @@ but allow the bg image itself to show. */
   .update-badge-accessory{background:rgba(50,150,180,.12);color:#0e5a78}
   .update-badge-history{background:rgba(120,80,180,.12);color:#4a2080}
   .update-badge-hs{background:rgba(120,80,180,.12);color:#4a2080}
+  .update-badge-facebook{background:rgba(24,119,242,.12);color:#0e4a9e}
 
   .update-card-title{
     font-family:var(--font-display);font-size:17px;font-weight:700;
@@ -3595,6 +3633,7 @@ but allow the bg image itself to show. */
   .update-card[data-feed-type="hs"] .update-card-thumb::before,.update-card[data-feed-type="article"] .update-card-thumb::before{content:'🏺'}
   .update-card[data-feed-type="amulet"] .update-card-thumb::before{content:'📿'}
   .update-card[data-feed-type="casing"] .update-card-thumb::before{content:'🔮'}
+  .update-card[data-feed-type="facebook"] .update-card-thumb::before{content:'📘'}
   .update-card-body{padding:26px !important}
   .update-card-badge{border-radius:999px !important;background:transparent !important;border:1px solid rgba(208,170,68,.42) !important;color:#d8bd5d !important;letter-spacing:3px !important;font-size:12px !important}
   .update-card-title{font-size:22px !important;color:rgba(238,226,174,.9) !important;margin-top:26px !important}
@@ -4784,7 +4823,7 @@ but allow the bg image itself to show. */
 
 <div class="fb-splash" id="fbSplash">
   <div class="fb-splash-inner">
-    <div class="fb-splash-logo"><img loading="eager" fetchpriority="high" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
+    <div class="fb-splash-logo"><img loading="eager" fetchpriority="high" decoding="async" src="/favicon/logo-180.webp" alt=""></div>
     <div class="fb-splash-dots"><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span><span class="fb-splash-dot"></span></div>
   </div>
 </div>
@@ -4845,7 +4884,7 @@ but allow the bg image itself to show. */
     </div>
     <section class="lens-hero">
       <div class="lens-copy">
-        <div class="lens-crest"><img id="socialAvatarImg" loading="lazy" decoding="async" src="/favicon/apple-touch-icon.png" alt=""></div>
+        <div class="lens-crest"><img id="socialAvatarImg" loading="lazy" decoding="async" src="/favicon/logo-180.webp" alt=""></div>
         <!-- No kicker here: it echoed `topbar`, which already runs across the
              top of the page on desktop, and its "Certified Genuine · Worldwide
              Shipping" wording was repeated word-for-word by the trust chips a
@@ -5586,6 +5625,15 @@ no per-frame sheen animation. */
   html.lite-mode .hero-3d,
   html.lite-mode #phra3d,
   html.lite-mode #phra3dLegacy{display:none !important}
+  /* Slow network: hide the WebGL canvases only — deliberately NOT .hero-3d,
+     which lite mode does hide. That block is also the parent of
+     .hero-still-img, and with has3D forced false applySettings() puts the
+     owner's still hero image in there. A still WebP instead of a 1.6 MB .glb
+     is the whole point; hiding its container would throw the good outcome
+     away and leave the column blank. When there is no still image either,
+     applySettings() sets .hero-3d display:none itself. */
+  html.slow-net #phra3d,
+  html.slow-net #phra3dLegacy{display:none !important}
   html.lite-mode *{
     animation:none !important;
     transition:none !important;
@@ -5808,7 +5856,7 @@ function defaultSettings(){
     // not the same as refusing to charge.
     checkoutEnabled:true,
     pageTitle:'Yingyingying Amulet | Authentic Thai Amulets',
-    logoIcon:'/favicon/apple-touch-icon.png',
+    logoIcon:'/favicon/logo-180.webp',
     logoText:'YingyingyingSG',
     logoSub:'AUTHENTIC THAI AMULETS',
     topbar:'📿 Yingyingying Amulet — Authentic Thai Amulets · Certified Genuine · Worldwide Shipping 📿',
@@ -6031,6 +6079,13 @@ function applyDbMigrations(d){
   // Only does this once — if the user has set anything other than the legacy
   // default emoji, we respect their choice.
   if(d.settings.logoIcon === '📿') d.settings.logoIcon = def.logoIcon;
+  // Same idea, one generation later: the stored value is a path, so changing
+  // the default alone does nothing for existing shops. Without this line the
+  // page fetches BOTH files — the WebP for the splash/avatar markup and the
+  // 49 KB PNG for this setting — which is heavier than before the swap.
+  // Only the exact legacy path is rewritten, so a real uploaded logo is kept.
+  // /favicon/apple-touch-icon.png is still shipped for <link rel=apple-touch-icon>.
+  if(d.settings.logoIcon === '/favicon/apple-touch-icon.png') d.settings.logoIcon = '/favicon/logo-180.webp';
   if(!Array.isArray(d.settings.homeOrder)){
     d.settings.homeOrder = def.homeOrder.slice();
   } else {
@@ -6567,7 +6622,14 @@ function applySettings(){
   const heroImage = imageUrl(s.hero.heroImage,'medium') || '';
   const hero3dBlock = document.querySelector('.hero-3d');
   const heroSection = document.querySelector('.hero');
-  const has3D = !!(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG));
+  // __yyySlowNet forces this false so the whole hero decision tree below
+  // resolves as "no 3D available": a still hero image wins if the owner
+  // uploaded one (a fraction of the .glb's 1.6 MB), and if they didn't, the
+  // card collapses to the single-column crest layout instead of leaving an
+  // empty lit box. Gating here rather than only inside initPhra3D() is what
+  // keeps .no-visual, .is-still and the has-3d halo consistent with reality.
+  const has3D = !window.__yyySlowNet &&
+                !!(window.PHRA_GLB || (window.PHRA_FRONT_IMG && window.PHRA_BACK_IMG));
   const hasHeroVisual = !!(heroImage || has3D);
 
   // ─── Sacred Glass hero: pick the layout ───
@@ -6807,7 +6869,7 @@ let _socialHomeCasingQueued=false;
 function renderSocialHomeBase(){
   const db=getDB();
   const s=db.settings||{};
-  const logo=imageUrl(s.logoIcon) || '/favicon/apple-touch-icon.png';
+  const logo=imageUrl(s.logoIcon) || '/favicon/logo-180.webp';
   const cover=imageUrl(s.hero && s.hero.bgImage,'medium') || imageUrl(s.hero && s.hero.heroImage,'medium') || '';
   // The nav pill above already carries the shop name in the script logotype,
   // so the headline takes the tagline instead of printing the name a second
@@ -6924,6 +6986,7 @@ function scheduleSocialHomeFeedLoad(){
       // Render once immediately after keys are confirmed loaded
       renderSocialHomeFeed();
       scheduleSocialCasingPreviewLoad();
+      scheduleFacebookFeedLoad();
     })
     .catch(err => {
       loadState.homeFeed = 'error';
@@ -6964,7 +7027,7 @@ function renderSocialHomeFeed(){
   // Balance: take up to 2 per type so casing doesn't dominate
   const allPosts=buildFeedPosts(db);
   const seenTypes={}; const balanced=[];
-  const LIMIT_PER_TYPE={casing:2,amulet:2,accessory:2,bracelet:2,book:2,service:2,other:2,project:2,review:2,hs:2,default:3,article:3,announcement:3};
+  const LIMIT_PER_TYPE={casing:2,amulet:2,accessory:2,bracelet:2,book:2,service:2,other:2,project:2,review:2,hs:2,facebook:3,default:3,article:3,announcement:3};
   // Manual/pinned posts first (no type-capping)
   allPosts.filter(p=>p.pinned||p.type==='default'||p.type==='article'||p.type==='announcement')
     .slice(0,3).forEach(p=>balanced.push(p));
@@ -7001,8 +7064,14 @@ function renderSocialPost(p){
   // Map badge text to CSS class
   const typeMap={default:'default',casing:'casing',amulet:'amulet',project:'project',
                  review:'review',article:'article',announcement:'announcement',
-                 accessory:'accessory',history:'history',hs:'hs'};
+                 accessory:'accessory',history:'history',hs:'hs',facebook:'facebook'};
   const badgeType=typeMap[p.type||'default']||'default';
+  // Every other card opens something on this site; a Facebook card leaves it
+  // for a new tab. Say so on the button rather than letting "Read more" imply
+  // the visitor is staying put.
+  const ctaLabel = p.type === 'facebook'
+    ? (lang === 'th' ? 'ดูบนเฟซบุ๊ก →' : 'View on Facebook →')
+    : 'Read more →';
   const thumbHtml=thumb
     ? `<img loading="lazy" decoding="async" ${imgAttrs(thumb,'medium','(max-width:700px) 100vw, 400px',photoAlt(p.title,0,1))}>`
     : `<div class="update-card-thumb-placeholder">✦</div>`;
@@ -7015,7 +7084,7 @@ function renderSocialPost(p){
         ${p.text?`<p class="update-card-text">${escapeHtml(p.text)}</p>`:''}
         <div class="update-card-foot">
           <span class="update-card-date">${escapeHtml(feedTimeLabel(p.ts))}</span>
-          <button class="update-card-cta" onclick="${p.action}">Read more →</button>
+          <button class="update-card-cta" onclick="${p.action}">${ctaLabel}</button>
         </div>
       </div>
     </article>
@@ -9493,6 +9562,7 @@ const FEED_TYPE_META = {
   review:       {badge:'⭐ Customer Review', kicker:'Customer Review'},
   article:      {badge:'📖 Article', kicker:'Read This'},
   announcement: {badge:'📢 Announcement', kicker:'Announcement'},
+  facebook:     {badge:'📘 From Facebook', kicker:'From Our Facebook Page'},
   default:      {badge:'🏪 Shop Update', kicker:'Shop Update'},
 };
 function feedTypeMeta(type){return FEED_TYPE_META[type]||FEED_TYPE_META.default;}
@@ -9982,12 +10052,158 @@ function buildFeedPosts(db){
   const projects=buildProjectFeedPosts(db);
   const reviews=buildReviewFeedPosts(db);
   const hs=buildHistoryStoriesFeedPosts(db);
-  const auto=[...casing,...products,...projects,...reviews,...hs];
+  // Not built from `db`: these come from their own Firestore collection and
+  // arrive after the first render — see buildFacebookFeedPosts below.
+  const facebook=buildFacebookFeedPosts();
+  const auto=[...casing,...products,...projects,...reviews,...hs,...facebook];
   return [...manual,...auto].sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if((b.ts||0) !== (a.ts||0)) return (b.ts||0) - (a.ts||0);
     return (b.score||0) - (a.score||0);
   });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FACEBOOK PAGE POSTS IN THE FEED
+//
+// Posts from ALL of the shop's Facebook pages are mirrored into Firestore
+// once an hour by the syncFacebookPosts Cloud Function, images and all. They
+// then render as ordinary .update-card items, sorted in among our own content
+// by date and labelled with the page each came from — which is the whole
+// point of doing it this way rather than embedding Facebook's own <iframe>
+// Page Plugin, which would be one un-styleable box per page.
+//
+// Two things make this builder unlike every other one in this file:
+//   • its data is NOT in `db`. It lives in its own collection and loads
+//     asynchronously, so the feed renders once without it and again once it
+//     lands (scheduleFacebookFeedLoad below).
+//   • its text is written by whoever runs the Facebook page, not by the
+//     admin panel. It is escaped like any other untrusted string, and the
+//     only thing a click can do is open a facebook.com permalink.
+// ═══════════════════════════════════════════════════════════════
+let _fbFeedPosts = [];
+let _fbFeedQueued = false;
+
+// A Facebook post is one blob of text; a feed card wants a heading and a
+// blurb. The first non-empty line is nearly always the post's own headline
+// (they are written that way), so that becomes the title and the rest the body.
+function fbPostTitle(message){
+  const lines = String(message || '').split('\n').map(l => l.trim()).filter(Boolean);
+  if(!lines.length) return lang === 'th' ? 'โพสต์จากเฟซบุ๊ก' : 'Facebook post';
+  const head = lines[0];
+  return head.length > 80 ? head.slice(0, 79).trimEnd() + '…' : head;
+}
+
+function fbPostBody(message){
+  const lines = String(message || '').split('\n').map(l => l.trim()).filter(Boolean);
+  const rest = lines.slice(1).join(' ').trim() || (lines[0] && lines[0].length > 80 ? lines[0] : '');
+  if(!rest) return '';
+  return rest.length > 180 ? rest.slice(0, 179).trimEnd() + '…' : rest;
+}
+
+// The document id is written by safeDocId() on the server, so it is already
+// [A-Za-z0-9_-] only. Re-stripping it here is what makes it safe to drop
+// straight into the inline onclick= that renderSocialPost builds.
+function fbPostRef(id){
+  return String(id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
+// The shop runs several Facebook pages and they post at very different rates.
+// Sorting the lot by date and taking the top few would hand every Facebook
+// slot in the feed to whichever page posted this morning, and the quieter
+// pages would never appear at all. So: at most FB_FEED_PER_PAGE posts from
+// any one page, then interleaved page by page, THEN date-sorted by
+// buildFeedPosts along with everything else.
+const FB_FEED_PER_PAGE = 2;
+const FB_FEED_MAX = 8;
+
+function fbPostPageKey(p){
+  return String(p.pageId || p.pageName || 'unknown');
+}
+
+// `_fbFeedPosts` arrives newest-first, so each page's bucket is already in
+// date order and taking the head of each in turn gives newest-of-page-A,
+// newest-of-page-B, … down the list.
+function fbInterleaveByPage(posts){
+  const byPage = new Map();
+  for(const p of posts){
+    const key = fbPostPageKey(p);
+    if(!byPage.has(key)) byPage.set(key, []);
+    const bucket = byPage.get(key);
+    if(bucket.length < FB_FEED_PER_PAGE) bucket.push(p);
+  }
+  const queues = [...byPage.values()];
+  const out = [];
+  for(let round = 0; round < FB_FEED_PER_PAGE; round++){
+    for(const q of queues) if(q[round]) out.push(q[round]);
+  }
+  return out.slice(0, FB_FEED_MAX);
+}
+
+// The badge carries the page's own name, so a visitor can tell Guardian
+// House's post from the gallery's at a glance. That name comes from Facebook,
+// and renderSocialPost drops `badge` into the HTML unescaped (every other
+// badge is a hardcoded literal) — so it gets escaped HERE.
+function fbPostBadge(pageName){
+  const name = String(pageName || '').trim();
+  if(!name) return '📘 From Facebook';
+  const short = name.length > 24 ? name.slice(0, 23).trimEnd() + '…' : name;
+  return `📘 ${escapeHtml(short)}`;
+}
+
+function buildFacebookFeedPosts(){
+  const usable = (_fbFeedPosts || [])
+    .filter(p => p && p.hidden !== true && fbPostRef(p.id))
+    .filter(p => (p.message && String(p.message).trim()) || (p.imgs && p.imgs.length));
+  return fbInterleaveByPage(usable)
+    .map(p => ({
+      type:'facebook',
+      badge:fbPostBadge(p.pageName),
+      kicker:p.pageName ? `From ${p.pageName}` : 'From Our Facebook Page',
+      title:fbPostTitle(p.message),
+      text:fbPostBody(p.message),
+      imgs:feedImages(p.imgs),
+      action:`openFacebookPost('${fbPostRef(p.id)}')`,
+      cta:'View on Facebook',
+      pinned:false,
+      ts:Number(p.createdAt || 0) || 0,
+      score:(p.imgs || []).length,
+    }));
+}
+
+function openFacebookPost(id){
+  const post = (_fbFeedPosts || []).find(p => fbPostRef(p.id) === fbPostRef(id));
+  const url = post && typeof post.permalink === 'string' ? post.permalink : '';
+  // Only ever navigate to a facebook.com permalink the sync itself wrote.
+  // The check is cheap and it means no value in this collection can ever
+  // become an open redirect out of the shop.
+  if(!/^https:\/\/(www\.|web\.|m\.|business\.)?facebook\.com\//i.test(url)){
+    showToast(lang === 'th' ? 'ไม่พบลิงก์โพสต์นี้' : 'Post link unavailable');
+    return;
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
+// Deferred on purpose, exactly like the casing preview above it: the feed's
+// own content is already on screen by now, and this is one extra Firestore
+// query for content the visitor has not scrolled to yet.
+function scheduleFacebookFeedLoad(){
+  if(_fbFeedQueued || _fbFeedPosts.length) return;
+  if(!window.FB || typeof window.FB.loadFacebookPosts !== 'function') return;
+  _fbFeedQueued = true;
+  const run = () => {
+    window.FB.loadFacebookPosts().then(posts => {
+      _fbFeedPosts = Array.isArray(posts) ? posts : [];
+      if(_fbFeedPosts.length && pageIsActive('page-home')) renderSocialHomeFeed();
+    }).catch(err => {
+      console.warn('[home feed] Facebook posts skipped:', err);
+    }).finally(() => {
+      _fbFeedQueued = false;
+    });
+  };
+  const delay = isMobilePerfMode() ? 8200 : 2200;
+  if('requestIdleCallback' in window) setTimeout(() => requestIdleCallback(run,{timeout:isMobilePerfMode()?9000:3000}), delay);
+  else setTimeout(run, delay);
 }
 
 function buildProductFeedPosts(db){
@@ -11085,6 +11301,7 @@ window.__yyyAppBooted = true;
   let frontTex = null, backTex = null;
   let loadedGlbUrl = '';                         // remember what we loaded so we can detect changes
   let initInFlight = null;
+  let phraDracoLoader = null;                    // shared across loads — owns a worker pool
   let phraResizeObserver = null;                 // watches #phra3d for the 0×0 → real-size jump
   let resizeRenderer = null;                     // buildScene's resize(), for the post-load settle pass
 
@@ -11118,9 +11335,17 @@ window.__yyyAppBooted = true;
   // and update here, or the 3D hero silently stops loading.
   const THREE_SRI  = 'sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu';
   const GLTF_SRI   = 'sha384-fljlqkjWlmSFjkESkQvm77heIZpoWmXEOzlCA7kOpGUH+95Zk0yGfQieWM2q136E';
+  const DRACO_SRI  = 'sha384-TNRcLasZnnfIJJskDY5XlrfmsKTjBSy98MtyLuX+3rQWRbpSQvtFIdikNpcOh3SN';
+
+  // Where DRACOLoader fetches the actual decoder (draco_wasm_wrapper.js +
+  // draco_decoder.wasm, ~86 KB together). It pulls these itself, on first
+  // Draco geometry only — so an uncompressed .glb never pays for them. Both
+  // are fetched with XHR, which CSP checks against connect-src, not
+  // script-src; cdn.jsdelivr.net is already on both lists.
+  const DRACO_DECODER_PATH = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/';
 
   function loadPhra3DLibs(){
-    if(window.THREE && window.THREE.GLTFLoader) return Promise.resolve();
+    if(window.THREE && window.THREE.GLTFLoader && window.THREE.DRACOLoader) return Promise.resolve();
     if(phraLibsPromise) return phraLibsPromise;
     phraLibsPromise = loadScriptOnce(
       'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
@@ -11130,6 +11355,16 @@ window.__yyyAppBooted = true;
       'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js',
       () => !!(window.THREE && window.THREE.GLTFLoader),
       GLTF_SRI
+    )).then(() => loadScriptOnce(
+      // 4 KB of glue. Draco-compressed geometry is ~46% smaller on the wire
+      // than the quantized-only .glb it replaces, which on mobile data buys
+      // far more than the decoder costs. GLTFLoader THROWS on a Draco file
+      // when no DRACOLoader is attached, so this is not optional once the
+      // uploaded model is compressed — and attaching it to a plain .glb is
+      // harmless, which keeps both old and new uploads working.
+      'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js',
+      () => !!(window.THREE && window.THREE.DRACOLoader),
+      DRACO_SRI
     )).catch(err => {
       console.warn('[phra3d] failed to lazy-load 3D libraries:', err);
       phraLibsPromise = null;
@@ -11152,7 +11387,12 @@ window.__yyyAppBooted = true;
     // WebGL context is the single biggest memory allocation on the page, and
     // the hero canvas is already display:none there. Downloading and running
     // it anyway is how a weak renderer gets OOM-killed into a white screen.
-    if(window.__yyyLite) return;
+    //
+    // Slow network (mobile data / Save-Data): the device could render this
+    // fine, but the download is 1.6 MB of .glb plus 144 KB of three.js — the
+    // single largest thing on the page, for a decoration. Both flags hide the
+    // canvas in CSS, so bailing here leaves no gap.
+    if(window.__yyyLite || window.__yyySlowNet) return;
     if(initInFlight) return initInFlight;
     canvas = canvas || document.getElementById('phra3d');
     if(!canvas) return;
@@ -11400,6 +11640,18 @@ window.__yyyAppBooted = true;
     }
     console.log('[phra3d] loading glb:', url.slice(0, 80) + (url.length > 80 ? '...' : ''));
     const loader = new THREE.GLTFLoader();
+    // One DRACOLoader for the page, not one per load. Each instance spins up
+    // its own web worker pool, and loadGlbModel() runs again on every hero
+    // settings change — a fresh one each time would leak workers until the
+    // tab dies. Attaching it to a non-Draco .glb costs nothing: GLTFLoader
+    // only calls the decoder when it actually meets KHR_draco_mesh_compression.
+    if(window.THREE.DRACOLoader){
+      if(!phraDracoLoader){
+        phraDracoLoader = new THREE.DRACOLoader();
+        phraDracoLoader.setDecoderPath(DRACO_DECODER_PATH);
+      }
+      loader.setDRACOLoader(phraDracoLoader);
+    }
 
     // Helper: take a parsed glTF and add it to the scene with auto-fit + recentre.
     const onParsed = (gltf) => {
