@@ -7608,14 +7608,20 @@ function buildContactMsg(item,type){
   const price=item.hidePrice?(s.contactPmText||'PM for price'):('S$'+Number(item.price||0).toLocaleString());
   return `Hi! I'm interested in the ${typeLabel}: "${item.name}" (${price}). Could you share more details? 🙏`;
 }
-function openContactWithItem(type,id){
+function openContactWithItem(type,id,idx){
   const db=getDB();const item=(db[type]||[]).find(i=>i.id===id);if(!item)return;
   const msg=buildContactMsg(item,type);
   // build buttons grid if multiple contacts
   const contacts=db.settings.contacts||[];
   if(!contacts.length){showToast(msg);return;}
-  // open first one with URL by appending text where supported
-  const c=contacts.find(x=>x.url&&x.url.trim());
+  // The detail modal renders one button per channel, so honour the one that was
+  // actually pressed — indexed into the same list the grid was built from, not
+  // into settings.contacts, which still holds the channels hidden from detail.
+  // Anything without an index (or an index whose channel has no URL) falls back
+  // to the first channel that has one.
+  const shown=contacts.filter(x=>x.showInDetail!==false);
+  const picked=(typeof idx==='number')?shown[idx]:null;
+  const c=(picked&&picked.url&&picked.url.trim())?picked:contacts.find(x=>x.url&&x.url.trim());
   if(c){
     let url=c.url;
     // wa.me supports ?text=, m.me does not, line https links don't, but we still encode
@@ -7625,7 +7631,9 @@ function openContactWithItem(type,id){
       url+= (url.indexOf('?')>=0?'&':'?')+'text='+encodeURIComponent(msg);
     }
     // copy message to clipboard so user can paste in apps that don't support pre-fill
-    try{navigator.clipboard&&navigator.clipboard.writeText(msg);}catch(e){}
+    // writeText rejects rather than throws (denied permission, unfocused tab),
+    // so the try/catch alone left an unhandled rejection on every contact click.
+    try{navigator.clipboard&&navigator.clipboard.writeText(msg).catch(()=>{});}catch(e){}
     window.open(url,'_blank','noopener');
     showToast('📋 Message copied — paste it in chat');
   } else {
@@ -10594,7 +10602,7 @@ async function openProject(id){
   const contacts=(db.settings.contacts||[]).filter(c=>c.showInDetail!==false);
   const ctaLabel=type==='offering'?(lang==='th'?'ร่วมทำบุญ':'Make Merit'):(lang==='th'?'ร่วมบุญเลย':'Ways to give');
   const contactBtnsHtml=contacts.length?
-    `<div class="contact-group">${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" onclick="openContactWithItemBtn('projects',${p.id})">${contactGroupBtnInner(c)}</button>`).join('')}</div>`:
+    `<div class="contact-group">${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" onclick="openContactWithItemBtn('projects',${p.id},${i})">${contactGroupBtnInner(c)}</button>`).join('')}</div>`:
     `<button class="btn-gold" style="width:100%" onclick="openContactWithItemBtn('projects',${p.id})">${ctaLabel}</button>`;
 
   document.getElementById('modalContent').innerHTML=`
@@ -10669,7 +10677,7 @@ async function openProd(type,id){
     `<div style="background:#f8d7da;color:#721c24;padding:14px;border-radius:10px;text-align:center;font-weight:600;border:1px solid #f5c6cb">❌ This item has been sold</div>`:
     contacts.length?
       `<div class="contact-group">
-        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" onclick="openContactWithItemBtn('${type}',${id})">${contactGroupBtnInner(c)}</button>`).join('')}
+        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" onclick="openContactWithItemBtn('${type}',${id},${i})">${contactGroupBtnInner(c)}</button>`).join('')}
       </div>`:
       `<button class="btn-gold" style="width:100%" onclick="showToast('${(s.contactBtnMessage||'').replace(/'/g,"\\'")}')">${s.contactBtnText||'Contact'}</button>`;
 
@@ -10766,7 +10774,7 @@ function renderProductModal(item,id,s){
     `<div style="background:#f8d7da;color:#721c24;padding:14px;border-radius:10px;text-align:center;font-weight:600;border:1px solid #f5c6cb">❌ ${lang==='th'?'สินค้านี้ถูกจำหน่ายแล้ว':'This item has been sold'}</div>`:
     contacts.length?
       `<div class="contact-group">
-        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" onclick="openContactWithItemBtn('products','${id}')">${contactGroupBtnInner(c)}</button>`).join('')}
+        ${contacts.map((c,i)=>`<button class="cf-btn ${i===0?'primary':''}" onclick="openContactWithItemBtn('products','${id}',${i})">${contactGroupBtnInner(c)}</button>`).join('')}
       </div>`:
       `<button class="btn-gold" style="width:100%" onclick="showToast('${(s.contactBtnMessage||'').replace(/'/g,"\\'")}')">${s.contactBtnText||'Contact'}</button>`;
 
@@ -10827,7 +10835,7 @@ function onProdVariantChange(id){
   const priceEl=document.querySelector('#modalContent .prod-price');
   if(priceEl && v.price) priceEl.textContent='S$'+Number(v.price).toLocaleString();
 }
-function openContactWithItemBtn(type,id){openContactWithItem(type,id);}
+function openContactWithItemBtn(type,id,idx){openContactWithItem(type,id,idx);}
 function swImgIndex(el,idx){
   const img=(window._prodImages || [])[idx];
   if(!img) return;
