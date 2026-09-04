@@ -5409,6 +5409,23 @@ no per-frame sheen animation. */
      is the no-op transform anyway. */
   #page-home.page{will-change:auto}
   #page-home.page.active{animation-fill-mode:backwards}
+
+  /* Dropping `both` for `backwards` above stopped the transform PERSISTING,
+     but pgIn still applies one for the 420ms it runs — and 420ms of
+     containing block is 420ms of broken `position:fixed`. .lens-bg re-lays
+     out from the viewport to the full page — measured 800px tall to 2547px,
+     so 3.2x — its background-size:cover photo grows to match, and it snaps back the frame
+     the animation ends: the backdrop zooms in and out every single time you
+     return to home. pgOut does the same on the way out.
+
+     So home neither slides nor scales — it only fades. No transform, no
+     containing block, no zoom. The other pages keep pgIn/pgOut in full;
+     they have no fixed backdrop to break. Opacity is safe here because it
+     makes a stacking context, not a containing block. */
+  #page-home.page.active{animation-name:pgHomeIn}
+  #page-home.page.page-leaving{animation-name:pgHomeOut}
+  @keyframes pgHomeIn{from{opacity:0}to{opacity:1}}
+  @keyframes pgHomeOut{from{opacity:1}to{opacity:0}}
   .lens-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
   .lens-photo{
     position:absolute;inset:0;
@@ -11344,6 +11361,30 @@ window.__yyyAppBooted = true;
   // script-src; cdn.jsdelivr.net is already on both lists.
   const DRACO_DECODER_PATH = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/';
 
+  // FETCHING the .wasm is a connect-src matter, but COMPILING it is not:
+  // WebAssembly.instantiate() is checked against script-src, and a policy
+  // without 'wasm-unsafe-eval' (or 'unsafe-eval') rejects it. That is exactly
+  // what shipped — the decoder aborted mid-parse, GLTFLoader never got its
+  // geometry, and the hero stayed empty with the .glb sitting in the network
+  // tab looking perfectly fine. The fix is 'wasm-unsafe-eval' in the
+  // script-src of firebase.json, which permits wasm compilation ONLY and does
+  // not re-open eval()/new Function(). JSON takes no comments, hence this one.
+  //
+  // The probe below is the safety net for the browsers that still say no:
+  // 'wasm-unsafe-eval' landed in Chrome 97 / Firefox 102 / Safari 16.4, and an
+  // older engine simply ignores the unknown token and keeps blocking. Rather
+  // than abort, fall back to Draco's pure-JS decoder. It is ~754 KB against
+  // the wasm build's 86 KB, so this must never be the default path — but a
+  // heavy model beats no model, and it restores what those visitors saw
+  // before the .glb was compressed. Compiling the 8-byte empty module is the
+  // whole check: CSP makes the constructor throw synchronously.
+  function canCompileWasm(){
+    try{
+      return typeof WebAssembly === 'object' &&
+        new WebAssembly.Module(new Uint8Array([0,0x61,0x73,0x6d,1,0,0,0])) instanceof WebAssembly.Module;
+    }catch(e){ return false; }
+  }
+
   function loadPhra3DLibs(){
     if(window.THREE && window.THREE.GLTFLoader && window.THREE.DRACOLoader) return Promise.resolve();
     if(phraLibsPromise) return phraLibsPromise;
@@ -11649,6 +11690,15 @@ window.__yyyAppBooted = true;
       if(!phraDracoLoader){
         phraDracoLoader = new THREE.DRACOLoader();
         phraDracoLoader.setDecoderPath(DRACO_DECODER_PATH);
+        // Left unset, DRACOLoader picks the wasm build whenever the
+        // WebAssembly object merely EXISTS — it never tries to compile
+        // anything, so a CSP that blocks compilation still routes it down the
+        // wasm path and it aborts. Pin it to 'js' only when we have proved
+        // compilation actually works. See canCompileWasm() above.
+        if(!canCompileWasm()){
+          console.warn('[phra3d] WebAssembly compilation unavailable — falling back to the JS Draco decoder');
+          phraDracoLoader.setDecoderConfig({type:'js'});
+        }
       }
       loader.setDRACOLoader(phraDracoLoader);
     }
