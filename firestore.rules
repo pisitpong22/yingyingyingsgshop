@@ -43,6 +43,44 @@ service cloud.firestore {
       allow create, update, delete: if isSuperAdmin();
     }
 
+    // ── บันทึกกิจกรรมของทีม: ใครแก้อะไร เมื่อไหร่ ────────────────────────
+    //
+    // Append-only audit trail, written by admin.html after every successful
+    // save. It exists so the owner can see whether a team member has actually
+    // uploaded the casing photos they were asked for, instead of messaging
+    // them to ask.
+    //
+    // `email` is pinned to the caller's own verified claim and `at` to the
+    // server clock, both deliberately: an audit trail one admin can write
+    // under another admin's name, or backdate to the top of the list, is
+    // worse than no audit trail at all — it looks authoritative and isn't.
+    //
+    // There is no update path. Only a super_admin may delete (the panel's
+    // Clear button), so an admin cannot erase their own tracks.
+    function activityShapeOk() {
+      return request.resource.data.keys().hasOnly(['email','name','action','area','target','detail','photos','at'])
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.at == request.time
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.action is string
+        && request.resource.data.action.size() <= 40
+        && request.resource.data.area is string
+        && request.resource.data.area.size() <= 80
+        && request.resource.data.target is string
+        && request.resource.data.target.size() <= 160
+        && request.resource.data.detail is string
+        && request.resource.data.detail.size() <= 300
+        && request.resource.data.photos is int
+        && request.resource.data.photos >= 0;
+    }
+    match /activityLog/{entryId} {
+      allow read:   if isTeamMember();
+      allow create: if isTeamMember() && activityShapeOk();
+      allow update: if false;
+      allow delete: if isSuperAdmin();
+    }
+
     // Customer review submissions — anyone can submit, only team can read/manage.
     //
     // NOTE ON `imgs`: rules cannot type-check the ELEMENTS of a list, so each

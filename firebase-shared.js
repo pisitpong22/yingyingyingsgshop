@@ -2424,6 +2424,81 @@ function onCartChange(cb){
   }, err => console.error('[FB] cart listener failed:', err));
 }
 
+// ─── TEAM ACTIVITY LOG ─────────────────────────────────────────────────────
+// Append-only record of who changed what, so the owner can see whether an
+// admin has uploaded the casing photos they were asked for without having to
+// message them. Team-only reads (firestore.rules) — these entries carry admin
+// email addresses, which are not public information.
+//
+// Everything here is written from the admin panel and never from the
+// storefront; index.html loads this same file, so the functions are exported
+// but simply never called there.
+const ACTIVITY_COL = 'activityLog';
+
+function clipStr(v, n){ return String(v === null || v === undefined ? '' : v).slice(0, n); }
+
+// Fire-and-forget by design: an audit write that fails must never turn a
+// successful content save into a failed one. The caller does not await it,
+// and a rejected promise is swallowed here rather than reaching the console
+// as an unhandled rejection. A permission-denied here almost always means
+// firestore.rules has not been deployed since this feature shipped — CI only
+// deploys hosting.
+async function logActivity(entry){
+  const user = currentUser();
+  if(!user || !user.email) return null;
+  const e = entry || {};
+  try {
+    const ref = await addDoc(collection(fs, ACTIVITY_COL), {
+      email:  user.email.toLowerCase(),
+      name:   clipStr(e.name || user.displayName || '', 80),
+      action: clipStr(e.action || 'save', 40),
+      area:   clipStr(e.area || '', 80),
+      target: clipStr(e.target || '', 160),
+      detail: clipStr(e.detail || '', 300),
+      photos: Math.max(0, Math.round(Number(e.photos) || 0)),
+      at:     serverTimestamp(),
+    });
+    return ref.id;
+  } catch(err){
+    console.warn('[FB] logActivity skipped:', (err && err.code) || err);
+    return null;
+  }
+}
+
+// `at` is a serverTimestamp, so a doc this client wrote a moment ago can come
+// back with at === null until the server acknowledges it. Those sort last
+// under orderBy but read as "just now", which is what they are.
+async function listActivity(max){
+  const n = Math.min(Math.max(Number(max) || 60, 1), 200);
+  const snap = await getDocs(query(collection(fs, ACTIVITY_COL), orderBy('at', 'desc'), limit(n)));
+  return snap.docs.map(d => {
+    const v = d.data() || {};
+    return {
+      id: d.id,
+      email:  v.email  || '',
+      name:   v.name   || '',
+      action: v.action || 'save',
+      area:   v.area   || '',
+      target: v.target || '',
+      detail: v.detail || '',
+      photos: Number(v.photos) || 0,
+      at: v.at && typeof v.at.toMillis === 'function' ? v.at.toMillis() : 0,
+    };
+  });
+}
+
+// Super-admin only (enforced by the rules, not by this function).
+async function clearActivityLog(){
+  const snap = await getDocs(collection(fs, ACTIVITY_COL));
+  const docs = snap.docs;
+  for(let i = 0; i < docs.length; i += 200){
+    const b = writeBatch(fs);
+    docs.slice(i, i + 200).forEach(d => b.delete(d.ref));
+    await b.commit();
+  }
+  return docs.length;
+}
+
 window.FB = {
   getDB, saveDB, onDBChange, ready,
   // Cart (guest-device based — see comment above)
@@ -2453,6 +2528,8 @@ window.FB = {
   deleteReviewSubmission,
   // Facebook Page posts (mirrored server-side — see loadFacebookPosts above)
   loadFacebookPosts,
+  // Team activity log (who changed what — see logActivity above)
+  logActivity, listActivity, clearActivityLog,
   // Admin role management
   getAdminRecord,
   listAdmins,

@@ -1229,6 +1229,26 @@
     .main{padding:12px 10px 80px}
   }
 
+  /* ── TEAM ACTIVITY ─────────────────────────────────────────────────── */
+  .act-row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
+  .act-row.act-photos{border-color:var(--gold-dark)}
+  .act-icon{font-size:18px;line-height:1.2;flex:0 0 auto}
+  .act-body{flex:1 1 auto;min-width:0}
+  .act-what{font-size:13.5px;font-weight:600;color:var(--text)}
+  .act-target{font-size:12.5px;color:var(--text-muted);word-break:break-word;margin-top:2px}
+  .act-who{font-size:11.5px;color:var(--text-muted);margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .act-who b{font-weight:600;color:var(--text)}
+  .act-pill{display:inline-block;padding:1px 8px;border-radius:999px;background:var(--gold-dark);color:#fff;font-size:10.5px;font-weight:600}
+  .act-when{white-space:nowrap}
+
+  .cp-row{display:flex;gap:12px;align-items:center;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;flex-wrap:wrap}
+  .cp-name{flex:1 1 160px;min-width:0;font-size:13.5px;font-weight:600;color:var(--text)}
+  .cp-bar{flex:1 1 160px;height:8px;border-radius:999px;background:var(--border);overflow:hidden}
+  .cp-bar span{display:block;height:100%;background:var(--gold-dark)}
+  .cp-num{flex:0 0 auto;font-size:12.5px;color:var(--text-muted);white-space:nowrap}
+  .cp-missing{flex:1 1 100%;font-size:12px;color:#c4564a;word-break:break-word}
+  .cp-done{flex:0 0 auto;font-size:12.5px;color:#5f9a45;font-weight:600}
+
 </style>
 </head>
 <body>
@@ -1327,6 +1347,9 @@
       <div class="side-item active" onclick="showPanel('dashboard',this)"
            data-en="📊 Dashboard" data-th="📊 แดชบอร์ด"
            data-kw="home overview stats แดชบอร์ด ภาพรวม สรุป">📊 Dashboard</div>
+      <div class="side-item" onclick="showPanel('activity',this)"
+           data-en="🔔 Team Activity" data-th="🔔 ทีมทำอะไรบ้าง"
+           data-kw="activity log audit who did what history team update uploaded photos casing กิจกรรม ประวัติ ใครทำอะไร ทีม อัพเดท อัปโหลด รูปกรอบ ตามงาน">🔔 Team Activity</div>
       <div class="side-item" onclick="showPanel('orders',this)"
            data-en="📦 Orders" data-th="📦 คำสั่งซื้อ"
            data-kw="orders order paid pending shipping address customer refund stripe คำสั่งซื้อ ออเดอร์ จ่ายแล้ว รอชำระ ที่อยู่ ลูกค้า จัดส่ง">📦 Orders<span class="side-count" id="sc-orders"></span></div>
@@ -1428,6 +1451,38 @@
                data-en="Things that are blocking a sale or will look wrong to a customer. This list is empty when everything is in order."
                data-th="สิ่งที่ขวางการขายอยู่ หรือจะแสดงผลผิดพลาดต่อลูกค้า ถ้าทุกอย่างเรียบร้อยรายการนี้จะว่าง">Things that are blocking a sale or will look wrong to a customer.</div>
           <div id="needsAttention" class="na-list"></div>
+        </div>
+      </div>
+
+      <!-- TEAM ACTIVITY -->
+      <div class="panel" id="panel-activity">
+        <div class="panel-title">
+          <span data-en="🔔 Team Activity" data-th="🔔 ทีมทำอะไรบ้าง">🔔 Team Activity</span>
+          <button class="btn-sm" onclick="loadActivityPanel(this)" data-en="🔄 Refresh" data-th="🔄 รีเฟรช">🔄 Refresh</button>
+        </div>
+        <div class="panel-sub"
+             data-en="Who changed what, and whether the casing photos are actually up yet — so you do not have to message anyone to find out."
+             data-th="ดูว่าใครแก้อะไรไปบ้าง และรูปกรอบขึ้นครบหรือยัง จะได้ไม่ต้องไปถามแอดมินทีละคน">Who changed what, and whether the casing photos are actually up yet.</div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🪬 Casing photo progress" data-th="🪬 ความคืบหน้ารูปกรอบ">🪬 Casing photo progress</div>
+          <div class="form-section-desc"
+               data-en="Counted from the casing data itself, so it covers work done before this page existed. Loading every style costs a read per style, which is why it runs on the button rather than automatically."
+               data-th="นับจากข้อมูลกรอบจริง จึงเห็นงานที่ทำไว้ก่อนหน้านี้ด้วย การโหลดแบบทั้งหมดใช้โควตาอ่านต่อ 1 แบบ จึงให้กดปุ่มเองแทนการโหลดอัตโนมัติ">Counted from the casing data itself, so it covers work done before this page existed.</div>
+          <button class="btn-gold" id="cpCheckBtn" onclick="checkCasingPhotos(this)"
+                  data-en="🔍 Check casing photos now" data-th="🔍 ตรวจรูปกรอบตอนนี้">🔍 Check casing photos now</button>
+          <div id="casingPhotoStatus" style="margin-top:14px"></div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-section-title" data-en="🕒 Recent changes" data-th="🕒 การแก้ไขล่าสุด">🕒 Recent changes</div>
+          <div class="form-section-desc"
+               data-en="Every save made from this admin panel, newest first. Only saves made after this feature shipped appear here — older work shows up in the progress list above instead."
+               data-th="ทุกการบันทึกจากหน้าแอดมิน เรียงใหม่สุดก่อน จะเห็นเฉพาะการบันทึกหลังจากเปิดใช้ฟีเจอร์นี้ ส่วนงานเก่าให้ดูจากความคืบหน้าด้านบนแทน">Every save made from this admin panel, newest first.</div>
+          <div id="activityList"><div class="empty-state" style="padding:24px" data-en="Loading…" data-th="กำลังโหลด…">Loading…</div></div>
+          <div id="activityAdminTools" style="margin-top:12px;display:none">
+            <button class="btn-del" onclick="clearActivityLogUI(this)" data-en="🗑 Clear activity log" data-th="🗑 ล้างประวัติทั้งหมด">🗑 Clear activity log</button>
+          </div>
         </div>
       </div>
 
@@ -3405,6 +3460,9 @@ function refreshDynamic(){
   const tabParent=active.getAttribute('data-parent');
 
   if(id==='panel-products'){ loadProductList(); }
+  // The casing-photo block redraws from the numbers it already counted —
+  // re-counting would cost a Firestore read per style on every save.
+  else if(id==='panel-activity'){ loadActivityPanel(); renderCasingPhotoStatus(); }
   else if(id==='panel-history-stories') loadHsPanel();
   else if(id==='panel-projects'){loadPanelPageIntro('projects');loadList('projects');}
   else if(id==='panel-casing'){
@@ -3862,13 +3920,22 @@ async function saveDB(db){
 
 function currentAdminAreaLabel(){
   const activePanel=document.querySelector('.panel.active');
-  const textOfChild=(sel)=>{
+  // A .panel-title usually holds the name in a <span> with an action button
+  // beside it, so plain textContent would read "Casing Service — Types ➕ Add
+  // New Casing Type". Take the span when there is one, and otherwise drop any
+  // button/link text, so the activity log records a place and not a sentence.
+  const titleOf=(sel)=>{
     const el = activePanel ? activePanel.querySelector(sel) : null;
-    const t = el ? el.textContent : null;
-    return t ? t.trim() : undefined;
+    if(!el) return undefined;
+    const span = el.querySelector(':scope > span');
+    if(span && span.textContent.trim()) return span.textContent.trim();
+    const clone = el.cloneNode(true);
+    clone.querySelectorAll('button, a').forEach(n => n.remove());
+    const t = clone.textContent.trim();
+    return t || undefined;
   };
-  const panelTitle=textOfChild('.panel-title');
-  const activeTab=textOfChild('.tab-btn.active');
+  const panelTitle=titleOf('.panel-title');
+  const activeTab=titleOf('.tab-btn.active');
   return [panelTitle, activeTab].filter(Boolean).join(' · ') || 'Website';
 }
 
@@ -3901,10 +3968,27 @@ function recordSiteFeedUpdate(db){
 
 async function persistDB(db, successMsg, opts={}){
   showToast(lang === 'th' ? 'กำลังบันทึก... กรุณารอจนเสร็จ' : 'Saving... please wait', { sticky: true });
+  // Claim the staged description up front, whether or not this save works.
+  // Leaving it behind would attach it to whatever the admin saved next.
+  const staged = _pendingActivity;
+  _pendingActivity = null;
   try {
     if(!opts.skipFeedUpdate) recordSiteFeedUpdate(db);
     await saveDB(db);
     await flushPendingImageDeletes(db);
+    // Not awaited: the audit trail is there to answer "did anyone upload the
+    // photos yet", and a Firestore hiccup writing it must not turn a saved
+    // change into a "Save failed" toast. FB.logActivity swallows its own
+    // errors — see firebase-shared.js.
+    if(!opts.skipActivityLog && window.FB && FB.logActivity){
+      FB.logActivity({
+        action: (staged && staged.action) || 'save',
+        area:   (staged && staged.area)   || currentAdminAreaLabel(),
+        target: (staged && staged.target) || '',
+        detail: (staged && staged.detail) || '',
+        photos: (staged && staged.photos) || 0,
+      });
+    }
     if(successMsg) showToast(successMsg);
     return true;
   } catch(err) {
@@ -3964,6 +4048,8 @@ function showPanel(name, el){
   // Load data for each panel
   if(name==='dashboard')loadDash();
   if(name==='orders')loadOrders();
+  // The casing-photo check is NOT auto-run here: it reads every style.
+  if(name==='activity')loadActivityPanel();
   if(name==='products'){ closeProductForm(); loadProductList(); loadShopStatus(); }
   if(name==='casing'){exitTypeView();loadPanelPageIntro('casing');loadCasingTypes();}
   if(name==='projects'){loadPanelPageIntro('projects');loadList('projects');}
@@ -4866,6 +4952,12 @@ async function saveCustomPage(){
     });
     db.settings.nav.push({id,label,visible:true,enabled:true,builtin:false});
   }
+  stageActivity({
+    action: editingPageId ? 'page_edit' : 'page_add',
+    area:   'pages',
+    target: label,
+  });
+
   if(!(await persistDB(db,tr('pageSaved')))) return;
   closeModal('pageModal');loadNav();
   // Also refresh Page Headers tab in case admin is about to switch over to it
@@ -4875,6 +4967,8 @@ async function saveCustomPage(){
 async function delCustomPage(id){
   if(!tConfirm('confirmDeletePage'))return;
   const db=captureNavValues();
+  const gonePage=(db.settings.customPages||[]).find(p=>p.id===id);
+  stageActivity({action:'page_del', area:'pages', target:(gonePage&&gonePage.label)||String(id)});
   db.settings.customPages=(db.settings.customPages||[]).filter(p=>p.id!==id);
   db.settings.nav=db.settings.nav.filter(n=>n.id!==id);
   if(!(await persistDB(db,tr('deleted')))) return;
@@ -5473,7 +5567,12 @@ async function saveFeedPosts(){
     .filter(p=>p && p.system)
     .slice(0,30)
     .map(p=>({...p, buttonTarget:p.buttonTarget === 'feed' ? 'home' : p.buttonTarget}));
-  db.feedPosts=[...captureFeedPosts(), ...systemPosts].slice(0,80);
+  const manualPosts=captureFeedPosts();
+  db.feedPosts=[...manualPosts, ...systemPosts].slice(0,80);
+  stageActivity({
+    action:'feed_save', area:'home',
+    detail: lang==='th' ? `โพสต์ที่ลงเอง ${manualPosts.length} รายการ` : `${manualPosts.length} manual post(s)`,
+  });
   const ok=await persistDB(db, lang==='th' ? '✅ บันทึกแล้ว' : '✅ Updates saved', {skipFeedUpdate:true});
   if(ok) loadFeedPosts();
 }
@@ -6113,6 +6212,13 @@ async function saveReview(){
   } else {
     db.reviews.push({id:genId(db.reviews),...data});
   }
+  stageActivity({
+    action: editingReviewId ? 'review_edit' : 'review_add',
+    area:   'reviews',
+    target: data.displayName || (anon ? (lang==='th'?'ไม่ระบุชื่อ':'Anonymous') : name),
+    photos: imgs.length,
+  });
+
   if(!(await persistDB(db,tr('reviewSaved')))) return;
   tempImgs['r_imgs']=[];
   cancelEditReview();loadReviewsList();
@@ -6152,7 +6258,10 @@ function cancelEditReview(){
 }
 async function deleteReview(id){
   if(!tConfirm('confirmDelete'))return;
-  const db=getDB();db.reviews=(db.reviews||[]).filter(r=>r.id!==id);
+  const db=getDB();
+  const goneReview=(db.reviews||[]).find(r=>r.id===id);
+  stageActivity({action:'review_del', area:'reviews', target:(goneReview&&(goneReview.displayName||goneReview.name))||String(id)});
+  db.reviews=(db.reviews||[]).filter(r=>r.id!==id);
   if(!(await persistDB(db,tr('reviewDeleted')))) return;
   loadReviewsList();
 }
@@ -6349,6 +6458,14 @@ async function saveType(){
   } else {
     db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[],updatedAt});
   }
+  // Captured before persistDB, because tempImgs is cleared straight after it.
+  stageActivity({
+    action: curEditTypeId ? 'type_edit' : 'type_add',
+    area:   'casing',
+    target: name,
+    photos: captureImgs('ft_banner').length + captureImgs('ft_samples').length,
+  });
+
   if(!(await persistDB(db,tr('saved')))) return;
   tempImgs={};
   closeModal('typeModal');
@@ -6379,7 +6496,10 @@ async function saveType(){
 
 async function delType(typeId){
   if(!tConfirm('confirmDeleteType'))return;
-  const db=getDB();db.casingTypes=db.casingTypes.filter(t=>t.id!==typeId);
+  const db=getDB();
+  const goneType=(db.casingTypes||[]).find(t=>t.id===typeId);
+  stageActivity({action:'type_del', area:'casing', target:(goneType&&goneType.name)||String(typeId)});
+  db.casingTypes=db.casingTypes.filter(t=>t.id!==typeId);
   if(!(await persistDB(db,tr('deleted')))) return;
   loadCasingTypes();loadDash();
 }
@@ -6685,7 +6805,12 @@ async function saveVariant(){
   }
   ty.updatedAt = updatedAt;
 
-
+  stageActivity({
+    action: editId ? 'style_edit' : 'style_add',
+    area:   'casing',
+    target: (ty.name || '') + ' › ' + name,
+    photos: data.imgs.length,
+  });
 
   if(!(await persistDB(db, tr('saved')))) return;
   tempImgs = {};
@@ -6753,6 +6878,7 @@ async function reorderVariantByDrag(dragId, targetId, before){
       : (target < from ? target+1 : target);
     ty.variants.splice(Math.max(0, Math.min(ty.variants.length, insertAt)), 0, item);
     ty.updatedAt = Date.now();
+    stageActivity({action:'style_order', area:'casing', target:ty.name || ''});
     // Show optimistic update immediately, then reload from Firestore
     renderVariantListFromDB();
     if(await persistDB(db, '✅ Order saved')){
@@ -6807,6 +6933,11 @@ async function delVariant(varId){
   const db = getDB();
   const ty = (db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));if(!ty)return;
   const prev = [...(ty.variants||[])];
+  const gone = prev.find(v=>String(v.id)===String(varId));
+  stageActivity({
+    action:'style_del', area:'casing',
+    target:(ty.name || '') + ' › ' + ((gone && gone.name) || String(varId)),
+  });
   // DELETE: remove only the selected style, keep all others
   ty.variants = ty.variants.filter(v=>String(v.id)!==String(varId));
   ty.updatedAt = Date.now();
@@ -7127,13 +7258,23 @@ async function saveHsArticle(){
     const id = db.historyStories.length ? Math.max(...db.historyStories.map(x=>Number(x.id)||0))+1 : 1;
     db.historyStories.push({id,createdAt:Date.now(),updatedAt:Date.now(),...data});
   }
+  stageActivity({
+    action: _hsEditId ? 'article_edit' : 'article_add',
+    area:   'library',
+    target: title,
+    detail: data.status === 'draft' ? (lang==='th' ? 'ฉบับร่าง' : 'draft') : '',
+    photos: (data.coverImage ? 1 : 0) + data.gallery.length,
+  });
+
   const ok = await persistDB(db, _hsEditId?'✅ Article updated':'✅ Article saved');
   if(ok){ cancelEditHs(); renderHsList(); }
 }
 
 async function delHsArticle(id){
-  if(!confirm('Delete this article?')) return;
+  if(!_confirm('Delete this article?')) return;
   const db = getDB();
+  const goneArticle = (db.historyStories||[]).find(x=>String(x.id)===String(id));
+  stageActivity({action:'article_del', area:'library', target:(goneArticle&&goneArticle.title)||String(id)});
   db.historyStories = (db.historyStories||[]).filter(x=>String(x.id)!==String(id));
   const ok = await persistDB(db,'✅ Article deleted');
   if(ok) renderHsList();
@@ -7152,6 +7293,7 @@ async function dupHsArticle(id){
     featured:false, status:'draft',
     createdAt:Date.now(), updatedAt:Date.now(),
   });
+  stageActivity({action:'article_dup', area:'library', target:'Copy of '+a.title});
   const ok = await persistDB(db,'✅ Article duplicated');
   if(ok) renderHsList();
 }
@@ -7623,6 +7765,14 @@ async function saveProduct(intent){
   } else {
     db.products.push({ id:'p_'+Math.random().toString(36).slice(2,10), legacySource:null, legacyId:null, createdAt:Date.now(), ...data });
   }
+  stageActivity({
+    action: editingProductId ? 'product_edit' : 'product_add',
+    area:   'products',
+    target: data.name || '',
+    detail: publishing ? '' : (lang==='th' ? 'ฉบับร่าง' : 'draft'),
+    photos: imgs.length,
+  });
+
   if(!(await persistDB(db, publishing ? tr('saved') : (lang==='th'?'💾 บันทึกฉบับร่างแล้ว':'💾 Draft saved')))) return;
   tempImgs['pr_imgs'] = [];
   closeProductForm();
@@ -7644,6 +7794,7 @@ async function duplicateProduct(id){
   copy.createdAt = Date.now();
   copy.updatedAt = Date.now();
   db.products.push(copy);
+  stageActivity({action:'product_dup', area:'products', target:copy.name});
   if(!(await persistDB(db, lang==='th'?'📄 ทำสำเนาแล้ว':'📄 Duplicated'))) return;
   loadProductList(); loadDash();
   openProductForm(copy.id);
@@ -7652,6 +7803,8 @@ async function duplicateProduct(id){
 async function delProduct(id){
   if(!tConfirm('confirmDelete')) return;
   const db = getDB();
+  const goneProduct = (db.products||[]).find(p=>p.id===id);
+  stageActivity({action:'product_del', area:'products', target:(goneProduct&&goneProduct.name)||String(id)});
   db.products = (db.products||[]).filter(p=>p.id!==id);
   if(!(await persistDB(db, tr('deleted')))) return;
   loadProductList(); loadDash();
@@ -7670,6 +7823,10 @@ async function prQuickUpdate(id, field, value){
   if(!it) return;
   it[field] = (field === 'price') ? Number(value||0) : value;
   it.updatedAt = Date.now();
+  stageActivity({
+    action:'product_edit', area:'products', target:it.name || String(id),
+    detail: lang==='th' ? `แก้ ${field} จากหน้ารายการ` : `quick edit: ${field}`,
+  });
   await persistDB(db, null); // silent — no toast for inline edits
   loadDash();
 }
@@ -7909,6 +8066,13 @@ async function saveProject(){
   } else {
     db.projects.push({id:genId(db.projects),...data});
   }
+  stageActivity({
+    action: editingItemId.projects ? 'project_edit' : 'project_add',
+    area:   'projects',
+    target: name,
+    photos: data.imgs.length,
+  });
+
   if(!(await persistDB(db,tr('saved')))) return;
   tempImgs['p_imgs']=[];
   cancelEditProject();
@@ -7962,6 +8126,7 @@ async function reorderProjectByDrag(dragId,targetId,before){
       ? (target>from ? target-1 : target)
       : (target<from ? target+1 : target);
     arr.splice(Math.max(0,Math.min(arr.length,insertAt)),0,item);
+    stageActivity({action:'project_order', area:'projects', target:(item&&item.name)||''});
     loadList('projects');
     if(!(await persistDB(db,lang==='th'?'✅ บันทึกลำดับแล้ว':'✅ Order saved'))){
       loadList('projects');
@@ -8028,7 +8193,14 @@ function cancelEditProject(){
 
 async function delItem(type,id){
   if(!tConfirm('confirmDelete'))return;
-  const db=getDB();db[type]=db[type].filter(i=>i.id!==id);
+  const db=getDB();
+  const goneItem=(db[type]||[]).find(i=>i.id===id);
+  stageActivity({
+    action: type==='projects' ? 'project_del' : 'save',
+    area:   type,
+    target: (goneItem&&goneItem.name)||String(id),
+  });
+  db[type]=db[type].filter(i=>i.id!==id);
   if(!(await persistDB(db,tr('deleted')))) return;
   loadList(type);loadDash();
 }
@@ -8587,6 +8759,289 @@ window.closeModals=closeModals;
 // Walks the DB, collects every image URL, requests each one through ImageKit
 // at the sizes the site actually uses. After this finishes, real visitors
 // hit a warm cache from the first byte → no more 1s cold-start latency.
+// ─── TEAM ACTIVITY ─────────────────────────────────────────────────────────
+// Answers two different questions with two different mechanisms, on purpose.
+//
+//   "Are the casing photos up yet?"  — counted live from the casing data, so
+//   it is right about work done long before this panel existed. Styles are
+//   lazy-loaded, so this costs one Firestore read per style; that is why it
+//   sits behind a button instead of running whenever the panel opens.
+//
+//   "Who did it?"  — only the append-only activityLog can say, and it only
+//   knows about saves made after this shipped. Older work has a date but no
+//   name. That is a gap in the data, not a bug to hide.
+
+// The next persistDB() picks this up and clears it. One slot, not a queue:
+// a save either follows a staged description or it doesn't, and a stale
+// description attached to an unrelated save would be worse than a generic one.
+let _pendingActivity = null;
+function stageActivity(entry){ _pendingActivity = entry || null; }
+
+const ACT_LABELS = {
+  // Casing service — the reason this panel exists
+  style_add:    {en:'➕ Added casing style',     th:'➕ เพิ่มแบบกรอบ'},
+  style_edit:   {en:'✏️ Edited casing style',    th:'✏️ แก้ไขแบบกรอบ'},
+  style_del:    {en:'🗑 Deleted casing style',   th:'🗑 ลบแบบกรอบ'},
+  style_order:  {en:'↕️ Reordered casing styles',th:'↕️ จัดลำดับแบบกรอบ'},
+  type_add:     {en:'➕ Added casing type',      th:'➕ เพิ่มประเภทกรอบ'},
+  type_edit:    {en:'✏️ Edited casing type',     th:'✏️ แก้ไขประเภทกรอบ'},
+  type_del:     {en:'🗑 Deleted casing type',    th:'🗑 ลบประเภทกรอบ'},
+  // Shop
+  product_add:  {en:'➕ Added product',          th:'➕ เพิ่มสินค้า'},
+  product_edit: {en:'✏️ Edited product',         th:'✏️ แก้ไขสินค้า'},
+  product_del:  {en:'🗑 Deleted product',        th:'🗑 ลบสินค้า'},
+  product_dup:  {en:'📄 Duplicated product',     th:'📄 ทำสำเนาสินค้า'},
+  // Projects
+  project_add:  {en:'➕ Added project',          th:'➕ เพิ่มโปรเจกต์'},
+  project_edit: {en:'✏️ Edited project',         th:'✏️ แก้ไขโปรเจกต์'},
+  project_del:  {en:'🗑 Deleted project',        th:'🗑 ลบโปรเจกต์'},
+  project_order:{en:'↕️ Reordered projects',     th:'↕️ จัดลำดับโปรเจกต์'},
+  // Library (ความรู้)
+  article_add:  {en:'➕ Added article',          th:'➕ เพิ่มบทความ'},
+  article_edit: {en:'✏️ Edited article',         th:'✏️ แก้ไขบทความ'},
+  article_del:  {en:'🗑 Deleted article',        th:'🗑 ลบบทความ'},
+  article_dup:  {en:'📄 Duplicated article',     th:'📄 ทำสำเนาบทความ'},
+  // Reviews
+  review_add:   {en:'➕ Added review',           th:'➕ เพิ่มรีวิว'},
+  review_edit:  {en:'✏️ Edited review',          th:'✏️ แก้ไขรีวิว'},
+  review_del:   {en:'🗑 Deleted review',         th:'🗑 ลบรีวิว'},
+  // Homepage feed + custom pages
+  feed_save:    {en:'📢 Updated homepage feed',  th:'📢 แก้อัปเดตหน้าแรก'},
+  page_add:     {en:'➕ Added page',             th:'➕ เพิ่มหน้าเว็บ'},
+  page_edit:    {en:'✏️ Edited page',            th:'✏️ แก้ไขหน้าเว็บ'},
+  page_del:     {en:'🗑 Deleted page',           th:'🗑 ลบหน้าเว็บ'},
+  // Everything else — settings, branding, SEO, homepage sections. The area
+  // name carries the meaning here, so there is no point inventing an action
+  // label for each of the two dozen settings screens.
+  save:         {en:'💾 Saved',                  th:'💾 บันทึก'},
+};
+// The icon column says WHAT KIND of thing changed; the label beside it says
+// what happened to it. Keep the two from repeating the same emoji, or a
+// delete row reads "🗑 🗑 Deleted product".
+const ACT_ICONS = {
+  style_add:'🪬', style_edit:'🪬', style_del:'🪬', style_order:'🪬',
+  type_add:'🪬', type_edit:'🪬', type_del:'🪬',
+  product_add:'🛍️', product_edit:'🛍️', product_del:'🛍️', product_dup:'🛍️',
+  project_add:'🎯', project_edit:'🎯', project_del:'🎯', project_order:'🎯',
+  article_add:'📖', article_edit:'📖', article_del:'📖', article_dup:'📖',
+  review_add:'🙏', review_edit:'🙏', review_del:'🙏',
+  feed_save:'🏠', page_add:'📄', page_edit:'📄', page_del:'📄',
+  save:'⚙️',
+};
+
+
+// Short area codes are written by the staged call sites. Anything else is the
+// panel name currentAdminAreaLabel() picked up, which is already readable in
+// whichever language the admin was using — pass it through untouched.
+const ACT_AREAS = {
+  casing:   {en:'🪬 Casing Service', th:'🪬 บริการกรอบพระ'},
+  products: {en:'🛍️ Shop',           th:'🛍️ ร้านค้า'},
+  projects: {en:'🎯 Projects',       th:'🎯 โปรเจกต์'},
+  library:  {en:'📖 Library',        th:'📖 คลังบทความ'},
+  reviews:  {en:'🙏 Reviews',        th:'🙏 รีวิว'},
+  pages:    {en:'📄 Pages',          th:'📄 หน้าเว็บ'},
+  home:     {en:'🏠 Homepage',       th:'🏠 หน้าแรก'},
+};
+
+function actLabel(action){
+  const m = ACT_LABELS[action];
+  if(!m) return ACT_LABELS.save[lang] || ACT_LABELS.save.en;
+  return m[lang] || m.en;
+}
+
+function actArea(area){
+  const m = ACT_AREAS[area];
+  return m ? (m[lang] || m.en) : String(area || '');
+}
+
+function actTimeAgo(ms){
+  const justNow = lang==='th' ? 'เมื่อสักครู่' : 'just now';
+  if(!ms) return justNow;
+  const secs = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+  if(secs < 60) return justNow;
+  const mins = Math.floor(secs / 60);
+  if(mins < 60) return lang==='th' ? mins + ' นาทีที่แล้ว' : mins + ' min ago';
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return lang==='th' ? hrs + ' ชั่วโมงที่แล้ว' : hrs + ' hr ago';
+  const days = Math.floor(hrs / 24);
+  if(days < 7) return lang==='th' ? days + ' วันที่แล้ว' : days + (days === 1 ? ' day ago' : ' days ago');
+  return new Date(ms).toLocaleDateString(lang==='th' ? 'th-TH' : 'en-GB');
+}
+
+// Email local part only. The full address is already on the row; the short
+// form is what makes a list of twenty entries scannable.
+function actWho(entry){
+  const name = String(entry.name || '').trim();
+  if(name) return name;
+  const email = String(entry.email || '').trim();
+  if(!email) return lang==='th' ? 'ไม่ทราบ' : 'unknown';
+  return email.split('@')[0];
+}
+
+async function loadActivityPanel(btn){
+  const list = document.getElementById('activityList');
+  if(!list) return;
+  const tools = document.getElementById('activityAdminTools');
+  if(tools) tools.style.display = (typeof hasPerm === 'function' && hasPerm('manageAdmins')) ? '' : 'none';
+
+  const original = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = lang==='th' ? '⏳ กำลังโหลด…' : '⏳ Loading…'; }
+  list.innerHTML = `<div class="empty-state" style="padding:24px">${lang==='th' ? 'กำลังโหลด…' : 'Loading…'}</div>`;
+
+  let entries;
+  try {
+    entries = await FB.listActivity(60);
+  } catch(err){
+    console.warn('[activity] load failed:', err);
+    // permission-denied here means firestore.rules has not been deployed
+    // since this feature shipped — CI deploys hosting only. Say that, rather
+    // than showing an empty list that looks like "nobody did anything".
+    const denied = err && (err.code === 'permission-denied' || /permission/i.test(err.message || ''));
+    list.innerHTML = `<div class="empty-state" style="padding:24px;line-height:1.6">${
+      denied
+        ? (lang==='th'
+            ? 'อ่านประวัติไม่ได้ — ยังไม่ได้ deploy firestore.rules เวอร์ชันใหม่<br><code>firebase deploy --only firestore:rules</code>'
+            : 'Cannot read the log — the new firestore.rules have not been deployed yet.<br><code>firebase deploy --only firestore:rules</code>')
+        : escapeHtml(String((err && err.message) || err))
+    }</div>`;
+    if(btn){ btn.disabled = false; btn.textContent = original; }
+    return;
+  }
+
+  if(!entries.length){
+    list.innerHTML = `<div class="empty-state" style="padding:24px">${
+      lang==='th'
+        ? 'ยังไม่มีการบันทึกหลังเปิดใช้ฟีเจอร์นี้ — พอมีคนแก้อะไร จะขึ้นที่นี่'
+        : 'Nothing saved since this feature shipped — the next change will appear here.'
+    }</div>`;
+  } else {
+    list.innerHTML = entries.map(e => {
+      const icon = ACT_ICONS[e.action] || '💾';
+      const photoPill = e.photos > 0
+        ? `<span class="act-pill">${e.photos} ${lang==='th' ? 'รูป' : (e.photos === 1 ? 'photo' : 'photos')}</span>`
+        : '';
+      // A settings save has no named item, so the area IS the subject line.
+      const subject = e.target || actArea(e.area);
+      const target = subject ? `<div class="act-target">${escapeHtml(subject)}</div>` : '';
+      const detail = e.detail ? `<div class="act-target">${escapeHtml(e.detail)}</div>` : '';
+      const areaTag = (e.target && e.area) ? `<span>${escapeHtml(actArea(e.area))}</span>` : '';
+      return `
+        <div class="act-row${e.photos > 0 ? ' act-photos' : ''}">
+          <div class="act-icon">${icon}</div>
+          <div class="act-body">
+            <div class="act-what">${escapeHtml(actLabel(e.action))} ${photoPill}</div>
+            ${target}${detail}
+            <div class="act-who">
+              <span><b>${escapeHtml(actWho(e))}</b> · ${escapeHtml(e.email || '')}</span>
+              ${areaTag}
+              <span class="act-when">${escapeHtml(actTimeAgo(e.at))}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  if(btn){ btn.disabled = false; btn.textContent = original; }
+}
+
+async function clearActivityLogUI(btn){
+  if(!_confirm(lang==='th'
+      ? 'ล้างประวัติการแก้ไขทั้งหมด? ย้อนกลับไม่ได้'
+      : 'Clear the whole activity log? This cannot be undone.')) return;
+  const original = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = lang==='th' ? '⏳ กำลังลบ…' : '⏳ Clearing…'; }
+  try {
+    const n = await FB.clearActivityLog();
+    showToast(lang==='th' ? `🗑 ลบแล้ว ${n} รายการ` : `🗑 Cleared ${n} entries`);
+  } catch(err){
+    showToast((lang==='th' ? 'ลบไม่สำเร็จ: ' : 'Clear failed: ') + ((err && err.message) || err));
+  }
+  if(btn){ btn.disabled = false; btn.textContent = original; }
+  loadActivityPanel();
+}
+
+// ─── CASING PHOTO PROGRESS ─────────────────────────────────────────────────
+// Loads every casing type's styles (they are lazy-loaded by default) and
+// counts how many carry at least one photo. This is the part that works
+// retroactively: it reads the real data, so it does not care whether the
+// upload happened before or after the activity log existed.
+
+// Counting is split from drawing so that switching EN/TH — which re-runs
+// every panel's render — redraws this from the numbers already in hand
+// instead of spending another read per casing style.
+let _casingPhotoStats = null;
+
+async function checkCasingPhotos(btn){
+  const out = document.getElementById('casingPhotoStatus');
+  if(!out) return;
+  const original = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = lang==='th' ? '⏳ กำลังตรวจ…' : '⏳ Checking…'; }
+  out.innerHTML = `<div class="empty-state" style="padding:20px">${lang==='th' ? 'กำลังโหลดแบบทั้งหมด…' : 'Loading every style…'}</div>`;
+
+  const typeIds = (getDB().casingTypes || []).map(t => t.id);
+  for(const id of typeIds){
+    try { await FB.ensureCasingVariants(id); }
+    catch(err){ console.warn('[activity] ensureCasingVariants failed for', id, err); }
+  }
+
+  // Re-read: loadSplitDB may have replaced the whole db object while we awaited.
+  _casingPhotoStats = (getDB().casingTypes || []).map(ty => {
+    const variants = Array.isArray(ty.variants) ? ty.variants : [];
+    const hasPhoto = v => Array.isArray(v.imgs) && v.imgs.length > 0;
+    const missing = variants.filter(v => !hasPhoto(v));
+    return {
+      name: ty.name || '—',
+      total: variants.length,
+      withPhotos: variants.filter(hasPhoto).length,
+      missingNames: missing.map(v => v.name || '—'),
+      touched: Math.max(Number(ty.updatedAt) || 0, ...variants.map(v => Number(v.updatedAt) || 0), 0),
+    };
+  });
+
+  renderCasingPhotoStatus();
+  if(btn){ btn.disabled = false; btn.textContent = original; }
+}
+
+function renderCasingPhotoStatus(){
+  const out = document.getElementById('casingPhotoStatus');
+  if(!out || !_casingPhotoStats) return;
+  if(!_casingPhotoStats.length){
+    out.innerHTML = `<div class="empty-state" style="padding:20px">${tr('noTypes')}</div>`;
+    return;
+  }
+
+  let totalStyles = 0, totalWithPhotos = 0;
+  const rows = _casingPhotoStats.map(st => {
+    totalStyles += st.total;
+    totalWithPhotos += st.withPhotos;
+    const pct = st.total ? Math.round(st.withPhotos / st.total * 100) : 0;
+    const shown = st.missingNames.slice(0, 8).join(', ')
+      + (st.missingNames.length > 8
+          ? (lang==='th' ? ` และอีก ${st.missingNames.length - 8} แบบ` : ` and ${st.missingNames.length - 8} more`)
+          : '');
+    return `
+      <div class="cp-row">
+        <div class="cp-name">${escapeHtml(st.name)}</div>
+        <div class="cp-bar"><span style="width:${pct}%"></span></div>
+        <div class="cp-num">${st.withPhotos}/${st.total} ${lang==='th' ? 'มีรูป' : 'have photos'}${
+          st.touched ? ' · ' + (lang==='th' ? 'แก้ล่าสุด ' : 'last edit ') + actTimeAgo(st.touched) : ''
+        }</div>
+        ${st.total && !st.missingNames.length ? `<div class="cp-done">${lang==='th' ? '✅ ครบแล้ว' : '✅ complete'}</div>` : ''}
+        ${st.missingNames.length ? `<div class="cp-missing">${lang==='th' ? 'ยังไม่มีรูป: ' : 'No photo yet: '}${escapeHtml(shown)}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  const missingTotal = totalStyles - totalWithPhotos;
+  const summary = totalStyles === 0
+    ? (lang==='th' ? 'ยังไม่มีแบบกรอบเลย' : 'No casing styles yet')
+    : missingTotal === 0
+      ? (lang==='th' ? `✅ ครบทั้ง ${totalStyles} แบบ มีรูปหมดแล้ว` : `✅ all ${totalStyles} styles have photos`)
+      : (lang==='th'
+          ? `⚠️ ${totalWithPhotos} จาก ${totalStyles} แบบมีรูปแล้ว — ยังขาดอีก ${missingTotal} แบบ`
+          : `⚠️ ${totalWithPhotos} of ${totalStyles} styles have photos — ${missingTotal} still missing`);
+
+  out.innerHTML = `<div style="font-size:14px;font-weight:600;margin-bottom:10px">${summary}</div>` + rows;
+}
+
 // ─── TEAM MANAGEMENT ───────────────────────────────────────────────────────
 async function loadTeamList(){
   const c = document.getElementById('teamList');
