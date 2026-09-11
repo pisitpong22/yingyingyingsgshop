@@ -683,6 +683,13 @@
   .vc-btn-edit:hover{background:rgba(var(--accent-rgb),.1)}
   .vc-btn-del{border:1px solid rgba(255,91,91,.35);color:#ff5b5b}
   .vc-btn-del:hover{background:rgba(255,91,91,.1)}
+  /* Uploading photos is what this list is actually for, so it gets the filled
+     button and a word, and Edit goes back to being the icon beside it. */
+  .vc-btn-add{
+    width:auto;padding:0 12px;gap:6px;font-size:12.5px;font-weight:600;white-space:nowrap;
+    border:1px solid transparent;background:var(--gold-dark);color:#fff;
+  }
+  .vc-btn-add:hover{background:var(--gold)}
 
   /* ── TYPE TILES ── */
   .type-tile{
@@ -1146,6 +1153,8 @@
     .variant-card .vc-side{gap:6px}
     .variant-card .vc-photos{font-size:9.5px;padding:3px 7px;white-space:nowrap}
     .variant-card .vc-btn{width:28px;height:28px;font-size:12px;border-radius:8px}
+    .variant-card .vc-btn-add{width:auto;padding:0 8px}
+    .variant-card .vc-btn-add span{display:none}
 
     /* ── TYPE TILES ── */
     .type-tile{padding:12px;border-radius:11px;margin-bottom:10px}
@@ -1245,7 +1254,7 @@
   .cp-name{flex:1 1 160px;min-width:0;font-size:13.5px;font-weight:600;color:var(--text)}
   .cp-bar{flex:1 1 160px;height:8px;border-radius:999px;background:var(--border);overflow:hidden}
   .cp-bar span{display:block;height:100%;background:var(--gold-dark)}
-  .cp-num{flex:0 0 auto;font-size:12.5px;color:var(--text-muted);white-space:nowrap}
+  .cp-num{flex:0 1 auto;font-size:12.5px;color:var(--text-muted)}
   .cp-missing{flex:1 1 100%;font-size:12px;color:#c4564a;word-break:break-word}
   .cp-done{flex:0 0 auto;font-size:12.5px;color:#5f9a45;font-weight:600}
 
@@ -3363,6 +3372,7 @@ const TR = {
   // itself — so the casing style modal was titled "addStyle" / "editStyle".
   addStyle:{en:'Add Style',th:'เพิ่มแบบ'},
   editStyle:{en:'Edit Style',th:'แก้ไขแบบ'},
+  addPhotos:{en:'Add Photos',th:'เพิ่มรูป'},
   // Inline UI
   builtin:{en:'built-in',th:'เริ่มต้น'},
   custom:{en:'custom',th:'กำหนดเอง'},
@@ -6206,17 +6216,21 @@ async function saveReview(){
     text,
     imgs:imgs.slice(),
   };
+  const prevReview=editingReviewId ? db.reviews.find(x=>x.id===editingReviewId) : null;
+  const prevReviewImgs=prevReview ? prevReview.imgs : [];
   if(editingReviewId){
     const it=db.reviews.find(x=>x.id===editingReviewId);
     if(it)Object.assign(it,data);
   } else {
     db.reviews.push({id:genId(db.reviews),...data});
   }
+  const rvDelta = photoDelta(prevReviewImgs, imgs);
   stageActivity({
-    action: editingReviewId ? 'review_edit' : 'review_add',
+    action: editingReviewId ? photoAction(rvDelta, 'review_edit') : 'review_add',
     area:   'reviews',
     target: data.displayName || (anon ? (lang==='th'?'ไม่ระบุชื่อ':'Anonymous') : name),
-    photos: imgs.length,
+    detail: photoDetail(rvDelta),
+    photos: rvDelta.added,
   });
 
   if(!(await persistDB(db,tr('reviewSaved')))) return;
@@ -6438,6 +6452,9 @@ async function saveType(){
   if(!name){showToast(tr('needName'));return;}
   const db=getDB();if(!db.casingTypes)db.casingTypes=[];
   const updatedAt=Date.now();
+  // Snapshot the banner + samples before the branches below overwrite them.
+  const prevType=curEditTypeId ? db.casingTypes.find(t=>String(t.id)===String(curEditTypeId)) : null;
+  const prevTypeImgs=prevType ? [...(prevType.bannerImg ? [prevType.bannerImg] : []), ...(prevType.sampleImgs||[])] : [];
   if(curEditTypeId){
     const ty=db.casingTypes.find(t=>String(t.id)===String(curEditTypeId));
     if(ty){
@@ -6459,11 +6476,17 @@ async function saveType(){
     db.casingTypes.push({id:genId(db.casingTypes),name,priceRange:price,desc:rteGetHtml('ft_desc'),bannerImg:(captureImgs('ft_banner')[0]||''),sampleImgs:captureImgs('ft_samples'),variants:[],updatedAt});
   }
   // Captured before persistDB, because tempImgs is cleared straight after it.
+  const tyNow  = (db.casingTypes||[]).find(t=>String(t.id)===String(curEditTypeId));
+  const tyDelta = photoDelta(
+    curEditTypeId ? prevTypeImgs : [],
+    [...(tyNow && tyNow.bannerImg ? [tyNow.bannerImg] : []), ...((tyNow && tyNow.sampleImgs) || [])]
+  );
   stageActivity({
-    action: curEditTypeId ? 'type_edit' : 'type_add',
+    action: curEditTypeId ? photoAction(tyDelta, 'type_edit') : 'type_add',
     area:   'casing',
     target: name,
-    photos: captureImgs('ft_banner').length + captureImgs('ft_samples').length,
+    detail: photoDetail(tyDelta),
+    photos: tyDelta.added,
   });
 
   if(!(await persistDB(db,tr('saved')))) return;
@@ -6666,6 +6689,7 @@ function _renderVariantTable(vars, c){
       <div class="vc-side">
         <span class="vc-photos">📷 ${(v.imgs||[]).length} ${lang==='th'?'รูป':'Photos'}</span>
         <div class="vc-actions">
+          <button class="vc-btn vc-btn-add" onclick="openVariantForm('${escapeHtml(String(v.id))}',{addPhotos:true})" title="${tr('addPhotos')}">📷<span>${tr('addPhotos')}</span></button>
           <button class="vc-btn vc-btn-edit" onclick="openVariantForm('${escapeHtml(String(v.id))}')" title="${tr('edit')}">✏️</button>
           <button class="vc-btn vc-btn-del" onclick="delVariant('${escapeHtml(String(v.id))}')" title="${tr('del')}">🗑</button>
         </div>
@@ -6697,7 +6721,11 @@ function populateAvailabilitySelect(selectId){
 }
 
 // ─── CASING VARIANT FORM ─────────────────────────────────────────────────────
-async function openVariantForm(varId=null){
+// opts.addPhotos opens the same form on the same style, but says so in the
+// title and drops the admin straight at the upload zone. Pressing "Edit" to
+// upload photos is what made every photo upload land in the activity log as
+// an edit, and made the owner ask whether anything had been added at all.
+async function openVariantForm(varId=null, opts={}){
   curEditVariantId = varId || null;
 
   // Ensure variants are loaded before reading — handles stale cache after saveType
@@ -6726,8 +6754,19 @@ async function openVariantForm(varId=null){
       }
     }
   }
-  document.getElementById('variantModalTitle').textContent = varId ? tr('editStyle') : tr('addStyle');
+  const styleName = document.getElementById('fv_name').value;
+  document.getElementById('variantModalTitle').textContent =
+    (varId && opts.addPhotos) ? `${tr('addPhotos')}${styleName ? ' — ' + styleName : ''}`
+    : varId                   ? tr('editStyle')
+    :                           tr('addStyle');
   openModal('variantModal');
+  if(opts.addPhotos){
+    // Let the modal finish opening before scrolling inside it.
+    setTimeout(() => {
+      const zone = document.querySelector('#variantModal .upload-zone');
+      if(zone) zone.scrollIntoView({block:'center', behavior:'smooth'});
+    }, 120);
+  }
 }
 
 // ─── SINGLE STABLE RELOAD FOR CASING STYLES ──────────────────────────────────
@@ -6789,6 +6828,9 @@ async function saveVariant(){
   if(!Array.isArray(ty.variants)) ty.variants = [];
 
   const beforeCount = ty.variants.length;
+  // Read the existing photos BEFORE the spread below overwrites them.
+  const prevVariant = editId ? (ty.variants || []).find(x=>String(x.id)===String(editId)) : null;
+  const prevImgs = prevVariant ? prevVariant.imgs : [];
   const updatedAt = Date.now();
   const availSel = document.getElementById('fv_availability');
   const availability = (availSel && availSel.value) || (window.FB && window.FB.CASING_AVAILABILITY_DEFAULT) || 'available';
@@ -6805,11 +6847,13 @@ async function saveVariant(){
   }
   ty.updatedAt = updatedAt;
 
+  const vDelta = photoDelta(editId ? prevImgs : [], data.imgs);
   stageActivity({
-    action: editId ? 'style_edit' : 'style_add',
+    action: editId ? photoAction(vDelta, 'style_edit') : 'style_add',
     area:   'casing',
     target: (ty.name || '') + ' › ' + name,
-    photos: data.imgs.length,
+    detail: photoDetail(vDelta),
+    photos: vDelta.added,
   });
 
   if(!(await persistDB(db, tr('saved')))) return;
@@ -7251,6 +7295,10 @@ async function saveHsArticle(){
   };
   const db = getDB();
   if(!db.historyStories) db.historyStories = [];
+  const prevArticle = _hsEditId ? db.historyStories.find(x=>String(x.id)===String(_hsEditId)) : null;
+  const prevArticleImgs = prevArticle
+    ? [...(prevArticle.coverImage ? [prevArticle.coverImage] : []), ...(prevArticle.gallery||[])]
+    : [];
   if(_hsEditId){
     const idx = db.historyStories.findIndex(x=>String(x.id)===String(_hsEditId));
     if(idx>=0) db.historyStories[idx] = {...db.historyStories[idx],...data,updatedAt:Date.now()};
@@ -7258,12 +7306,15 @@ async function saveHsArticle(){
     const id = db.historyStories.length ? Math.max(...db.historyStories.map(x=>Number(x.id)||0))+1 : 1;
     db.historyStories.push({id,createdAt:Date.now(),updatedAt:Date.now(),...data});
   }
+  const hsDelta = photoDelta(prevArticleImgs,
+    [...(data.coverImage ? [data.coverImage] : []), ...data.gallery]);
   stageActivity({
-    action: _hsEditId ? 'article_edit' : 'article_add',
+    action: _hsEditId ? photoAction(hsDelta, 'article_edit') : 'article_add',
     area:   'library',
     target: title,
-    detail: data.status === 'draft' ? (lang==='th' ? 'ฉบับร่าง' : 'draft') : '',
-    photos: (data.coverImage ? 1 : 0) + data.gallery.length,
+    detail: [data.status === 'draft' ? (lang==='th' ? 'ฉบับร่าง' : 'draft') : '', photoDetail(hsDelta)]
+              .filter(Boolean).join(' · '),
+    photos: hsDelta.added,
   });
 
   const ok = await persistDB(db, _hsEditId?'✅ Article updated':'✅ Article saved');
@@ -7759,18 +7810,24 @@ async function saveProduct(intent){
   };
   if(!data.sku) data.sku = `${prTypePrefix(data.type)}-${String((db.products||[]).length+1).padStart(4,'0')}`;
 
+  const prevProduct = editingProductId ? db.products.find(x=>x.id===editingProductId) : null;
+  const prevProductImgs = prevProduct
+    ? [...(prevProduct.coverImg ? [prevProduct.coverImg] : []), ...(prevProduct.gallery||[])]
+    : [];
   if(editingProductId){
     const it = db.products.find(x=>x.id===editingProductId);
     if(it) Object.assign(it, data);
   } else {
     db.products.push({ id:'p_'+Math.random().toString(36).slice(2,10), legacySource:null, legacyId:null, createdAt:Date.now(), ...data });
   }
+  const prDelta = photoDelta(prevProductImgs, imgs);
   stageActivity({
-    action: editingProductId ? 'product_edit' : 'product_add',
+    action: editingProductId ? photoAction(prDelta, 'product_edit') : 'product_add',
     area:   'products',
     target: data.name || '',
-    detail: publishing ? '' : (lang==='th' ? 'ฉบับร่าง' : 'draft'),
-    photos: imgs.length,
+    detail: [publishing ? '' : (lang==='th' ? 'ฉบับร่าง' : 'draft'), photoDetail(prDelta)]
+              .filter(Boolean).join(' · '),
+    photos: prDelta.added,
   });
 
   if(!(await persistDB(db, publishing ? tr('saved') : (lang==='th'?'💾 บันทึกฉบับร่างแล้ว':'💾 Draft saved')))) return;
@@ -8060,17 +8117,21 @@ async function saveProject(){
     data.hideStats=document.getElementById('p_hideStats').checked;
     data.price=0;data.unit='';data.priceTiers=[];
   }
+  const prevProject=editingItemId.projects ? db.projects.find(x=>x.id===editingItemId.projects) : null;
+  const prevProjectImgs=prevProject ? prevProject.imgs : [];
   if(editingItemId.projects){
     const it=db.projects.find(x=>x.id===editingItemId.projects);
     if(it)Object.assign(it,data);
   } else {
     db.projects.push({id:genId(db.projects),...data});
   }
+  const pjDelta = photoDelta(prevProjectImgs, data.imgs);
   stageActivity({
-    action: editingItemId.projects ? 'project_edit' : 'project_add',
+    action: editingItemId.projects ? photoAction(pjDelta, 'project_edit') : 'project_add',
     area:   'projects',
     target: name,
-    photos: data.imgs.length,
+    detail: photoDetail(pjDelta),
+    photos: pjDelta.added,
   });
 
   if(!(await persistDB(db,tr('saved')))) return;
@@ -8777,7 +8838,53 @@ window.closeModals=closeModals;
 let _pendingActivity = null;
 function stageActivity(entry){ _pendingActivity = entry || null; }
 
+// Photos are compared by stored URL, because the entries around them are not
+// comparable: the same picture is a bare string once it has been saved and a
+// {url, thumb, medium, alt} object right after upload, and editing its alt
+// text rewrites the object without touching the image.
+function imgUrlSet(imgs){
+  const out = new Set();
+  (Array.isArray(imgs) ? imgs : []).forEach(i => {
+    const u = imageUrl(i);
+    if(u) out.add(u);
+  });
+  return out;
+}
+
+// `photos` in the log means photos ADDED by this one action, never the total
+// on the item. The total is the number the admin can already see on the row
+// in the styles list; what they cannot see is who put them there and when.
+function photoDelta(before, after){
+  const a = imgUrlSet(before), b = imgUrlSet(after);
+  let added = 0, removed = 0;
+  b.forEach(u => { if(!a.has(u)) added++; });
+  a.forEach(u => { if(!b.has(u)) removed++; });
+  return { added, removed, total: b.size };
+}
+
+function photoDetail(d){
+  const parts = [];
+  if(d.removed) parts.push(lang==='th' ? `ลบออก ${d.removed} รูป` : `${d.removed} removed`);
+  if(d.total)   parts.push(lang==='th' ? `รวมทั้งหมด ${d.total} รูป` : `${d.total} in total`);
+  return parts.join(' · ');
+}
+
+// Which action a save to an EXISTING item really was. Adding photos is the
+// common case in this shop and it is not an edit in any sense the owner cares
+// about, so it gets to say so.
+function photoAction(delta, editAction){
+  if(delta.added)   return 'photos_add';
+  if(delta.removed) return 'photos_del';
+  return editAction;
+}
+
 const ACT_LABELS = {
+  // Photo work, on anything. "Edited" was actively misleading here: an admin
+  // who opens a style and uploads twenty photos has added something, and the
+  // old label said they edited it and then printed the TOTAL photo count, so
+  // the one number on the row answered a question nobody asked.
+  photos_add:   {en:'➕ Added photos',           th:'➕ เพิ่มรูป'},
+  photos_del:   {en:'📷 Removed photos',         th:'📷 ลบรูปออก'},
   // Casing service — the reason this panel exists
   style_add:    {en:'➕ Added casing style',     th:'➕ เพิ่มแบบกรอบ'},
   style_edit:   {en:'✏️ Edited casing style',    th:'✏️ แก้ไขแบบกรอบ'},
@@ -8828,6 +8935,16 @@ const ACT_ICONS = {
   feed_save:'🏠', page_add:'📄', page_edit:'📄', page_del:'📄',
   save:'⚙️',
 };
+// photos_add / photos_del deliberately have no entry above — they happen in
+// every area, so the icon comes from the area instead and the row still says
+// at a glance whether it was a casing style or a product.
+const ACT_AREA_ICONS = {
+  casing:'🪬', products:'🛍️', projects:'🎯', library:'📖',
+  reviews:'🙏', pages:'📄', home:'🏠',
+};
+function actIcon(e){
+  return ACT_ICONS[e.action] || ACT_AREA_ICONS[e.area] || '💾';
+}
 
 
 // Short area codes are written by the staged call sites. Anything else is the
@@ -8852,6 +8969,20 @@ function actLabel(action){
 function actArea(area){
   const m = ACT_AREAS[area];
   return m ? (m[lang] || m.en) : String(area || '');
+}
+
+// The owner asked for the actual date and time, not only "5 hr ago": when
+// chasing up who was meant to upload what, "Tuesday evening" settles it and
+// a relative age does not.
+function actExactTime(ms){
+  if(!ms) return '';
+  try {
+    return new Date(ms).toLocaleString(lang==='th' ? 'th-TH' : 'en-GB', {
+      day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit',
+    });
+  } catch(_){
+    return new Date(ms).toLocaleString();
+  }
 }
 
 function actTimeAgo(ms){
@@ -8916,9 +9047,12 @@ async function loadActivityPanel(btn){
     }</div>`;
   } else {
     list.innerHTML = entries.map(e => {
-      const icon = ACT_ICONS[e.action] || '💾';
+      const icon = actIcon(e);
+      // "+40 photos", not "40 photos" — the number is what this action added.
       const photoPill = e.photos > 0
-        ? `<span class="act-pill">${e.photos} ${lang==='th' ? 'รูป' : (e.photos === 1 ? 'photo' : 'photos')}</span>`
+        ? `<span class="act-pill">${lang==='th'
+             ? `+${e.photos} รูป`
+             : `+${e.photos} ${e.photos === 1 ? 'photo' : 'photos'}`}</span>`
         : '';
       // A settings save has no named item, so the area IS the subject line.
       const subject = e.target || actArea(e.area);
@@ -8934,7 +9068,9 @@ async function loadActivityPanel(btn){
             <div class="act-who">
               <span><b>${escapeHtml(actWho(e))}</b> · ${escapeHtml(e.email || '')}</span>
               ${areaTag}
-              <span class="act-when">${escapeHtml(actTimeAgo(e.at))}</span>
+              <span class="act-when">${escapeHtml(
+                [actExactTime(e.at), actTimeAgo(e.at)].filter(Boolean).join(' · ')
+              )}</span>
             </div>
           </div>
         </div>`;
@@ -9023,7 +9159,7 @@ function renderCasingPhotoStatus(){
         <div class="cp-name">${escapeHtml(st.name)}</div>
         <div class="cp-bar"><span style="width:${pct}%"></span></div>
         <div class="cp-num">${st.withPhotos}/${st.total} ${lang==='th' ? 'มีรูป' : 'have photos'}${
-          st.touched ? ' · ' + (lang==='th' ? 'แก้ล่าสุด ' : 'last edit ') + actTimeAgo(st.touched) : ''
+          st.touched ? ' · ' + (lang==='th' ? 'แก้ล่าสุด ' : 'last edit ') + escapeHtml(actExactTime(st.touched)) : ''
         }</div>
         ${st.total && !st.missingNames.length ? `<div class="cp-done">${lang==='th' ? '✅ ครบแล้ว' : '✅ complete'}</div>` : ''}
         ${st.missingNames.length ? `<div class="cp-missing">${lang==='th' ? 'ยังไม่มีรูป: ' : 'No photo yet: '}${escapeHtml(shown)}</div>` : ''}
