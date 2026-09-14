@@ -9051,16 +9051,51 @@ function applyCasingStyleFilter(){
   }
 }
 
+// Returning customers kept seeing the same first photo on every style, so the
+// casing page looked unchanged even when it wasn't. Each style now gets a
+// random cover per page load, and its gallery opens in a fresh order. Only the
+// photos move: the order of the styles themselves is the admin's and stays.
+function shuffledCopy(list){
+  const a = [...list];
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+// Picked once per style per page load, so the cover doesn't jump when the grid
+// re-renders, and the style's gallery can open on the photo that was clicked.
+const _casingCoverPicks = new Map();
+function casingCoverImage(v){
+  const imgs = feedImages(v && v.imgs);
+  if(!imgs.length) return null;
+  const key = `${v.id}|${casingVariantKey(v)}`;
+  const picked = _casingCoverPicks.get(key);
+  if(picked && imgs.some(img => imageUrl(img) === picked)) return imgs.find(img => imageUrl(img) === picked);
+  const img = imgs[Math.floor(Math.random() * imgs.length)];
+  _casingCoverPicks.set(key, imageUrl(img));
+  return img;
+}
+// Cover photo first (it's what the customer just tapped), the rest shuffled.
+function casingGalleryOrder(v){
+  const imgs = feedImages(v && v.imgs);
+  const cover = casingCoverImage(v);
+  if(!cover) return imgs;
+  const coverUrl = imageUrl(cover);
+  return [cover, ...shuffledCopy(imgs.filter(img => imageUrl(img) !== coverUrl))];
+}
+
 function variantCardHtml(ty, v, i){
   // First 8: eager+fetchpriority. Rest: lazy.
   // Never pass through watchImage — it moves src→data-src causing blank cards.
-  const imgUrl = v.imgs&&v.imgs[0] ? imageUrl(v.imgs[0], i<8?'medium':'thumb') : '';
+  const coverImg = casingCoverImage(v);
+  const imgUrl = coverImg ? imageUrl(coverImg, i<8?'medium':'thumb') : '';
   const alreadyLoaded = isCasingImageLoaded(imgUrl);
   // onload: mark this URL so we never show shimmer for it again
   const onload = imgUrl ? `onload="markCasingImageLoaded('${imgUrl.replace(/'/g,"\'")}')"` : '';
   const styleName = String(v.name || '').trim();
   const typeName = String((ty && ty.name) || '').trim();
-  const cardAlt = imageAlt(v.imgs && v.imgs[0], (styleName && typeName)
+  const cardAlt = imageAlt(coverImg, (styleName && typeName)
     ? (lang === 'th' ? `${styleName} — ${typeName}` : `${styleName} — ${typeName} casing`)
     : (styleName || typeName));
   const imgTag = imgUrl
@@ -9196,7 +9231,7 @@ function renderVariants(typeId){
     setupCasingStyleTools([]);
     // No separate styles — show the type's own sample images directly so
     // visitors can preview right away without the admin needing to create a style.
-    const samples=(ty.sampleImgs&&ty.sampleImgs.length)?ty.sampleImgs : (ty.bannerImg?[ty.bannerImg]:[]);
+    const samples=(ty.sampleImgs&&ty.sampleImgs.length)?shuffledCopy(ty.sampleImgs) : (ty.bannerImg?[ty.bannerImg]:[]);
     if(samples.length){
       window._lbImages=samples;
       window._lbAltName=ty.name||'';
@@ -9258,7 +9293,7 @@ function openVariant(typeId,varId){
   const db=getDB();
   const ty=(db.casingTypes||[]).find(x=>x.id===typeId);if(!ty)return;
   const v=(ty.variants||[]).find(x=>x.id===varId);if(!v)return;
-  const imgs=feedImages(v.imgs||[]);
+  const imgs=casingGalleryOrder(v);
   // store images globally for lightbox — keep originals for full-size view
   window._lbImages = imgs;
   window._lbAltName = v.name || '';
