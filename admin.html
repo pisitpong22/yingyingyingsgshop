@@ -683,13 +683,16 @@
   .vc-btn-edit:hover{background:rgba(var(--accent-rgb),.1)}
   .vc-btn-del{border:1px solid rgba(255,91,91,.35);color:#ff5b5b}
   .vc-btn-del:hover{background:rgba(255,91,91,.1)}
-  /* Uploading photos is what this list is actually for, so it gets the filled
-     button and a word, and Edit goes back to being the icon beside it. */
-  .vc-btn-add{
-    width:auto;padding:0 12px;gap:6px;font-size:12.5px;font-weight:600;white-space:nowrap;
-    border:1px solid transparent;background:var(--gold-dark);color:#fff;
+  /* One button opens the style for everything — name, price, status and
+     photos — because the form behind it is the same either way. The activity
+     log works out afterwards whether photos were added or removed, so the
+     button no longer has to guess what the admin meant to do. */
+  .vc-btn-manage{
+    width:auto;padding:0 14px;gap:7px;font-size:13px;font-weight:600;white-space:nowrap;font-family:inherit;
+    border:1px solid rgba(var(--accent-rgb),.35);background:rgba(var(--accent-rgb),.08);color:var(--gold);
   }
-  .vc-btn-add:hover{background:var(--gold)}
+  .vc-btn-manage:hover{background:rgba(var(--accent-rgb),.16);border-color:rgba(var(--accent-rgb),.55)}
+  .vc-btn-manage .vc-btn-ico{font-size:13px;line-height:1}
 
   /* ── TYPE TILES ── */
   .type-tile{
@@ -1153,8 +1156,8 @@
     .variant-card .vc-side{gap:6px}
     .variant-card .vc-photos{font-size:9.5px;padding:3px 7px;white-space:nowrap}
     .variant-card .vc-btn{width:28px;height:28px;font-size:12px;border-radius:8px}
-    .variant-card .vc-btn-add{width:auto;padding:0 8px}
-    .variant-card .vc-btn-add span{display:none}
+    .variant-card .vc-btn-manage{width:auto;padding:0 9px;font-size:11.5px}
+    .variant-card .vc-btn-manage .vc-btn-txt{display:none}
 
     /* ── TYPE TILES ── */
     .type-tile{padding:12px;border-radius:11px;margin-bottom:10px}
@@ -3372,7 +3375,7 @@ const TR = {
   // itself — so the casing style modal was titled "addStyle" / "editStyle".
   addStyle:{en:'Add Style',th:'เพิ่มแบบ'},
   editStyle:{en:'Edit Style',th:'แก้ไขแบบ'},
-  addPhotos:{en:'Add Photos',th:'เพิ่มรูป'},
+  editStylePhotos:{en:'Edit / Photos',th:'แก้ไข / เพิ่มรูป'},
   // Inline UI
   builtin:{en:'built-in',th:'เริ่มต้น'},
   custom:{en:'custom',th:'กำหนดเอง'},
@@ -6689,8 +6692,7 @@ function _renderVariantTable(vars, c){
       <div class="vc-side">
         <span class="vc-photos">📷 ${(v.imgs||[]).length} ${lang==='th'?'รูป':'Photos'}</span>
         <div class="vc-actions">
-          <button class="vc-btn vc-btn-add" onclick="openVariantForm('${escapeHtml(String(v.id))}',{addPhotos:true})" title="${tr('addPhotos')}">📷<span>${tr('addPhotos')}</span></button>
-          <button class="vc-btn vc-btn-edit" onclick="openVariantForm('${escapeHtml(String(v.id))}')" title="${tr('edit')}">✏️</button>
+          <button class="vc-btn vc-btn-manage" onclick="openVariantForm('${escapeHtml(String(v.id))}')" title="${tr('editStylePhotos')}"><span class="vc-btn-ico">✏️</span><span class="vc-btn-txt">${tr('editStylePhotos')}</span></button>
           <button class="vc-btn vc-btn-del" onclick="delVariant('${escapeHtml(String(v.id))}')" title="${tr('del')}">🗑</button>
         </div>
       </div>
@@ -6721,11 +6723,7 @@ function populateAvailabilitySelect(selectId){
 }
 
 // ─── CASING VARIANT FORM ─────────────────────────────────────────────────────
-// opts.addPhotos opens the same form on the same style, but says so in the
-// title and drops the admin straight at the upload zone. Pressing "Edit" to
-// upload photos is what made every photo upload land in the activity log as
-// an edit, and made the owner ask whether anything had been added at all.
-async function openVariantForm(varId=null, opts={}){
+async function openVariantForm(varId=null){
   curEditVariantId = varId || null;
 
   // Ensure variants are loaded before reading — handles stale cache after saveType
@@ -6756,17 +6754,8 @@ async function openVariantForm(varId=null, opts={}){
   }
   const styleName = document.getElementById('fv_name').value;
   document.getElementById('variantModalTitle').textContent =
-    (varId && opts.addPhotos) ? `${tr('addPhotos')}${styleName ? ' — ' + styleName : ''}`
-    : varId                   ? tr('editStyle')
-    :                           tr('addStyle');
+    varId ? `${tr('editStyle')}${styleName ? ' — ' + styleName : ''}` : tr('addStyle');
   openModal('variantModal');
-  if(opts.addPhotos){
-    // Let the modal finish opening before scrolling inside it.
-    setTimeout(() => {
-      const zone = document.querySelector('#variantModal .upload-zone');
-      if(zone) zone.scrollIntoView({block:'center', behavior:'smooth'});
-    }, 120);
-  }
 }
 
 // ─── SINGLE STABLE RELOAD FOR CASING STYLES ──────────────────────────────────
@@ -6848,11 +6837,14 @@ async function saveVariant(){
   ty.updatedAt = updatedAt;
 
   const vDelta = photoDelta(editId ? prevImgs : [], data.imgs);
+  // With one button for both jobs, the log is what tells the owner which job
+  // it was — so a save that uploads photos AND fixes the price says both.
+  const vChanges = prevVariant ? styleFieldChanges(prevVariant, data) : '';
   stageActivity({
     action: editId ? photoAction(vDelta, 'style_edit') : 'style_add',
     area:   'casing',
     target: (ty.name || '') + ' › ' + name,
-    detail: photoDetail(vDelta),
+    detail: [vChanges, photoDetail(vDelta)].filter(Boolean).join(' · '),
     photos: vDelta.added,
   });
 
@@ -8860,6 +8852,27 @@ function photoDelta(before, after){
   b.forEach(u => { if(!a.has(u)) added++; });
   a.forEach(u => { if(!b.has(u)) removed++; });
   return { added, removed, total: b.size };
+}
+
+// "Price S$15 → S$18 · Status Available → Out of Stock" for a style save.
+// Empty when nothing but the photos changed.
+function styleFieldChanges(before, after){
+  const th = lang==='th';
+  const money = v => (v === '' || v == null) ? '—' : `S$${v}`;
+  const status = v => {
+    const key = window.FB && window.FB.casingAvailabilityStatus ? window.FB.casingAvailabilityStatus(v) : (v.availability || '');
+    const opt = window.FB && window.FB.casingAvailabilityOptions
+      ? window.FB.casingAvailabilityOptions().find(o => o.key === key) : null;
+    return opt ? (th ? opt.th : opt.en) : key;
+  };
+  const out = [];
+  if(String(before.name || '') !== String(after.name || ''))
+    out.push(`${th ? 'ชื่อ' : 'Name'} ${before.name || '—'} → ${after.name || '—'}`);
+  if(String(before.price ?? '') !== String(after.price ?? ''))
+    out.push(`${th ? 'ราคา' : 'Price'} ${money(before.price)} → ${money(after.price)}`);
+  if(status(before) !== status(after))
+    out.push(`${th ? 'สถานะ' : 'Status'} ${status(before)} → ${status(after)}`);
+  return out.join(' · ');
 }
 
 function photoDetail(d){
